@@ -1,8 +1,9 @@
+import { LinearGradient } from 'expo-linear-gradient'
 import { Fragment, type ReactElement } from 'react'
-import { ScrollView, Text, View } from 'react-native'
-import { PressableButton } from 'shared/ui/pressable-button'
-import { useTheme, withAlpha } from 'shared/ui/theme'
+import { ScrollView, View } from 'react-native'
+import { useTheme } from 'shared/ui/theme'
 import { styles } from './PillTabs.styles'
+import { PillTabSegment } from './PillTabSegment'
 
 export interface PillTabItem {
   disabled?: boolean
@@ -14,14 +15,25 @@ interface PillTabsProps {
   items: PillTabItem[]
   onChange: (key: string) => void
   onDisabledPress?: () => void
-  /** Full-width track with equal segments (scope row) instead of a hugging, scrollable one. */
+  /** Scope only: full-width track with equal segments instead of a hugging one. */
   stretch?: boolean
   value: string
-  /** `scope` — white track with a soft external shadow; `results` — flat track, accent selection. */
+  /**
+   * `scope` — card track with an external halo and gray selection.
+   * `results` — trackless row of standalone labels; the selected item is an accent pill.
+   */
   variant?: 'results' | 'scope'
   /** Page-owned wrapper around a single pill (e.g. An onboarding target). */
   wrapItem?: (item: PillTabItem, pill: ReactElement) => ReactElement
 }
+
+const SHADOW_COLORS = [
+  'rgba(0, 0, 0, 0)',
+  'rgba(0, 0, 0, 0.05)',
+  'rgba(0, 0, 0, 0.03)',
+  'rgba(0, 0, 0, 0)',
+] as const
+const SHADOW_LOCATIONS = [0, 0.4, 0.75, 1] as const
 
 export const PillTabs = ({
   items,
@@ -35,65 +47,58 @@ export const PillTabs = ({
   const { currentTheme } = useTheme()
   const isResults = variant === 'results'
 
-  const track = (
-    <View
-      testID='pill-tabs-track'
-      style={[
-        styles.track,
-        { backgroundColor: currentTheme.card },
-        !isResults && styles.trackShadow,
-        stretch && styles.trackStretch,
-      ]}
-    >
-      {items.map(item => {
-        const isSelected = item.key === value
-        const isDisabled = item.disabled === true
+  const content = items.map(item => {
+    const pill = (
+      <PillTabSegment
+        stretch={stretch}
+        label={item.label}
+        isResults={isResults}
+        disabled={item.disabled}
+        selected={item.key === value}
+        onPress={item.disabled ? onDisabledPress : () => onChange(item.key)}
+      />
+    )
 
-        const pill = (
-          <PressableButton
-            accessibilityLabel={item.label}
-            onPress={isDisabled ? onDisabledPress : () => onChange(item.key)}
-            accessibilityState={{ disabled: isDisabled, selected: isSelected }}
-            style={[
-              styles.segment,
-              stretch && styles.segmentStretch,
-              isSelected && {
-                backgroundColor: isResults
-                  ? currentTheme.primary
-                  : withAlpha(currentTheme.text, 0.1),
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.label,
-                {
-                  color: isDisabled
-                    ? currentTheme.textMuted
-                    : isResults && isSelected
-                      ? currentTheme.onPrimary
-                      : currentTheme.text,
-                  fontWeight: isSelected ? '600' : '400',
-                },
-              ]}
-            >
-              {item.label}
-            </Text>
-          </PressableButton>
-        )
+    return <Fragment key={item.key}>{wrapItem ? wrapItem(item, pill) : pill}</Fragment>
+  })
 
-        return <Fragment key={item.key}>{wrapItem ? wrapItem(item, pill) : pill}</Fragment>
-      })}
+  if (isResults)
+    return (
+      <ScrollView
+        horizontal
+        testID='pill-tabs-scroll'
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.resultsRow}
+      >
+        {content}
+      </ScrollView>
+    )
+
+  const shadowedTrack = (
+    <View>
+      <LinearGradient
+        colors={SHADOW_COLORS}
+        testID='pill-tabs-shadow'
+        style={styles.shadowHalo}
+        locations={SHADOW_LOCATIONS}
+      />
+      <View
+        testID='pill-tabs-track'
+        style={[
+          styles.track,
+          { backgroundColor: currentTheme.card },
+          stretch && styles.trackStretch,
+        ]}
+      >
+        {content}
+      </View>
     </View>
   )
 
   if (stretch)
     return (
-      <View
-        testID='pill-tabs-stretch-row'
-        style={isResults ? styles.stretchRowCompact : styles.stretchRowRoom}
-      >
-        {track}
+      <View style={styles.scopeRow} testID='pill-tabs-stretch-row'>
+        {shadowedTrack}
       </View>
     )
 
@@ -101,11 +106,11 @@ export const PillTabs = ({
     <ScrollView
       horizontal
       testID='pill-tabs-scroll'
+      style={styles.scopeScroll}
       showsHorizontalScrollIndicator={false}
-      style={isResults ? styles.scrollCompact : styles.scrollRoom}
-      contentContainerStyle={isResults ? styles.scrollContentCompact : styles.scrollContentRoom}
+      contentContainerStyle={styles.scopeScrollContent}
     >
-      {track}
+      {shadowedTrack}
     </ScrollView>
   )
 }

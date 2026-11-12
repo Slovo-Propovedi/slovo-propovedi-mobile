@@ -1,8 +1,14 @@
 import { fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
-import { COLORS, RADIUSES, withAlpha } from 'shared/ui/theme'
+import { COLORS, FONT_SIZES, RADIUSES, withAlpha } from 'shared/ui/theme'
 import { PillTabs } from './PillTabs'
+
+jest.mock('expo-linear-gradient', () => {
+  const { View } = jest.requireActual('react-native')
+
+  return { LinearGradient: (props: Record<string, unknown>) => <View {...props} /> }
+})
 
 const ITEMS = [
   { key: 'sermons', label: 'Проповеди' },
@@ -18,10 +24,11 @@ const SCOPE_ITEMS = [
 const TRACK_ID = 'pill-tabs-track'
 const SCROLL_ID = 'pill-tabs-scroll'
 const STRETCH_ROW_ID = 'pill-tabs-stretch-row'
+const SHADOW_ID = 'pill-tabs-shadow'
 const TRACK_HEIGHT = 48
-// The track shadow reaches ~35dp below the track (offsetY 16 + blur 38/2); the
-// wrappers must keep that room or the shadow is cut into a rim at the pill edge.
-const MIN_SHADOW_ROOM = 35
+// The shadow halo extends 22dp below the track; the wrappers must keep that as
+// real layout room (no negative-margin cancel) or the halo is cut off.
+const MIN_SHADOW_ROOM = 22
 // The active theme is resolved by ThemeProvider (light or dark), so expected
 // colors come from the same COLORS the component reads through `useTheme`.
 const SELECTED_FILL = () => withAlpha(COLORS.text, 0.1)
@@ -36,6 +43,8 @@ describe('<PillTabs>', () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
 
     for (const item of ITEMS) expect(screen.getByText(item.label)).toBeTruthy()
+
+    expect(screen.getByText(ITEMS[0].label)).toHaveStyle({ fontSize: FONT_SIZES.base })
   })
 
   test('renders the segments inside one raised, pill-shaped track', async () => {
@@ -44,13 +53,28 @@ describe('<PillTabs>', () => {
     expect(screen.getByTestId(TRACK_ID)).toHaveStyle({
       backgroundColor: COLORS.card,
       borderRadius: RADIUSES.round,
-      boxShadow: '0px 16px 38px rgba(0, 0, 0, 0.06)',
       flexDirection: 'row',
       height: TRACK_HEIGHT,
     })
-    // Android elevation draws a tight outline ring around the track — the soft
-    // shadow must come from boxShadow alone.
+    // Android draws boxShadow as a background drawable clipped to the view, so
+    // an outset shadow degrades into an inner rim — the halo layer replaces it.
+    expect(trackStyle().boxShadow).toBeUndefined()
     expect(trackStyle().elevation).toBeUndefined()
+  })
+
+  test('draws the scope shadow as an outer halo behind the track', async () => {
+    await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
+
+    const halo = StyleSheet.flatten(screen.getByTestId(SHADOW_ID).props.style)
+
+    expect(halo).toMatchObject({
+      borderRadius: RADIUSES.round,
+      position: 'absolute',
+    })
+    // Expanded beyond the track on every side that can show a shadow.
+    expect(halo.bottom).toBeLessThan(0)
+    expect(halo.left).toBeLessThan(0)
+    expect(halo.right).toBeLessThan(0)
   })
 
   test('marks only the active pill as selected (radio semantics)', async () => {
@@ -84,7 +108,7 @@ describe('<PillTabs>', () => {
     expect(unselected.elevation).toBeUndefined()
   })
 
-  test('keeps shadow room inside the scroll viewport so the shadow is not clipped', async () => {
+  test('keeps real shadow room inside the scroll viewport, without negative margins', async () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
 
     const scroll = screen.getByTestId(SCROLL_ID)
@@ -93,12 +117,13 @@ describe('<PillTabs>', () => {
 
     expect(content.paddingBottom).toBeGreaterThanOrEqual(MIN_SHADOW_ROOM)
     expect(content.overflow).not.toBe('hidden')
-    // The added room is compensated so the on-screen spacing does not grow.
-    expect(viewport.marginBottom).toBeLessThan(0)
+    // Negative margins would cancel the room and re-clip the halo.
+    expect(viewport.marginBottom).toBeUndefined()
+    expect(viewport.marginHorizontal).toBeUndefined()
     expect(viewport.overflow).not.toBe('hidden')
   })
 
-  test('keeps shadow room around the full-width track', async () => {
+  test('keeps real shadow room around the full-width track, without negative margins', async () => {
     await renderWithProviders(
       <PillTabs stretch value='listen' items={SCOPE_ITEMS} onChange={jest.fn()} />,
     )
@@ -106,15 +131,25 @@ describe('<PillTabs>', () => {
     const row = StyleSheet.flatten(screen.getByTestId(STRETCH_ROW_ID).props.style)
 
     expect(row.paddingBottom).toBeGreaterThanOrEqual(MIN_SHADOW_ROOM)
-    expect(row.marginBottom).toBeLessThan(0)
+    expect(row.marginBottom).toBeUndefined()
+    expect(row.marginHorizontal).toBeUndefined()
     expect(row.overflow).not.toBe('hidden')
     expect(trackStyle().overflow).not.toBe('hidden')
   })
 
-  test('results variant highlights the selection with the accent color and no track shadow', async () => {
+  test('results variant is a trackless row of standalone items', async () => {
     await renderWithProviders(
       <PillTabs items={ITEMS} variant='results' value='playlists' onChange={jest.fn()} />,
     )
+
+    expect(screen.queryByTestId(TRACK_ID)).toBeNull()
+    expect(screen.queryByTestId(SHADOW_ID)).toBeNull()
+
+    const row = StyleSheet.flatten(screen.getByTestId(SCROLL_ID).props.contentContainerStyle)
+    expect(row.backgroundColor).toBeUndefined()
+    expect(row.borderRadius).toBeUndefined()
+    // No shadow means no shadow room either.
+    expect(row.paddingBottom ?? 0).toBeLessThan(MIN_SHADOW_ROOM)
 
     expect(segmentStyle('Плейлисты')).toMatchObject({
       backgroundColor: COLORS.primary,
@@ -122,10 +157,19 @@ describe('<PillTabs>', () => {
     })
     expect(screen.getByText('Плейлисты')).toHaveStyle({
       color: COLORS.onPrimary,
-      fontWeight: '600',
+      fontWeight: '400',
     })
-    expect(trackStyle().boxShadow).toBeUndefined()
-    expect(trackStyle().elevation).toBeUndefined()
+
+    // Unselected items are plain but bold labels: no fill, no border, no shadow.
+    const unselected = segmentStyle('Проповеди')
+    expect(unselected.backgroundColor).toBeUndefined()
+    expect(unselected.borderWidth).toBeUndefined()
+    expect(unselected.boxShadow).toBeUndefined()
+    expect(unselected.elevation).toBeUndefined()
+    expect(screen.getByText('Проповеди')).toHaveStyle({ fontWeight: '700' })
+
+    // Results labels are a step larger than the scope track labels.
+    expect(screen.getByText('Проповеди')).toHaveStyle({ fontSize: FONT_SIZES.md })
   })
 
   test('stretches the track and splits it equally between the scope segments', async () => {
