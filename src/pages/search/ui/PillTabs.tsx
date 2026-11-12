@@ -20,7 +20,7 @@ interface PillTabsProps {
   wrapItem?: (item: PillTabItem, pill: ReactElement) => ReactElement
 }
 
-const TRACK_HEIGHT = 40
+const TRACK_HEIGHT = 48
 const TRACK_PADDING = 3
 
 export const PillTabs = ({
@@ -108,12 +108,12 @@ const styles = StyleSheet.create({
   },
   track: {
     borderRadius: RADIUSES.round,
-    // Deep downward-only drop shadow: a third of the 40dp track height, with a
+    // Deep downward-only drop shadow: a third of the 48dp track height, with a
     // wide blur so the track reads as lifted, not outlined.
-    boxShadow: '0px 13px 28px rgba(0, 0, 0, 0.10)',
-    // Android elevation cannot offset or blur like boxShadow; 5 is the closest
+    boxShadow: '0px 16px 38px rgba(0, 0, 0, 0.06)',
+    // Android elevation cannot offset or blur like boxShadow; 3 is the closest
     // modest approximation.
-    elevation: 5,
+    elevation: 3,
     flexDirection: 'row',
     height: TRACK_HEIGHT,
     padding: TRACK_PADDING,

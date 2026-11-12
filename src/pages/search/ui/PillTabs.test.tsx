@@ -16,7 +16,7 @@ const SCOPE_ITEMS = [
 ]
 
 const TRACK_ID = 'pill-tabs-track'
-const TRACK_HEIGHT = 40
+const TRACK_HEIGHT = 48
 // The active theme is resolved by ThemeProvider (light or dark), so expected
 // colors come from the same COLORS the component reads through `useTheme`.
 const SELECTED_FILL = () => withAlpha(COLORS.text, 0.1)
@@ -39,8 +39,8 @@ describe('<PillTabs>', () => {
     expect(screen.getByTestId(TRACK_ID)).toHaveStyle({
       backgroundColor: COLORS.card,
       borderRadius: RADIUSES.round,
-      boxShadow: '0px 13px 28px rgba(0, 0, 0, 0.10)',
-      elevation: 5,
+      boxShadow: '0px 16px 38px rgba(0, 0, 0, 0.06)',
+      elevation: 3,
       flexDirection: 'row',
       height: TRACK_HEIGHT,
     })
