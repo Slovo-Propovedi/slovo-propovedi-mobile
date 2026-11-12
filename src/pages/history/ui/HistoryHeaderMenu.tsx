@@ -52,7 +52,7 @@ export const HistoryHeaderMenu = () => {
           Icon={
             <MaterialCommunityIcons
               size={ICON_SIZE}
-              name='dots-vertical'
+              name='dots-horizontal'
               color={currentTheme.text}
             />
           }

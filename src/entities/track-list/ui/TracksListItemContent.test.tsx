@@ -16,6 +16,7 @@ jest.mock('@expo/vector-icons', () => ({
 
 const CLOUD_DOWNLOAD_ICON = 'cloud-download-outline'
 const CLOCK_ICON = 'clock-outline'
+const DOTS_ICON = 'dots-horizontal'
 const PLAY_ICON = 'play'
 const ARTWORK_TEST_ID = 'tracks-list-item-artwork'
 const TEST_TITLE = 'Test Title'
@@ -60,6 +61,12 @@ describe('<TracksListItemContent>', () => {
   beforeEach(() => {
     mockIconSpy.mockClear()
     mockFavoritePress.mockClear()
+  })
+
+  test('uses the horizontal three-dot menu glyph', async () => {
+    await renderWithProviders(<TracksListItemContent {...baseProps} />)
+
+    expect(mockIconSpy).toHaveBeenCalledWith(expect.objectContaining({ name: DOTS_ICON }))
   })
 
   test('renders cloud icon when not cached, not downloading, not queued', async () => {

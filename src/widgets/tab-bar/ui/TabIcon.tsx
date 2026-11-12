@@ -18,7 +18,7 @@ const IONICONS_ICONS: Record<string, IconSet<IoniconsName>> = {
 }
 
 const MCI_ICONS: Record<string, IconSet<MciName>> = {
-  more: { active: 'dots-vertical', inactive: 'dots-vertical' },
+  more: { active: 'dots-horizontal', inactive: 'dots-horizontal' },
   playlists: { active: 'playlist-music', inactive: 'playlist-music-outline' },
 }
 

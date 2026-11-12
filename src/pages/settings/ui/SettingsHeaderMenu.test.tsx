@@ -54,10 +54,11 @@ describe('<SettingsHeaderMenu>', () => {
     jest.restoreAllMocks()
   })
 
-  test('renders the kebab header button', async () => {
-    const { getByRole } = await renderWithProviders(<SettingsHeaderMenu />)
+  test('renders the kebab header button with a horizontal three-dot glyph', async () => {
+    const { getByRole, getByText } = await renderWithProviders(<SettingsHeaderMenu />)
 
     expect(getByRole('button', { name: MENU_LABEL })).toBeTruthy()
+    expect(getByText('dots-horizontal')).toBeTruthy()
   })
 
   test('opens the menu with the admin entry when unauthenticated', async () => {

@@ -25,6 +25,7 @@ jest.mock('entities/offline-cache', () => {
 const mockedClearAudioCacheAction = jest.mocked(clearAudioCacheAction)
 
 const HEADER_MENU_LABEL = 'Меню офлайн-библиотеки'
+const DOTS_ICON = 'dots-horizontal'
 const PLAY_ALL_ITEM_TEXT = 'Воспроизвести все'
 const CLEAR_ITEM_TEXT = 'Очистить офлайн'
 const CONFIRM_TEXT = 'Очистить'
@@ -70,8 +71,10 @@ describe('<OfflineHeaderMenu>', () => {
     jest.restoreAllMocks()
   })
 
-  test('opens the menu on button press', async () => {
+  test('opens the menu from a horizontal three-dot button', async () => {
     const { getByRole, getByText } = await renderMenu()
+
+    expect(getByText(DOTS_ICON)).toBeTruthy()
 
     await act(async () => {
       fireEvent.press(getByRole('button', { name: HEADER_MENU_LABEL }))
