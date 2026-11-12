@@ -30,6 +30,9 @@ WORKFLOW = "/actions/workflows/ci.yml"
 ARTIFACT_NAME = "unsigned-apk"
 SELFTEST_SHA = "0123456789abcdef0123456789abcdef01234567"
 WRONG_SHA = "f" * 40
+# Synthetic tag-object sha for the annotated-tag scenario: distinct from any
+# commit so the deref round-trip is observable.
+TAG_OBJECT_SHA = "a" * 40
 STATE = {}
 
 
@@ -106,16 +109,35 @@ class Handler(BaseHTTPRequestHandler):
             return
         for kind in ("tags", "heads"):
             prefix = f"{REPO}/git/ref/{kind}/"
-            if path.startswith(prefix):
-                ref = path[len(prefix):]
-                self.send_json(200, {
-                    "ref": f"refs/{kind}/{ref}",
-                    "object": {
-                        "sha": WRONG_SHA if STATE["wrong_tag"] else STATE["sha"],
-                        "type": "commit",
-                    },
-                })
+            if not path.startswith(prefix):
+                continue
+            if kind == "tags" and STATE["heads_only"]:
+                self.send_json(404, {"message": f"no tag ref for {path}"})
                 return
+            ref = path[len(prefix):]
+            annotated = kind == "tags" and STATE["annotated_tag"]
+            self.send_json(200, {
+                "ref": f"refs/{kind}/{ref}",
+                "object": {
+                    "sha": TAG_OBJECT_SHA if annotated
+                    else (WRONG_SHA if STATE["wrong_tag"] else STATE["sha"]),
+                    "type": "tag" if annotated else "commit",
+                },
+            })
+            return
+        if path.startswith(f"{REPO}/git/tags/"):
+            sha = path[len(f"{REPO}/git/tags/"):]
+            if sha != TAG_OBJECT_SHA:
+                self.send_json(404, {"message": f"no tag object {sha}"})
+                return
+            self.send_json(200, {
+                "tag": "v-selftest",
+                "object": {
+                    "sha": WRONG_SHA if STATE["wrong_tag"] else STATE["sha"],
+                    "type": "commit",
+                },
+            })
+            return
         if path == f"{REPO}/actions/runs/{RUN_ID}":
             if STATE["run_503"]:
                 self.send_json(503, {"message": "service unavailable"})
@@ -222,6 +244,16 @@ def main():
         action="store_true",
         help="report a different head_sha on the run (stale-run scenario)",
     )
+    parser.add_argument(
+        "--annotated-tag",
+        action="store_true",
+        help="serve an annotated tag ref that dereferences via /git/tags/<sha>",
+    )
+    parser.add_argument(
+        "--heads-only",
+        action="store_true",
+        help="404 the tag ref so the dispatcher falls back to the heads ref",
+    )
     args = parser.parse_args()
 
     STATE["scenario"] = args.scenario
@@ -236,6 +268,8 @@ def main():
     STATE["sha"] = args.sha
     STATE["wrong_tag"] = args.wrong_tag
     STATE["wrong_sha"] = args.wrong_sha
+    STATE["annotated_tag"] = args.annotated_tag
+    STATE["heads_only"] = args.heads_only
     STATE["dispatch_time"] = time.monotonic()
 
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)

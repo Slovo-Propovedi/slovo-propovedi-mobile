@@ -16,9 +16,12 @@
 #   (k) mismatch tag (VERIFY_REF=1)           -> 44 (hard failure, no dispatch POST)
 #   (l) mismatch head_sha (VERIFY_REF=1)      -> 1 (real failure, no cancel POST)
 #   (m) default path (no VERIFY_REF)          -> 0 (commit binding skipped)
+#   (n) annotated-tag deref (VERIFY_REF=1)    -> 0 (tag object -> commit)
+#   (o) heads fallback on 404 (VERIFY_REF=1)  -> 0 (tag ref missing)
+#   (p) annotated tag moved (VERIFY_REF=1)    -> 44 (deref commit != SHA)
 #
-# Cases (k)/(l) opt into commit binding with VERIFY_REF=1; (m) is the
-# regression guard for ci.yml's unbound branch dispatch.
+# Cases (k)/(l)/(n)/(o)/(p) opt into commit binding with VERIFY_REF=1; (m) is
+# the regression guard for ci.yml's unbound branch dispatch.
 #
 # Case (a) also asserts the emitted GH_UNSIGNED_APK_SHA256= digest matches the
 # sha256 of the extracted apk.
@@ -51,9 +54,10 @@ stop_mock() {
   fi
 }
 
-start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [request_log] [dispatch_503_once] [run_503] [mirror_401] [wrong_tag] [wrong_sha] -> sets PORT
+start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [request_log] [dispatch_503_once] [run_503] [mirror_401] [wrong_tag] [wrong_sha] [annotated_tag] [heads_only] -> sets PORT
   local scenario=$1 cancel_log=$2 dispatch_log=${3:-} artifact_error=${4:-} request_log=${5:-}
   local dispatch_503_once=${6:-} run_503=${7:-} mirror_401=${8:-} wrong_tag=${9:-} wrong_sha=${10:-}
+  local annotated_tag=${11:-} heads_only=${12:-}
   local port_file
   local extra=()
   port_file="$WORK_DIR/port"
@@ -78,6 +82,12 @@ start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [reques
   fi
   if [ -n "$wrong_sha" ]; then
     extra+=(--wrong-sha)
+  fi
+  if [ -n "$annotated_tag" ]; then
+    extra+=(--annotated-tag)
+  fi
+  if [ -n "$heads_only" ]; then
+    extra+=(--heads-only)
   fi
   python3 "$MOCK" --scenario "$scenario" --port-file "$port_file" --sha "$SHA" \
     --cancel-log "$cancel_log" --dispatch-log "$dispatch_log" "${extra[@]}" &
@@ -309,6 +319,33 @@ if [ -s "$WORK_DIR/default-stdout.log" ] \
 else
   printf 'FAIL (m) missing GH_UNSIGNED_APK_SHA256 digest line\n'
   FAILURES=$((FAILURES + 1))
+fi
+
+# --- (n) annotated tag dereferences to the dispatched commit ------------------
+start_mock success "$WORK_DIR/cancel-n.log" "" "" "" "" "" "" "" "" "annotated-tag"
+status=0
+run_dispatch "$WORK_DIR/annotated-tag" 1 "" VERIFY_REF=1 || status=$?
+stop_mock
+check_exit "(n) annotated tag dereference -> success" 0 "$status"
+
+# --- (o) missing tag ref falls back to the heads ref --------------------------
+start_mock success "$WORK_DIR/cancel-o.log" "" "" "" "" "" "" "" "" "" "heads-only"
+status=0
+run_dispatch "$WORK_DIR/heads-only" 1 "" VERIFY_REF=1 || status=$?
+stop_mock
+check_exit "(o) heads fallback on 404 -> success" 0 "$status"
+
+# --- (p) annotated tag points at a moved commit: hard failure, no dispatch ----
+start_mock success "$WORK_DIR/cancel-p.log" "$WORK_DIR/dispatch-p.log" "" "" "" "" "" "wrong-tag" "" "annotated-tag"
+status=0
+run_dispatch "$WORK_DIR/annotated-moved" 1 "" VERIFY_REF=1 || status=$?
+stop_mock
+check_exit "(p) annotated tag moved -> hard failure" 44 "$status"
+if [ -s "$WORK_DIR/dispatch-p.log" ]; then
+  printf 'FAIL (p) dispatcher POSTed a dispatch despite the moved annotated tag\n'
+  FAILURES=$((FAILURES + 1))
+else
+  printf 'ok   (p) no dispatch POST sent\n'
 fi
 
 # --- dry-run touches no network ----------------------------------------------
