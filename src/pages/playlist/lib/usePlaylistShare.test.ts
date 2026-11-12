@@ -13,7 +13,7 @@ import { buildCustomPlaylistShareUrl } from './buildCustomPlaylistShareUrl'
 import { buildPlaylistShareUrl } from './buildPlaylistShareUrl'
 import { usePlaylistShare } from './usePlaylistShare'
 
-const mockSharePlaylist = jest.fn()
+const mockShareLink = jest.fn()
 const mockSetStringAsync = jest.mocked(Clipboard.setStringAsync)
 
 jest.mock('expo-clipboard', () => ({
@@ -21,7 +21,7 @@ jest.mock('expo-clipboard', () => ({
 }))
 
 jest.mock('shared/lib/shareLink', () => ({
-  shareLink: (...args: unknown[]) => mockSharePlaylist(...args),
+  shareLink: (...args: unknown[]) => mockShareLink(...args),
 }))
 
 const VALID_UUID = '0f0e8d6c-1a2b-4c3d-9e8f-001122334455'
@@ -115,7 +115,7 @@ describe('usePlaylistShare', () => {
   })
 
   test('sendShareLink shares the title and URL and stays silent on success', async () => {
-    mockSharePlaylist.mockResolvedValue('shared')
+    mockShareLink.mockResolvedValue('shared')
     const { ctx, result } = await renderShare(VALID_UUID)
     const expectedUrl = buildPlaylistShareUrl(VALID_UUID)
 
@@ -123,7 +123,7 @@ describe('usePlaylistShare', () => {
       await result.current.sendShareLink()
     })
 
-    expect(mockSharePlaylist).toHaveBeenCalledWith({
+    expect(mockShareLink).toHaveBeenCalledWith({
       text: `${PLAYLIST_TITLE} — ${expectedUrl}`,
       url: expectedUrl,
     })
@@ -131,7 +131,7 @@ describe('usePlaylistShare', () => {
   })
 
   test.each(['shared', 'dismissed'])('shows no toast when sharing resolves "%s"', async outcome => {
-    mockSharePlaylist.mockResolvedValue(outcome)
+    mockShareLink.mockResolvedValue(outcome)
     const { ctx, result } = await renderShare(VALID_UUID)
 
     await act(async () => {
@@ -142,7 +142,7 @@ describe('usePlaylistShare', () => {
   })
 
   test('sendShareLink shows the share-error toast when sharing fails', async () => {
-    mockSharePlaylist.mockResolvedValue('error')
+    mockShareLink.mockResolvedValue('error')
     const { ctx, result } = await renderShare(VALID_UUID)
 
     jest.useFakeTimers()

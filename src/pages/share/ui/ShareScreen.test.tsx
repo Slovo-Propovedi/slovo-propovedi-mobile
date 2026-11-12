@@ -2,6 +2,7 @@ import { act, fireEvent } from '@testing-library/react-native'
 import * as Clipboard from 'expo-clipboard'
 import { View as MockView } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
+import { toastAtom } from 'shared/model'
 import { SHARE_MESSAGE } from '../lib/constants'
 import { type LatestReleaseState } from '../lib/useLatestReleaseUrl'
 import { ShareScreen } from './ShareScreen'
@@ -12,6 +13,7 @@ const mockShareLink = jest.fn()
 let mockIsShareSupported = true
 const LANDING_URL = 'https://slovo-propovedi.ru/'
 const WEB_APP_URL = 'https://app.slovo-propovedi.ru/'
+const SHARE_ERROR_MESSAGE = 'Не удалось поделиться. Попробуйте ещё раз'
 const RELEASE_URL =
   'https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest'
 
@@ -144,6 +146,17 @@ describe('<ShareScreen>', () => {
       text: `${SHARE_MESSAGE}\n${LANDING_URL}`,
       url: LANDING_URL,
     })
+  })
+
+  test('landing share button shows an error toast when sharing fails', async () => {
+    mockShareLink.mockResolvedValue('error')
+    mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'loading' } })
+
+    const { ctx, getByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByText('Поделиться ссылкой'))
+    await act(async () => {})
+
+    expect(ctx.get(toastAtom)).toBe(SHARE_ERROR_MESSAGE)
   })
 
   test('share button is hidden when the platform does not support sharing', async () => {
