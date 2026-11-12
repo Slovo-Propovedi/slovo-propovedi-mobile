@@ -38,6 +38,10 @@ jobs:
         run: |
           set -e
 
+          # PUSH_MODE marks a plain push event (neither a PR nor a new branch):
+          # only there can `github.event.before` point at a commit that no
+          # longer exists on the server.
+          PUSH_MODE=0
           if [ -n "${{ github.event.pull_request }}" ]; then
             BASE_SHA=${{ github.event.pull_request.base.sha }}
             HEAD_SHA=${{ github.event.pull_request.head.sha }}
@@ -45,12 +49,70 @@ jobs:
             BASE_SHA=$(git rev-list --max-parents=0 HEAD | tail -1)
             HEAD_SHA=${{ github.event.after }}
           else
+            PUSH_MODE=1
             BASE_SHA=${{ github.event.before }}
             HEAD_SHA=${{ github.event.after }}
           fi
 
-          # Get all non-merge commits in the PR range
-          COMMITS=$(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA")
+          # A force-push rewrites history, so `github.event.before` may name a
+          # commit that no ref points at any more. `fetch-depth: 0` cannot
+          # materialize it then, and `git rev-list BASE..HEAD` aborts with
+          # "fatal: Invalid revision range" (exit 128) — failing a perfectly
+          # legal force-push. Recover from the commit list the push event
+          # itself carried instead.
+          if [ "$PUSH_MODE" -eq 1 ] && ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            # The server may still keep the dangling object, so try a targeted
+            # fetch. `|| true`: a failed fetch must not abort the script under
+            # `set -e` — resolvability is re-checked below either way.
+            git fetch --quiet origin "$BASE_SHA" || true
+          fi
+
+          RANGE_OK=1
+          if [ "$PUSH_MODE" -eq 1 ]; then
+            # `cat-file -e` / `merge-base --is-ancestor` are safe inside `if`
+            # conditions: `set -e` does not trigger on a false test.
+            if ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null ||
+              ! git merge-base --is-ancestor "$BASE_SHA" "$HEAD_SHA"; then
+              RANGE_OK=0
+            fi
+          fi
+
+          COMMITS=""
+          if [ "$RANGE_OK" -eq 0 ]; then
+            echo "::warning::previous tip $BASE_SHA is unreachable after force-push; checking commits from the push event payload instead"
+
+            EVENT_COMMITS=""
+            # `command -v jq`: the runner image normally ships jq, but a slim
+            # image must not kill the step — the empty-list warning below
+            # covers that case.
+            if command -v jq >/dev/null 2>&1 &&
+              [ -n "$GITHUB_EVENT_PATH" ] &&
+              [ -f "$GITHUB_EVENT_PATH" ]; then
+              # `sort -u` dedupes: a push payload may repeat ids. `|| true`:
+              # jq exits non-zero on a malformed payload and `set -e` would
+              # abort before the fallback warning is printed.
+              EVENT_COMMITS=$(jq -r '.commits[].id // empty' "$GITHUB_EVENT_PATH" | sort -u || true)
+            fi
+
+            for SHA in $EVENT_COMMITS; do
+              # Keep only commits this checkout actually has: the payload can
+              # name commits from another branch or an object already pruned.
+              git cat-file -e "$SHA^{commit}" 2>/dev/null || continue
+              # Non-merge only: `rev-list --parents -n1` prints the commit
+              # followed by its parents, so 2 words means exactly one parent.
+              if [ "$(git rev-list --parents -n1 "$SHA" | wc -w)" -ne 2 ]; then
+                continue
+              fi
+              COMMITS="$COMMITS $SHA"
+            done
+
+            if [ -z "$COMMITS" ]; then
+              echo "::warning::push event carried no usable commit list; DCO will be verified on the next ordinary push"
+            fi
+          else
+            # Get all non-merge commits in the resolved range
+            COMMITS=$(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA")
+          fi
           FAILED=0
           TOTAL=0
           BAD_ROWS=""
