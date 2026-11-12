@@ -39,8 +39,8 @@ describe('<PillTabs>', () => {
     expect(screen.getByTestId(TRACK_ID)).toHaveStyle({
       backgroundColor: COLORS.card,
       borderRadius: RADIUSES.round,
-      boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.1)',
-      elevation: 2,
+      boxShadow: '0px 13px 28px rgba(0, 0, 0, 0.10)',
+      elevation: 5,
       flexDirection: 'row',
       height: TRACK_HEIGHT,
     })

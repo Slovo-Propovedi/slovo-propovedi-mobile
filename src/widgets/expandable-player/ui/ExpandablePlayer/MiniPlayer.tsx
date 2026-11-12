@@ -35,6 +35,8 @@ interface MiniPlayerProps {
   playing: boolean
   playlist: null | PlaylistData
   showSpinner: boolean
+  /** Slide-down offset that tucks the pill under the focused search row. */
+  tuckStyle?: AnimatedStyle<ViewStyle>
 }
 
 export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
@@ -54,6 +56,7 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
       playing,
       playlist,
       showSpinner,
+      tuckStyle,
     },
     ref,
   ) => {
@@ -76,6 +79,7 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
             // last keeps the shadow tree on the settled bar state's geometry (#63).
             miniBarStyle,
             miniBarRestingStyle,
+            tuckStyle,
           ]}
         >
           <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />

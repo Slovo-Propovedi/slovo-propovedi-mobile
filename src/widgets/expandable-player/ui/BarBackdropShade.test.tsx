@@ -2,6 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { act, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
@@ -246,6 +247,32 @@ describe('<BarBackdropShade>', () => {
     // The middle stop is recomputed for the settled collapsed height, so the
     // ramp still ends exactly on the pill's midline.
     expect(findGradient()?.props.locations).toEqual(COLLAPSED_LOCATIONS)
+  })
+
+  test('retracts to the islands row while the search field is focused and grows back on blur', async () => {
+    const { ctx, rerender } = await renderShade()
+
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, true)
+    })
+    await rerender(<BarBackdropShade hasMiniPlayer />)
+
+    // The pill tucks under the row, so the shade's top follows it down to the
+    // search pill + close row instead of keeping the pill-extended extent.
+    expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
+      height: NO_PILL_EXPANDED_HEIGHT,
+    })
+    expect(findGradient()?.props.locations).toEqual(NO_PILL_EXPANDED_LOCATIONS)
+
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, false)
+    })
+    await rerender(<BarBackdropShade hasMiniPlayer />)
+
+    expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
+      height: EXPANDED_HEIGHT,
+    })
+    expect(findGradient()?.props.locations).toEqual(EXPANDED_LOCATIONS)
   })
 
   test('anchors to the islands row top while no pill is active', async () => {

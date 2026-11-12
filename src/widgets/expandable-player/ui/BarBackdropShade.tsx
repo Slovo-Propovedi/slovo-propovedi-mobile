@@ -1,31 +1,26 @@
 import { useAtom } from '@reatom/npm-react'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useEffect } from 'react'
 import { StyleSheet, useWindowDimensions } from 'react-native'
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
-import { BAR_BOTTOM_INSET_MIN, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
+import {
+  BAR_BOTTOM_INSET_MIN,
+  BAR_MORPH_DURATION_MS,
+  isTabBarMeasuredAtom,
+  tabBarHeightAtom,
+} from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
-import { getBarShadeHeight, getShadeHeight, getShadeLocations } from '../lib/getBarShadeHeight'
-import { getMiniPlayerGeometry } from '../lib/getMiniPlayerGeometry'
+import { getBarShadeHeight, getPillShadeHeight, getShadeLocations } from '../lib/getBarShadeHeight'
 import { useBarMorphProgress } from '../model/useBarMorphProgress'
 import { useProgressAnimation } from '../model/useProgressAnimation'
 
-// One subtle but perceptible depth cue behind the whole bottom-bar complex. The
-// shade is edge to edge (no side insets, no radius) and anchors to the very
-// screen bottom (the Android navbar is transparent, so the safe-area inset is
-// deliberately ignored). Its top edge tracks the current chrome top as the bar
-// morphs — the mini-pill top when a pill is visible, the islands row top
-// otherwise — ending a few pixels above it so the ramp never lands a hard edge
-// on the glass rim.
-// One continuous gradient: full opacity from the pill's vertical middle down,
-// transparent above it. A single layer leaves no cap/fill junction that some
-// panels (Xiaomi on Android 15) read as a hairline across the pill. The shape
-// is identical in both themes, but the ramp is gray in the dark one:
-// black-on-black would vanish, while the mid-gray stop reads as a faint depth
-// cue rather than a white glow. The gray alpha is doubled versus the light stop
-// (128/255 is roughly half the luminance of white), so both themes keep the
-// same perceived density.
+// One subtle depth cue behind the bottom-bar complex: edge to edge, anchored to
+// the screen bottom (the transparent Android navbar means the inset is ignored).
+// Its top tracks the current chrome top with overscan, and one continuous
+// gradient leaves no cap/fill junction; the dark ramp is gray with doubled alpha.
 const SHADE_OPAQUE_LIGHT = 'rgba(0, 0, 0, 0.18)'
 const SHADE_OPAQUE_DARK = 'rgba(128, 128, 128, 0.36)'
 const SHADE_COLORS_LIGHT = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE_LIGHT, SHADE_OPAQUE_LIGHT] as const
@@ -35,10 +30,10 @@ const getShadeColors = (isLight: boolean) => (isLight ? SHADE_COLORS_LIGHT : SHA
 
 /**
  * Vertical gradient behind the bottom chrome, rendered as the first child of the
- * tab bar's floating container. Pill-anchored geometry applies only when the mini
- * player mounts in this zone (`hasMiniPlayer`); otherwise the shade anchors to the
- * islands row top regardless of playback. Hidden only on settled fullscreen
- * expansion in the player zone, or before the tab bar has been measured.
+ * tab-bar floating container. It is pill-anchored only where this zone mounts
+ * the mini player (`hasMiniPlayer`) and retracts to the islands row while the
+ * search field is focused. Hidden on settled fullscreen expansion in the player
+ * zone, or before the tab bar has been measured.
  * @param root0 - Component props.
  * @param root0.hasMiniPlayer - Whether this zone mounts the mini-player pill.
  */
@@ -50,6 +45,13 @@ export const BarBackdropShade = ({ hasMiniPlayer }: { hasMiniPlayer: boolean }) 
   const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { progress, settledCollapsed } = useBarMorphProgress()
+  const [isFocused] = useAtom(isSearchFieldFocusedAtom)
+  const focusProgress = useSharedValue(isFocused ? 1 : 0)
+  // Starts after the tuck's zIndex commit; the pill uses the same post-commit
+  // timing, so the shade and the sliding pill stay in step.
+  useEffect(() => {
+    focusProgress.value = withTiming(isFocused ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
+  }, [focusProgress, isFocused])
   // The shade has no expand animation of its own: this shared value only drives
   // the pill's settle timing, so the shade stays behind the pill for the whole
   // expand morph instead of popping out on its first frame.
@@ -65,30 +67,31 @@ export const BarBackdropShade = ({ hasMiniPlayer }: { hasMiniPlayer: boolean }) 
   const shadeStyle = useAnimatedStyle(() => {
     if (!hasPill) return { height: getBarShadeHeight(progress.value, bottomPadding) }
 
-    const { bottom: pillBottom } = getMiniPlayerGeometry({
-      barProgress: progress.value,
-      fullScreenHeight: screenHeight,
-      screenWidth,
-      tabBarHeight,
-    })
-
-    return { height: getShadeHeight(pillBottom) }
+    return {
+      height: getPillShadeHeight({
+        barProgress: progress.value,
+        bottomPadding,
+        focusProgress: focusProgress.value,
+        fullScreenHeight: screenHeight,
+        screenWidth,
+        tabBarHeight,
+      }),
+    }
   })
 
   // Gradient stops come from the SETTLED geometry (plain React props, recomputed
-  // only on state commits), never per animation frame. During the 300 ms morph
-  // the ramp endpoint drifts at most a few pixels. The expand morph only gates
-  // unmount through `settledExpanded` — it does not change the shade geometry.
+  // on state commits, never per frame); the expand morph only gates unmount.
+  const settledBarProgress = settledCollapsed ? 1 : 0
   const settledShadeHeight = hasPill
-    ? getShadeHeight(
-        getMiniPlayerGeometry({
-          barProgress: settledCollapsed ? 1 : 0,
-          fullScreenHeight: screenHeight,
-          screenWidth,
-          tabBarHeight,
-        }).bottom,
-      )
-    : getBarShadeHeight(settledCollapsed ? 1 : 0, bottomPadding)
+    ? getPillShadeHeight({
+        barProgress: settledBarProgress,
+        bottomPadding,
+        focusProgress: isFocused ? 1 : 0,
+        fullScreenHeight: screenHeight,
+        screenWidth,
+        tabBarHeight,
+      })
+    : getBarShadeHeight(settledBarProgress, bottomPadding)
 
   if ((hasPill && expanded && settledExpanded) || !isTabBarMeasured) return null
 
@@ -107,11 +110,9 @@ export const BarBackdropShade = ({ hasMiniPlayer }: { hasMiniPlayer: boolean }) 
 }
 
 const styles = StyleSheet.create({
-  // No zIndex: the tab-bar layer already paints above the screens. The islands
-  // row is positioned with zIndex 1, so on web it beats this z-auto positioned
-  // layer in the CSS step-8 paint order; on native the higher zIndex sorts it
-  // above the shade too. Anchored to the container's bottom, so the taller
-  // inner shade overflows upward out of the container box.
+  // No zIndex: the tab-bar layer already paints above the screens, and the
+  // zIndex-1 islands row beats this z-auto layer in the CSS step-8 paint order.
+  // The taller inner shade overflows upward out of the container box.
   layer: {
     bottom: 0,
     left: 0,

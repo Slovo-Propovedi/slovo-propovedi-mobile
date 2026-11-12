@@ -10,6 +10,7 @@ import { type PlaylistData } from 'entities/playlist'
 import { isSearchHistoryLoadedAtom, loadSearchHistoryAction } from 'entities/search-history'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { EmptyState, ScreenTitleRow } from 'shared/ui'
+import { INDENTS } from 'shared/ui/theme'
 import { type SearchGroup } from '../lib/searchGroup'
 import { usePagedSearch } from '../lib/usePagedSearch'
 import { useSearchResultActions } from '../lib/useSearchResultActions'
@@ -115,5 +116,8 @@ export const SearchScreen = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    // Small breathing room below the top safe-area inset, which the screen
+    // wrapper already applies.
+    paddingTop: INDENTS.low,
   },
 })

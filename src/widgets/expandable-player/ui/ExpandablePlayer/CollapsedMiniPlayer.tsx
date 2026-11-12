@@ -1,14 +1,26 @@
+import { useAtom } from '@reatom/npm-react'
+import { useEffect } from 'react'
 import { type ViewStyle } from 'react-native'
 import { type GestureType } from 'react-native-gesture-handler'
-import Animated, { type AnimatedStyle } from 'react-native-reanimated'
+import Animated, {
+  type AnimatedStyle,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
 import { useOnboardingTargetRef } from 'features/onboarding'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
-import { useKeyboardLiftStyle } from 'shared/ui/layout'
-import { type ThemeColors } from 'shared/ui/theme'
+import { BAR_MORPH_DURATION_MS, BAR_OUTER_GAP, useKeyboardLiftStyle } from 'shared/ui/layout'
+import { PLAYER_SIZES, type ThemeColors } from 'shared/ui/theme'
 import { miniLayerStyle } from './commonStyles'
 import { MiniPlayer } from './MiniPlayer'
 import { createMiniStyles } from './miniStyles'
+
+// Sliding the pill down by its own height plus the two outer gaps lands its top
+// on the focused full-width search pill's top, so it disappears behind it.
+const MINI_TUCK_DISTANCE = PLAYER_SIZES.miniPlayerHeight + BAR_OUTER_GAP * 2
 
 /**
  * The collapsed mini-player layer, split out of ExpandablePlayer so the
@@ -60,9 +72,25 @@ export const CollapsedMiniPlayer = ({
   const miniTargetRef = useOnboardingTargetRef('player.mini')
   const miniStyles = createMiniStyles(currentTheme)
   const keyboardLiftStyle = useKeyboardLiftStyle()
+  const [isHidden] = useAtom(isSearchFieldFocusedAtom)
+  const focusProgress = useSharedValue(isHidden ? 1 : 0)
+  const tuckStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: MINI_TUCK_DISTANCE * focusProgress.value }],
+  }))
+
+  // Starts after the commit so the player root's zIndex (dropped below the tab
+  // bar) is in place before the first tucked frame. Stays mounted while hidden.
+  useEffect(() => {
+    focusProgress.value = withTiming(isHidden ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
+  }, [focusProgress, isHidden])
 
   return (
-    <Animated.View pointerEvents='box-none' style={[miniLayerStyle, keyboardLiftStyle]}>
+    <Animated.View
+      accessibilityElementsHidden={isHidden}
+      style={[miniLayerStyle, keyboardLiftStyle]}
+      pointerEvents={isHidden ? 'none' : 'box-none'}
+      importantForAccessibility={isHidden ? 'no-hide-descendants' : 'yes'}
+    >
       <MiniPlayer
         audio={audio}
         playing={playing}
@@ -72,6 +100,7 @@ export const CollapsedMiniPlayer = ({
         ref={miniTargetRef}
         playlist={playlist}
         miniStyle={miniStyle}
+        tuckStyle={tuckStyle}
         miniStyles={miniStyles}
         onPlayPause={onPlayPause}
         showSpinner={isBuffering}

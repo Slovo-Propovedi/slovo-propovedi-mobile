@@ -231,7 +231,7 @@ describe('<SearchIslandMorph>', () => {
     await renderMorph()
 
     expect(mockIoniconsSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'close', size: CLOSE_ICON_SIZE }),
+      expect.objectContaining({ name: 'close-outline', size: CLOSE_ICON_SIZE }),
     )
   })
 

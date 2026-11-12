@@ -1,12 +1,14 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent, screen } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
+import { StyleSheet } from 'react-native'
 import { isSearchFieldFocusedAtom, searchQueryAtom } from 'features/sermon-search'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { searchHistoryAtom } from 'entities/search-history'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
 import { showInfo } from 'shared/model/info-dialog'
+import { INDENTS } from 'shared/ui/theme'
 import { type PagedSearch } from '../lib/pagedGroup'
 import { usePagedSearch } from '../lib/usePagedSearch'
 import { SearchScreen } from './SearchScreen'
@@ -170,6 +172,18 @@ describe('<SearchScreen>', () => {
     expect(screen.getByRole('button', { name: 'Читать' })).toBeTruthy()
     expect(screen.getByText('Недавние поиски')).toBeTruthy()
     expect(screen.getByText(SERMON.title)).toBeTruthy()
+  })
+
+  test('keeps the scope tabs a small gap below the top safe area', async () => {
+    await renderScreen({ focused: true })
+
+    const container = screen.root?.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
+
+      return flat?.flex === 1 && flat?.paddingTop === INDENTS.low
+    })[0]
+
+    expect(container).toBeDefined()
   })
 
   test('shows group pills and the selected group results for an active query', async () => {

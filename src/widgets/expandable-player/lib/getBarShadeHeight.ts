@@ -4,6 +4,7 @@ import {
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
+import { getMiniPlayerGeometry } from './getMiniPlayerGeometry'
 
 // The shade top ends this far above the chrome top so the ramp never lands a
 // hard edge on the glass rim.
@@ -72,4 +73,48 @@ export const getBarShadeHeight = (barProgress: number, bottomPadding: number) =>
   const islandTopGap = (BAR_ROW_MIN_HEIGHT - islandHeight) / 2
 
   return BAR_ROW_MIN_HEIGHT + bottomPadding - islandTopGap + SHADE_TOP_OVERSCAN_PX
+}
+
+interface PillShadeHeightInput {
+  barProgress: number
+  bottomPadding: number
+  focusProgress: number
+  fullScreenHeight: number
+  screenWidth: number
+  tabBarHeight: number
+}
+
+/**
+ * Shade height with a mini pill, retracting to the islands-row height as the
+ * search field gains focus and the pill tucks under the row.
+ *
+ * Worklet-safe: called from Reanimated animated styles.
+ * @param input - Pill, row and focus geometry inputs.
+ * @param input.barProgress - 0 = expanded bar, 1 = collapsed bar.
+ * @param input.bottomPadding - Row bottom padding (max(inset, minimum inset)).
+ * @param input.focusProgress - 0 = pill visible, 1 = pill tucked/focused.
+ * @param input.fullScreenHeight - Full device screen height.
+ * @param input.screenWidth - Current window width.
+ * @param input.tabBarHeight - Measured height of the floating tab row.
+ */
+export const getPillShadeHeight = ({
+  barProgress,
+  bottomPadding,
+  focusProgress,
+  fullScreenHeight,
+  screenWidth,
+  tabBarHeight,
+}: PillShadeHeightInput) => {
+  'worklet'
+  const rowHeight = getBarShadeHeight(barProgress, bottomPadding)
+  const { bottom } = getMiniPlayerGeometry({
+    barProgress,
+    fullScreenHeight,
+    screenWidth,
+    tabBarHeight,
+  })
+  const pillHeight = getShadeHeight(bottom)
+  const focus = Math.min(Math.max(focusProgress, 0), 1)
+
+  return pillHeight + (rowHeight - pillHeight) * focus
 }

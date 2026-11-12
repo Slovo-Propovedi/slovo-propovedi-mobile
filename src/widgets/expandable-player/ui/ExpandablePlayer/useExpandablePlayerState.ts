@@ -56,7 +56,9 @@ export const useExpandablePlayerState = () => {
     isBarCollapsed: isBarCollapsed && !isSearchFieldVisible,
     isBuffering,
     isLight,
-    isSearchFieldFocused,
+    // The mini pill tucks under the bottom islands while the field has focus,
+    // so its whole subtree must drop below the tab bar's zIndex 10.
+    isPillTucked: isSearchFieldFocused && !expanded,
     isTabBarMeasured,
     playing,
     playlist,

@@ -108,8 +108,12 @@ const styles = StyleSheet.create({
   },
   track: {
     borderRadius: RADIUSES.round,
-    boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.1)',
-    elevation: 2,
+    // Deep downward-only drop shadow: a third of the 40dp track height, with a
+    // wide blur so the track reads as lifted, not outlined.
+    boxShadow: '0px 13px 28px rgba(0, 0, 0, 0.10)',
+    // Android elevation cannot offset or blur like boxShadow; 5 is the closest
+    // modest approximation.
+    elevation: 5,
     flexDirection: 'row',
     height: TRACK_HEIGHT,
     padding: TRACK_PADDING,

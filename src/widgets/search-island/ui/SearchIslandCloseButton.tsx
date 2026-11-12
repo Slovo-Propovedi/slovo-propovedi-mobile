@@ -24,7 +24,7 @@ export const SearchIslandCloseButton = ({ onPress }: { onPress: () => void }) =>
       style={styles.fill}
       onPressIn={handlePressIn}
       accessibilityLabel={CLOSE_LABEL}
-      Icon={<Ionicons name='close' size={CLOSE_ICON_SIZE} color={currentTheme.text} />}
+      Icon={<Ionicons name='close-outline' size={CLOSE_ICON_SIZE} color={currentTheme.text} />}
     />
   )
 }

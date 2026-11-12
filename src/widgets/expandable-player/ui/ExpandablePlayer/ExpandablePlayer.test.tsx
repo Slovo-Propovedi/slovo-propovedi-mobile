@@ -1,4 +1,6 @@
-import { act, fireEvent } from '@testing-library/react-native'
+import { act, fireEvent, screen } from '@testing-library/react-native'
+import { StyleSheet, type ViewStyle } from 'react-native'
+import { type TestInstance } from 'test-renderer'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/model'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
@@ -32,6 +34,8 @@ jest.mock('entities/player', () => {
 jest.mock('shared/ui/layout', () => {
   const { atom } = jest.requireActual('@reatom/framework')
   return {
+    BAR_MORPH_DURATION_MS: 300,
+    BAR_OUTER_GAP: 6,
     CONTENT_COLUMN_WIDTH: 600,
     isBarCollapsedAtom: atom(false, 'mockIsBarCollapsedAtom'),
     isTabBarMeasuredAtom: atom(true, 'mockIsTabBarMeasuredAtom'),
@@ -91,19 +95,60 @@ jest.mock('./ContainerView', () => ({
   ContainerView: () => null,
 }))
 
-jest.mock('./styles', () => ({ createStyles: () => ({}) }))
+jest.mock('./styles', () => ({
+  createStyles: () => ({
+    backdrop: {},
+    recoveryOverlay: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0, zIndex: 20 },
+    recoveryOverlayTucked: { zIndex: 9 },
+  }),
+}))
 jest.mock('./miniStyles', () => ({ createMiniStyles: () => ({}) }))
+
+// Captures the animated props the real MiniPlayer would receive, so the tuck
+// transform is asserted without rendering the whole glass pill.
+const mockMiniPlayerProps: Array<{ tuckStyle?: ViewStyle }> = []
 
 jest.mock('./MiniPlayer', () => {
   const { PressableButton } = jest.requireActual('../../../../shared/ui/pressable-button')
   return {
-    MiniPlayer: ({ onPlayPause }: { onPlayPause: () => void }) => (
-      <PressableButton onPress={onPlayPause} accessibilityLabel='play-pause' />
-    ),
+    MiniPlayer: (props: { onPlayPause: () => void; tuckStyle?: ViewStyle }) => {
+      mockMiniPlayerProps.push(props)
+
+      return <PressableButton onPress={props.onPlayPause} accessibilityLabel='play-pause' />
+    },
   }
 })
 
 const PLAY_PAUSE_LABEL = 'play-pause'
+// The focused pill is 64 tall; sliding it down by its height plus the two outer
+// gaps lands its top on the focused search pill's top (see CollapsedMiniPlayer).
+const MINI_TUCK_DISTANCE = 76
+const PLAYER_UNDER_BAR_Z = 9
+const PLAYER_OVER_BAR_Z = 20
+
+const tuckTransform = () => StyleSheet.flatten(mockMiniPlayerProps.at(-1)?.tuckStyle)?.transform
+
+// The mini layer is the nearest ancestor that gates pointer events.
+const findPointerGate = (node: null | TestInstance): null | TestInstance => {
+  let current = node
+
+  while (current !== null) {
+    if (current.props.pointerEvents !== undefined) return current
+    current = current.parent
+  }
+
+  return null
+}
+
+const findPlayerRoot = () =>
+  screen.root?.queryAll(instance => {
+    const flat = StyleSheet.flatten(instance.props.style)
+
+    return (
+      flat?.position === 'absolute' &&
+      (flat?.zIndex === PLAYER_UNDER_BAR_Z || flat?.zIndex === PLAYER_OVER_BAR_Z)
+    )
+  })[0]
 const AUDIO_URL = 'https://example.com/audio.mp3'
 
 const mockAudio = {
@@ -118,6 +163,7 @@ describe('<ExpandablePlayer>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockTogglePlay.mockResolvedValue(undefined)
+    mockMiniPlayerProps.length = 0
     currentAudioAtom(ctx, mockAudio)
     isPlayerExpandedAtom(ctx, false)
     isTabBarMeasuredAtom(ctx, true)
@@ -158,7 +204,7 @@ describe('<ExpandablePlayer>', () => {
     expect(ctx.get(isMiniPillCollapsedAtom)).toBe(false)
   })
 
-  test('hides the mini player while the search field is focused and restores it on blur', async () => {
+  test('tucks the mini player under the search row while the field is focused', async () => {
     isBarCollapsedAtom(ctx, false)
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, '')
@@ -166,15 +212,25 @@ describe('<ExpandablePlayer>', () => {
     tabBarHeightAtom(ctx, 98)
     const { queryByLabelText } = await renderWithProviders(<ExpandablePlayer />, { ctx })
 
-    // Focus hands the whole bottom row to the search pill: the mini player must
-    // not stay visible above it either.
-    expect(queryByLabelText(PLAY_PAUSE_LABEL)).toBeNull()
+    const button = queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })
+
+    // The pill stays mounted and slides under the row: no invisible hit area,
+    // and its subtree sits below the tab bar's floating container (zIndex 10).
+    expect(button).toBeTruthy()
+    expect(findPointerGate(button)?.props.pointerEvents).toBe('none')
+    expect(tuckTransform()).toEqual([{ translateY: MINI_TUCK_DISTANCE }])
+    expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_UNDER_BAR_Z)
 
     await act(async () => {
       isSearchFieldFocusedAtom(ctx, false)
     })
 
-    expect(queryByLabelText(PLAY_PAUSE_LABEL)).toBeTruthy()
+    expect(
+      findPointerGate(queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true }))?.props
+        .pointerEvents,
+    ).toBe('box-none')
+    expect(tuckTransform()).toEqual([{ translateY: 0 }])
+    expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)
   })
 
   test('keeps the last real tab bar height when a hidden screen reports zero', async () => {

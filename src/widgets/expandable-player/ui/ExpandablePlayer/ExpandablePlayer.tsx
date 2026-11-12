@@ -28,7 +28,7 @@ export const ExpandablePlayer = ({
     isBarCollapsed,
     isBuffering,
     isLight,
-    isSearchFieldFocused,
+    isPillTucked,
     isTabBarMeasured,
     playing,
     playlist,
@@ -80,17 +80,17 @@ export const ExpandablePlayer = ({
 
   if (!audio || !isTabBarMeasured) return null
 
+  const overlayStyle = isPillTucked ? styles.recoveryOverlayTucked : undefined
+
   return (
-    <View key={recoveryKey} style={styles.recoveryOverlay}>
+    <View key={recoveryKey} style={[styles.recoveryOverlay, overlayStyle]}>
       <PlayerBackdrop
         style={styles.backdrop}
         screenWidth={screenWidth}
         screenHeight={screenHeight}
         backdropStyle={backdropStyle}
       />
-      {/* Focus hands the whole bottom row to the search pill; the player returns
-          on blur without closing the search. */}
-      {!expanded && !isSearchFieldFocused && (
+      {!expanded && (
         <CollapsedMiniPlayer
           audio={audio}
           playing={playing}

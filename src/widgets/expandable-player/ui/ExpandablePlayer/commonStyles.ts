@@ -34,6 +34,11 @@ export const createCommonStyles = (theme: ThemeColors) =>
       pointerEvents: 'box-none',
       zIndex: 20,
     },
+    // Below the tab bar's floating container (zIndex 10): while the mini pill
+    // tucks under the islands it must never paint over the search pill or ✕.
+    recoveryOverlayTucked: {
+      zIndex: 9,
+    },
   })
 
 // Full-screen pass-through layer that carries the keyboard lift of the mini pill.
