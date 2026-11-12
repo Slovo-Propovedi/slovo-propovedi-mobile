@@ -2,7 +2,11 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
 import { StyleSheet } from 'react-native'
-import { isSearchFieldFocusedAtom, searchQueryAtom } from 'features/sermon-search'
+import {
+  isSearchFieldFocusedAtom,
+  searchFocusRequestAtom,
+  searchQueryAtom,
+} from 'features/sermon-search'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { searchHistoryAtom } from 'entities/search-history'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
@@ -301,6 +305,21 @@ describe('<SearchScreen>', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Читать' }))
 
     expect(mockShowInfo).toHaveBeenCalled()
+  })
+
+  test('requests focus before and after the locked read-scope dialog', async () => {
+    const { ctx } = await renderScreen({ focused: true })
+    const initialNonce = ctx.get(searchFocusRequestAtom)?.nonce ?? 0
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Читать' }))
+
+    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(initialNonce + 1)
+
+    const onDismiss = mockShowInfo.mock.calls[0]?.[2]?.onDismiss
+    expect(onDismiss).toBeDefined()
+    onDismiss?.()
+
+    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(initialNonce + 2)
   })
 
   test('keeps the empty pose for a two-character query', async () => {

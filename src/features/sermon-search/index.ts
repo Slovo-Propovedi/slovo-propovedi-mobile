@@ -4,7 +4,14 @@ export { useIsSearchFieldVisible } from './lib/useIsSearchFieldVisible'
 export { useOpenSearch } from './lib/useOpenSearch'
 export { useSearchUrlSync } from './lib/useSearchUrlSync'
 export { useSermonPlayback } from './lib/useSermonPlayback'
-export { isSearchOpenAtom, MIN_QUERY_LENGTH, searchQueryAtom, typeSearchInput } from './model'
+export {
+  isSearchOpenAtom,
+  MIN_QUERY_LENGTH,
+  requestSearchFocus,
+  searchFocusRequestAtom,
+  searchQueryAtom,
+  typeSearchInput,
+} from './model'
 export { isSearchFieldFocusedAtom, isSearchQueryActive } from './model-searchField'
 export { closeSearch, closeSearchAndExpand } from './model-session'
 export { SearchBar } from './ui/SearchBar'

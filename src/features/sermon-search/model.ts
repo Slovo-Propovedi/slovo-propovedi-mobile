@@ -15,6 +15,20 @@ export const searchInputRequestAtom = atom<{ nonce: number; text: string } | nul
   'searchInputRequestAtom',
 )
 
+// External request to return focus to the visible search input. The search page
+// raises it when a locked scope press or its info dialog would otherwise leave
+// the field blurred. `nonce` makes repeated requests distinct; `SearchBar` seeds
+// the current nonce so a stale request is never replayed on mount.
+export const searchFocusRequestAtom = atom<{ nonce: number } | null>(null, 'searchFocusRequestAtom')
+
+// Asks the visible `SearchBar` input to focus. Callers raise it before an
+// action that steals focus and again once the action is dismissed.
+export const requestSearchFocus = action(ctx => {
+  const previous = ctx.get(searchFocusRequestAtom)
+
+  searchFocusRequestAtom(ctx, { nonce: (previous?.nonce ?? 0) + 1 })
+}, 'requestSearchFocus')
+
 // Simulates a keystroke: sets the canonical query (which drives the search page)
 // and asks the visible `SearchBar` input to adopt the same text, so the
 // onboarding tour's typed demo query shows up in the field while the page keeps

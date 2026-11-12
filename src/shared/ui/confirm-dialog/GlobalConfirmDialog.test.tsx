@@ -1,4 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
+import { Platform } from 'react-native'
+import { createKeyDownEvent, installFakeDom } from '../../lib/testing'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { globalInfoAtom } from '../../model/info-dialog'
 import { GlobalConfirmDialog } from './GlobalConfirmDialog'
@@ -48,5 +50,40 @@ describe('<GlobalConfirmDialog>', () => {
     })
 
     expect(screen.getByText(CUSTOM_TITLE)).toBeTruthy()
+  })
+
+  test('runs the dismissal callback when confirmed', async () => {
+    const { ctx } = await renderWithProviders(<GlobalConfirmDialog />)
+    const onDismiss = jest.fn()
+
+    await act(async () => {
+      globalInfoAtom(ctx, { message: MESSAGE, onDismiss })
+    })
+    fireEvent.press(screen.getByText(CONFIRM_TEXT))
+
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+    expect(ctx.get(globalInfoAtom)).toBeNull()
+  })
+
+  test('runs the dismissal callback when dismissed with Escape', async () => {
+    const { dispatchKeyDown, restore } = installFakeDom()
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const { ctx } = await renderWithProviders(<GlobalConfirmDialog />)
+      const onDismiss = jest.fn()
+
+      await act(async () => {
+        globalInfoAtom(ctx, { message: MESSAGE, onDismiss })
+      })
+      await act(async () => {
+        dispatchKeyDown(createKeyDownEvent('Escape'))
+      })
+
+      expect(onDismiss).toHaveBeenCalledTimes(1)
+      expect(ctx.get(globalInfoAtom)).toBeNull()
+    } finally {
+      restorePlatform.restore()
+      restore()
+    }
   })
 })

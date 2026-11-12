@@ -9,6 +9,8 @@ import { setBarCollapsed } from 'shared/ui/layout'
 import { INDENTS } from 'shared/ui/theme'
 import {
   isSearchOpenAtom,
+  requestSearchFocus,
+  searchFocusRequestAtom,
   searchInputRequestAtom,
   searchQueryAtom,
   typeSearchInput,
@@ -70,6 +72,7 @@ beforeEach(() => {
 
   searchQueryAtom(ctx, '')
   searchInputRequestAtom(ctx, null)
+  searchFocusRequestAtom(ctx, null)
   isSearchOpenAtom(ctx, false)
   distinctValuesAtom(ctx, null)
   setBarCollapsed(ctx, false)
@@ -145,6 +148,30 @@ describe('<SearchBar>', () => {
       typeSearchInput(ctx, 'ли')
     })
     await waitFor(() => expect(input.props.value).toBe('ли'))
+  })
+
+  test('focuses the input when an external focus request arrives', async () => {
+    const ctx = getSharedTestCtx()
+    const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
+    await renderWithProviders(<SearchBar />, { ctx })
+    focusMock.mockClear()
+
+    await act(async () => {
+      requestSearchFocus(ctx)
+    })
+
+    expect(focusMock).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not replay an earlier focus request when it mounts', async () => {
+    const ctx = getSharedTestCtx()
+    const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
+    requestSearchFocus(ctx)
+    focusMock.mockClear()
+
+    await renderWithProviders(<SearchBar />, { ctx })
+
+    expect(focusMock).not.toHaveBeenCalled()
   })
 
   test('does not replay an earlier external typing request when it mounts', async () => {
