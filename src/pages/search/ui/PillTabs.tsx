@@ -1,5 +1,5 @@
 import { Fragment, type ReactElement } from 'react'
-import { ScrollView, StyleSheet, Text } from 'react-native'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme, withAlpha } from 'shared/ui/theme'
 
@@ -13,19 +13,34 @@ interface PillTabsProps {
   items: PillTabItem[]
   onChange: (key: string) => void
   onDisabledPress?: () => void
+  /** Full-width track with equal segments (scope row) instead of a hugging, scrollable one. */
+  stretch?: boolean
   value: string
-  /** Page-owned wrapper around a single pill (e.g. An onboarding target). */
+  /** Page-owned wrapper around a single pill (e.g. an onboarding target). */
   wrapItem?: (item: PillTabItem, pill: ReactElement) => ReactElement
 }
 
-export const PillTabs = ({ items, onChange, onDisabledPress, value, wrapItem }: PillTabsProps) => {
+const TRACK_HEIGHT = 40
+const TRACK_PADDING = 3
+
+export const PillTabs = ({
+  items,
+  onChange,
+  onDisabledPress,
+  stretch = false,
+  value,
+  wrapItem,
+}: PillTabsProps) => {
   const { currentTheme } = useTheme()
 
-  return (
-    <ScrollView
-      horizontal
-      contentContainerStyle={styles.row}
-      showsHorizontalScrollIndicator={false}
+  const track = (
+    <View
+      testID='pill-tabs-track'
+      style={[
+        styles.track,
+        { backgroundColor: withAlpha(currentTheme.text, 0.06) },
+        stretch && styles.trackStretch,
+      ]}
     >
       {items.map(item => {
         const isSelected = item.key === value
@@ -37,22 +52,20 @@ export const PillTabs = ({ items, onChange, onDisabledPress, value, wrapItem }: 
             onPress={isDisabled ? onDisabledPress : () => onChange(item.key)}
             accessibilityState={{ disabled: isDisabled, selected: isSelected }}
             style={[
-              styles.pill,
-              {
-                backgroundColor: isSelected ? withAlpha(currentTheme.primary, 0.16) : undefined,
-                borderColor: isSelected ? currentTheme.primary : currentTheme.textMuted,
-              },
+              styles.segment,
+              stretch && styles.segmentStretch,
+              isSelected && [
+                styles.segmentSelected,
+                { backgroundColor: withAlpha(currentTheme.text, 0.1) },
+              ],
             ]}
           >
             <Text
               style={[
                 styles.label,
                 {
-                  color: isDisabled
-                    ? currentTheme.textMuted
-                    : isSelected
-                      ? currentTheme.primary
-                      : currentTheme.text,
+                  color: isDisabled ? currentTheme.textMuted : currentTheme.text,
+                  fontWeight: isSelected ? '600' : '400',
                 },
               ]}
             >
@@ -63,21 +76,52 @@ export const PillTabs = ({ items, onChange, onDisabledPress, value, wrapItem }: 
 
         return <Fragment key={item.key}>{wrapItem ? wrapItem(item, pill) : pill}</Fragment>
       })}
+    </View>
+  )
+
+  if (stretch) return <View style={styles.stretchRow}>{track}</View>
+
+  return (
+    <ScrollView
+      horizontal
+      style={styles.scroll}
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+    >
+      {track}
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
   label: { fontSize: FONT_SIZES.base },
-  pill: {
+  scroll: { flexGrow: 0 },
+  scrollContent: {
+    paddingHorizontal: INDENTS.medium,
+    paddingVertical: INDENTS.lowest,
+  },
+  segment: {
+    alignItems: 'center',
+    backgroundColor: 'transparent',
     borderRadius: RADIUSES.round,
-    borderWidth: 1,
-    paddingHorizontal: INDENTS.medium,
-    paddingVertical: INDENTS.low,
+    height: '100%',
+    justifyContent: 'center',
+    paddingHorizontal: INDENTS.middle,
   },
-  row: {
-    gap: INDENTS.low,
-    paddingHorizontal: INDENTS.medium,
-    paddingVertical: INDENTS.low,
+  segmentSelected: {
+    boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
   },
+  segmentStretch: { flex: 1, paddingHorizontal: 0 },
+  stretchRow: {
+    paddingHorizontal: INDENTS.medium,
+    paddingVertical: INDENTS.lowest,
+  },
+  track: {
+    borderRadius: RADIUSES.round,
+    flexDirection: 'row',
+    height: TRACK_HEIGHT,
+    padding: TRACK_PADDING,
+  },
+  trackStretch: { flexGrow: 1 },
 })

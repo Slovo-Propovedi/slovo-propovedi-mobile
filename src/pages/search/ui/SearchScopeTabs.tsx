@@ -20,6 +20,7 @@ export const SearchScopeTabs = ({
 
   return (
     <PillTabs
+      stretch
       items={items}
       value={value}
       onChange={onChange}
