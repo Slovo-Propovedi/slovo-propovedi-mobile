@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
-import { COLORS, FONT_SIZES, RADIUSES, withAlpha } from 'shared/ui/theme'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES, withAlpha } from 'shared/ui/theme'
 import { PillTabs } from './PillTabs'
 
 jest.mock('expo-linear-gradient', () => {
@@ -26,9 +26,11 @@ const SCROLL_ID = 'pill-tabs-scroll'
 const STRETCH_ROW_ID = 'pill-tabs-stretch-row'
 const SHADOW_ID = 'pill-tabs-shadow'
 const TRACK_HEIGHT = 48
-// The shadow halo spreads 88dp below the track and 16dp to each side; wrappers
-// keep that much real layout room (no negative margins) so nothing cuts it off.
-const MIN_SHADOW_ROOM = 88
+// The halo is a cast shadow: it overflows the row (88dp below the track and
+// 16dp to each side) and tints the content underneath instead of reserving room.
+const HALO_DEPTH = 88
+// The row itself only keeps a small shape-breathing gap under the pill.
+const SMALL_GAP = INDENTS.low
 // The active theme is resolved by ThemeProvider (light or dark), so expected
 // colors come from the same COLORS the component reads through `useTheme`.
 const SELECTED_FILL = () => withAlpha(COLORS.text, 0.1)
@@ -72,12 +74,14 @@ describe('<PillTabs>', () => {
 
     expect(StyleSheet.flatten(halo.props.style)).toMatchObject({
       borderRadius: RADIUSES.round,
-      bottom: -MIN_SHADOW_ROOM,
+      bottom: -HALO_DEPTH,
       left: -16,
       position: 'absolute',
       right: -16,
       top: -4,
     })
+    // It now overflows onto interactive content, so it must never swallow taps.
+    expect(halo).toHaveStyle({ pointerEvents: 'none' })
     expect(halo.props.colors).toEqual([
       'rgba(0, 0, 0, 0)',
       'rgba(0, 0, 0, 0.06)',
@@ -118,29 +122,29 @@ describe('<PillTabs>', () => {
     expect(unselected.elevation).toBeUndefined()
   })
 
-  test('keeps real shadow room inside the scroll viewport, without negative margins', async () => {
+  test('keeps only a small gap in the scroll row so the halo can overflow it', async () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
 
     const scroll = screen.getByTestId(SCROLL_ID)
     const content = StyleSheet.flatten(scroll.props.contentContainerStyle)
     const viewport = StyleSheet.flatten(scroll.props.style)
 
-    expect(content.paddingBottom).toBeGreaterThanOrEqual(MIN_SHADOW_ROOM)
+    expect(content.paddingBottom).toBe(SMALL_GAP)
     expect(content.overflow).not.toBe('hidden')
-    // Negative margins would cancel the room and re-clip the halo.
+    // Negative margins would shift content under the halo.
     expect(viewport.marginBottom).toBeUndefined()
     expect(viewport.marginHorizontal).toBeUndefined()
     expect(viewport.overflow).not.toBe('hidden')
   })
 
-  test('keeps real shadow room around the full-width track, without negative margins', async () => {
+  test('keeps only a small gap below the full-width track so the halo can overflow it', async () => {
     await renderWithProviders(
       <PillTabs stretch value='listen' items={SCOPE_ITEMS} onChange={jest.fn()} />,
     )
 
     const row = StyleSheet.flatten(screen.getByTestId(STRETCH_ROW_ID).props.style)
 
-    expect(row.paddingBottom).toBeGreaterThanOrEqual(MIN_SHADOW_ROOM)
+    expect(row.paddingBottom).toBe(SMALL_GAP)
     expect(row.marginBottom).toBeUndefined()
     expect(row.marginHorizontal).toBeUndefined()
     expect(row.overflow).not.toBe('hidden')
@@ -158,8 +162,8 @@ describe('<PillTabs>', () => {
     const row = StyleSheet.flatten(screen.getByTestId(SCROLL_ID).props.contentContainerStyle)
     expect(row.backgroundColor).toBeUndefined()
     expect(row.borderRadius).toBeUndefined()
-    // No shadow means no shadow room either.
-    expect(row.paddingBottom ?? 0).toBeLessThan(MIN_SHADOW_ROOM)
+    // No shadow means no reserved shadow room either.
+    expect(row.paddingBottom).toBeUndefined()
 
     expect(segmentStyle('Плейлисты')).toMatchObject({
       backgroundColor: COLORS.primary,

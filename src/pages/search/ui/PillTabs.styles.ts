@@ -6,9 +6,10 @@ const TRACK_PADDING = 3
 const ITEM_HEIGHT = 36
 const PAGE_GUTTER = INDENTS.medium
 const ROW_GUTTER = INDENTS.lowest
-// The halo below the track is drawn outside its box; the scope wrappers keep
-// that much real layout room (no negative margins) so nothing cuts it off.
-const SHADOW_ROOM = 88
+const SMALL_GAP = INDENTS.low
+// The halo is a cast shadow: it overflows its row and tints the content below,
+// so the row reserves only SMALL_GAP under the pill (no clipping, no negatives).
+const HALO_DEPTH = 88
 
 export const styles = StyleSheet.create({
   label: { fontSize: FONT_SIZES.base },
@@ -29,13 +30,13 @@ export const styles = StyleSheet.create({
   },
   scopeRow: {
     overflow: 'visible',
-    paddingBottom: SHADOW_ROOM,
+    paddingBottom: SMALL_GAP,
     paddingHorizontal: PAGE_GUTTER,
     paddingTop: ROW_GUTTER,
   },
   scopeScroll: { flexGrow: 0 },
   scopeScrollContent: {
-    paddingBottom: SHADOW_ROOM,
+    paddingBottom: SMALL_GAP,
     paddingHorizontal: PAGE_GUTTER,
     paddingTop: ROW_GUTTER,
   },
@@ -52,8 +53,10 @@ export const styles = StyleSheet.create({
   // drawable clipped to the view — an outset shadow there reads as an inner rim.
   shadowHalo: {
     borderRadius: RADIUSES.round,
-    bottom: -SHADOW_ROOM,
+    bottom: -HALO_DEPTH,
     left: -INDENTS.medium,
+    // The halo overflows onto interactive content; it must never eat taps.
+    pointerEvents: 'none',
     position: 'absolute',
     right: -INDENTS.medium,
     top: -INDENTS.lowest,
