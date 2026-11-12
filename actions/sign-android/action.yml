@@ -8,6 +8,8 @@
 # inputs:
 #   version          release version without the leading "v" (e.g. 0.33.1)
 #   unsignedApkPath  path to the unsigned APK to sign
+#   expectedSha256   64-hex SHA-256 of that APK as produced by the dispatched
+#                    GitHub run (anti-substitution gate; required)
 #
 # Env supplied by the caller (step-level `env:` on the `uses:` step):
 #   ANDROID_KEYSTORE_BASE64     base64-encoded release keystore (required)
@@ -28,6 +30,11 @@ inputs:
     required: true
   unsignedApkPath:
     description: Path to the unsigned APK to sign.
+    required: true
+  expectedSha256:
+    description: >-
+      64-hex SHA-256 of the unsigned APK as produced by the dispatched GitHub
+      run (anti-substitution gate).
     required: true
 
 runs:
@@ -54,6 +61,28 @@ runs:
           printf '%s\n' "- APK signing: ❌ missing$missing_list — release aborted" | scripts/ci/step-summary.sh
           exit 1
         fi
+
+    - name: Verify unsigned APK digest
+      id: verify-digest
+      shell: bash
+      run: |
+        set -euo pipefail
+        EXPECTED=$(printf '%s' "${{ inputs.expectedSha256 }}" | tr -d '[:space:]' | tr 'A-F' 'a-f')
+        ACTUAL=$(sha256sum "${{ inputs.unsignedApkPath }}" | awk '{print $1}')
+
+        if ! printf '%s' "$EXPECTED" | grep -Eqx '[0-9a-f]{64}'; then
+          echo "::error::expectedSha256 is empty or not a 64-hex digest — refusing to sign an APK not bound to the dispatched GitHub build"
+          printf '%s\n' "- Unsigned APK digest: ❌ missing/bad expectedSha256 — release aborted" | scripts/ci/step-summary.sh
+          exit 1
+        fi
+
+        if [ "$ACTUAL" != "$EXPECTED" ]; then
+          echo "::error::unsigned APK digest mismatch (expected $EXPECTED, got $ACTUAL) — the artifact does not match the dispatched GitHub build"
+          printf '%s\n' "- Unsigned APK digest: ❌ mismatch — release aborted" | scripts/ci/step-summary.sh
+          exit 1
+        fi
+
+        printf '%s\n' "- Unsigned APK digest: ✅ matches the dispatched GitHub build (\`${ACTUAL:0:16}…\`)" | scripts/ci/step-summary.sh
 
     - name: Restore release keystore
       id: restore-keystore

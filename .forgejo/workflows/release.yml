@@ -393,6 +393,7 @@ jobs:
     outputs:
       fallback: ${{ steps.dispatch.outputs.fallback }}
       run_url: ${{ steps.dispatch.outputs.run_url }}
+      apk_sha256: ${{ steps.dispatch.outputs.apk_sha256 }}
 
     steps:
       - name: Checkout repository
@@ -434,7 +435,12 @@ jobs:
 
           # Printed by the dispatcher on the 0/1/42 paths (see its header).
           RUN_URL=$(printf '%s\n' "$OUTPUT" | sed -n 's/^GH_RUN_URL=//p' | tail -1)
+          # Emitted only on the dispatcher's success path. On fallback (42) this
+          # stays empty and branch A hard-fails downstream by design.
+          APK_SHA=$(printf '%s\n' "$OUTPUT" | sed -n 's/^GH_UNSIGNED_APK_SHA256=//p' | tail -1)
 
+          # Exit 44 (mirror tag/ref does not resolve to SHA) intentionally falls
+          # into the `*` branch: hard failure, never a local fallback.
           case "$STATUS" in
             0)
               echo "fallback=false" >> "$GITHUB_OUTPUT"
@@ -450,6 +456,7 @@ jobs:
           esac
 
           echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
+          echo "apk_sha256=$APK_SHA" >> "$GITHUB_OUTPUT"
 
       # Fallback builds produce their artifacts directly in the local jobs, so
       # nothing is uploaded here when fallback=true.
@@ -549,6 +556,9 @@ jobs:
         with:
           version: ${{ steps.version.outputs.version }}
           unsignedApkPath: ${{ steps.unsigned-apk.outputs.path }}
+          # Branch A only: branch B builds locally from the trusted Forgejo
+          # commit, so no GitHub digest exists or is needed.
+          expectedSha256: ${{ needs.build-remote.outputs.apk_sha256 }}
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
