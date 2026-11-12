@@ -49,8 +49,9 @@ on:
 #                     remote unsigned APK (or build locally on fallback), zip it
 #                     with SHA256SUMS.txt into the `release-assets` artifact
 #                     (30-day retention)
-#   web-package     — needs: [changes] — always builds the web PWA on the local
-#                     runner; attaches the web zip in native mode only
+#   web-package     — needs: [changes, android-package] — builds the web PWA on
+#                     the local runner; native tags run only after a successful
+#                     APK sign, attaching the web zip in native mode only
 #   publish-release — needs: [create-release, android-package], native only —
 #                     download `release-assets`, attach them to the Forgejo
 #                     release and mirror that release to GitHub and Codeberg.
@@ -627,7 +628,12 @@ jobs:
   web-package:
     # Deploy runs on every tag, including JS-only (no release exists there).
     # The release-asset steps below are gated on native mode separately.
-    needs: [changes]
+    needs: [changes, android-package]
+    # Native tags: web image push / VPS deploy / release zip wait for a
+    # successful android sign, so a failed APK leaves no pushed image (mutable
+    # `latest`), no deploy and no web zip. js-only tags skip android-package
+    # (no native changes), so the condition passes and web ships as before.
+    if: "!cancelled() && needs.changes.result == 'success' && (needs.android-package.result == 'success' || needs.android-package.result == 'skipped')"
     runs-on: ubuntu-24.04
 
     concurrency:
@@ -909,6 +915,7 @@ jobs:
       - name: Job summary
         if: always()
         env:
+          ANDROID_OUTCOME: ${{ needs.android-package.result }}
           WEB_EXPORT_OUTCOME: ${{ steps.web-export.outcome }}
           DEPLOYCFG_OUTCOME: ${{ steps.deploycfg.outcome }}
           SSH_SETUP_OUTCOME: ${{ steps.ssh-setup.outcome }}
@@ -932,6 +939,7 @@ jobs:
             echo ''
             echo '| Step | Status |'
             echo '| --- | --- |'
+            summary_row android-package "$ANDROID_OUTCOME"
             summary_row web-export "$WEB_EXPORT_OUTCOME"
             summary_row deploycfg "$DEPLOYCFG_OUTCOME"
             summary_row ssh-setup "$SSH_SETUP_OUTCOME"
