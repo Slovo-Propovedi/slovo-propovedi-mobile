@@ -68,9 +68,9 @@ const NO_PILL_EXPANDED_HEIGHT =
   TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2 + SHADE_TOP_OVERSCAN_PX
 const NO_PILL_COLLAPSED_HEIGHT =
   TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT) / 2 + SHADE_TOP_OVERSCAN_PX
-const LIGHT_SHADE_OPAQUE = 'rgba(0, 0, 0, 0.12)'
+const LIGHT_SHADE_OPAQUE = 'rgba(0, 0, 0, 0.08)'
 const LIGHT_SHADE_COLORS = ['rgba(0, 0, 0, 0)', LIGHT_SHADE_OPAQUE, LIGHT_SHADE_OPAQUE]
-const DARK_SHADE_OPAQUE = 'rgba(128, 128, 128, 0.23)'
+const DARK_SHADE_OPAQUE = 'rgba(128, 128, 128, 0.15)'
 const DARK_SHADE_COLORS = ['rgba(128, 128, 128, 0)', DARK_SHADE_OPAQUE, DARK_SHADE_OPAQUE]
 // One continuous gradient: transparent at the shade top, opaque from the pill's
 // midline down. The middle stop is the fixed ramp height over the settled shade

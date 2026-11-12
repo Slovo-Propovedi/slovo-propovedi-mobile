@@ -21,8 +21,8 @@ import { useProgressAnimation } from '../model/useProgressAnimation'
 // the screen bottom (the transparent Android navbar means the inset is ignored).
 // Its top tracks the current chrome top with overscan, and one continuous
 // gradient leaves no cap/fill junction; the dark ramp is gray with doubled alpha.
-const SHADE_OPAQUE_LIGHT = 'rgba(0, 0, 0, 0.12)'
-const SHADE_OPAQUE_DARK = 'rgba(128, 128, 128, 0.23)'
+const SHADE_OPAQUE_LIGHT = 'rgba(0, 0, 0, 0.08)'
+const SHADE_OPAQUE_DARK = 'rgba(128, 128, 128, 0.15)'
 const SHADE_COLORS_LIGHT = ['rgba(0, 0, 0, 0)', SHADE_OPAQUE_LIGHT, SHADE_OPAQUE_LIGHT] as const
 const SHADE_COLORS_DARK = ['rgba(128, 128, 128, 0)', SHADE_OPAQUE_DARK, SHADE_OPAQUE_DARK] as const
 
