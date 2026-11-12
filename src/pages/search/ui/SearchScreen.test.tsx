@@ -3,7 +3,6 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
 import { StyleSheet } from 'react-native'
 import {
-  holdSearchFocus,
   isSearchFieldFocusedAtom,
   searchFocusRequestAtom,
   searchQueryAtom,
@@ -182,34 +181,27 @@ describe('<SearchScreen>', () => {
     mockUseFeatureFlag.mockReturnValue(false)
   })
 
-  test('shows the large «Поиск» title when the field is blurred and the query is empty', async () => {
-    await renderScreen()
+  test('shows the title, scope pills and recents when the field is blurred with an empty query', async () => {
+    await renderScreen({ history: [SERMON] })
 
     expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
-    expect(screen.queryByText('Слушать')).toBeNull()
-    expect(screen.queryByText(RECENT_SEARCHES_TITLE)).toBeNull()
-  })
-
-  test('shows scope pills and recent searches while the field is focused with an empty query', async () => {
-    const ctx = createCtx()
-    searchQueryAtom(ctx, '')
-    isSearchFieldFocusedAtom(ctx, true)
-    searchHistoryAtom(ctx, [historyEntry(SERMON)])
-    mockUsePagedSearch.mockReturnValue(createPaged())
-
-    await renderWithProviders(
-      <SearchScreen onSermonPress={jest.fn()} onPlaylistPress={jest.fn()} />,
-      { ctx },
-    )
-
-    expect(screen.queryByRole('header', { name: 'Поиск' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Слушать' })).toBeSelected()
     expect(screen.getByRole('button', { name: 'Читать' })).toBeTruthy()
     expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
     expect(screen.getByText(SERMON.title)).toBeTruthy()
   })
 
-  test('keeps the scope tabs a small gap below the top safe area', async () => {
+  test('shows the title, scope pills and recents while the field is focused with an empty query', async () => {
+    await renderScreen({ focused: true, history: [SERMON] })
+
+    expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Слушать' })).toBeSelected()
+    expect(screen.getByRole('button', { name: 'Читать' })).toBeTruthy()
+    expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
+    expect(screen.getByText(SERMON.title)).toBeTruthy()
+  })
+
+  test('keeps the page a small gap below the top safe area', async () => {
     await renderScreen({ focused: true })
 
     const container = screen.root?.queryAll(instance => {
@@ -230,6 +222,7 @@ describe('<SearchScreen>', () => {
 
     expect(screen.getByRole('button', { name: 'Проповеди' })).toBeSelected()
     expect(screen.getByRole('button', { name: 'Плейлисты' })).not.toBeSelected()
+    expect(screen.queryByRole('header', { name: 'Поиск' })).toBeNull()
     expect(screen.getByText(SERMON.title)).toBeTruthy()
 
     await fireEvent.press(screen.getByText(SERMON.title))
@@ -331,19 +324,21 @@ describe('<SearchScreen>', () => {
     expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(initialNonce + 2)
   })
 
-  test('keeps the focused pose while the focus is held after a blur', async () => {
-    const { ctx } = await renderScreen({ focused: true })
+  test('keeps scope pills and recents mounted when the field blurs', async () => {
+    const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
 
     await act(async () => {
-      holdSearchFocus(ctx)
       isSearchFieldFocusedAtom(ctx, false)
     })
 
-    expect(screen.queryByRole('header', { name: 'Поиск' })).toBeNull()
-    expect(screen.getByRole('button', { name: 'Слушать' })).toBeTruthy()
+    expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Слушать' })).toBeSelected()
+    expect(screen.getByRole('button', { name: 'Читать' })).toBeTruthy()
+    expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
+    expect(screen.getByText(SERMON.title)).toBeTruthy()
   })
 
-  test('holds the focused pose while the clear-history dialog is open', async () => {
+  test('keeps the main page content while the clear-history dialog is open', async () => {
     const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
@@ -352,13 +347,13 @@ describe('<SearchScreen>', () => {
     })
 
     expect(screen.getByText(CLEAR_DIALOG_TITLE)).toBeTruthy()
-    expect(screen.queryByRole('header', { name: 'Поиск' })).toBeNull()
+    expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Слушать' })).toBeSelected()
     expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
     expect(screen.getByText(SERMON.title)).toBeTruthy()
   })
 
-  test('refocuses the input and returns to the recents pose on cancel', async () => {
+  test('refocuses the input and keeps the main page on cancel', async () => {
     const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
@@ -376,7 +371,7 @@ describe('<SearchScreen>', () => {
       isSearchFieldFocusedAtom(ctx, true)
     })
 
-    expect(screen.queryByRole('header', { name: 'Поиск' })).toBeNull()
+    expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Слушать' })).toBeTruthy()
     expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
   })
@@ -404,19 +399,20 @@ describe('<SearchScreen>', () => {
     expect(screen.queryByText(RECENT_SEARCHES_TITLE)).toBeNull()
   })
 
-  test('keeps the empty pose for a two-character query', async () => {
+  test('keeps the main page for a two-character query', async () => {
     await renderScreen({ focused: true, history: [SERMON], query: 'ве' })
 
+    expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Слушать' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Читать' })).toBeTruthy()
     expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Проповеди' })).toBeNull()
   })
 
-  test('keeps the focused pose for a two-character query while blurred', async () => {
+  test('keeps the main page for a two-character query while blurred', async () => {
     await renderScreen({ history: [SERMON], query: 'ве' })
 
-    expect(screen.queryByRole('header', { name: 'Поиск' })).toBeNull()
+    expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Слушать' })).toBeSelected()
     expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
     expect(screen.getByText(SERMON.title)).toBeTruthy()
@@ -452,6 +448,16 @@ describe('<SearchScreen>', () => {
     await renderScreen({ focused: true, query: 'вер' })
 
     expect(screen.getByText('Ничего не найдено')).toBeTruthy()
+  })
+
+  test('shows the read placeholder in the main page when the read scope is selected', async () => {
+    await renderScreen({ focused: true, history: [SERMON], readEnabled: true })
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Читать' }))
+
+    expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
+    expect(screen.getByText('Раздел «Читать» скоро появится')).toBeTruthy()
+    expect(screen.queryByText(RECENT_SEARCHES_TITLE)).toBeNull()
   })
 
   test('shows the read placeholder and stops fetching when the flag is on', async () => {
