@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRef } from 'react'
 import { useIsSearchFieldVisible } from 'features/sermon-search'
-import { isSearchFocusActiveAtom } from 'features/sermon-search/@x/barMorph'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import {
   currentAudioAtom,
   currentPlaylistAtom,
@@ -37,7 +37,7 @@ export const useExpandablePlayerState = () => {
   const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
   const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
   const isSearchFieldVisible = useIsSearchFieldVisible()
-  const [isSearchFocusActive] = useAtom(isSearchFocusActiveAtom)
+  const [isSearchFieldFocused] = useAtom(isSearchFieldFocusedAtom)
   const [playing] = useAtom(isPlayingAtom)
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
@@ -56,10 +56,10 @@ export const useExpandablePlayerState = () => {
     isBarCollapsed: isBarCollapsed && !isSearchFieldVisible,
     isBuffering,
     isLight,
-    // The mini pill tucks under the bottom islands while the field has focus (or
-    // that focus is held by a dialog), so its whole subtree must drop below the
-    // tab bar's zIndex 10.
-    isPillTucked: isSearchFocusActive && !expanded,
+    // The mini pill tucks under the bottom islands only while the input field
+    // itself has focus; dialogs that hold the search focus leave it in place.
+    // Its whole subtree must drop below the tab bar's zIndex 10 while tucked.
+    isPillTucked: isSearchFieldFocused && !expanded,
     isTabBarMeasured,
     playing,
     playlist,

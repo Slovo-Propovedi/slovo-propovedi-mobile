@@ -10,7 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useOnboardingTargetRef } from 'features/onboarding'
-import { isSearchFocusActiveAtom } from 'features/sermon-search/@x/barMorph'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { BAR_MORPH_DURATION_MS, BAR_OUTER_GAP, useKeyboardLiftStyle } from 'shared/ui/layout'
@@ -76,7 +76,7 @@ export const CollapsedMiniPlayer = ({
   const miniTargetRef = useOnboardingTargetRef('player.mini')
   const miniStyles = createMiniStyles(currentTheme)
   const keyboardLiftStyle = useKeyboardLiftStyle()
-  const [isHidden] = useAtom(isSearchFocusActiveAtom)
+  const [isHidden] = useAtom(isSearchFieldFocusedAtom)
   const focusProgress = useSharedValue(isHidden ? 1 : 0)
   const pillOpacity = useSharedValue(isHidden ? 0 : 1)
   const tuckStyle = useAnimatedStyle(() => ({

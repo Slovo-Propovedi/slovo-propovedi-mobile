@@ -244,28 +244,40 @@ describe('<ExpandablePlayer>', () => {
     expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)
   })
 
-  test('keeps the mini player tucked while the focus is held', async () => {
+  test('keeps the mini player in place while only the focus hold is set', async () => {
     isBarCollapsedAtom(ctx, false)
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, '')
-    isSearchFieldFocusedAtom(ctx, true)
     tabBarHeightAtom(ctx, 98)
     const { queryByLabelText } = await renderWithProviders(<ExpandablePlayer />, { ctx })
 
+    // A dialog raised the hold; the input field itself never got focus.
     await act(async () => {
       holdSearchFocus(ctx)
     })
-    // The dialog blurs the field; the held focus keeps the pill tucked.
+
+    const findButton = () => queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })
+
+    expect(findPointerGate(findButton())?.props.pointerEvents).toBe('box-none')
+    expect(layerOpacity(findButton())).toBe(1)
+    expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(false)
+    expect(tuckTransform()).toEqual([{ translateY: 0 }])
+    expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)
+
+    // The real field focus still tucks it, hold or no hold.
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, true)
+    })
+    expect(findPointerGate(findButton())?.props.pointerEvents).toBe('none')
+
+    // And a blur returns it even while the hold is still raised.
     await act(async () => {
       isSearchFieldFocusedAtom(ctx, false)
     })
-
-    const button = queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })
-
-    expect(findPointerGate(button)?.props.pointerEvents).toBe('none')
-    expect(layerOpacity(button)).toBe(0)
-    expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(true)
-    expect(tuckTransform()).toEqual([{ translateY: MINI_TUCK_DISTANCE }])
+    expect(findPointerGate(findButton())?.props.pointerEvents).toBe('box-none')
+    expect(layerOpacity(findButton())).toBe(1)
+    expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(false)
+    expect(tuckTransform()).toEqual([{ translateY: 0 }])
   })
 
   test('keeps the last real tab bar height when a hidden screen reports zero', async () => {
