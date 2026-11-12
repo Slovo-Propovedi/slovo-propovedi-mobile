@@ -21,21 +21,6 @@ import { SearchScreen } from './SearchScreen'
 const mockUsePagedSearch = usePagedSearch as jest.MockedFunction<typeof usePagedSearch>
 const mockUseFeatureFlag = useFeatureFlag as jest.MockedFunction<typeof useFeatureFlag>
 const mockShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
-const mockClearSearchHistoryAction = jest.fn()
-
-// Spy through to the real action so the dialog's confirm path stays observable
-// while the history atom still empties.
-jest.mock('entities/search-history', () => {
-  const actual = jest.requireActual('entities/search-history')
-
-  return {
-    ...actual,
-    clearSearchHistoryAction: (...args: unknown[]) => {
-      mockClearSearchHistoryAction(...args)
-      return actual.clearSearchHistoryAction(...args)
-    },
-  }
-})
 
 jest.mock('../lib/usePagedSearch', () => ({
   usePagedSearch: jest.fn(),
@@ -340,17 +325,7 @@ describe('<SearchScreen>', () => {
     expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(initialNonce + 2)
   })
 
-  test('requests focus and opens the clear-history dialog', async () => {
-    const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
-    const initialNonce = ctx.get(searchFocusRequestAtom)?.nonce ?? 0
-
-    await fireEvent.press(screen.getByText(CLEAR_LABEL))
-
-    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(initialNonce + 1)
-    expect(screen.getByText(CLEAR_DIALOG_TITLE)).toBeTruthy()
-  })
-
-  test('keeps the clear-history dialog open when the field blurs', async () => {
+  test('holds the focused pose while the clear-history dialog is open', async () => {
     const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
@@ -358,33 +333,57 @@ describe('<SearchScreen>', () => {
       isSearchFieldFocusedAtom(ctx, false)
     })
 
-    expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
     expect(screen.getByText(CLEAR_DIALOG_TITLE)).toBeTruthy()
+    expect(screen.queryByRole('header', { name: 'Поиск' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Слушать' })).toBeSelected()
+    expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
+    expect(screen.getByText(SERMON.title)).toBeTruthy()
   })
 
-  test('refocuses the input when the clear-history dialog is cancelled', async () => {
+  test('refocuses the input and returns to the recents pose on cancel', async () => {
     const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, false)
+    })
     const afterOpenNonce = ctx.get(searchFocusRequestAtom)?.nonce ?? 0
 
     await fireEvent.press(screen.getByText(CANCEL_LABEL))
 
-    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(afterOpenNonce + 1)
     expect(screen.queryByText(CLEAR_DIALOG_TITLE)).toBeNull()
+    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(afterOpenNonce + 1)
+
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, true)
+    })
+
+    expect(screen.queryByRole('header', { name: 'Поиск' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Слушать' })).toBeTruthy()
+    expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
   })
 
   test('clears the history and refocuses on confirm', async () => {
     const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, false)
+    })
     const afterOpenNonce = ctx.get(searchFocusRequestAtom)?.nonce ?? 0
 
     await fireEvent.press(screen.getAllByText(CLEAR_LABEL).at(-1) as never)
 
-    await waitFor(() => expect(mockClearSearchHistoryAction).toHaveBeenCalled())
+    await waitFor(() => expect(ctx.get(searchHistoryAtom)).toEqual([]))
     expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(afterOpenNonce + 1)
     expect(screen.queryByText(CLEAR_DIALOG_TITLE)).toBeNull()
+
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, true)
+    })
+
+    expect(screen.getByRole('button', { name: 'Слушать' })).toBeTruthy()
+    expect(screen.queryByText(RECENT_SEARCHES_TITLE)).toBeNull()
   })
 
   test('keeps the empty pose for a two-character query', async () => {

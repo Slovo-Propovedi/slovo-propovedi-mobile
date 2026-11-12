@@ -7,12 +7,10 @@ import { isSearchHistoryLoadedAtom, loadSearchHistoryAction } from 'entities/sea
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { EmptyState, ScreenTitleRow } from 'shared/ui'
 import { INDENTS } from 'shared/ui/theme'
-import { openClearHistoryDialog } from '../lib/clearHistoryDialog'
 import { type SearchGroup } from '../lib/searchGroup'
 import { MIN_RESULTS_VIEW_LENGTH } from '../lib/searchThresholds'
 import { usePagedSearch } from '../lib/usePagedSearch'
 import { useSearchResultActions } from '../lib/useSearchResultActions'
-import { ClearHistoryDialog } from './ClearHistoryDialog'
 import { RecentSearchesSection } from './RecentSearchesSection'
 import { SearchResultsView } from './SearchResultsView'
 import { type SearchScope, SearchScopeTabs } from './SearchScopeTabs'
@@ -41,9 +39,9 @@ export const SearchScreen = ({
   const [isFocused] = useAtom(isSearchFieldFocusedAtom)
   const [isHistoryLoaded] = useAtom(isSearchHistoryLoadedAtom)
   const loadSearchHistory = useAction(loadSearchHistoryAction)
-  const openClearDialog = useAction(openClearHistoryDialog)
   const [scope, setScope] = useState<SearchScope>('listen')
   const [group, setGroup] = useState<SearchGroup>('sermons')
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false)
   const showResults = query.trim().length >= MIN_RESULTS_VIEW_LENGTH
   const paged = usePagedSearch(scope === 'listen' ? query : '')
   const firstSermon = paged.sermons.items[0]
@@ -66,40 +64,40 @@ export const SearchScreen = ({
     setGroup(toSearchGroup(key))
   }, [])
 
+  const handleClearDialogOpenChange = useCallback((open: boolean) => {
+    setIsClearDialogOpen(open)
+  }, [])
+
+  // The open clear dialog owns the focus, so it holds this pose too.
+  if (!isFocused && !isClearDialogOpen && !showResults) return <ScreenTitleRow title='Поиск' />
+
   return (
-    <>
-      {isFocused || showResults ? (
-        <Pressable style={styles.container} onPress={Keyboard.dismiss}>
-          {!showResults && <SearchScopeTabs value={scope} onChange={handleScopeChange} />}
-          {showResults ? (
-            scope === 'read' ? (
-              <EmptyState message={READ_PLACEHOLDER} />
-            ) : (
-              <SearchResultsView
-                group={group}
-                paged={paged}
-                query={query}
-                onChangeGroup={handleGroupChange}
-                onSermonPress={handleSermonPress}
-                onPlaylistPress={onPlaylistPress}
-                onAddToPlaylist={onAddToPlaylist}
-                onPreacherPress={handlePreacherPress}
-                onRemoveFromSearchHistory={handleRemoveFromSearchHistory}
-              />
-            )
-          ) : (
-            <RecentSearchesSection
-              onPress={handleSermonPress}
-              onClearPress={openClearDialog}
-              onAddToPlaylist={onAddToPlaylist}
-            />
-          )}
-        </Pressable>
+    <Pressable style={styles.container} onPress={Keyboard.dismiss}>
+      {!showResults && <SearchScopeTabs value={scope} onChange={handleScopeChange} />}
+      {showResults ? (
+        scope === 'read' ? (
+          <EmptyState message={READ_PLACEHOLDER} />
+        ) : (
+          <SearchResultsView
+            group={group}
+            paged={paged}
+            query={query}
+            onChangeGroup={handleGroupChange}
+            onSermonPress={handleSermonPress}
+            onPlaylistPress={onPlaylistPress}
+            onAddToPlaylist={onAddToPlaylist}
+            onPreacherPress={handlePreacherPress}
+            onRemoveFromSearchHistory={handleRemoveFromSearchHistory}
+          />
+        )
       ) : (
-        <ScreenTitleRow title='Поиск' />
+        <RecentSearchesSection
+          onPress={handleSermonPress}
+          onAddToPlaylist={onAddToPlaylist}
+          onClearDialogOpenChange={handleClearDialogOpenChange}
+        />
       )}
-      <ClearHistoryDialog />
-    </>
+    </Pressable>
   )
 }
 

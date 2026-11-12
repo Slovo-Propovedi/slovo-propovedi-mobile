@@ -7,6 +7,22 @@ import { renderWithProviders } from 'shared/mocks'
 import { FONT_SIZES } from 'shared/ui/theme'
 import { RecentSearchesSection } from './RecentSearchesSection'
 
+const mockRequestSearchFocus = jest.fn()
+
+// Spy through to the real action so refocusing stays observable while the
+// search-focus nonce still advances.
+jest.mock('features/sermon-search', () => {
+  const actual = jest.requireActual('features/sermon-search')
+
+  return {
+    ...actual,
+    requestSearchFocus: (...args: unknown[]) => {
+      mockRequestSearchFocus(...args)
+      return actual.requestSearchFocus(...args)
+    },
+  }
+})
+
 // The feature barrel re-exports the player-coupled search UI; these rows only
 // need the track/search surface.
 jest.mock('entities/player', () => ({
@@ -66,17 +82,20 @@ const buildEntry = (id: string, title: string, savedAt: number): SearchHistoryEn
 
 const SECTION_TITLE = 'Недавние поиски'
 const CLEAR_LABEL = 'Очистить'
+const DIALOG_TITLE = 'Очистить историю поиска?'
+const CANCEL_LABEL = 'Отмена'
 const REMOVE_FROM_SEARCH_HISTORY = 'Удалить из истории поиска'
 
 describe('<RecentSearchesSection>', () => {
+  beforeEach(() => {
+    mockRequestSearchFocus.mockClear()
+  })
+
   test('renders stored sermons with the header and clear action', async () => {
     const ctx = createCtx()
     searchHistoryAtom(ctx, [buildEntry('1', 'Первая', 2), buildEntry('2', 'Вторая', 1)])
 
-    await renderWithProviders(
-      <RecentSearchesSection onPress={jest.fn()} onClearPress={jest.fn()} />,
-      { ctx },
-    )
+    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
 
     expect(screen.getByText(SECTION_TITLE)).toBeTruthy()
     expect(screen.getByText(CLEAR_LABEL)).toBeTruthy()
@@ -85,12 +104,9 @@ describe('<RecentSearchesSection>', () => {
   })
 
   test('renders the header on the next size token above the old one', async () => {
-    await renderWithProviders(
-      <RecentSearchesSection onPress={jest.fn()} onClearPress={jest.fn()} />,
-      {
-        ctx: createCtxWithHistory([buildEntry('1', 'Первая', 1)]),
-      },
-    )
+    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, {
+      ctx: createCtxWithHistory([buildEntry('1', 'Первая', 1)]),
+    })
 
     const title = screen.getByText(SECTION_TITLE)
     const clear = screen.getByText(CLEAR_LABEL)
@@ -103,9 +119,7 @@ describe('<RecentSearchesSection>', () => {
   })
 
   test('renders nothing without history', async () => {
-    await renderWithProviders(
-      <RecentSearchesSection onPress={jest.fn()} onClearPress={jest.fn()} />,
-    )
+    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />)
 
     expect(screen.queryByText(SECTION_TITLE)).toBeNull()
   })
@@ -114,38 +128,76 @@ describe('<RecentSearchesSection>', () => {
     const onPress = jest.fn()
     const entry = buildEntry('1', 'Первая', 1)
 
-    await renderWithProviders(
-      <RecentSearchesSection onPress={onPress} onClearPress={jest.fn()} />,
-      {
-        ctx: createCtxWithHistory([entry]),
-      },
-    )
+    await renderWithProviders(<RecentSearchesSection onPress={onPress} />, {
+      ctx: createCtxWithHistory([entry]),
+    })
 
     await fireEvent.press(screen.getByText('Первая'))
 
     expect(onPress).toHaveBeenCalledWith(expect.objectContaining({ id: '1' }))
   })
 
-  test('raises the clear intent without owning the dialog', async () => {
-    const onClearPress = jest.fn()
+  test('opens its own dialog and reports the open state', async () => {
+    const onClearDialogOpenChange = jest.fn()
 
     await renderWithProviders(
-      <RecentSearchesSection onPress={jest.fn()} onClearPress={onClearPress} />,
+      <RecentSearchesSection
+        onPress={jest.fn()}
+        onClearDialogOpenChange={onClearDialogOpenChange}
+      />,
       { ctx: createCtxWithHistory([buildEntry('1', 'Первая', 1)]) },
     )
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
 
-    expect(onClearPress).toHaveBeenCalledTimes(1)
+    expect(screen.getByText(DIALOG_TITLE)).toBeTruthy()
+    expect(onClearDialogOpenChange).toHaveBeenCalledTimes(1)
+    expect(onClearDialogOpenChange).toHaveBeenCalledWith(true)
+  })
+
+  test('reports the close and refocuses the field on cancel', async () => {
+    const onClearDialogOpenChange = jest.fn()
+
+    await renderWithProviders(
+      <RecentSearchesSection
+        onPress={jest.fn()}
+        onClearDialogOpenChange={onClearDialogOpenChange}
+      />,
+      { ctx: createCtxWithHistory([buildEntry('1', 'Первая', 1)]) },
+    )
+
+    await fireEvent.press(screen.getByText(CLEAR_LABEL))
+    await fireEvent.press(screen.getByText(CANCEL_LABEL))
+
+    expect(screen.queryByText(DIALOG_TITLE)).toBeNull()
+    expect(onClearDialogOpenChange).toHaveBeenLastCalledWith(false)
+    expect(mockRequestSearchFocus).toHaveBeenCalledTimes(1)
+  })
+
+  test('clears the history, reports the close and refocuses on confirm', async () => {
+    const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 1)])
+    const onClearDialogOpenChange = jest.fn()
+
+    await renderWithProviders(
+      <RecentSearchesSection
+        onPress={jest.fn()}
+        onClearDialogOpenChange={onClearDialogOpenChange}
+      />,
+      { ctx },
+    )
+
+    await fireEvent.press(screen.getByText(CLEAR_LABEL))
+    await fireEvent.press(screen.getAllByText(CLEAR_LABEL).at(-1) as never)
+
+    await waitFor(() => expect(ctx.get(searchHistoryAtom)).toEqual([]))
+    expect(onClearDialogOpenChange).toHaveBeenLastCalledWith(false)
+    expect(mockRequestSearchFocus).toHaveBeenCalledTimes(1)
   })
 
   test('removes a single entry through the row menu', async () => {
     const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 2), buildEntry('2', 'Вторая', 1)])
 
-    await renderWithProviders(
-      <RecentSearchesSection onPress={jest.fn()} onClearPress={jest.fn()} />,
-      { ctx },
-    )
+    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
 
     await fireEvent.press(screen.getAllByText(REMOVE_FROM_SEARCH_HISTORY)[0])
 
