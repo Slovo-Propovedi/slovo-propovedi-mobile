@@ -51,11 +51,13 @@ on:
 #                     (30-day retention)
 #   web-package     — needs: [changes, android-package] — builds the web PWA on
 #                     the local runner; native tags run only after a successful
-#                     APK sign, attaching the web zip in native mode only
-#   publish-release — needs: [create-release, android-package], native only —
-#                     download `release-assets`, attach them to the Forgejo
-#                     release and mirror that release to GitHub and Codeberg.
-#                     Re-running this job alone re-publishes WITHOUT rebuilding.
+#                     APK sign and upload the web zip as the `web-assets`
+#                     artifact
+#   publish-release — needs: [create-release, android-package, web-package],
+#                     native only — download `release-assets` + `web-assets`,
+#                     attach them to the Forgejo release and mirror the full
+#                     asset set to GitHub and Codeberg. Re-running this job alone
+#                     re-publishes WITHOUT rebuilding.
 #   ota             — needs: changes, JS-only — publish the OTA bundle to xprem
 # `web-package` depends on `android-package` (needs: [changes, android-package]):
 # in native mode it starts only after a successful APK sign, while JS-only tags
@@ -851,9 +853,10 @@ jobs:
             "chmod +x /tmp/vps-deploy-web.sh && $REMOTE_ENV bash /tmp/vps-deploy-web.sh"
           printf '%s\n' "- VPS deploy: ✅ https://$WEB_HOSTNAME (tag $DEPLOY_TAG)" | scripts/ci/step-summary.sh
 
-      # Native mode only, and deliberately after the deploy: a JS-only tag has
-      # no Forgejo release to attach to, and the deploy must not depend on
-      # release creation (create-release runs in parallel in native mode).
+      # Native mode only: the zip is published as the `web-assets` artifact and
+      # attached to the release by publish-release with the APK assets, so the
+      # GitHub/Codeberg mirrors always carry the full asset set. No release
+      # dependency here (create-release runs in parallel).
       - name: Zip web build
         id: zip-web
         if: needs.changes.outputs.native == 'true'
@@ -865,59 +868,18 @@ jobs:
             echo "- Artifact: \`slovo-propovedi-web-v${VERSION}.zip\` ($(du -h "slovo-propovedi-web-v${VERSION}.zip" | cut -f1))"
           } | scripts/ci/step-summary.sh
 
-      - name: Upload web zip to the Forgejo Release
+      - name: Upload web zip artifact
         id: upload-web
         if: needs.changes.outputs.native == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
-          VERSION="${{ github.ref_name }}"
-          VERSION="${VERSION#v}"
-          TAG="${{ github.ref_name }}"
-
-          # create-release runs in parallel (it waits for CI first), so the
-          # release object may not exist yet — poll for it. The window matches
-          # create-release's CI wait (60 × 15 s = 15 min), which may include a
-          # GitHub-hosted runner queue.
-          RELEASE_JSON=/tmp/fo-release-web.json
-          RELEASE_ID=""
-          for attempt in $(seq 1 60); do
-            curl -s \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -o "$RELEASE_JSON" \
-              "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG"
-            RELEASE_ID=$(jq -r '.id // empty' "$RELEASE_JSON" 2>/dev/null || true)
-            if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "null" ]; then
-              break
-            fi
-            echo "Waiting for Forgejo release $TAG (attempt $attempt/60)..."
-            if [ "$attempt" -lt 60 ]; then
-              sleep 15
-            fi
-          done
-          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
-            echo "::error::Could not resolve Forgejo release id for $TAG"
-            exit 1
-          fi
-
-          # Same-name assets are skipped: Forgejo allows duplicates, a re-run
-          # must not add another copy of the web zip.
-          asset_exists() {
-            jq -e --arg name "$1" '[.assets[]? | select(.name == $name)] | length > 0' "$RELEASE_JSON" >/dev/null
-          }
-
-          WEB_ZIP="slovo-propovedi-web-v${VERSION}.zip"
-          if asset_exists "$WEB_ZIP"; then
-            echo "::warning::$WEB_ZIP already attached to the release — skipping"
-          else
-            curl -s -X POST \
-              "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=$WEB_ZIP" \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Content-Type: application/zip" \
-              --data-binary @"$WEB_ZIP"
-          fi
-          summary_row "- Uploaded to the release: ✅ [$TAG](${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG)"
+        # Attached to the release in publish-release with the APK assets, so
+        # the GitHub/Codeberg mirrors include it too.
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+        with:
+          name: web-assets
+          # zip-web writes the archive to the workspace root (../ from dist/).
+          path: slovo-propovedi-web-v*.zip
+          if-no-files-found: error
+          retention-days: 30
 
       # Footer: always runs, so the summary gets a verdict table even when a
       # step above failed. An empty outcome means the step never ran, not a pass.
@@ -964,11 +926,12 @@ jobs:
           find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
 
   publish-release:
-    # Native mode only: both dependencies are native-gated, so a JS-only tag
+    # Native mode only: every dependency is native-gated, so a JS-only tag
     # skips this job too. Split out of the build job so a failed attach/mirror
-    # can be re-run (re-run failed jobs) from the retained `release-assets`
-    # artifact — no APK rebuild.
-    needs: [create-release, android-package]
+    # can be re-run (re-run failed jobs) from the retained artifacts — no
+    # rebuild. The web zip is attached here with the APK assets, so the
+    # GitHub/Codeberg mirrors always carry the full asset set.
+    needs: [create-release, android-package, web-package]
     runs-on: ubuntu-24.04
 
     # Deliberately NOT in the `memory-heavy-jobs` concurrency group: this job
@@ -1008,7 +971,14 @@ jobs:
           name: release-assets
           path: release-assets
 
-      - name: Upload APK to the Forgejo Release
+      - name: Download web zip
+        id: download-web
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
+        with:
+          name: web-assets
+          path: web-assets
+
+      - name: Upload APK and web assets to the Forgejo Release
         id: upload-apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -1049,6 +1019,7 @@ jobs:
 
           upload_asset "slovo-propovedi-v${VERSION}.zip" "release-assets/slovo-propovedi-v${VERSION}.zip" "application/zip"
           upload_asset "SHA256SUMS.txt" "release-assets/SHA256SUMS.txt" "text/plain"
+          upload_asset "slovo-propovedi-web-v${VERSION}.zip" "web-assets/slovo-propovedi-web-v${VERSION}.zip" "application/zip"
           summary_row "- Uploaded to the release: ✅ [$TAG](${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG)"
 
       - name: Mirror release to GitHub
@@ -1161,6 +1132,25 @@ jobs:
             summary_row "- GitHub mirror: ⚠️ failed (checksum status $SUMS_UPLOAD_STATUS)"
           fi
 
+          # Web bundle rides in the same mirror release (422 = already there).
+          WEB_ZIP_FILE="slovo-propovedi-web-v${VERSION}.zip"
+          WEB_UPLOAD_STATUS=$(curl -s -o /tmp/gh-web-upload.json -w "%{http_code}" -X POST \
+            -H "$AUTH_HEADER" -H "$ACCEPT_HEADER" -H "$API_VERSION_HEADER" \
+            -H "Content-Type: application/zip" \
+            --data-binary @"web-assets/$WEB_ZIP_FILE" \
+            "$UPLOAD_BASE/releases/$RELEASE_ID/assets?name=$WEB_ZIP_FILE" || true)
+
+          if [ "$WEB_UPLOAD_STATUS" = "201" ]; then
+            echo "Uploaded $WEB_ZIP_FILE to GitHub release $RELEASE_ID"
+            summary_row "- GitHub mirror: ✅ web asset uploaded"
+          elif [ "$WEB_UPLOAD_STATUS" = "422" ]; then
+            echo "Asset $WEB_ZIP_FILE already exists on GitHub release $RELEASE_ID - skipping"
+            summary_row "- GitHub mirror: ✅ web asset already exists"
+          else
+            echo "::warning::GitHub mirror failed: web asset upload returned status $WEB_UPLOAD_STATUS - $(jq -r .message /tmp/gh-web-upload.json 2>/dev/null || true)"
+            summary_row "- GitHub mirror: ⚠️ failed (web asset status $WEB_UPLOAD_STATUS)"
+          fi
+
       - name: Mirror release to Codeberg
         id: mirror-codeberg
         env:
@@ -1182,6 +1172,8 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
           ZIP_FILE="slovo-propovedi-v${VERSION}.zip"
           ZIP_PATH="release-assets/$ZIP_FILE"
+          WEB_ZIP_FILE="slovo-propovedi-web-v${VERSION}.zip"
+          WEB_ZIP_PATH="web-assets/$WEB_ZIP_FILE"
           if [ -z "${MIRROR_CODEBERG_URL:-}" ] || [ -z "${MOBILE_REPOSITORY_NAME:-}" ]; then
             echo "::warning::MIRROR_CODEBERG_URL / MOBILE_REPOSITORY_NAME org variables are not set - skipping"
             summary_row "- Codeberg: ⚠️ skipped (MIRROR_CODEBERG_* / MOBILE_REPOSITORY_NAME not set)"
@@ -1218,6 +1210,7 @@ jobs:
 
           UPLOAD_ZIP=true
           UPLOAD_SUMS=true
+          UPLOAD_WEB=true
 
           if [ "$RELEASE_STATUS" = "200" ]; then
             RELEASE_ID=$(jq -r .id /tmp/cb-release.json 2>/dev/null || echo null)
@@ -1230,9 +1223,11 @@ jobs:
             # assets are the dedup mechanism: upload only what is missing.
             ZIP_EXISTS=$(jq -r --arg n "$ZIP_FILE" '[.assets[]? | select(.name == $n)] | length > 0' /tmp/cb-release.json 2>/dev/null || echo false)
             SUMS_EXISTS=$(jq -r --arg n "SHA256SUMS.txt" '[.assets[]? | select(.name == $n)] | length > 0' /tmp/cb-release.json 2>/dev/null || echo false)
+            WEB_EXISTS=$(jq -r --arg n "$WEB_ZIP_FILE" '[.assets[]? | select(.name == $n)] | length > 0' /tmp/cb-release.json 2>/dev/null || echo false)
             if [ "$ZIP_EXISTS" = "true" ]; then UPLOAD_ZIP=false; fi
             if [ "$SUMS_EXISTS" = "true" ]; then UPLOAD_SUMS=false; fi
-            if [ "$UPLOAD_ZIP" = "false" ] && [ "$UPLOAD_SUMS" = "false" ]; then
+            if [ "$WEB_EXISTS" = "true" ]; then UPLOAD_WEB=false; fi
+            if [ "$UPLOAD_ZIP" = "false" ] && [ "$UPLOAD_SUMS" = "false" ] && [ "$UPLOAD_WEB" = "false" ]; then
               echo "Assets already attached to Codeberg release $TAG - skipping upload"
               summary_row "- Codeberg mirror: ✅ asset already attached"
               exit 0
@@ -1311,6 +1306,21 @@ jobs:
             fi
           fi
 
+          if [ "$UPLOAD_WEB" = "true" ]; then
+            WEB_UPLOAD_STATUS=$(curl -s -o /tmp/cb-web-upload.json -w "%{http_code}" -X POST \
+              -H "$AUTH_HEADER" -H "Content-Type: application/zip" \
+              --data-binary @"$WEB_ZIP_PATH" \
+              "$API_BASE/releases/$RELEASE_ID/assets?name=$WEB_ZIP_FILE" || true)
+
+            if [ "$WEB_UPLOAD_STATUS" = "201" ]; then
+              echo "Uploaded $WEB_ZIP_FILE to Codeberg release $RELEASE_ID"
+              summary_row "- Codeberg mirror: ✅ web asset uploaded"
+            else
+              echo "::warning::Codeberg mirror failed: web asset upload returned status $WEB_UPLOAD_STATUS - $(jq -r .message /tmp/cb-web-upload.json 2>/dev/null || true)"
+              summary_row "- Codeberg mirror: ⚠️ failed (web asset upload status $WEB_UPLOAD_STATUS)"
+            fi
+          fi
+
       - name: Prune old Codeberg release assets
         id: prune-codeberg
         env:
@@ -1380,8 +1390,8 @@ jobs:
           # Newest first: created_at is the primary key, id breaks ties (the
           # endpoint already returns newest-first, but sort explicitly so the
           # keep window does not depend on server ordering). One release per
-          # line with its first .zip asset resolved up front.
-          jq -c 'sort_by([(.created_at // ""), .id]) | reverse | .[] | {id, tag: (.tag_name // ""), zip: ([.assets[]? | select(.name | endswith(".zip")) | {id, name}][0] // null)}' \
+          # line with ALL .zip assets (APK + web bundle) resolved up front.
+          jq -c 'sort_by([(.created_at // ""), .id]) | reverse | .[] | {id, tag: (.tag_name // ""), zips: [.assets[]? | select(.name | endswith(".zip")) | {id, name}]}' \
             /tmp/cb-releases.json > /tmp/cb-releases-sorted.jsonl || {
             echo "::warning::Codeberg prune failed: releases payload transform failed"
             summary_row "- Codeberg prune: ⚠️ failed (payload transform)"
@@ -1398,8 +1408,7 @@ jobs:
 
             RELEASE_ID=$(jq -r '.id' <<<"$RELEASE")
             RELEASE_TAG=$(jq -r '.tag' <<<"$RELEASE")
-            ASSET_ID=$(jq -r '.zip.id // empty' <<<"$RELEASE")
-            ASSET_NAME=$(jq -r '.zip.name // empty' <<<"$RELEASE")
+            ASSET_COUNT=$(jq -r '.zips | length' <<<"$RELEASE")
 
             WITHIN_WINDOW=false
             if [ "$INDEX" -le "$KEEP_COUNT" ]; then
@@ -1415,27 +1424,28 @@ jobs:
             fi
 
             if [ "$WITHIN_WINDOW" = "true" ]; then
-              if [ -n "$ASSET_ID" ]; then KEPT=$((KEPT + 1)); fi
+              KEPT=$((KEPT + ASSET_COUNT))
               continue
             fi
 
-            if [ -z "$ASSET_ID" ]; then
-              continue
-            fi
+            # Only .zip attachments are pruned (APK + web bundle):
+            # SHA256SUMS.txt is tiny and keeping it leaves old release pages
+            # self-consistent.
+            while IFS=$'\t' read -r ASSET_ID ASSET_NAME; do
+              [ -n "$ASSET_ID" ] || continue
 
-            # Only .zip attachments are pruned: SHA256SUMS.txt is tiny and
-            # keeping it leaves old release pages self-consistent.
-            DELETE_STATUS=$(curl -s -o /tmp/cb-delete.json -w "%{http_code}" -X DELETE \
-              -H "$AUTH_HEADER" \
-              "$API_BASE/releases/$RELEASE_ID/assets/$ASSET_ID" || true)
+              DELETE_STATUS=$(curl -s -o /tmp/cb-delete.json -w "%{http_code}" -X DELETE \
+                -H "$AUTH_HEADER" \
+                "$API_BASE/releases/$RELEASE_ID/assets/$ASSET_ID" || true)
 
-            if [ "$DELETE_STATUS" = "204" ]; then
-              echo "Pruned $ASSET_NAME from Codeberg release $RELEASE_TAG"
-              summary_row "- Codeberg prune: ✅ pruned $RELEASE_TAG ($ASSET_NAME)"
-              PRUNED=$((PRUNED + 1))
-            else
-              echo "::warning::Codeberg prune failed for $RELEASE_TAG ($ASSET_NAME): status $DELETE_STATUS - $(jq -r .message /tmp/cb-delete.json 2>/dev/null || true)"
-            fi
+              if [ "$DELETE_STATUS" = "204" ]; then
+                echo "Pruned $ASSET_NAME from Codeberg release $RELEASE_TAG"
+                summary_row "- Codeberg prune: ✅ pruned $RELEASE_TAG ($ASSET_NAME)"
+                PRUNED=$((PRUNED + 1))
+              else
+                echo "::warning::Codeberg prune failed for $RELEASE_TAG ($ASSET_NAME): status $DELETE_STATUS - $(jq -r .message /tmp/cb-delete.json 2>/dev/null || true)"
+              fi
+            done < <(jq -r '.zips[] | [.id, .name] | @tsv' <<<"$RELEASE")
           done < /tmp/cb-releases-sorted.jsonl
 
           summary_row "- Codeberg prune: kept newest $KEPT zips, pruned $PRUNED"
@@ -1447,6 +1457,7 @@ jobs:
         env:
           CHANGELOG_OUTCOME: ${{ steps.changelog.outcome }}
           DOWNLOAD_ARTIFACTS_OUTCOME: ${{ steps.download-artifacts.outcome }}
+          DOWNLOAD_WEB_OUTCOME: ${{ steps.download-web.outcome }}
           UPLOAD_APK_OUTCOME: ${{ steps.upload-apk.outcome }}
           MIRROR_GITHUB_OUTCOME: ${{ steps.mirror-github.outcome }}
           MIRROR_CODEBERG_OUTCOME: ${{ steps.mirror-codeberg.outcome }}
@@ -1470,6 +1481,7 @@ jobs:
             echo '| --- | --- |'
             summary_row changelog "$CHANGELOG_OUTCOME"
             summary_row download-artifacts "$DOWNLOAD_ARTIFACTS_OUTCOME"
+            summary_row download-web "$DOWNLOAD_WEB_OUTCOME"
             summary_row upload-apk "$UPLOAD_APK_OUTCOME"
             summary_row mirror-github "$MIRROR_GITHUB_OUTCOME"
             summary_row mirror-codeberg "$MIRROR_CODEBERG_OUTCOME"
