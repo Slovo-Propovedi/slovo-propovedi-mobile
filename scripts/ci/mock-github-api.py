@@ -28,6 +28,8 @@ RUN_ID = 123
 REPO = "/repos/owner/repo"
 WORKFLOW = "/actions/workflows/ci.yml"
 ARTIFACT_NAME = "unsigned-apk"
+SELFTEST_SHA = "0123456789abcdef0123456789abcdef01234567"
+WRONG_SHA = "f" * 40
 STATE = {}
 
 
@@ -86,6 +88,7 @@ class Handler(BaseHTTPRequestHandler):
             "id": RUN_ID,
             "status": status,
             "conclusion": conclusion,
+            "head_sha": WRONG_SHA if STATE["wrong_sha"] else STATE["sha"],
             "html_url": f"{STATE['base_url']}/runs/{RUN_ID}",
         }
 
@@ -101,6 +104,18 @@ class Handler(BaseHTTPRequestHandler):
                 return
             self.send_json(200, {"sha": path.rsplit("/", 1)[-1]})
             return
+        for kind in ("tags", "heads"):
+            prefix = f"{REPO}/git/ref/{kind}/"
+            if path.startswith(prefix):
+                ref = path[len(prefix):]
+                self.send_json(200, {
+                    "ref": f"refs/{kind}/{ref}",
+                    "object": {
+                        "sha": WRONG_SHA if STATE["wrong_tag"] else STATE["sha"],
+                        "type": "commit",
+                    },
+                })
+                return
         if path == f"{REPO}/actions/runs/{RUN_ID}":
             if STATE["run_503"]:
                 self.send_json(503, {"message": "service unavailable"})
@@ -192,6 +207,21 @@ def main():
         action="store_true",
         help="return 403 for artifact downloads (transport-failure scenario)",
     )
+    parser.add_argument(
+        "--sha",
+        default=SELFTEST_SHA,
+        help="commit sha the mock tag/ref endpoints resolve to",
+    )
+    parser.add_argument(
+        "--wrong-tag",
+        action="store_true",
+        help="resolve the tag/ref endpoints to a different commit (moved-tag scenario)",
+    )
+    parser.add_argument(
+        "--wrong-sha",
+        action="store_true",
+        help="report a different head_sha on the run (stale-run scenario)",
+    )
     args = parser.parse_args()
 
     STATE["scenario"] = args.scenario
@@ -203,6 +233,9 @@ def main():
     STATE["run_503"] = args.run_503
     STATE["mirror_401"] = args.mirror_401
     STATE["artifact_error"] = args.artifact_error
+    STATE["sha"] = args.sha
+    STATE["wrong_tag"] = args.wrong_tag
+    STATE["wrong_sha"] = args.wrong_sha
     STATE["dispatch_time"] = time.monotonic()
 
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)

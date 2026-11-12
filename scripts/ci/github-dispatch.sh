@@ -30,8 +30,9 @@
 #
 # Exit codes:
 #   0   run succeeded (and every requested artifact was downloaded)
-#   1   the run completed without success, or a requested artifact was not
-#       produced / downloaded empty — a real build failure, do NOT re-run locally
+#   1   the run completed without success, a requested artifact was not
+#       produced / downloaded empty, or the dispatched run's head_sha is not
+#       $SHA — a real build failure, do NOT re-run locally
 #   2   usage/environment error (missing env, bad SHA/REF/ARTIFACTS format,
 #       missing jq)
 #   3   the dispatched run never appeared on GitHub (run-discovery path only)
@@ -44,6 +45,8 @@
 #       cancel (the run is already terminal)
 #   43  the run was cancelled externally (e.g. superseded by a newer push) —
 #       neutral: no fallback, no failure; the newer run reports the result
+#   44  the mirror tag/ref does not resolve to SHA (hard failure, no local
+#       fallback) — the push mirror served a stale or moved ref
 #
 # The dispatch POST is retried up to 3 attempts (5s apart) on transport-level
 # failures — HTTP 000 (DNS/connect) and 5xx; 4xx (auth/validation) is not retried.
@@ -53,6 +56,9 @@
 # Stdout contract: once the run is known, a single line `GH_RUN_URL=<url>` is
 # printed (before polling), so callers that capture stdout can report the run
 # URL on the 0/1/42/43 exit paths. All human-readable progress goes to stderr.
+# On the success path (exit 0) only, after artifact extraction, a line
+# `GH_UNSIGNED_APK_SHA256=<hex>` is printed when an artifact directory holds
+# exactly one *.apk; callers must treat a missing digest as fatal.
 
 set -euo pipefail
 
@@ -173,6 +179,47 @@ wait_for_mirror() {
   done
 }
 
+verify_tag_ref() {
+  local deadline=$((SECONDS + MIRROR_WAIT_MIN * 60))
+  local code sha ref_type commit_sha
+  while :; do
+    code=$(api_request GET "$GH_API_BASE/repos/$GH_REPO/git/ref/tags/$REF" "$WORK_DIR/ref.json")
+    if [ "$code" = "404" ]; then
+      code=$(api_request GET "$GH_API_BASE/repos/$GH_REPO/git/ref/heads/$REF" "$WORK_DIR/ref.json")
+    fi
+
+    if [ "$code" = "200" ]; then
+      sha=$(jq -r '.object.sha // empty' "$WORK_DIR/ref.json")
+      ref_type=$(jq -r '.object.type // empty' "$WORK_DIR/ref.json")
+      commit_sha=$sha
+      # An annotated tag points at a tag object; dereference it to the commit.
+      if [ "$ref_type" = "tag" ]; then
+        commit_sha=""
+        code=$(api_request GET "$GH_API_BASE/repos/$GH_REPO/git/tags/$sha" "$WORK_DIR/tag.json")
+        if [ "$code" = "200" ]; then
+          commit_sha=$(jq -r '.object.sha // empty' "$WORK_DIR/tag.json")
+        fi
+      fi
+      if [ -n "$commit_sha" ]; then
+        if [ "$commit_sha" = "$SHA" ]; then
+          log "tag $REF resolves to $SHA on $GH_REPO"
+          return 0
+        fi
+        # A moved ref will not move back: fail now, do not retry.
+        log "error: $REF on $GH_REPO resolves to $commit_sha, not our commit $SHA — refusing to dispatch (stale or moved ref; no local fallback)"
+        exit 44
+      fi
+    fi
+
+    if [ "$SECONDS" -ge "$deadline" ]; then
+      log "error: could not resolve $REF to $SHA on $GH_REPO within ${MIRROR_WAIT_MIN}m (last HTTP ${code:-none}) — refusing to dispatch (no local fallback)"
+      exit 44
+    fi
+    log "waiting for $REF on $GH_REPO to resolve to $SHA (HTTP ${code:-none}); retrying in ${POLL_INTERVAL_SECONDS}s"
+    sleep "$POLL_INTERVAL_SECONDS"
+  done
+}
+
 discover_run_id() {
   local deadline=$((SECONDS + DISCOVER_TIMEOUT_SECONDS))
   local url code run_id
@@ -255,7 +302,7 @@ download_artifacts() {
   [ -n "${ARTIFACTS:-}" ] || return 0
 
   local code url archive name outdir pair
-  local -a pairs
+  local -a pairs apks
   code=$(api_request GET \
     "$GH_API_BASE/repos/$GH_REPO/actions/runs/$RUN_ID/artifacts" \
     "$WORK_DIR/artifacts.json")
@@ -303,6 +350,10 @@ download_artifacts() {
       exit 42
     fi
     log "downloaded artifact '$name' -> $outdir ($(wc -c < "$archive") bytes)"
+    mapfile -t apks < <(find "$outdir" -maxdepth 1 -name '*.apk')
+    if [ "${#apks[@]}" -eq 1 ]; then
+      printf 'GH_UNSIGNED_APK_SHA256=%s\n' "$(sha256sum "${apks[0]}" | awk '{print $1}')"
+    fi
   done
 }
 
@@ -329,7 +380,7 @@ poll_run() {
   local start=$SECONDS
   local deadline=$((start + RUN_TIMEOUT_MIN * 60))
   local queue_started=""
-  local code status conclusion html_url
+  local code status conclusion html_url head_sha
 
   while :; do
     code=$(api_request GET \
@@ -352,6 +403,13 @@ poll_run() {
       html_url=$(jq -r '.html_url // empty' "$WORK_DIR/run.json")
       if [ -n "$html_url" ]; then
         RUN_URL=$html_url
+      fi
+      # Refuse to use a run that belongs to another commit. Do NOT cancel it:
+      # it is not ours to touch.
+      head_sha=$(jq -r '.head_sha // empty' "$WORK_DIR/run.json")
+      if [ -n "$head_sha" ] && [ "$head_sha" != "$SHA" ]; then
+        log "error: run $RUN_ID head_sha $head_sha does not match our commit $SHA — refusing to use this run"
+        exit 1
       fi
 
       case "$status" in
@@ -402,6 +460,7 @@ poll_run() {
 
 log "waiting for commit $SHA on $GH_REPO"
 wait_for_mirror
+verify_tag_ref
 
 RUN_ID=$(dispatch_workflow)
 RUN_URL="https://github.com/$GH_REPO/actions/runs/$RUN_ID"

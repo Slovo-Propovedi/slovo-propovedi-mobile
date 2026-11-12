@@ -13,6 +13,11 @@
 #   (h) API unreachable during poll           -> 42 (bounded by RUN_TIMEOUT_MIN)
 #   (i) mirror rejects the token (401)        -> 42 (fallback, no dispatch POST)
 #   (j) run never booted (startup_failure)    -> 42 (fallback, no job-log fetch)
+#   (k) mirror tag points elsewhere           -> 44 (hard failure, no dispatch POST)
+#   (l) dispatched run is for another commit  -> 1 (real failure, no cancel POST)
+#
+# Case (a) also asserts the emitted GH_UNSIGNED_APK_SHA256= digest matches the
+# sha256 of the extracted apk.
 #
 # Usage: bash scripts/ci/github-dispatch-selftest.sh
 
@@ -42,9 +47,10 @@ stop_mock() {
   fi
 }
 
-start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [request_log] [dispatch_503_once] [run_503] [mirror_401] -> sets PORT
+start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [request_log] [dispatch_503_once] [run_503] [mirror_401] [wrong_tag] [wrong_sha] -> sets PORT
   local scenario=$1 cancel_log=$2 dispatch_log=${3:-} artifact_error=${4:-} request_log=${5:-}
-  local dispatch_503_once=${6:-} run_503=${7:-} mirror_401=${8:-} port_file
+  local dispatch_503_once=${6:-} run_503=${7:-} mirror_401=${8:-} wrong_tag=${9:-} wrong_sha=${10:-}
+  local port_file
   local extra=()
   port_file="$WORK_DIR/port"
   rm -f "$port_file"
@@ -63,7 +69,13 @@ start_mock() { # <scenario> <cancel_log> [dispatch_log] [artifact_error] [reques
   if [ -n "$mirror_401" ]; then
     extra+=(--mirror-401)
   fi
-  python3 "$MOCK" --scenario "$scenario" --port-file "$port_file" \
+  if [ -n "$wrong_tag" ]; then
+    extra+=(--wrong-tag)
+  fi
+  if [ -n "$wrong_sha" ]; then
+    extra+=(--wrong-sha)
+  fi
+  python3 "$MOCK" --scenario "$scenario" --port-file "$port_file" --sha "$SHA" \
     --cancel-log "$cancel_log" --dispatch-log "$dispatch_log" "${extra[@]}" &
   MOCK_PID=$!
   for _ in $(seq 1 100); do
@@ -123,10 +135,20 @@ run_dispatch() { # <workdir> <queue_timeout> <artifacts-or-empty> [extra env...]
 # --- (a) success + artifact download -----------------------------------------
 start_mock success "$WORK_DIR/cancel-a.log"
 status=0
-run_dispatch "$WORK_DIR/success" 1 "unsigned-apk=unsigned-apk" || status=$?
+run_dispatch "$WORK_DIR/success" 1 "unsigned-apk=unsigned-apk" \
+  >"$WORK_DIR/success-stdout.log" 2>/dev/null || status=$?
 stop_mock
 check_exit "(a) successful run with artifact" 0 "$status"
 check_file "(a) extracted artifact" "$WORK_DIR/success/unsigned-apk/app-prod-release-unsigned.apk"
+expected_apk_sha=$(sha256sum \
+  "$WORK_DIR/success/unsigned-apk/app-prod-release-unsigned.apk" | awk '{print $1}')
+if [ -s "$WORK_DIR/success-stdout.log" ] \
+  && grep -qx "GH_UNSIGNED_APK_SHA256=$expected_apk_sha" "$WORK_DIR/success-stdout.log"; then
+  printf 'ok   (a) emitted digest matches the extracted apk\n'
+else
+  printf 'FAIL (a) stdout does not contain GH_UNSIGNED_APK_SHA256=%s\n' "$expected_apk_sha"
+  FAILURES=$((FAILURES + 1))
+fi
 
 # --- (b) completed run with failure ------------------------------------------
 start_mock failure "$WORK_DIR/cancel-b.log"
@@ -238,6 +260,32 @@ if [ -s "$WORK_DIR/cancel-j.log" ]; then
   FAILURES=$((FAILURES + 1))
 else
   printf 'ok   (j) no cancel POST sent\n'
+fi
+
+# --- (k) mirror tag points at a different commit: hard failure, no dispatch ---
+start_mock success "$WORK_DIR/cancel-k.log" "$WORK_DIR/dispatch-k.log" "" "" "" "" "" "wrong-tag"
+status=0
+run_dispatch "$WORK_DIR/wrong-tag" 1 "" || status=$?
+stop_mock
+check_exit "(k) tag/ref mismatch -> hard failure" 44 "$status"
+if [ -s "$WORK_DIR/dispatch-k.log" ]; then
+  printf 'FAIL (k) dispatcher POSTed a dispatch despite the tag/ref mismatch\n'
+  FAILURES=$((FAILURES + 1))
+else
+  printf 'ok   (k) no dispatch POST sent\n'
+fi
+
+# --- (l) dispatched run belongs to another commit: failure, no cancel ---------
+start_mock success "$WORK_DIR/cancel-l.log" "" "" "" "" "" "" "" "wrong-sha"
+status=0
+run_dispatch "$WORK_DIR/wrong-sha" 1 "" || status=$?
+stop_mock
+check_exit "(l) run head_sha mismatch -> real failure" 1 "$status"
+if [ -s "$WORK_DIR/cancel-l.log" ]; then
+  printf 'FAIL (l) dispatcher cancelled a run that is not ours\n'
+  FAILURES=$((FAILURES + 1))
+else
+  printf 'ok   (l) no cancel POST sent\n'
 fi
 
 # --- dry-run touches no network ----------------------------------------------
