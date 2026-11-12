@@ -29,12 +29,13 @@ interface PillTabsProps {
 
 const SHADOW_COLORS = [
   'rgba(0, 0, 0, 0)',
-  'rgba(0, 0, 0, 0.005)',
-  'rgba(0, 0, 0, 0.065)',
+  'rgba(0, 0, 0, 0.08)',
   'rgba(0, 0, 0, 0.02)',
   'rgba(0, 0, 0, 0)',
 ] as const
-const SHADOW_LOCATIONS = [0, 0.33, 0.5, 0.78, 1] as const
+// The box is 124dp tall and the pill's bottom edge sits at 60/124 ≈ 0.48, so the
+// profile starts at true 0 exactly there and peaks just under the pill.
+const SHADOW_LOCATIONS = [0.48, 0.56, 0.74, 1] as const
 
 export const PillTabs = ({
   items,

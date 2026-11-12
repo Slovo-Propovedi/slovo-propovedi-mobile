@@ -9,9 +9,9 @@ const ROW_GUTTER = INDENTS.lowest
 const SMALL_GAP = INDENTS.low
 // The halo is a cast shadow: it overflows its row and tints the content below,
 // so the row reserves only SMALL_GAP under the pill (no clipping, no negatives).
-// Sides reach far past the visible falloff; the top sits behind the opaque pill.
-const HALO_DEPTH = 124
-const HALO_SIDE = 72
+// Sides reach past the falloff; the top sits behind the opaque pill.
+const HALO_DEPTH = 64
+const HALO_SIDE = 48
 const HALO_TOP = INDENTS.middle
 
 export const styles = StyleSheet.create({

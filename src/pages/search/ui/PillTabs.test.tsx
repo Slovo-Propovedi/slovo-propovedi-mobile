@@ -26,10 +26,10 @@ const SCROLL_ID = 'pill-tabs-scroll'
 const STRETCH_ROW_ID = 'pill-tabs-stretch-row'
 const SHADOW_ID = 'pill-tabs-shadow'
 const TRACK_HEIGHT = 48
-// The halo is a cast shadow: it overflows the row (124dp below the track and
-// 72dp to each side) and tints the content underneath instead of reserving room.
-const HALO_DEPTH = 124
-const HALO_SIDE = 72
+// The halo is a cast shadow: it overflows the row (64dp below the track and
+// 48dp to each side) and tints the content underneath instead of reserving room.
+const HALO_DEPTH = 64
+const HALO_SIDE = 48
 const HALO_TOP = 12
 const HALO_BOX_HEIGHT = TRACK_HEIGHT + HALO_TOP + HALO_DEPTH
 // The row itself only keeps a small shape-breathing gap under the pill.
@@ -87,16 +87,15 @@ describe('<PillTabs>', () => {
     expect(-Number(haloStyle.top) + TRACK_HEIGHT - Number(haloStyle.bottom)).toBe(HALO_BOX_HEIGHT)
     // It now overflows onto interactive content, so it must never swallow taps.
     expect(halo).toHaveStyle({ pointerEvents: 'none' })
-    // Profile: ~zero alpha at the pill's contour, peak a quarter into the
-    // visible region, then one long smooth tail reaching true 0 at the bottom.
+    // Profile: true 0 exactly at the pill's contour (the pill bottom sits at
+    // 60/124 ≈ 0.48 of the box), peak 0.08 just under it, long smooth tail to 0.
     expect(halo.props.colors).toEqual([
       'rgba(0, 0, 0, 0)',
-      'rgba(0, 0, 0, 0.005)',
-      'rgba(0, 0, 0, 0.065)',
+      'rgba(0, 0, 0, 0.08)',
       'rgba(0, 0, 0, 0.02)',
       'rgba(0, 0, 0, 0)',
     ])
-    expect(halo.props.locations).toEqual([0, 0.33, 0.5, 0.78, 1])
+    expect(halo.props.locations).toEqual([0.48, 0.56, 0.74, 1])
   })
 
   test('marks only the active pill as selected (radio semantics)', async () => {
