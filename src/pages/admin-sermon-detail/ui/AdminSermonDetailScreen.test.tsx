@@ -1,6 +1,6 @@
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { sermonsMocks } from 'shared/api/generated'
-import { renderHookWithProviders, renderWithProviders } from 'shared/mocks'
+import { mockConsole, renderHookWithProviders, renderWithProviders } from 'shared/mocks'
 import { useAdminSermonDetail } from '../lib/useAdminSermonDetail'
 import { AdminSermonDetailScreen } from './AdminSermonDetailScreen'
 
@@ -115,6 +115,22 @@ describe('<AdminSermonDetailScreen>', () => {
     fireEvent.press(await findByRole('link', { name: TIMECODE_LINK_LABEL }))
 
     expect(mockSeekTo).toHaveBeenCalledWith(TIMECODE_SEEK_SECONDS)
+  })
+
+  test('reports a failed timecode seek without crashing', async () => {
+    const { error: consoleError } = mockConsole('error')
+    mockFindOne.mockResolvedValue(buildSermon({ description: TIMECODED_DESCRIPTION }))
+    mockSeekTo.mockRejectedValueOnce(new Error('seek boom'))
+
+    const { findByRole } = await renderWithProviders(<AdminSermonDetailScreen />)
+    await fireEvent.press(await findByRole('link', { name: TIMECODE_LINK_LABEL }))
+
+    await waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith(
+        '[SermonDescriptionCard] timecode seek failed:',
+        expect.any(Error),
+      ),
+    )
   })
 
   test('renders a plain description when the sermon has no audio', async () => {

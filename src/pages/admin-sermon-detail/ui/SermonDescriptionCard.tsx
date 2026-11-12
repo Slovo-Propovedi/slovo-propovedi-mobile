@@ -15,13 +15,11 @@ export const SermonDescriptionCard = ({
 }: {
   audioUrl?: null | string
   description: string
-  player: AudioPlayer | null
+  player: AudioPlayer
 }) => {
   const { currentTheme } = useTheme()
 
   const handleTimecodePress = (ms: number) => {
-    if (!player) return
-
     void player.seekTo(millisToSeconds(ms)).catch(error => {
       console.error('[SermonDescriptionCard] timecode seek failed:', error)
       reportError(error, TIMECODE_SEEK_ERROR_MESSAGE)

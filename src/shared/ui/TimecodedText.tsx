@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { type StyleProp, Text, type TextStyle } from 'react-native'
 import { parseTimecodeSegments } from '../lib/player/parseTimecode'
 
@@ -12,7 +13,7 @@ export const TimecodedText = ({
   text: string
   timecodeStyle?: StyleProp<TextStyle>
 }) => {
-  const segments = parseTimecodeSegments(text)
+  const segments = useMemo(() => parseTimecodeSegments(text), [text])
 
   return (
     <Text style={style}>
