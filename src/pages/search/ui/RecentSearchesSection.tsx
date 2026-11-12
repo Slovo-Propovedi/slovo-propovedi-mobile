@@ -70,6 +70,7 @@ export const RecentSearchesSection = ({
   return (
     <>
       <ScrollView
+        keyboardDismissMode='on-drag'
         keyboardShouldPersistTaps='handled'
         contentContainerStyle={[
           styles.content,

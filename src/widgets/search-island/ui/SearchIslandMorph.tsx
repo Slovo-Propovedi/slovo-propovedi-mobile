@@ -100,9 +100,10 @@ export const SearchIslandMorph = () => {
 
   return (
     <>
+      {/* Pass-through frame: it only positions its interactive children. */}
       <GlassIsland
         isLight={isLight}
-        pointerEvents='auto'
+        pointerEvents='box-none'
         hostStyle={styles.container}
         animatedStyle={[frameStyle, restingFrameStyle]}
       >

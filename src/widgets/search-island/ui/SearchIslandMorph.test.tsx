@@ -353,6 +353,20 @@ describe('<SearchIslandMorph>', () => {
     expect(findContentWrapper(input).props.pointerEvents).toBe('auto')
   })
 
+  test('lets drags beside the pill content pass through to the list', async () => {
+    const { ctx } = await renderMorph()
+
+    // The frame only positions its interactive children (field row, mic/clear,
+    // closed-circle tap layer); its own glass box must never swallow a drag.
+    expect(findMorphContainer().props.pointerEvents).toBe('box-none')
+
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+
+    expect(findMorphContainer().props.pointerEvents).toBe('box-none')
+  })
+
   test('opens the search by tapping the closed circle', async () => {
     const { ctx, getByRole } = await renderMorph()
 

@@ -84,10 +84,13 @@ export const CustomTabBar = ({
           setMeasuredTabBarHeight(height)
         }}
       >
+        {/* Pass-through between the tab buttons: the glass host only positions
+            them, so a drag started on its padding/gaps lands on the list behind
+            the bar instead of being swallowed. */}
         <GlassIsland
           isLight={isLight}
           hostStyle={styles.floatingIsland}
-          pointerEvents={isFocused ? 'none' : undefined}
+          pointerEvents={isFocused ? 'none' : 'box-none'}
           animatedStyle={[islandStyle, restingIslandStyle]}
         >
           <Animated.View style={[styles.islandContent, contentStyle, restingContentStyle]}>

@@ -129,8 +129,9 @@ const getTabsProps = (itemKey: string) =>
     .mock.calls.map(([props]) => props)
     .find(props => props.items.some(item => item.key === itemKey))
 
-// Every scroll surface of the page opts into tap-through; a `keyboardDismissMode`
-// of `on-drag` on any of them would blur the field mid-scroll and collapse the pose.
+// Every scroll surface of the page opts into tap-through and dismisses the
+// keyboard on drag: the page poses are focus-invariant, so blurring mid-scroll
+// never changes the layout.
 const getScrollables = () =>
   screen.root?.queryAll(instance => instance.props.keyboardShouldPersistTaps === 'handled') ?? []
 
@@ -418,7 +419,7 @@ describe('<SearchScreen>', () => {
     expect(screen.getByText(SERMON.title)).toBeTruthy()
   })
 
-  test('keeps the keyboard up while the results list scrolls', async () => {
+  test('dismisses the keyboard while the results list scrolls', async () => {
     await renderScreen({
       focused: true,
       paged: createPaged({ sermons: createGroup([SERMON]) }),
@@ -428,20 +429,16 @@ describe('<SearchScreen>', () => {
     const scrollables = getScrollables()
 
     expect(scrollables.length).toBeGreaterThan(0)
-    scrollables.forEach(scrollable =>
-      expect(scrollable.props.keyboardDismissMode).not.toBe('on-drag'),
-    )
+    scrollables.forEach(scrollable => expect(scrollable.props.keyboardDismissMode).toBe('on-drag'))
   })
 
-  test('keeps the keyboard up while the recent searches list scrolls', async () => {
+  test('dismisses the keyboard while the recent searches list scrolls', async () => {
     await renderScreen({ focused: true, history: [SERMON] })
 
     const scrollables = getScrollables()
 
     expect(scrollables.length).toBeGreaterThan(0)
-    scrollables.forEach(scrollable =>
-      expect(scrollable.props.keyboardDismissMode).not.toBe('on-drag'),
-    )
+    scrollables.forEach(scrollable => expect(scrollable.props.keyboardDismissMode).toBe('on-drag'))
   })
 
   test('shows the empty state from three characters', async () => {

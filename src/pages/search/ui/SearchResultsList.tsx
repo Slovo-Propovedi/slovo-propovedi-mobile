@@ -62,6 +62,9 @@ export const SearchResultsList = ({
       { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
     ],
     ItemSeparatorComponent: SearchRowSeparator,
+    // Safe now that neither page pose depends on focus: dragging the list hides
+    // the keyboard and keeps scrolling instead of leaving a dead chrome strip.
+    keyboardDismissMode: 'on-drag' as const,
     keyboardShouldPersistTaps: 'handled' as const,
     ListEmptyComponent: groupState.isLoading ? (
       <SearchResultsSkeleton />

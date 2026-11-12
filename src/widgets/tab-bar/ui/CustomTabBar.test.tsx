@@ -382,13 +382,26 @@ describe('<CustomTabBar>', () => {
         return flat?.borderRadius === RADIUSES.round && flat?.maxWidth === 600
       })[0]
 
-    expect(findIsland()?.props.pointerEvents).toBeUndefined()
+    // Idle, the glass host passes drags through to the list between its buttons.
+    expect(findIsland()?.props.pointerEvents).toBe('box-none')
 
     await act(async () => {
       isSearchFieldFocusedAtom(ctx, true)
     })
 
     expect(findIsland()?.props.pointerEvents).toBe('none')
+  })
+
+  test('gates the floating chrome so drags beside the islands reach the list', async () => {
+    await renderTabBar()
+
+    const container = findFloatingContainer()
+    const islandsRow = findIslandsRow()
+
+    // Both layers only position the interactive islands; the strip around them
+    // belongs to the scroll content underneath.
+    expect(container?.props.pointerEvents).toBe('box-none')
+    expect(islandsRow?.props.pointerEvents).toBe('box-none')
   })
 
   test('renders a slot for every route in the navigator state', async () => {
