@@ -9,10 +9,16 @@ import {
   updateSectionSettings,
   withFavoritesFirst,
 } from 'entities/playlist'
+import {
+  loadSearchHistoryAction,
+  readSearchHistory,
+  writeSearchHistory,
+} from 'entities/search-history'
 import { type BackupImportData, type BackupImportMode } from '../model/backupPayload'
 import { applyPlayerScalars, applySettingsScalars, applyYouTubeImport } from './applyBackupScalars'
 import { mergeHistory } from './mergeHistory'
 import { mergePlaylists } from './mergePlaylists'
+import { mergeSearchHistory } from './mergeSearchHistory'
 
 const applyHistory = async (
   ctx: Ctx,
@@ -28,6 +34,22 @@ const applyHistory = async (
 
   await writeHistory(next)
   await loadHistoryAction(ctx)
+}
+
+const applySearchHistory = async (
+  ctx: Ctx,
+  data: BackupImportData,
+  mode: BackupImportMode,
+): Promise<void> => {
+  if (!data.searchHistory) return
+
+  const next =
+    mode === 'replace'
+      ? data.searchHistory
+      : mergeSearchHistory(await readSearchHistory(), data.searchHistory)
+
+  await writeSearchHistory(next)
+  await loadSearchHistoryAction(ctx)
 }
 
 const applyPlaylists = async (
@@ -76,5 +98,6 @@ export const applyImport = action(async (ctx, data: BackupImportData, mode: Back
   await applyYouTubeImport(data.youtubeImport)
   await applySectionSettings(ctx, data)
   await applyHistory(ctx, data, mode)
+  await applySearchHistory(ctx, data, mode)
   await applyPlaylists(ctx, data, mode)
 }, 'applyImport')

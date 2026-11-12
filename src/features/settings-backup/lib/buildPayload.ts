@@ -1,5 +1,6 @@
 import { readHistory } from 'entities/listening-history'
 import { readStoredMyPlaylists, readStoredSectionSettings } from 'entities/playlist'
+import { readSearchHistory } from 'entities/search-history'
 import { type BackupFile } from '../model/backupPayload'
 import { BACKUP_KIND, BACKUP_VERSION } from '../model/backupScalars'
 import { readScalars } from './readScalars'
@@ -17,12 +18,14 @@ const dropEmpty = <T extends object>(value: T): T | undefined =>
  * опускается, а не роняет экспорт.
  */
 export const buildPayload = async (): Promise<BackupFile> => {
-  const [listeningHistory, myPlaylists, myPlaylistsSectionSettings, scalars] = await Promise.all([
-    readHistory(),
-    readStoredMyPlaylists(),
-    readStoredSectionSettings(),
-    readScalars(),
-  ])
+  const [listeningHistory, myPlaylists, myPlaylistsSectionSettings, searchHistory, scalars] =
+    await Promise.all([
+      readHistory(),
+      readStoredMyPlaylists(),
+      readStoredSectionSettings(),
+      readSearchHistory(),
+      readScalars(),
+    ])
 
   return {
     data: {
@@ -30,6 +33,7 @@ export const buildPayload = async (): Promise<BackupFile> => {
       myPlaylists,
       myPlaylistsSectionSettings,
       player: scalars.player ? dropEmpty(scalars.player) : undefined,
+      searchHistory,
       settings: scalars.settings ? dropEmpty(scalars.settings) : undefined,
       youtubeImport: scalars.youtubeImport ? dropEmpty(scalars.youtubeImport) : undefined,
     },

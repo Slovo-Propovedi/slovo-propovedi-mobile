@@ -15,6 +15,7 @@ import {
   resumeAudioManifestMigration,
 } from 'entities/offline-cache'
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
+import { loadSearchHistoryAction } from 'entities/search-history'
 import { hydrateCachedSections } from 'entities/section'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { initServerUrlAction, loadHapticsEnabled, loadToursDisabled } from 'shared/model'
@@ -112,6 +113,7 @@ void initServerUrlAction(ctx)
 void loadHapticsEnabled(ctx)
 void loadToursDisabled(ctx)
 void loadHistoryAction(ctx)
+void loadSearchHistoryAction(ctx)
 void hydrateCachedSections(ctx)
 void hydrateCachedFeatureFlags(ctx).then(() => fetchMyFeatureFlags(ctx))
 
