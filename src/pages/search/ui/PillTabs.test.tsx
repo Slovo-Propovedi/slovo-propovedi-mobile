@@ -2,8 +2,27 @@ import { fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
 import { GLASS } from 'shared/ui'
-import { COLORS, FONT_SIZES, INDENTS, RADIUSES, withAlpha } from 'shared/ui/theme'
+import {
+  COLORS,
+  DarkTheme,
+  FONT_SIZES,
+  INDENTS,
+  LightTheme,
+  RADIUSES,
+  useTheme,
+  withAlpha,
+} from 'shared/ui/theme'
 import { PillTabs } from './PillTabs'
+
+jest.mock('shared/ui/theme', () => {
+  const actual = jest.requireActual('shared/ui/theme')
+
+  return { ...actual, useTheme: jest.fn() }
+})
+
+const mockUseTheme = jest.mocked(useTheme)
+const DARK_CONTEXT = { currentTheme: DarkTheme, isLight: false, themeMode: 'dark' } as const
+const LIGHT_CONTEXT = { currentTheme: LightTheme, isLight: true, themeMode: 'light' } as const
 
 const ITEMS = [
   { key: 'sermons', label: 'Проповеди' },
@@ -30,9 +49,9 @@ const SHADOW_FEATHER = 20
 const SHADOW_FILL = 'rgba(0, 0, 0, 0.09)'
 // The row itself only keeps a small shape-breathing gap under the pill.
 const SMALL_GAP = INDENTS.low
-// The active theme is resolved by ThemeProvider (light or dark), so expected
-// colors come from the same COLORS the component reads through `useTheme`.
-const SELECTED_FILL = () => withAlpha(COLORS.text, 0.1)
+// Theme-aware selection: subtle gray on the white track, clearly lighter on the
+// pure-black one. The theme is mocked so both branches are deterministic.
+const SELECTED_FILL = () => withAlpha(DarkTheme.text, 0.18)
 
 const trackStyle = () => StyleSheet.flatten(screen.getByTestId(TRACK_ID).props.style)
 
@@ -40,6 +59,10 @@ const segmentStyle = (label: string) =>
   StyleSheet.flatten(screen.getByRole('button', { name: label }).props.style)
 
 describe('<PillTabs>', () => {
+  beforeEach(() => {
+    mockUseTheme.mockReturnValue(DARK_CONTEXT)
+  })
+
   test('renders every pill label', async () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
 
@@ -58,8 +81,8 @@ describe('<PillTabs>', () => {
     })
     // Pure themed surface, not the off-white/dark-gray card token.
     const fill = trackStyle().backgroundColor
-    expect(fill).not.toBe(COLORS.card)
-    expect([COLORS.white, COLORS.black]).toContain(fill)
+    expect(fill).not.toBe(DarkTheme.card)
+    expect(fill).toBe(COLORS.black)
     // Android draws boxShadow as a background drawable clipped to the view, so
     // an outset shadow degrades into an inner rim — the halo layer replaces it.
     expect(trackStyle().boxShadow).toBeUndefined()
@@ -109,6 +132,22 @@ describe('<PillTabs>', () => {
     expect(screen.getByRole('button', { name: 'Плейлисты' })).toBeSelected()
     expect(screen.getByRole('button', { name: 'Проповеди' })).not.toBeSelected()
     expect(screen.getByRole('button', { name: 'Проповедники' })).not.toBeSelected()
+  })
+
+  test('uses a subtle gray selection on a light track', async () => {
+    mockUseTheme.mockReturnValue(LIGHT_CONTEXT)
+    await renderWithProviders(<PillTabs items={ITEMS} value='playlists' onChange={jest.fn()} />)
+
+    expect(trackStyle().backgroundColor).toBe(COLORS.white)
+    expect(segmentStyle('Плейлисты').backgroundColor).toBe(withAlpha(LightTheme.text, 0.1))
+  })
+
+  test('strengthens the scope selection fill on a dark track', async () => {
+    mockUseTheme.mockReturnValue(DARK_CONTEXT)
+    await renderWithProviders(<PillTabs items={ITEMS} value='playlists' onChange={jest.fn()} />)
+
+    expect(trackStyle().backgroundColor).toBe(COLORS.black)
+    expect(segmentStyle('Плейлисты').backgroundColor).toBe(SELECTED_FILL())
   })
 
   test('highlights the selected segment with a flat gray pill', async () => {
@@ -179,11 +218,11 @@ describe('<PillTabs>', () => {
     expect(row.paddingBottom).toBeUndefined()
 
     expect(segmentStyle('Плейлисты')).toMatchObject({
-      backgroundColor: COLORS.primary,
+      backgroundColor: DarkTheme.primary,
       borderRadius: RADIUSES.round,
     })
     expect(screen.getByText('Плейлисты')).toHaveStyle({
-      color: COLORS.onPrimary,
+      color: DarkTheme.onPrimary,
       fontWeight: '400',
     })
 
@@ -232,7 +271,7 @@ describe('<PillTabs>', () => {
 
     const readPill = screen.getByRole('button', { name: 'Читать' })
     expect(readPill).toBeDisabled()
-    expect(screen.getByText('Читать')).toHaveStyle({ color: COLORS.textMuted })
+    expect(screen.getByText('Читать')).toHaveStyle({ color: DarkTheme.textMuted })
 
     await fireEvent.press(readPill)
 

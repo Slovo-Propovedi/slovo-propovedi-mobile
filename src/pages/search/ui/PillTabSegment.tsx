@@ -1,7 +1,14 @@
-import { Text } from 'react-native'
+import { type ColorValue, Text } from 'react-native'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme, withAlpha } from 'shared/ui/theme'
 import { styles } from './PillTabs.styles'
+
+// Gray selection overlay on the scope track: subtle on the white track, clearly
+// lighter on the pure-black one where a 10% black overlay disappears.
+const SCOPE_SELECTED_ALPHA = { dark: 0.18, light: 0.1 } as const
+
+const getScopeSelectedFill = (isLight: boolean, text: ColorValue) =>
+  withAlpha(text, isLight ? SCOPE_SELECTED_ALPHA.light : SCOPE_SELECTED_ALPHA.dark)
 
 // In results the accent fill marks the selection, so the contrast comes from
 // boldness of the unselected labels instead of the selected one.
@@ -26,7 +33,7 @@ export const PillTabSegment = ({
   selected: boolean
   stretch?: boolean
 }) => {
-  const { currentTheme } = useTheme()
+  const { currentTheme, isLight } = useTheme()
 
   return (
     <PressableButton
@@ -38,7 +45,9 @@ export const PillTabSegment = ({
         !isResults && stretch && styles.segmentStretch,
         isResults && selected && styles.resultsItemSelected,
         selected && {
-          backgroundColor: isResults ? currentTheme.primary : withAlpha(currentTheme.text, 0.1),
+          backgroundColor: isResults
+            ? currentTheme.primary
+            : getScopeSelectedFill(isLight, currentTheme.text),
         },
       ]}
     >
