@@ -3,6 +3,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { execFileSync, execSync } from 'node:child_process'
 import { updateChangelogFiles } from './generate-changelog.mjs'
+import { rewriteAndroidRuntimeVersion, rewriteIosRuntimeVersion } from './runtime-version-core.mjs'
 
 const GREEN = '\x1b[32m'
 const RED = '\x1b[31m'
@@ -37,6 +38,8 @@ const GRADLE_PATH = 'android/app/build.gradle'
 const PBXPROJ_PATH = 'ios/SlovoPropovedi.xcodeproj/project.pbxproj'
 const FDROID_PATH = 'fdroid/metadata/ru.slovopropovedi.yml'
 const OTA_CONFIG_PATH = 'ota.config.ts'
+const STRINGS_XML_PATH = 'android/app/src/main/res/values/strings.xml'
+const EXPO_PLIST_PATH = 'ios/SlovoPropovedi/Supporting/Expo.plist'
 const CHANGELOG_PATH = 'CHANGELOG.md'
 const fastlaneChangelogPaths = versionCode => [
   `fastlane/metadata/android/en-US/changelogs/${versionCode}.txt`,
@@ -56,6 +59,8 @@ const dirtyOwnFiles = git([
   PBXPROJ_PATH,
   FDROID_PATH,
   OTA_CONFIG_PATH,
+  STRINGS_XML_PATH,
+  EXPO_PLIST_PATH,
   CHANGELOG_PATH,
   'fastlane/metadata/android/en-US/changelogs',
   'fastlane/metadata/android/ru/changelogs',
@@ -142,7 +147,7 @@ try {
   exitError(`File not found: ${GRADLE_PATH}`)
 }
 
-// --- Update all 4 files ---
+// --- Update all version files (5 version files + 2 native runtime mirrors) ---
 
 // 1. package.json
 pkg.version = newVersion
@@ -193,6 +198,28 @@ if (isNativeRelease) {
   otaConfig = otaConfig.replace(runtimeVersionPattern, `const RUNTIME_VERSION = '${newVersion}'`)
   writeFileSync(OTA_CONFIG_PATH, otaConfig)
   log(`→ RUNTIME_VERSION: ${currentRuntimeVersion} → ${newVersion}`, YELLOW)
+
+  // 6. android/app/src/main/res/values/strings.xml — expo prebuild mirror of RUNTIME_VERSION
+  const stringsXml = readFileSync(STRINGS_XML_PATH, 'utf-8')
+  const nextStringsXml = rewriteAndroidRuntimeVersion(stringsXml, newVersion)
+
+  if (!nextStringsXml) {
+    exitError(`Could not find "expo_runtime_version" in ${STRINGS_XML_PATH}`)
+  }
+
+  writeFileSync(STRINGS_XML_PATH, nextStringsXml)
+  log('✓ Updated android/app/src/main/res/values/strings.xml', GREEN)
+
+  // 7. ios/SlovoPropovedi/Supporting/Expo.plist — expo prebuild mirror of RUNTIME_VERSION
+  const expoPlist = readFileSync(EXPO_PLIST_PATH, 'utf-8')
+  const nextExpoPlist = rewriteIosRuntimeVersion(expoPlist, newVersion)
+
+  if (!nextExpoPlist) {
+    exitError(`Could not find "EXUpdatesRuntimeVersion" in ${EXPO_PLIST_PATH}`)
+  }
+
+  writeFileSync(EXPO_PLIST_PATH, nextExpoPlist)
+  log('✓ Updated ios/SlovoPropovedi/Supporting/Expo.plist', GREEN)
 } else {
   log(`→ RUNTIME_VERSION untouched (${currentRuntimeVersion})`, YELLOW)
 }
@@ -221,7 +248,7 @@ const bumpPaths = [
   GRADLE_PATH,
   PBXPROJ_PATH,
   FDROID_PATH,
-  ...(isNativeRelease ? [OTA_CONFIG_PATH] : []),
+  ...(isNativeRelease ? [OTA_CONFIG_PATH, STRINGS_XML_PATH, EXPO_PLIST_PATH] : []),
   CHANGELOG_PATH,
   ...fastlaneChangelogPaths(newVersionCode),
 ]
