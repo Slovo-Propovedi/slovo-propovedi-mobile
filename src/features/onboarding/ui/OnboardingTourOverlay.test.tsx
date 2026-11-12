@@ -419,7 +419,7 @@ describe('<OnboardingTourOverlay>', () => {
     expect(queryByText('hole:336,100')).toBeNull()
   })
 
-  test('spotlights the sermon-row ⋯ menu on the final search card', async () => {
+  test('spotlights the sermon-row ⋯ menu on the search card', async () => {
     const MENU_RECT: OnboardingTargetRect = { height: 40, width: 40, x: 300, y: 400 }
     const { getByTestId, getByText, queryByTestId, queryByText } = await renderAtDeck('search', 6, {
       'search-results.first-sermon-menu': instances(MENU_RECT),
@@ -427,7 +427,7 @@ describe('<OnboardingTourOverlay>', () => {
 
     expect(getByTestId(TOUR_MODAL)).toBeTruthy()
     expect(getByText('Меню проповеди')).toBeTruthy()
-    expect(getByText(DONE_LABEL)).toBeTruthy()
+    expect(getByText(NEXT_LABEL)).toBeTruthy()
     expect(getByText(DIM)).toBeTruthy()
     expect(getByText('hole:300,400')).toBeTruthy()
     expect(queryByTestId(TAP_MODAL)).toBeNull()
