@@ -1,12 +1,12 @@
 import { type AudioPlayer } from 'expo-audio'
 import { Text, View } from 'react-native'
+import { millisToSeconds } from 'shared/lib/player'
 import { reportError } from 'shared/model/error-dialog'
 import { TimecodedText } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { styles } from './styles'
 
 const TIMECODE_SEEK_ERROR_MESSAGE = 'Ошибка при перемотке аудио'
-const MS_PER_SECOND = 1000
 
 export const SermonDescriptionCard = ({
   audioUrl,
@@ -22,7 +22,7 @@ export const SermonDescriptionCard = ({
   const handleTimecodePress = (ms: number) => {
     if (!player) return
 
-    void player.seekTo(ms / MS_PER_SECOND).catch(error => {
+    void player.seekTo(millisToSeconds(ms)).catch(error => {
       console.error('[SermonDescriptionCard] timecode seek failed:', error)
       reportError(error, TIMECODE_SEEK_ERROR_MESSAGE)
     })

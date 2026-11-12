@@ -1,2 +1,2 @@
 export { formatPlaybackRate } from './formatPlaybackRate'
-export { millisToMinutesAndSeconds } from './timeConverters'
+export { millisToMinutesAndSeconds, millisToSeconds } from './timeConverters'

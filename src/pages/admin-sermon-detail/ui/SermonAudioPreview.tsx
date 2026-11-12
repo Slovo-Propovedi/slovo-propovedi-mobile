@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { type AudioPlayer, type AudioStatus } from 'expo-audio'
 import { View } from 'react-native'
 import { PlayerProgressBar } from 'entities/player'
+import { millisToSeconds } from 'shared/lib/player'
 import { reportError } from 'shared/model/error-dialog'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
@@ -33,7 +34,7 @@ export const SermonAudioPreview = ({
   }
 
   const handleSeek = (positionMillis: number) => {
-    void player.seekTo(positionMillis / 1000).catch(error => {
+    void player.seekTo(millisToSeconds(positionMillis)).catch(error => {
       console.error('[SermonAudioPreview] seek failed:', error)
       reportError(error, SEEK_ERROR_MESSAGE)
     })
