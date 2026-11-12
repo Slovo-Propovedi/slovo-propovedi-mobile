@@ -1245,7 +1245,31 @@ jobs:
             # Force is intentional: Codeberg is a read-only public mirror, so
             # its main and tags must follow Forgejo exactly. The helper only
             # answers the credential request of this single codeberg push.
-            if ! git -c credential.helper='!f() { test "$1" = get && printf "username=mirror\npassword=%s\n" "$MIRROR_CODEBERG_TOKEN"; }; f' push codeberg "+refs/remotes/origin/main:refs/heads/main" "+refs/tags/*:refs/tags/*"; then
+            # Codeberg/Gitea intermittently answers large HTTP/2 pushes with
+            # 504 + "send-pack: unexpected disconnect" while the pack HAS been
+            # processed server-side (the trailing "Everything up-to-date").
+            # Force HTTP/1.1 (known Gitea workaround), retry, and verify the
+            # tag via ls-remote before declaring failure — a 504 after
+            # server-side processing must not skip release creation.
+            PUSH_OK=""
+            for ATTEMPT in 1 2 3; do
+              if git -c http.version=HTTP/1.1 -c credential.helper='!f() { test "$1" = get && printf "username=mirror\npassword=%s\n" "$MIRROR_CODEBERG_TOKEN"; }; f' push codeberg "+refs/remotes/origin/main:refs/heads/main" "+refs/tags/*:refs/tags/*"; then
+                PUSH_OK=1
+                break
+              fi
+              # Anonymous on purpose: Codeberg is a public read-only mirror
+              # (see the comment above), so its refs are world-readable.
+              if git ls-remote --exit-code codeberg "refs/tags/$TAG" >/dev/null 2>&1; then
+                echo "tag $TAG already present on Codeberg despite push error (504 after server-side processing) - continuing"
+                PUSH_OK=1
+                break
+              fi
+              if [ "$ATTEMPT" -lt 3 ]; then
+                echo "push attempt $ATTEMPT failed; retrying in 15s"
+                sleep 15
+              fi
+            done
+            if [ -z "$PUSH_OK" ]; then
               echo "::warning::Codeberg mirror failed: git push to Codeberg failed — check that MIRROR_CODEBERG_TOKEN may write to the repo, that the Codeberg repo exists, and whether its history diverged from Forgejo"
               summary_row "- Codeberg mirror: ⚠️ failed (git push)"
               exit 0
