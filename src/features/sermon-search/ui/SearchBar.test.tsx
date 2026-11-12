@@ -1,7 +1,6 @@
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import * as IntentLauncher from 'expo-intent-launcher'
 import { Keyboard, Platform, StyleSheet, TextInput } from 'react-native'
-import { type SermonData } from 'entities/sermon'
 import { sermonsMocks } from 'shared/api/generated'
 import { createKeyDownEvent, installFakeDom } from 'shared/lib/testing'
 import { getSharedTestCtx, renderWithProviders } from 'shared/mocks'
@@ -9,13 +8,9 @@ import { showInfo } from 'shared/model/info-dialog'
 import { setBarCollapsed } from 'shared/ui/layout'
 import { INDENTS } from 'shared/ui/theme'
 import {
-  isSearchingAtom,
   isSearchOpenAtom,
   searchInputRequestAtom,
-  searchPlaylistsAtom,
-  searchPreachersAtom,
   searchQueryAtom,
-  searchResultsAtom,
   typeSearchInput,
 } from '../model'
 import { distinctValuesAtom } from '../model-distinctValues'
@@ -66,14 +61,6 @@ const flushAnimationFrame = async () => {
   })
 }
 
-const sermon: SermonData = {
-  artist: 'Иван',
-  artwork: 'https://example.com/a.jpg',
-  audioUrl: 'https://example.com/a.mp3',
-  id: '1',
-  title: 'Проповедь о вере',
-}
-
 let addListenerSpy: jest.SpyInstance
 
 // The file now uses ONE shared context, so every test must start from the same
@@ -82,11 +69,7 @@ beforeEach(() => {
   const ctx = getSharedTestCtx()
 
   searchQueryAtom(ctx, '')
-  searchResultsAtom(ctx, [])
-  searchPlaylistsAtom(ctx, [])
-  searchPreachersAtom(ctx, [])
   searchInputRequestAtom(ctx, null)
-  isSearchingAtom(ctx, false)
   isSearchOpenAtom(ctx, false)
   distinctValuesAtom(ctx, null)
   setBarCollapsed(ctx, false)
@@ -110,16 +93,13 @@ describe('<SearchBar>', () => {
     expect(ctx.get(searchQueryAtom)).toBe('вера')
   })
 
-  test('keeps the same input field across debounced query and result atom updates', async () => {
+  test('keeps the same input field across query atom updates', async () => {
     const ctx = getSharedTestCtx()
     const { getByPlaceholderText } = await renderWithProviders(<SearchBar />, { ctx })
     const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
 
     await act(async () => {
       searchQueryAtom(ctx, 'вера')
-      isSearchingAtom(ctx, true)
-      searchResultsAtom(ctx, [sermon])
-      isSearchingAtom(ctx, false)
     })
 
     // A remount would replace the host node and drop the caret/focus on web.
@@ -290,19 +270,15 @@ describe('<SearchBar>', () => {
     }
   })
 
-  test('clears the query via the clear button, resets results and keeps the search open', async () => {
+  test('clears the query via the clear button and keeps the search open', async () => {
     const ctx = getSharedTestCtx()
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, 'вера')
-    searchResultsAtom(ctx, [sermon])
-    isSearchingAtom(ctx, true)
     const { getByLabelText } = await renderWithProviders(<SearchBar />, { ctx })
 
     await fireEvent.press(getByLabelText(CLEAR_LABEL))
 
     expect(ctx.get(searchQueryAtom)).toBe('')
-    expect(ctx.get(searchResultsAtom)).toEqual([])
-    expect(ctx.get(isSearchingAtom)).toBe(false)
     expect(ctx.get(isSearchOpenAtom)).toBe(true)
   })
 

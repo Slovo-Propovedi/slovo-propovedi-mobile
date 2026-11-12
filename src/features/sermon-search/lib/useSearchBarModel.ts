@@ -1,12 +1,7 @@
 import { useAction, useAtom, useCtx } from '@reatom/npm-react'
 import { useState } from 'react'
 import { Keyboard } from 'react-native'
-import {
-  isSearchOpenAtom,
-  resetSearchResults,
-  searchInputRequestAtom,
-  searchQueryAtom,
-} from '../model'
+import { isSearchOpenAtom, searchInputRequestAtom, searchQueryAtom } from '../model'
 import { isSearchFieldVisibleAtom } from '../model-searchField'
 import { closeSearch } from '../model-session'
 import { useDistinctValuesOnOpen } from './useDistinctValuesOnOpen'
@@ -39,7 +34,6 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
   const [inputRequest] = useAtom(searchInputRequestAtom)
   const inputRef = useSearchInputFocus(isSearchFieldVisible)
   const closeSearchAction = useAction(closeSearch)
-  const resetSearchResultsAction = useAction(resetSearchResults)
   useDistinctValuesOnOpen(isSearchOpen)
 
   const handleChangeText = (text: string) => {
@@ -82,7 +76,6 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
     voiceInput.stopListening()
     setInputValue('')
     setHasSelectedSuggestion(false)
-    void resetSearchResultsAction()
     setQuery('')
     // The ⊗ sits inside the pill: pressing it must not hand focus away, or the
     // external ✕ and the keyboard would disappear along with the query.

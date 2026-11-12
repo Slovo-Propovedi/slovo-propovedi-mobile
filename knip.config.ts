@@ -59,14 +59,6 @@ const config: KnipConfig = {
     'xml-js', // FB2 parsing for the Read tab
   ],
 
-  // Search-history slice is complete ahead of its UI consumer: add/remove/clear
-  // actions and the loaded flag are exported and tested now, Phase 3 wires them
-  // into the search screen (see docs/debt.md → «Поиск»). Drop this entry when
-  // the search UI imports them.
-  ignoreIssues: {
-    'src/entities/search-history/index.ts': ['exports', 'types'],
-  },
-
   jest: true,
 
   project: ['app/**/*.{ts,tsx}', 'scripts/**/*.{js,mjs}', 'src/**/*.{ts,js,tsx,jsx}'],

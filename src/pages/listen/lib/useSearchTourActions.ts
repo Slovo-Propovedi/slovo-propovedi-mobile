@@ -1,7 +1,7 @@
-import { useAction, useAtom } from '@reatom/npm-react'
+import { useAction } from '@reatom/npm-react'
 import { useCallback, useEffect, useRef } from 'react'
 import { useTourActionRegistrar } from 'features/onboarding'
-import { searchResultsAtom, typeSearchInput } from 'features/sermon-search'
+import { typeSearchInput } from 'features/sermon-search'
 import { type SermonData } from 'entities/sermon'
 
 const OPEN_SEARCH_ACTION_ID = 'open-listen-search'
@@ -21,17 +21,19 @@ const TYPE_STEP_MS = 100
  * because `features/sermon-search` must not import `features/onboarding`
  * (dependency inversion).
  * @param root0 - Hook input.
+ * @param root0.getFirstSermon - Reads the first result currently rendered by the search page.
  * @param root0.onOpenSearch - Page-owned handler that opens the search overlay.
  * @param root0.onPressFirstSermon - Page-owned handler that starts playback of a sermon.
  */
 export const useSearchTourActions = ({
+  getFirstSermon,
   onOpenSearch,
   onPressFirstSermon,
 }: {
+  getFirstSermon: () => SermonData | undefined
   onOpenSearch: () => void
   onPressFirstSermon: (sermon: SermonData) => void
 }) => {
-  const [sermons] = useAtom(searchResultsAtom)
   const typeSearchInputAction = useAction(typeSearchInput)
   const typingTimerRef = useRef<null | ReturnType<typeof setTimeout>>(null)
 
@@ -50,11 +52,11 @@ export const useSearchTourActions = ({
   }, [typeSearchInputAction])
 
   const pressFirstSermon = useCallback(() => {
-    const firstSermon = sermons[0]
+    const firstSermon = getFirstSermon()
     if (firstSermon === undefined) return
 
     onPressFirstSermon(firstSermon)
-  }, [onPressFirstSermon, sermons])
+  }, [getFirstSermon, onPressFirstSermon])
 
   useEffect(
     () => () => {

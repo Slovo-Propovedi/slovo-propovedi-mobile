@@ -1,7 +1,7 @@
 import { type Atom, createCtx, action as mockAction, atom as mockAtom } from '@reatom/framework'
 import { act, waitFor } from '@testing-library/react-native'
 import { useTourActionRegistrar } from 'features/onboarding'
-import { searchQueryAtom, searchResultsAtom } from 'features/sermon-search'
+import { searchQueryAtom } from 'features/sermon-search'
 import { type SermonData } from 'entities/sermon'
 import { renderHookWithProviders } from 'shared/mocks'
 import { useSearchTourActions } from './useSearchTourActions'
@@ -30,7 +30,6 @@ jest.mock('features/sermon-search', () => {
   return {
     searchInputRequestAtom: mockSearchInputRequestAtom,
     searchQueryAtom: mockSearchQueryAtom,
-    searchResultsAtom: mockAtom<SermonData[]>([], 'mockSearchResultsAtom'),
     typeSearchInput: mockTypeSearchInput,
   }
 })
@@ -64,15 +63,20 @@ const getSearchInputRequest = () =>
 
 const renderActions = async (
   onPressFirstSermon: (sermon: SermonData) => void,
-  sermons: SermonData[] = [],
+  firstSermon: SermonData | undefined = undefined,
   onOpenSearch: () => void = jest.fn(),
 ) => {
   const ctx = createCtx()
-  searchResultsAtom(ctx, sermons)
 
-  await renderHookWithProviders(() => useSearchTourActions({ onOpenSearch, onPressFirstSermon }), {
-    ctx,
-  })
+  await renderHookWithProviders(
+    () =>
+      useSearchTourActions({
+        getFirstSermon: () => firstSermon,
+        onOpenSearch,
+        onPressFirstSermon,
+      }),
+    { ctx },
+  )
 
   return ctx
 }
@@ -84,7 +88,7 @@ describe('useSearchTourActions', () => {
 
   test('opens the search without typing the demo query', async () => {
     const onOpenSearch = jest.fn()
-    const ctx = await renderActions(jest.fn(), [], onOpenSearch)
+    const ctx = await renderActions(jest.fn(), undefined, onOpenSearch)
 
     await act(async () => {
       getRegisteredAction(OPEN_SEARCH)?.()
@@ -114,7 +118,12 @@ describe('useSearchTourActions', () => {
   test('stops typing when the sequence is cancelled on unmount', async () => {
     const ctx = createCtx()
     const { unmount } = await renderHookWithProviders(
-      () => useSearchTourActions({ onOpenSearch: jest.fn(), onPressFirstSermon: jest.fn() }),
+      () =>
+        useSearchTourActions({
+          getFirstSermon: () => undefined,
+          onOpenSearch: jest.fn(),
+          onPressFirstSermon: jest.fn(),
+        }),
       { ctx },
     )
 
@@ -135,7 +144,7 @@ describe('useSearchTourActions', () => {
 
   test('presses the first rendered sermon', async () => {
     const onPressFirstSermon = jest.fn()
-    await renderActions(onPressFirstSermon, [SERMON])
+    await renderActions(onPressFirstSermon, SERMON)
 
     await act(async () => {
       getRegisteredAction(PRESS_FIRST_SERMON)?.()

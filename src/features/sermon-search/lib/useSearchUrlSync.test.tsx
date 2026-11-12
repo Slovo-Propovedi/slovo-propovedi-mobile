@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react'
 import { Platform } from 'react-native'
 import { renderHookWithProviders, renderWithProviders } from 'shared/mocks'
 import { isSearchOpenAtom, searchQueryAtom } from '../model'
-import { fetchSermonResults } from './searchSources'
-import { useDebouncedSearch } from './useDebouncedSearch'
 import { useSearchUrlSync } from './useSearchUrlSync'
 
 const mockReplace = jest.fn()
@@ -24,14 +22,6 @@ jest.mock('expo-router', () => ({
     },
     setParams: (...args: unknown[]) => mockSetParams(...args),
   }),
-}))
-
-jest.mock('./searchSources', () => ({
-  fetchPlaylistTitleMatches: jest.fn().mockResolvedValue({ data: [], fromNetwork: true }),
-  fetchSermonResults: jest.fn().mockResolvedValue({ data: [], fromNetwork: true }),
-  persistPlaylistSearchResults: jest.fn(),
-  persistSearchResults: jest.fn(),
-  persistSermonSearchResults: jest.fn(),
 }))
 
 describe('useSearchUrlSync', () => {
@@ -133,22 +123,5 @@ describe('useSearchUrlSync', () => {
     expect(ctx.get(searchQueryAtom)).toBe('')
     expect(mockReplace).not.toHaveBeenCalled()
     expect(mockSetParams).not.toHaveBeenCalled()
-  })
-
-  test('deep-link seed fetches exactly once (no duplicate debounced fetch)', async () => {
-    mockParams = { search: 'вера' }
-    const ctx = createCtx()
-    const Probe = () => {
-      useSearchUrlSync()
-      useDebouncedSearch()
-      return null
-    }
-
-    await renderWithProviders(<Probe />, { ctx })
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 500))
-    })
-
-    expect(jest.mocked(fetchSermonResults)).toHaveBeenCalledTimes(1)
   })
 })

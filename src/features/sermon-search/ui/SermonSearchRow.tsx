@@ -11,6 +11,7 @@ export const SermonSearchRow = memo(
     menuButtonWrapper,
     onAddToPlaylist,
     onPress,
+    onRemoveFromSearchHistory,
     progress,
     sermon,
   }: {
@@ -18,6 +19,7 @@ export const SermonSearchRow = memo(
     menuButtonWrapper?: (button: ReactElement) => ReactElement
     onAddToPlaylist?: (sermon: AudioPlayerData) => void
     onPress: () => void
+    onRemoveFromSearchHistory?: () => void
     progress?: number
     sermon: SermonData
   }) => {
@@ -30,6 +32,7 @@ export const SermonSearchRow = memo(
           inHistory,
           isCompleted: progress === 1,
           onAddToPlaylist,
+          onRemoveFromSearchHistory,
           playlist: sermon.playlists?.[0],
           sermon: audio,
         })

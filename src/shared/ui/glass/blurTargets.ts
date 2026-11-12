@@ -24,7 +24,6 @@ export const BLUR_TARGET_ROUTES = {
   playlistEdit: '/listen/playlist-edit',
   playlistList: '/listen/playlist-list',
   read: '/read',
-  searchResults: '/listen/search-results',
 } as const
 
 const targets = new Map<string, BlurTargetRef>()

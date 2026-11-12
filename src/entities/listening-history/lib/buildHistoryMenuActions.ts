@@ -11,6 +11,8 @@ interface BuildHistoryMenuActionsParams {
   isCompleted: boolean
   /** Opens the add-to-playlist modal for the row's sermon. */
   onAddToPlaylist?: (sermon: AudioPlayerData) => void
+  /** Removes the row's sermon from the local search history (search UI only). */
+  onRemoveFromSearchHistory?: () => void
   playlist?: PlaylistData
   sermon: AudioPlayerData
 }
@@ -21,6 +23,7 @@ export const buildHistoryMenuActions = ({
   inHistory,
   isCompleted,
   onAddToPlaylist,
+  onRemoveFromSearchHistory,
   playlist,
   sermon,
 }: BuildHistoryMenuActionsParams): MenuItem[] => {
@@ -49,6 +52,13 @@ export const buildHistoryMenuActions = ({
       icon: 'time-outline',
       onPress: () => void removeHistoryEntryAction(ctx, sermon.id),
       text: 'Удалить из истории',
+    })
+
+  if (onRemoveFromSearchHistory)
+    actions.push({
+      icon: 'search-outline',
+      onPress: onRemoveFromSearchHistory,
+      text: 'Удалить из истории поиска',
     })
 
   return actions

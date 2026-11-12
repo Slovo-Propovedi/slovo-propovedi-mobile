@@ -1,111 +1,89 @@
 import { mapPlaylistEntityToPlaylistData, type PlaylistData } from 'entities/playlist'
 import { mapAllSermonsResponse, type SermonData } from 'entities/sermon'
-import { playlistsApi, sermonsApi } from 'shared/api'
+import { type APITypes, playlistsApi, sermonsApi } from 'shared/api'
 import { getCachedPlaylistSearch, setCachedPlaylistSearch } from './playlistSearchCache'
 import { getCachedSearchResults, setCachedSearchResults } from './searchCache'
 
-const SEARCH_TAKE = 20
-const PLAYLIST_SEARCH_LIMIT = 50
+const SERMON_PAGE_SIZE = 20
+const PLAYLIST_PAGE_SIZE = 20
 
-export interface SearchFetchResult<T> {
-  data: T
+export interface PlaylistSearchPage {
+  count: number
   fromNetwork: boolean
+  playlists: PlaylistData[]
+}
+
+export interface SermonSearchPage {
+  fromNetwork: boolean
+  nextCursor: null | string
+  sermons: SermonData[]
 }
 
 /**
- * Fetches sermons with an offline fallback to the per-query cache. Never rejects.
+ * Fetches one sermon search page. The first page falls back to the per-query
+ * cache on a network failure; later pages return empty instead. Never rejects.
  * @param query - Trimmed search query.
- * @param take - Maximum number of sermons requested (compact search uses 20, full results 100).
+ * @param cursor - Keyset cursor of the previous page; omitted for the first page.
  */
-export const fetchSermonResults = async (
+export const fetchSermonSearchPage = async (
   query: string,
-  take: number = SEARCH_TAKE,
-): Promise<SearchFetchResult<SermonData[]>> => {
+  cursor?: string,
+): Promise<SermonSearchPage> => {
+  const params: APITypes.SermonControllerFindAllParams = { search: query, take: SERMON_PAGE_SIZE }
+  if (cursor != null) params.cursor = cursor
+
   try {
-    const response = await sermonsApi.getSermons().sermonControllerFindAll({
-      search: query,
-      take,
-    })
-    return { data: mapAllSermonsResponse(response), fromNetwork: true }
+    const response = await sermonsApi.getSermons().sermonControllerFindAll(params)
+    const sermons = mapAllSermonsResponse(response)
+    if (cursor == null)
+      void setCachedSearchResults(query, sermons).catch(error =>
+        console.error('Search cache write failed:', error),
+      )
+    return { fromNetwork: true, nextCursor: response.nextCursor ?? null, sermons }
   } catch (error) {
-    console.error('fetchSearchResults network failed:', error)
+    console.error('fetchSermonSearchPage network failed:', error)
+    if (cursor != null) return { fromNetwork: false, nextCursor: null, sermons: [] }
+
     try {
-      return { data: (await getCachedSearchResults(query)) ?? [], fromNetwork: false }
+      const cached = (await getCachedSearchResults(query)) ?? []
+      return { fromNetwork: false, nextCursor: null, sermons: cached }
     } catch (cacheError) {
       console.error('Search cache read failed:', cacheError)
-      return { data: [], fromNetwork: false }
+      return { fromNetwork: false, nextCursor: null, sermons: [] }
     }
   }
 }
 
 /**
- * Fetches playlists by title/description with an offline fallback to the per-query cache.
+ * Fetches one playlist search page. The first page falls back to the per-query
+ * cache on a network failure; later pages return empty instead. Never rejects.
  * @param query - Trimmed search query.
- * @param limit - Page size requested (compact search uses 50, full results 100).
+ * @param page - 1-based offset page.
  */
-export const fetchPlaylistTitleMatches = async (
+export const fetchPlaylistSearchPage = async (
   query: string,
-  limit: number = PLAYLIST_SEARCH_LIMIT,
-): Promise<SearchFetchResult<PlaylistData[]>> => {
+  page: number,
+): Promise<PlaylistSearchPage> => {
   try {
-    const response = await playlistsApi.getPlaylists().playlistControllerFindAll({
-      limit,
-      search: query,
-    })
+    const response = await playlistsApi
+      .getPlaylists()
+      .playlistControllerFindAll({ limit: PLAYLIST_PAGE_SIZE, page, search: query })
     const playlists = (response.playlists ?? []).map(mapPlaylistEntityToPlaylistData)
-    return { data: playlists, fromNetwork: true }
+    if (page === 1)
+      void setCachedPlaylistSearch(query, playlists).catch(error =>
+        console.error('Playlist search cache write failed:', error),
+      )
+    return { count: response.count, fromNetwork: true, playlists }
   } catch (error) {
-    console.error('fetchPlaylistTitleMatches network failed:', error)
+    console.error('fetchPlaylistSearchPage network failed:', error)
+    if (page > 1) return { count: 0, fromNetwork: false, playlists: [] }
+
     try {
-      return { data: (await getCachedPlaylistSearch(query)) ?? [], fromNetwork: false }
+      const cached = (await getCachedPlaylistSearch(query)) ?? []
+      return { count: cached.length, fromNetwork: false, playlists: cached }
     } catch (cacheError) {
       console.error('Playlist search cache read failed:', cacheError)
-      return { data: [], fromNetwork: false }
+      return { count: 0, fromNetwork: false, playlists: [] }
     }
   }
-}
-
-/**
- * Persists a fresh sermon search result to its per-query cache.
- * @param query - Trimmed search query used as the cache key.
- * @param result - Sermon fetch result; written only when it came from the network.
- */
-export const persistSermonSearchResults = (
-  query: string,
-  result: SearchFetchResult<SermonData[]>,
-): void => {
-  if (result.fromNetwork)
-    void setCachedSearchResults(query, result.data).catch(error =>
-      console.error('Search cache write failed:', error),
-    )
-}
-
-/**
- * Persists a fresh playlist search result to its per-query cache.
- * @param query - Trimmed search query used as the cache key.
- * @param result - Playlist fetch result; written only when it came from the network.
- */
-export const persistPlaylistSearchResults = (
-  query: string,
-  result: SearchFetchResult<PlaylistData[]>,
-): void => {
-  if (result.fromNetwork)
-    void setCachedPlaylistSearch(query, result.data).catch(error =>
-      console.error('Playlist search cache write failed:', error),
-    )
-}
-
-/**
- * Persists both compact-search results to their per-query caches.
- * @param query - Trimmed search query used as the cache key.
- * @param sermonResult - Sermon fetch result.
- * @param playlistResult - Playlist fetch result.
- */
-export const persistSearchResults = (
-  query: string,
-  sermonResult: SearchFetchResult<SermonData[]>,
-  playlistResult: SearchFetchResult<PlaylistData[]>,
-): void => {
-  persistSermonSearchResults(query, sermonResult)
-  persistPlaylistSearchResults(query, playlistResult)
 }
