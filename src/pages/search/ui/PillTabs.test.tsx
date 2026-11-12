@@ -26,9 +26,9 @@ const SCROLL_ID = 'pill-tabs-scroll'
 const STRETCH_ROW_ID = 'pill-tabs-stretch-row'
 const SHADOW_ID = 'pill-tabs-shadow'
 const TRACK_HEIGHT = 48
-// The shadow halo spreads 44dp below the track and 8dp to each side; wrappers
+// The shadow halo spreads 88dp below the track and 16dp to each side; wrappers
 // keep that much real layout room (no negative margins) so nothing cuts it off.
-const MIN_SHADOW_ROOM = 44
+const MIN_SHADOW_ROOM = 88
 // The active theme is resolved by ThemeProvider (light or dark), so expected
 // colors come from the same COLORS the component reads through `useTheme`.
 const SELECTED_FILL = () => withAlpha(COLORS.text, 0.1)
@@ -73,18 +73,18 @@ describe('<PillTabs>', () => {
     expect(StyleSheet.flatten(halo.props.style)).toMatchObject({
       borderRadius: RADIUSES.round,
       bottom: -MIN_SHADOW_ROOM,
-      left: -8,
+      left: -16,
       position: 'absolute',
-      right: -8,
-      top: -2,
+      right: -16,
+      top: -4,
     })
     expect(halo.props.colors).toEqual([
       'rgba(0, 0, 0, 0)',
+      'rgba(0, 0, 0, 0.06)',
       'rgba(0, 0, 0, 0.035)',
-      'rgba(0, 0, 0, 0.02)',
       'rgba(0, 0, 0, 0)',
     ])
-    expect(halo.props.locations).toEqual([0, 0.35, 0.8, 1])
+    expect(halo.props.locations).toEqual([0, 0.32, 0.72, 1])
   })
 
   test('marks only the active pill as selected (radio semantics)', async () => {

@@ -8,7 +8,7 @@ const PAGE_GUTTER = INDENTS.medium
 const ROW_GUTTER = INDENTS.lowest
 // The halo below the track is drawn outside its box; the scope wrappers keep
 // that much real layout room (no negative margins) so nothing cuts it off.
-const SHADOW_ROOM = 44
+const SHADOW_ROOM = 88
 
 export const styles = StyleSheet.create({
   label: { fontSize: FONT_SIZES.base },
@@ -53,10 +53,10 @@ export const styles = StyleSheet.create({
   shadowHalo: {
     borderRadius: RADIUSES.round,
     bottom: -SHADOW_ROOM,
-    left: -INDENTS.low,
+    left: -INDENTS.medium,
     position: 'absolute',
-    right: -INDENTS.low,
-    top: -2,
+    right: -INDENTS.medium,
+    top: -INDENTS.lowest,
   },
   track: {
     borderRadius: RADIUSES.round,

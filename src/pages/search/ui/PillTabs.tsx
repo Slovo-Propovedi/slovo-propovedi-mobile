@@ -29,11 +29,11 @@ interface PillTabsProps {
 
 const SHADOW_COLORS = [
   'rgba(0, 0, 0, 0)',
+  'rgba(0, 0, 0, 0.06)',
   'rgba(0, 0, 0, 0.035)',
-  'rgba(0, 0, 0, 0.02)',
   'rgba(0, 0, 0, 0)',
 ] as const
-const SHADOW_LOCATIONS = [0, 0.35, 0.8, 1] as const
+const SHADOW_LOCATIONS = [0, 0.32, 0.72, 1] as const
 
 export const PillTabs = ({
   items,
