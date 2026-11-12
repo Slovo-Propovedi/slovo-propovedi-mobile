@@ -326,7 +326,21 @@ describe('<SearchIslandMorph>', () => {
     expect(queryByRole('button', { name: SEARCH_LABEL })).toBeNull()
   })
 
-  test('keeps the close circle mounted but non-interactive while hidden', async () => {
+  test('keeps the close circle mounted but non-interactive while blurred with an empty query', async () => {
+    const { ctx, getByLabelText } = await renderMorph()
+
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+      searchQueryAtom(ctx, '')
+    })
+
+    const closeButton = getByLabelText(CLOSE_LABEL, { includeHiddenElements: true })
+    const closeCircle = findContentWrapper(closeButton)
+
+    expect(closeCircle.props.pointerEvents).toBe('none')
+  })
+
+  test('shows the external close circle for an active query without focus', async () => {
     const { ctx, getByLabelText } = await renderMorph()
 
     await act(async () => {
@@ -334,10 +348,25 @@ describe('<SearchIslandMorph>', () => {
       searchQueryAtom(ctx, 'ве')
     })
 
-    const closeButton = getByLabelText(CLOSE_LABEL, { includeHiddenElements: true })
-    const closeCircle = findContentWrapper(closeButton)
+    const closeButton = getByLabelText(CLOSE_LABEL)
 
-    expect(closeCircle.props.pointerEvents).toBe('none')
+    expect(findContentWrapper(closeButton).props.pointerEvents).toBe('auto')
+  })
+
+  test('hides the external close circle when a blurred active query is cleared', async () => {
+    const { ctx, getByLabelText, queryByLabelText } = await renderMorph()
+
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+      searchQueryAtom(ctx, 'ве')
+    })
+    expect(getByLabelText(CLOSE_LABEL)).toBeTruthy()
+
+    await act(async () => {
+      searchQueryAtom(ctx, '')
+    })
+
+    expect(queryByLabelText(CLOSE_LABEL)).toBeNull()
   })
 
   test('writes the shared focus flag while the input has focus', async () => {

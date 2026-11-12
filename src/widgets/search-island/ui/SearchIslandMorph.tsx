@@ -31,7 +31,8 @@ export const SearchIslandMorph = () => {
   const isSearchFieldVisible = useIsSearchFieldVisible()
   const openSearch = useOpenSearch()
   const closeSearchAction = useAction(closeSearch)
-  const { closeProgress, handleCloseFocusChange, isFocused, settledClose } = useSearchFocusMorph()
+  const { closeProgress, handleCloseFocusChange, settledClose, shouldShowClose } =
+    useSearchFocusMorph()
   // Both morphs subscribe to their atom, so they start in the same tick as the
   // tab island instead of waiting for a React commit. Their SETTLED flags feed
   // the resting layer; the live progress drives the animated layer.
@@ -121,7 +122,7 @@ export const SearchIslandMorph = () => {
         tabBarHeight={tabBarHeight}
         closeProgress={closeProgress}
         restingStyle={closeSlotRestingStyle}
-        isVisible={isSearchFieldVisible && isFocused}
+        isVisible={isSearchFieldVisible && shouldShowClose}
       />
     </>
   )

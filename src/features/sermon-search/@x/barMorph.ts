@@ -2,4 +2,8 @@
 // the feature barrel would pull its UI + player graph (and expo-audio) into the
 // bare model tests that exercise the morph.
 export { isSearchOpenAtom, searchQueryAtom } from '../model'
-export { isSearchFieldFocusedAtom, isSearchFieldVisibleAtom } from '../model-searchField'
+export {
+  isSearchFieldFocusedAtom,
+  isSearchFieldVisibleAtom,
+  isSearchQueryActive,
+} from '../model-searchField'

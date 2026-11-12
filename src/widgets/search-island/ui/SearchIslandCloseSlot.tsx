@@ -18,9 +18,10 @@ interface SearchIslandCloseSlotProps {
 }
 
 /**
- * The circular ✕ that appears beside the pill while the input is focused.
- * Its opacity and scale follow the shared close progress, so appearance and
- * disappearance use the same morph duration as the pill's width. It is content
+ * The circular ✕ that appears beside the pill while the field is focused or an
+ * active query keeps the search open. Its opacity and scale follow the shared
+ * close progress, so appearance and disappearance use the same morph duration
+ * as the pill's width. It is content
  * of the same morph component, never a second shadow carrier: the search frame
  * owns the row's only boxShadow.
  * @param root0 - Component props.
