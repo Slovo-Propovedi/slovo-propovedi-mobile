@@ -13,8 +13,12 @@
 #   (h) API unreachable during poll           -> 42 (bounded by RUN_TIMEOUT_MIN)
 #   (i) mirror rejects the token (401)        -> 42 (fallback, no dispatch POST)
 #   (j) run never booted (startup_failure)    -> 42 (fallback, no job-log fetch)
-#   (k) mirror tag points elsewhere           -> 44 (hard failure, no dispatch POST)
-#   (l) dispatched run is for another commit  -> 1 (real failure, no cancel POST)
+#   (k) mismatch tag (VERIFY_REF=1)           -> 44 (hard failure, no dispatch POST)
+#   (l) mismatch head_sha (VERIFY_REF=1)      -> 1 (real failure, no cancel POST)
+#   (m) default path (no VERIFY_REF)          -> 0 (commit binding skipped)
+#
+# Cases (k)/(l) opt into commit binding with VERIFY_REF=1; (m) is the
+# regression guard for ci.yml's unbound branch dispatch.
 #
 # Case (a) also asserts the emitted GH_UNSIGNED_APK_SHA256= digest matches the
 # sha256 of the extracted apk.
@@ -265,7 +269,7 @@ fi
 # --- (k) mirror tag points at a different commit: hard failure, no dispatch ---
 start_mock success "$WORK_DIR/cancel-k.log" "$WORK_DIR/dispatch-k.log" "" "" "" "" "" "wrong-tag"
 status=0
-run_dispatch "$WORK_DIR/wrong-tag" 1 "" || status=$?
+run_dispatch "$WORK_DIR/wrong-tag" 1 "" VERIFY_REF=1 || status=$?
 stop_mock
 check_exit "(k) tag/ref mismatch -> hard failure" 44 "$status"
 if [ -s "$WORK_DIR/dispatch-k.log" ]; then
@@ -278,7 +282,7 @@ fi
 # --- (l) dispatched run belongs to another commit: failure, no cancel ---------
 start_mock success "$WORK_DIR/cancel-l.log" "" "" "" "" "" "" "" "wrong-sha"
 status=0
-run_dispatch "$WORK_DIR/wrong-sha" 1 "" || status=$?
+run_dispatch "$WORK_DIR/wrong-sha" 1 "" VERIFY_REF=1 || status=$?
 stop_mock
 check_exit "(l) run head_sha mismatch -> real failure" 1 "$status"
 if [ -s "$WORK_DIR/cancel-l.log" ]; then
@@ -286,6 +290,25 @@ if [ -s "$WORK_DIR/cancel-l.log" ]; then
   FAILURES=$((FAILURES + 1))
 else
   printf 'ok   (l) no cancel POST sent\n'
+fi
+
+# --- (m) default path skips commit binding (ci.yml branch dispatch) -----------
+# A concurrent push may move the mirror branch between checkout and this check;
+# with VERIFY_REF unset neither the ref nor the head_sha is asserted.
+start_mock success "$WORK_DIR/cancel-m.log" "" "" "$WORK_DIR/requests-m.log" "" "" "" "wrong-tag" "wrong-sha"
+status=0
+run_dispatch "$WORK_DIR/default-unbound" 1 "unsigned-apk=unsigned-apk" \
+  >"$WORK_DIR/default-stdout.log" 2>/dev/null || status=$?
+stop_mock
+check_exit "(m) default path skips commit binding" 0 "$status"
+check_file "(m) extracted artifact" \
+  "$WORK_DIR/default-unbound/unsigned-apk/app-prod-release-unsigned.apk"
+if [ -s "$WORK_DIR/default-stdout.log" ] \
+  && grep -q '^GH_UNSIGNED_APK_SHA256=' "$WORK_DIR/default-stdout.log"; then
+  printf 'ok   (m) digest line emitted\n'
+else
+  printf 'FAIL (m) missing GH_UNSIGNED_APK_SHA256 digest line\n'
+  FAILURES=$((FAILURES + 1))
 fi
 
 # --- dry-run touches no network ----------------------------------------------

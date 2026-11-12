@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
+        # `js-only` is manual-only and currently dead: Forgejo dispatches native.
         description: 'native | js-only'
         required: true
         type: string

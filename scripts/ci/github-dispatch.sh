@@ -25,14 +25,20 @@
 #   DISPATCH_INPUTS     raw JSON object merged into the dispatch body as
 #                       "inputs", e.g. '{"mode":"native"}' (workflow_dispatch
 #                       inputs); validated as a JSON object before dispatch
+#   VERIFY_REF=1        require the dispatched run to be bound to $SHA: the
+#                       mirror tag/ref must resolve to $SHA (exit 44) and the
+#                       run's head_sha must equal $SHA (exit 1). Opt-in — set
+#                       by release.yml (tag releases); leave unset for branch
+#                       dispatches like ci.yml, where a moving ref must not
+#                       fail CI on a mirror race.
 #   GH_API_BASE         API base URL (default https://api.github.com)
 #   GH_DISPATCH_DRY_RUN=1  log the planned calls, touch no network, exit 0
 #
 # Exit codes:
 #   0   run succeeded (and every requested artifact was downloaded)
 #   1   the run completed without success, a requested artifact was not
-#       produced / downloaded empty, or the dispatched run's head_sha is not
-#       $SHA — a real build failure, do NOT re-run locally
+#       produced / downloaded empty, or — with VERIFY_REF=1 — the dispatched
+#       run's head_sha is not $SHA — a real build failure, do NOT re-run locally
 #   2   usage/environment error (missing env, bad SHA/REF/ARTIFACTS format,
 #       missing jq)
 #   3   the dispatched run never appeared on GitHub (run-discovery path only)
@@ -45,8 +51,9 @@
 #       cancel (the run is already terminal)
 #   43  the run was cancelled externally (e.g. superseded by a newer push) —
 #       neutral: no fallback, no failure; the newer run reports the result
-#   44  the mirror tag/ref does not resolve to SHA (hard failure, no local
-#       fallback) — the push mirror served a stale or moved ref
+#   44  the mirror tag/ref does not resolve to SHA (only when VERIFY_REF=1;
+#       hard failure, no local fallback) — the push mirror served a stale or
+#       moved ref
 #
 # The dispatch POST is retried up to 3 attempts (5s apart) on transport-level
 # failures — HTTP 000 (DNS/connect) and 5xx; 4xx (auth/validation) is not retried.
@@ -58,7 +65,8 @@
 # URL on the 0/1/42/43 exit paths. All human-readable progress goes to stderr.
 # On the success path (exit 0) only, after artifact extraction, a line
 # `GH_UNSIGNED_APK_SHA256=<hex>` is printed when an artifact directory holds
-# exactly one *.apk; callers must treat a missing digest as fatal.
+# exactly one *.apk. Zero or multiple *.apk files emit no digest line —
+# callers must fail closed on a missing digest.
 
 set -euo pipefail
 
@@ -100,6 +108,13 @@ GH_API_BASE="${GH_API_BASE%/}"
 require_uint MIRROR_WAIT_MIN "$MIRROR_WAIT_MIN"
 require_uint QUEUE_TIMEOUT_MIN "$QUEUE_TIMEOUT_MIN"
 require_uint RUN_TIMEOUT_MIN "$RUN_TIMEOUT_MIN"
+
+# Opt-in commit binding: release.yml only. Branches move by design, so a mirror
+# race on a concurrent push must not fail CI — the default path stays unbound.
+VERIFY_ENABLED=0
+if [ "${VERIFY_REF:-0}" = "1" ]; then
+  VERIFY_ENABLED=1
+fi
 
 if ! printf '%s' "$SHA" | grep -Eq '^[0-9a-fA-F]{40}$'; then
   usage_error "SHA must be a full 40-hex commit sha (got '$SHA')"
@@ -405,11 +420,13 @@ poll_run() {
         RUN_URL=$html_url
       fi
       # Refuse to use a run that belongs to another commit. Do NOT cancel it:
-      # it is not ours to touch.
-      head_sha=$(jq -r '.head_sha // empty' "$WORK_DIR/run.json")
-      if [ -n "$head_sha" ] && [ "$head_sha" != "$SHA" ]; then
-        log "error: run $RUN_ID head_sha $head_sha does not match our commit $SHA — refusing to use this run"
-        exit 1
+      # it is not ours to touch. Opt-in with the ref check above (release.yml).
+      if [ "$VERIFY_ENABLED" = "1" ]; then
+        head_sha=$(jq -r '.head_sha // empty' "$WORK_DIR/run.json")
+        if [ -n "$head_sha" ] && [ "$head_sha" != "$SHA" ]; then
+          log "error: run $RUN_ID head_sha $head_sha does not match our commit $SHA — refusing to use this run"
+          exit 1
+        fi
       fi
 
       case "$status" in
@@ -460,7 +477,11 @@ poll_run() {
 
 log "waiting for commit $SHA on $GH_REPO"
 wait_for_mirror
-verify_tag_ref
+# Opt-in: release.yml only; branches move by design and must not fail CI on a
+# mirror race.
+if [ "$VERIFY_ENABLED" = "1" ]; then
+  verify_tag_ref
+fi
 
 RUN_ID=$(dispatch_workflow)
 RUN_URL="https://github.com/$GH_REPO/actions/runs/$RUN_ID"

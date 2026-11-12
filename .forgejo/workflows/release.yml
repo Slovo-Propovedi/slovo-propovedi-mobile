@@ -410,6 +410,9 @@ jobs:
           WORKFLOW: release.yml
           REF: ${{ github.ref_name }}
           SHA: ${{ github.sha }}
+          # Opt-in commit binding (tag/ref + run head_sha). Exit 44 hard-fails
+          # the release intentionally: no local fallback for a moved mirror tag.
+          VERIFY_REF: '1'
         run: |
           # An unconfigured secret must not fail the release dispatch: signal the
           # local fallback instead (uploads below are skipped when fallback=true).
@@ -459,8 +462,9 @@ jobs:
         with:
           name: unsigned-apk
           path: unsigned-apk/
-          # js-only mode produces no APK; ignore rather than fail the dispatcher.
-          if-no-files-found: ignore
+          # The dispatcher guarantees unsigned-apk on its success path, so a
+          # missing artifact is a hard error (the digest gate expects it).
+          if-no-files-found: error
           retention-days: 30
 
   android-package:
