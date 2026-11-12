@@ -28,6 +28,7 @@ export const ExpandablePlayer = ({
     isBarCollapsed,
     isBuffering,
     isLight,
+    isSearchFieldFocused,
     isTabBarMeasured,
     playing,
     playlist,
@@ -87,7 +88,9 @@ export const ExpandablePlayer = ({
         screenHeight={screenHeight}
         backdropStyle={backdropStyle}
       />
-      {!expanded && (
+      {/* Focus hands the whole bottom row to the search pill; the player returns
+          on blur without closing the search. */}
+      {!expanded && !isSearchFieldFocused && (
         <CollapsedMiniPlayer
           audio={audio}
           playing={playing}

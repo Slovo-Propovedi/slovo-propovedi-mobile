@@ -103,6 +103,7 @@ jest.mock('./MiniPlayer', () => {
   }
 })
 
+const PLAY_PAUSE_LABEL = 'play-pause'
 const AUDIO_URL = 'https://example.com/audio.mp3'
 
 const mockAudio = {
@@ -127,7 +128,7 @@ describe('<ExpandablePlayer>', () => {
     const { getByLabelText } = await renderWithProviders(<ExpandablePlayer />, { ctx })
 
     await act(async () => {
-      fireEvent.press(getByLabelText('play-pause'))
+      fireEvent.press(getByLabelText(PLAY_PAUSE_LABEL))
     })
 
     expect(mockTogglePlay).toHaveBeenCalledTimes(1)
@@ -157,18 +158,23 @@ describe('<ExpandablePlayer>', () => {
     expect(ctx.get(isMiniPillCollapsedAtom)).toBe(false)
   })
 
-  test('keeps the mini player above the row while the search field is focused', async () => {
-    isBarCollapsedAtom(ctx, true)
+  test('hides the mini player while the search field is focused and restores it on blur', async () => {
+    isBarCollapsedAtom(ctx, false)
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, '')
     isSearchFieldFocusedAtom(ctx, true)
     tabBarHeightAtom(ctx, 98)
-    await renderWithProviders(<ExpandablePlayer />, { ctx })
+    const { queryByLabelText } = await renderWithProviders(<ExpandablePlayer />, { ctx })
 
-    // Focus hands the whole row to the stretched search pill, so the player
-    // must stay in its detached pose instead of collapsing into that line.
-    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98)
-    expect(ctx.get(isMiniPillCollapsedAtom)).toBe(false)
+    // Focus hands the whole bottom row to the search pill: the mini player must
+    // not stay visible above it either.
+    expect(queryByLabelText(PLAY_PAUSE_LABEL)).toBeNull()
+
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, false)
+    })
+
+    expect(queryByLabelText(PLAY_PAUSE_LABEL)).toBeTruthy()
   })
 
   test('keeps the last real tab bar height when a hidden screen reports zero', async () => {

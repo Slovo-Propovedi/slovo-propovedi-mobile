@@ -84,7 +84,7 @@ const SEARCH_LABEL = 'Поиск'
 const CLOSE_LABEL = 'Закрыть поиск'
 const CIRCLE_ICON_SIZE = 32
 const PILL_ICON_SIZE = 32
-const CLOSE_ICON_SIZE = 32
+const CLOSE_ICON_SIZE = 48
 const MAGNIFIER_GLYPH = 'search'
 
 const findShadows = () =>

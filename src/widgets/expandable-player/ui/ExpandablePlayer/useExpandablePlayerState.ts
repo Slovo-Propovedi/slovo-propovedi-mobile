@@ -48,13 +48,15 @@ export const useExpandablePlayerState = () => {
     audio,
     currentTheme,
     expanded,
-    // While the search field is visible or focused the bottom row belongs to
-    // the search surface, so the mini player rests detached above it instead of
-    // collapsing into it. A collapsed bar with an empty query hides the field
-    // and pulls the player back into the compact line.
-    isBarCollapsed: isBarCollapsed && !isSearchFieldVisible && !isSearchFieldFocused,
+    // While the search field is visible the bottom row is [active tab
+    // circle][search field], so the mini player rests detached above it instead
+    // of collapsing into it. A collapsed bar with an empty query hides the field
+    // and pulls the player back into the compact line. Focus hides the player
+    // entirely (see ExpandablePlayer), so it does not affect the pose.
+    isBarCollapsed: isBarCollapsed && !isSearchFieldVisible,
     isBuffering,
     isLight,
+    isSearchFieldFocused,
     isTabBarMeasured,
     playing,
     playlist,
