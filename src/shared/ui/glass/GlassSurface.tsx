@@ -29,7 +29,8 @@ import { getWebGlassStyle } from './webGlass'
  *   `BlurTargetProvider`; without a target (page not laid out, or Android
  *   11 and below) the surface keeps the tint plus the top-edge sheen.
  * @param root0 - Glass surface props.
- * @param root0.blurTarget - Explicit backdrop override; defaults to the provider's target.
+ * @param root0.blurTarget - Explicit backdrop; `undefined` inherits the
+ * provider's target and `null` opts out of it.
  * @param root0.isLight - Active theme; selects the fill, rim and blur tint.
  * @param root0.radius - Corner radius of the hairline rim; matches the host shape.
  */
@@ -46,7 +47,9 @@ export const GlassSurface = ({
   const isWeb = Platform.OS === 'web'
   const isAndroid = Platform.OS === 'android'
   const contextTarget = useGlassBlurTarget()
-  const target = blurTarget ?? contextTarget
+  // `undefined` inherits the provider; an explicit `null` opts out of it (a
+  // surface floating over the page must not sample the chrome shade).
+  const target = blurTarget === undefined ? contextTarget : blurTarget
   // Never ask expo-blur for a native blur without a target: the native view
   // would silently fall back and log a warning on every mount.
   const realBlurTarget =

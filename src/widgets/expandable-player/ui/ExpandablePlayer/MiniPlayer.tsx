@@ -1,16 +1,15 @@
 import { forwardRef } from 'react'
-import { ActivityIndicator, Platform, View, type ViewInstance, type ViewStyle } from 'react-native'
+import { Platform, View, type ViewInstance, type ViewStyle } from 'react-native'
 import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
 import { type AnimatedStyle } from 'react-native-reanimated'
-import { OnboardingTarget } from 'features/onboarding'
-import { PlayerControlButton, PlayerControlButtonType } from 'entities/player'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
-import { CoverImage, GlassIsland, MovingText, useMarqueeCycle } from 'shared/ui'
+import { CoverImage, GlassIsland, MovingText, useMarqueeCycle, usePageBlurTarget } from 'shared/ui'
 import { type ThemeColors } from 'shared/ui/theme'
 import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
-import { type createMiniStyles, MINI_PLAY_HIT_SLOP } from './miniStyles'
+import { MiniPlayerTransport } from './MiniPlayerTransport'
+import { type createMiniStyles } from './miniStyles'
 
 // Web: the row renders as <div role="link" tabindex=0> (RNW maps 'link' to the
 // role attribute, no <a> tag) so the inner play/pause <button> is not nested
@@ -64,6 +63,9 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
     ref,
   ) => {
     const subtitle = getPlayerSubtitle(audio, playlist)
+    // The pill floats over the page (search overlay included), never over the
+    // tab-bar shade, so it frosts the page target instead of the chrome's.
+    const pageBlurTarget = usePageBlurTarget()
     // The title owns the marquee cycle; the subtitle only follows it, so both
     // lines restart together and neither overruns the other's rhythm.
     const marqueeCycle = useMarqueeCycle()
@@ -74,6 +76,7 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
           ref={ref}
           onPress={onPress}
           isLight={isLight}
+          blurTarget={pageBlurTarget}
           accessibilityRole={ROW_ACCESSIBILITY_ROLE}
           hostStyle={[
             miniStyles.miniContainer,
@@ -105,22 +108,13 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
               style={miniStyles.miniPlaylistName}
             />
           </View>
-          <View style={miniStyles.miniControls}>
-            {showSpinner ? (
-              <ActivityIndicator size={36} color={currentTheme.text} testID='buffering-indicator' />
-            ) : (
-              <OnboardingTarget id='player.mini-play-pause'>
-                <PlayerControlButton
-                  size={36}
-                  onPress={onPlayPause}
-                  color={currentTheme.text}
-                  hitSlop={MINI_PLAY_HIT_SLOP}
-                  style={miniStyles.miniPlayButton}
-                  type={playing ? PlayerControlButtonType.Pause : PlayerControlButtonType.Play}
-                />
-              </OnboardingTarget>
-            )}
-          </View>
+          <MiniPlayerTransport
+            playing={playing}
+            miniStyles={miniStyles}
+            onPlayPause={onPlayPause}
+            showSpinner={showSpinner}
+            currentTheme={currentTheme}
+          />
           <MiniDownloadProgress miniStyles={miniStyles} audioUrl={audio.audioUrl} />
         </GlassIsland>
       </GestureDetector>

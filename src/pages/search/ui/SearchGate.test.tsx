@@ -149,7 +149,6 @@ describe('<SearchGate>', () => {
     )[0]
     const style = StyleSheet.flatten(layer?.props.style)
 
-    expect([LightTheme.background, DarkTheme.background]).toContain(style?.backgroundColor)
     expect(style).toMatchObject({
       bottom: 0,
       left: 0,
@@ -157,12 +156,28 @@ describe('<SearchGate>', () => {
       right: 0,
       top: 0,
     })
+
+    // The themed page background lives INSIDE the blur target: the pill frosts
+    // the page it floats over, and a transparent target would blur the window
+    // background (bright gray in the dark theme) instead.
+    const page = screen.root?.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
+
+      return (
+        flat?.flex === 1 &&
+        [DarkTheme.background, LightTheme.background].includes(flat?.backgroundColor)
+      )
+    })[0]
+
+    expect(page).toBeDefined()
   })
 
-  test('does not publish the page as a glass blur target while open', async () => {
+  test('publishes the page as a glass blur target while open', async () => {
     await renderGate(true)
 
-    expect(screen.queryByText('BLUR_TARGET:/more')).toBeNull()
+    // Surfaces that float over the page (the mini pill) resolve this target,
+    // while the tab-bar chrome keeps its own shade target.
+    expect(screen.getByText('BLUR_TARGET:/more')).toBeTruthy()
   })
 
   test('hosts the playback picker and add-to-playlist modals', async () => {

@@ -53,4 +53,22 @@ describe('<BlurTargetProvider>', () => {
     expect(findBlur()?.[0]?.props.blurMethod).toBe(GLASS.blur.androidMethod)
     expect(findBlur()?.[0]?.props.blurTarget).toBe(target)
   })
+
+  test('an explicit null opts the surface out of the provider target', async () => {
+    setPlatform('android', 35)
+    const target = createTargetRef()
+    registeredTarget = target
+
+    await render(
+      <BlurTargetProvider>
+        <GlassSurface isLight radius={28} blurTarget={null} />
+      </BlurTargetProvider>,
+    )
+    await act(async () => registerBlurTarget('/listen', target))
+
+    // Used by surfaces floating over the page (the mini pill): they resolve
+    // their own page target instead of inheriting the chrome shade.
+    expect(findBlur()?.[0]?.props.blurMethod).toBeUndefined()
+    expect(findBlur()?.[0]?.props.blurTarget).toBeUndefined()
+  })
 })

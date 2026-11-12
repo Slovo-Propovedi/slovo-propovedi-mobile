@@ -1,7 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { useRouter } from 'expo-router'
+import { usePathname, useRouter } from 'expo-router'
 import { useCallback, useRef } from 'react'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { useTourActionRegistrar } from 'features/onboarding'
@@ -14,6 +14,7 @@ import {
 import { type PlaylistData } from 'entities/playlist'
 import { type SermonData } from 'entities/sermon'
 import { useNavigationGuard } from 'shared/routing'
+import { BlurBackdrop } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { useSearchTourActions } from '../lib/useSearchTourActions'
 import { SearchScreen } from './SearchScreen'
@@ -29,6 +30,7 @@ const CLOSE_SERMON_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
  */
 export const SearchGate = () => {
   const insets = useSafeAreaInsets()
+  const pathname = usePathname()
   const { currentTheme } = useTheme()
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
   const openSearch = useOpenSearch()
@@ -75,19 +77,26 @@ export const SearchGate = () => {
   if (!isSearchOpen) return null
 
   return (
-    <SafeAreaView
-      edges={['left', 'right']}
-      style={[styles.layer, { backgroundColor: currentTheme.background, paddingTop: insets.top }]}
-    >
-      {/* The page is never sampled as a glass backdrop: the bottom chrome
-          registers its own always-mounted shade target while search is open,
-          so route and overlay transitions cannot swap the backdrop. */}
-      <SearchScreen
-        onSermonPress={onSermonPress}
-        onAddToPlaylist={openAddToPlaylist}
-        onPlaylistPress={navigateToPlaylist}
-        onFirstSermonChange={handleFirstSermonChange}
-      />
+    <SafeAreaView style={styles.layer} edges={['left', 'right']}>
+      {/* Surfaces floating over the page (the mini pill) resolve this target
+          via the route stack; the tab-bar chrome keeps sampling its own shade.
+          The themed background must live INSIDE the target, otherwise the
+          pill's blur samples the window background (bright gray in dark). */}
+      <BlurBackdrop routeKey={pathname}>
+        <View
+          style={[
+            styles.page,
+            { backgroundColor: currentTheme.background, paddingTop: insets.top },
+          ]}
+        >
+          <SearchScreen
+            onSermonPress={onSermonPress}
+            onAddToPlaylist={openAddToPlaylist}
+            onPlaylistPress={navigateToPlaylist}
+            onFirstSermonChange={handleFirstSermonChange}
+          />
+        </View>
+      </BlurBackdrop>
       {modal}
       {sermonPlaybackModal}
     </SafeAreaView>
@@ -105,5 +114,8 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     zIndex: 5,
+  },
+  page: {
+    flex: 1,
   },
 })

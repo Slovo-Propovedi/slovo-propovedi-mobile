@@ -9,6 +9,7 @@ import {
   unregisterBlurTarget,
 } from './blurTargets'
 import { useActiveBlurTarget } from './useActiveBlurTarget'
+import { usePageBlurTarget } from './usePageBlurTarget'
 
 const mockUsePathname = jest.fn(() => '/listen')
 
@@ -16,8 +17,14 @@ jest.mock('expo-router', () => ({ usePathname: () => mockUsePathname() }))
 
 const createTargetRef = (): BlurTargetRef => createRef<ComponentRef<typeof View>>()
 
-const Probe = ({ shadeTarget }: { shadeTarget?: BlurTargetRef }) => {
-  const target = useActiveBlurTarget()
+const Probe = ({
+  shadeTarget,
+  useTarget = useActiveBlurTarget,
+}: {
+  shadeTarget?: BlurTargetRef
+  useTarget?: typeof useActiveBlurTarget
+}) => {
+  const target = useTarget()
   const value = target === null ? 'NONE' : target === shadeTarget ? 'SHADE' : 'TARGET'
 
   return <Text>{value}</Text>
@@ -77,6 +84,27 @@ describe('useActiveBlurTarget', () => {
 
     await act(async () => {
       unregisterBlurTarget('/listen', pageTarget)
+    })
+  })
+
+  test('page target ignores the chrome shade target', async () => {
+    setPlatform('android', 35)
+    const pageTarget = createTargetRef()
+    const shadeTarget = createTargetRef()
+
+    await render(<Probe shadeTarget={shadeTarget} useTarget={usePageBlurTarget} />)
+    await act(async () => {
+      registerBlurTarget('/listen', pageTarget)
+      registerBlurTarget(BOTTOM_CHROME_SHADE_KEY, shadeTarget)
+    })
+
+    // Surfaces floating over the page (the mini pill) must frost the page even
+    // while the chrome samples its own shade.
+    expect(screen.getByText('TARGET')).toBeTruthy()
+
+    await act(async () => {
+      unregisterBlurTarget('/listen', pageTarget)
+      unregisterBlurTarget(BOTTOM_CHROME_SHADE_KEY, shadeTarget)
     })
   })
 

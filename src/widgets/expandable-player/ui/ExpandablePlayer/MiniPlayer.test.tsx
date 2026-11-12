@@ -1,14 +1,19 @@
 import { createCtx } from '@reatom/framework'
-import { fireEvent, screen, waitFor } from '@testing-library/react-native'
-import { type ComponentProps } from 'react'
-import { StyleSheet, type TextStyle } from 'react-native'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
+import { type ComponentProps, type ComponentRef, createRef } from 'react'
+import { Platform, StyleSheet, type TextStyle, type View } from 'react-native'
 import { type GestureType } from 'react-native-gesture-handler'
 import { onboardingTargetRectsAtom, onboardingTourAtom } from 'features/onboarding'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
+import { BlurTargetProvider, getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
+import {
+  BOTTOM_CHROME_SHADE_KEY,
+  registerBlurTarget,
+  unregisterBlurTarget,
+} from 'shared/ui/glass/blurTargets'
 import { DarkTheme, FONT_SIZES, LightTheme } from 'shared/ui/theme'
 import { MiniPlayer } from './MiniPlayer'
 import {
@@ -21,6 +26,7 @@ import {
 
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn() }),
+  usePathname: () => '/listen',
 }))
 
 // The mini player wires the title/subtitle marquee contract through MovingText;
@@ -217,6 +223,39 @@ describe('<MiniPlayer>', () => {
         return flat?.borderColor === getGlassBorder(false) && flat?.borderWidth === 1
       }),
     ).toHaveLength(1)
+  })
+
+  test('frosts the page, never the chrome shade, while the search page is open', async () => {
+    Object.defineProperty(Platform, 'OS', { configurable: true, value: 'android' })
+    Object.defineProperty(Platform, 'Version', { configurable: true, value: 35 })
+    const pageTarget = createRef<ComponentRef<typeof View>>()
+    const shadeTarget = createRef<ComponentRef<typeof View>>()
+    await act(async () => {
+      registerBlurTarget('/listen', pageTarget)
+      registerBlurTarget(BOTTOM_CHROME_SHADE_KEY, shadeTarget)
+    })
+
+    try {
+      await renderWithProviders(<MiniPlayer {...baseProps} />, {
+        AdditionalWrapper: BlurTargetProvider,
+      })
+
+      const blur = screen.root?.queryAll(
+        instance => instance.props.intensity === GLASS.blur.intensity,
+      )[0]
+
+      // The pill floats over the page, not over the tab-bar shade: sampling the
+      // shade would frost it with the gray gradient while the page behind it is
+      // black (the bright-gray slab in the dark theme).
+      expect(blur?.props.blurTarget).toBe(pageTarget)
+    } finally {
+      await act(async () => {
+        unregisterBlurTarget('/listen', pageTarget)
+        unregisterBlurTarget(BOTTOM_CHROME_SHADE_KEY, shadeTarget)
+      })
+      Object.defineProperty(Platform, 'OS', { configurable: true, value: 'ios' })
+      Object.defineProperty(Platform, 'Version', { configurable: true, value: undefined })
+    }
   })
 
   test('renders the track title and artwork', async () => {

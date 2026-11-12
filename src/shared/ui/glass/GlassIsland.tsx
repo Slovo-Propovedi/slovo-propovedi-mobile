@@ -3,6 +3,7 @@ import { type StyleProp, type ViewInstance, type ViewStyle } from 'react-native'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 import { PressableButton, type PressableButtonProps } from '../pressable-button/PressableButton'
 import { RADIUSES } from '../theme/themed'
+import { type BlurTargetRef } from './blurTargets'
 import { createGlassStyles } from './glass'
 import { GlassSurface } from './GlassSurface'
 
@@ -25,6 +26,8 @@ export const GlassIsland = forwardRef<
     /** Role of the pressable host (default 'button'); pass 'link' on web when it contains a button. */
     accessibilityRole?: PressableButtonProps['accessibilityRole']
     animatedStyle?: StyleProp<AnimatedStyle<ViewStyle>>
+    /** Explicit backdrop; `undefined` inherits the provider, `null` opts out of it. */
+    blurTarget?: BlurTargetRef | null
     children: ReactNode
     hostStyle?: StyleProp<ViewStyle>
     importantForAccessibility?: 'auto' | 'no-hide-descendants' | 'no' | 'yes'
@@ -37,6 +40,7 @@ export const GlassIsland = forwardRef<
     accessibilityElementsHidden,
     accessibilityRole,
     animatedStyle,
+    blurTarget,
     children,
     hostStyle,
     importantForAccessibility,
@@ -46,7 +50,14 @@ export const GlassIsland = forwardRef<
   } = props
   const radius = RADIUSES.round
   const hostStyles = [hostStyle, createGlassStyles(isLight, radius).containerPlain, animatedStyle]
-  const glass = <GlassSurface radius={radius} isLight={isLight} key={isLight ? 'light' : 'dark'} />
+  const glass = (
+    <GlassSurface
+      radius={radius}
+      isLight={isLight}
+      blurTarget={blurTarget}
+      key={isLight ? 'light' : 'dark'}
+    />
+  )
   const pointerProps = pointerEvents === undefined ? {} : { pointerEvents }
 
   if (onPress)
