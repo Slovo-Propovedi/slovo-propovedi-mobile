@@ -8,22 +8,6 @@ import { renderWithProviders } from 'shared/mocks'
 import { FONT_SIZES } from 'shared/ui/theme'
 import { RecentSearchesSection } from './RecentSearchesSection'
 
-const mockRequestSearchFocus = jest.fn()
-
-// Spy through to the real action so refocusing stays observable while the
-// search-focus nonce still advances.
-jest.mock('features/sermon-search', () => {
-  const actual = jest.requireActual('features/sermon-search')
-
-  return {
-    ...actual,
-    requestSearchFocus: (...args: unknown[]) => {
-      mockRequestSearchFocus(...args)
-      return actual.requestSearchFocus(...args)
-    },
-  }
-})
-
 // The feature barrel re-exports the player-coupled search UI; these rows only
 // need the track/search surface.
 jest.mock('entities/player', () => ({
@@ -88,10 +72,6 @@ const CANCEL_LABEL = 'Отмена'
 const REMOVE_FROM_SEARCH_HISTORY = 'Удалить из истории поиска'
 
 describe('<RecentSearchesSection>', () => {
-  beforeEach(() => {
-    mockRequestSearchFocus.mockClear()
-  })
-
   test('renders stored sermons with the header and clear action', async () => {
     const ctx = createCtx()
     searchHistoryAtom(ctx, [buildEntry('1', 'Первая', 2), buildEntry('2', 'Вторая', 1)])
@@ -149,7 +129,7 @@ describe('<RecentSearchesSection>', () => {
     expect(ctx.get(isSearchFocusHeldAtom)).toBe(true)
   })
 
-  test('releases the hold and refocuses the field on cancel', async () => {
+  test('releases the hold on cancel', async () => {
     const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 1)])
 
     await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
@@ -159,10 +139,9 @@ describe('<RecentSearchesSection>', () => {
 
     expect(screen.queryByText(DIALOG_TITLE)).toBeNull()
     expect(ctx.get(isSearchFocusHeldAtom)).toBe(false)
-    expect(mockRequestSearchFocus).toHaveBeenCalledTimes(1)
   })
 
-  test('clears the history, releases the hold and refocuses on confirm', async () => {
+  test('clears the history and releases the hold on confirm', async () => {
     const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 1)])
 
     await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
@@ -172,7 +151,6 @@ describe('<RecentSearchesSection>', () => {
 
     await waitFor(() => expect(ctx.get(searchHistoryAtom)).toEqual([]))
     expect(ctx.get(isSearchFocusHeldAtom)).toBe(false)
-    expect(mockRequestSearchFocus).toHaveBeenCalledTimes(1)
   })
 
   test('removes a single entry through the row menu', async () => {

@@ -4,7 +4,6 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import {
   holdSearchFocus,
   releaseSearchFocusHold,
-  requestSearchFocus,
   SearchResultsRow,
   SearchRowSeparator,
 } from 'features/sermon-search'
@@ -52,12 +51,11 @@ export const RecentSearchesSection = ({
     holdSearchFocus(ctx)
   }, [ctx])
 
-  // Cancel, Android back and web Escape all dismiss through this path; release
-  // the hold and hand the focus back to the search field.
+  // Cancel, Android back and web Escape all dismiss through this path; releasing
+  // the hold restores the normal focus-driven chrome.
   const closeDialog = useCallback(() => {
     setDialogVisible(false)
     releaseSearchFocusHold(ctx)
-    requestSearchFocus(ctx)
   }, [ctx])
 
   const handleConfirm = useCallback(() => {

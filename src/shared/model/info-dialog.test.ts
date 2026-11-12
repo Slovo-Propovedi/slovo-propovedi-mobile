@@ -14,12 +14,4 @@ describe('info-dialog model', () => {
 
     expect(rootCtx.get(globalInfoAtom)).toEqual({ message: MESSAGE, title: TITLE })
   })
-
-  test('carries the dismissal callback to the dialog state', () => {
-    const onDismiss = jest.fn()
-
-    showInfo(MESSAGE, TITLE, { onDismiss })
-
-    expect(rootCtx.get(globalInfoAtom)).toEqual({ message: MESSAGE, onDismiss, title: TITLE })
-  })
 })

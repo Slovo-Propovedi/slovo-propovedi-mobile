@@ -4,14 +4,7 @@ export { useIsSearchFieldVisible } from './lib/useIsSearchFieldVisible'
 export { useOpenSearch } from './lib/useOpenSearch'
 export { useSearchUrlSync } from './lib/useSearchUrlSync'
 export { useSermonPlayback } from './lib/useSermonPlayback'
-export {
-  isSearchOpenAtom,
-  MIN_QUERY_LENGTH,
-  requestSearchFocus,
-  searchFocusRequestAtom,
-  searchQueryAtom,
-  typeSearchInput,
-} from './model'
+export { isSearchOpenAtom, MIN_QUERY_LENGTH, searchQueryAtom, typeSearchInput } from './model'
 export {
   holdSearchFocus,
   isSearchFieldFocusedAtom,

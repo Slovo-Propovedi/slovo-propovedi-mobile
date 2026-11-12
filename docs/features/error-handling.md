@@ -122,19 +122,16 @@ TTF ~1.3 МБ) утекало как unhandled promise rejection, которое
 
 ### Состояние — `src/shared/model/info-dialog.ts`
 
-- `globalInfoAtom` (`GlobalInfo | null`, поля `message` + опциональный `title` + опциональный `onDismiss`) — текущее сообщение;
-- `showInfo(message, title?, options?)` — императивный репортер, вызывается откуда угодно
-  (сервисы, слушатели, не-React код). `options.onDismiss` выполняется после закрытия
-  диалога любым путём (кнопка, системный «Назад», `Escape`) — им восстанавливают то,
-  что отобрал модальный диалог (например, фокус поля поиска). Использует модульный
+- `globalInfoAtom` (`GlobalInfo | null`, поля `message` + опциональный `title`) — текущее сообщение;
+- `showInfo(message, title?)` — императивный репортер, вызывается откуда угодно
+  (сервисы, слушатели, не-React код). Использует модульный
   Reatom-контекст из `shared/lib/reatom-ctx` (синглтон), как и `reportError`;
 - `dismissInfoAction(ctx)` — закрывает диалог (очищает атом).
 
 ### Отображение — `src/shared/ui/confirm-dialog/`
 
 - `GlobalConfirmDialog.tsx` — читает `globalInfoAtom` через `useAtom`, дисмисс через
-  `useAction(dismissInfoAction)`. `handleDismiss` сначала очищает атом, затем вызывает
-  `onDismiss` из состояния (диалог уже закрыт к моменту колбэка). Рендерит `ConfirmDialog` (`hideCancel`, без иконки,
+  `useAction(dismissInfoAction)`. Рендерит `ConfirmDialog` (`hideCancel`, без иконки,
   кнопка «Понятно», заголовок по умолчанию «Информация»). Рендерится в корневом
   layout `app/_RootLayout.tsx` рядом с `GlobalErrorDialog`.
 

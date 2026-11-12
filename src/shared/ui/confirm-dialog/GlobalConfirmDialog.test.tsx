@@ -52,34 +52,19 @@ describe('<GlobalConfirmDialog>', () => {
     expect(screen.getByText(CUSTOM_TITLE)).toBeTruthy()
   })
 
-  test('runs the dismissal callback when confirmed', async () => {
-    const { ctx } = await renderWithProviders(<GlobalConfirmDialog />)
-    const onDismiss = jest.fn()
-
-    await act(async () => {
-      globalInfoAtom(ctx, { message: MESSAGE, onDismiss })
-    })
-    fireEvent.press(screen.getByText(CONFIRM_TEXT))
-
-    expect(onDismiss).toHaveBeenCalledTimes(1)
-    expect(ctx.get(globalInfoAtom)).toBeNull()
-  })
-
-  test('runs the dismissal callback when dismissed with Escape', async () => {
+  test('dismisses with Escape', async () => {
     const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
       const { ctx } = await renderWithProviders(<GlobalConfirmDialog />)
-      const onDismiss = jest.fn()
 
       await act(async () => {
-        globalInfoAtom(ctx, { message: MESSAGE, onDismiss })
+        globalInfoAtom(ctx, { message: MESSAGE })
       })
       await act(async () => {
         dispatchKeyDown(createKeyDownEvent('Escape'))
       })
 
-      expect(onDismiss).toHaveBeenCalledTimes(1)
       expect(ctx.get(globalInfoAtom)).toBeNull()
     } finally {
       restorePlatform.restore()

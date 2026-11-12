@@ -1,11 +1,8 @@
-import { useAtom } from '@reatom/npm-react'
 import { Platform, TextInput, View } from 'react-native'
 import { useEscapeKey } from 'shared/lib/escape-key'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
 import { useTheme } from 'shared/ui/theme'
-import { useExternalFocusRequest } from '../lib/useExternalFocusRequest'
 import { useSearchBarModel } from '../lib/useSearchBarModel'
-import { searchFocusRequestAtom } from '../model'
 import { styles } from './SearchBar.styles'
 import { SearchBarClearButton } from './SearchBarClearButton'
 import { SearchBarMicButton } from './SearchBarMicButton'
@@ -30,13 +27,6 @@ export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boole
     isSearchOpen,
     voiceInput,
   } = useSearchBarModel(onFocusChange)
-  const [focusRequest] = useAtom(searchFocusRequestAtom)
-
-  // Page-level signal: restore focus after a press or dialog steals it.
-  useExternalFocusRequest({
-    focusRequest,
-    onFocus: () => inputRef.current?.focus(),
-  })
 
   // Esc goes through the shared escape stack: its capture listener on document
   // sees the event before the focused input, so one path covers focus and blur.

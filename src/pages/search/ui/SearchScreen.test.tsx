@@ -2,11 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
 import { StyleSheet } from 'react-native'
-import {
-  isSearchFieldFocusedAtom,
-  searchFocusRequestAtom,
-  searchQueryAtom,
-} from 'features/sermon-search'
+import { isSearchFieldFocusedAtom, searchQueryAtom } from 'features/sermon-search'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { searchHistoryAtom } from 'entities/search-history'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
@@ -337,21 +333,6 @@ describe('<SearchScreen>', () => {
     expect(mockShowInfo).toHaveBeenCalled()
   })
 
-  test('requests focus before and after the locked read-scope dialog', async () => {
-    const { ctx } = await renderScreen({ focused: true })
-    const initialNonce = ctx.get(searchFocusRequestAtom)?.nonce ?? 0
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Читать' }))
-
-    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(initialNonce + 1)
-
-    const onDismiss = mockShowInfo.mock.calls[0]?.[2]?.onDismiss
-    expect(onDismiss).toBeDefined()
-    onDismiss?.()
-
-    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(initialNonce + 2)
-  })
-
   test('keeps scope pills and recents mounted when the field blurs', async () => {
     const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
 
@@ -381,19 +362,17 @@ describe('<SearchScreen>', () => {
     expect(screen.getByText(SERMON.title)).toBeTruthy()
   })
 
-  test('refocuses the input and keeps the main page on cancel', async () => {
+  test('keeps the main page on cancel', async () => {
     const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
     await act(async () => {
       isSearchFieldFocusedAtom(ctx, false)
     })
-    const afterOpenNonce = ctx.get(searchFocusRequestAtom)?.nonce ?? 0
 
     await fireEvent.press(screen.getByText(CANCEL_LABEL))
 
     expect(screen.queryByText(CLEAR_DIALOG_TITLE)).toBeNull()
-    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(afterOpenNonce + 1)
 
     await act(async () => {
       isSearchFieldFocusedAtom(ctx, true)
@@ -404,19 +383,17 @@ describe('<SearchScreen>', () => {
     expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
   })
 
-  test('clears the history and refocuses on confirm', async () => {
+  test('clears the history on confirm', async () => {
     const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
     await act(async () => {
       isSearchFieldFocusedAtom(ctx, false)
     })
-    const afterOpenNonce = ctx.get(searchFocusRequestAtom)?.nonce ?? 0
 
     await fireEvent.press(screen.getAllByText(CLEAR_LABEL).at(-1) as never)
 
     await waitFor(() => expect(ctx.get(searchHistoryAtom)).toEqual([]))
-    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(afterOpenNonce + 1)
     expect(screen.queryByText(CLEAR_DIALOG_TITLE)).toBeNull()
 
     await act(async () => {
