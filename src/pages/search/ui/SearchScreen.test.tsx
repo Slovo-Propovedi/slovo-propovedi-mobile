@@ -244,6 +244,19 @@ describe('<SearchScreen>', () => {
     expect(mockShowInfo).toHaveBeenCalled()
   })
 
+  test('hides the empty state for a two-character query', async () => {
+    await renderScreen({ focused: true, query: 'ве' })
+
+    expect(screen.getByRole('button', { name: 'Проповеди' })).toBeTruthy()
+    expect(screen.queryByText('Ничего не найдено')).toBeNull()
+  })
+
+  test('shows the empty state from three characters', async () => {
+    await renderScreen({ focused: true, query: 'вер' })
+
+    expect(screen.getByText('Ничего не найдено')).toBeTruthy()
+  })
+
   test('shows the read placeholder and stops fetching when the flag is on', async () => {
     await renderScreen({ focused: true, query: 'вера', readEnabled: true })
 

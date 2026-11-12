@@ -21,6 +21,10 @@ import { SearchResultsSkeleton } from './SearchResultsSkeleton'
 
 const NO_RESULTS_MESSAGE = 'Ничего не найдено'
 const FOOTER_STYLE = { paddingVertical: INDENTS.medium }
+// The server effectively returns nothing for two-character searches, so the
+// message waits for a third character; fetching still starts at
+// `MIN_QUERY_LENGTH` (2).
+const MIN_EMPTY_STATE_LENGTH = 3
 
 export const SearchResultsList = ({
   group,
@@ -30,6 +34,7 @@ export const SearchResultsList = ({
   onRemoveFromSearchHistory,
   onSermonPress,
   paged,
+  query,
   wrapFirstRow,
   wrapMenuButton,
 }: {
@@ -40,6 +45,7 @@ export const SearchResultsList = ({
   onRemoveFromSearchHistory: (sermonId: string) => void
   onSermonPress: (sermon: SermonData) => void
   paged: PagedSearch
+  query: string
   wrapFirstRow?: (row: ReactElement) => ReactElement
   wrapMenuButton?: (button: ReactElement) => ReactElement
 }) => {
@@ -48,6 +54,7 @@ export const SearchResultsList = ({
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const { onScroll } = useBarCollapseOnScroll({ isSuspended: isBarCollapseSuspended })
+  const showEmptyState = query.trim().length >= MIN_EMPTY_STATE_LENGTH
 
   const groupState =
     group === 'sermons' ? paged.sermons : group === 'playlists' ? paged.playlists : paged.preachers
@@ -62,9 +69,9 @@ export const SearchResultsList = ({
     keyboardShouldPersistTaps: 'handled' as const,
     ListEmptyComponent: groupState.isLoading ? (
       <SearchResultsSkeleton />
-    ) : (
+    ) : showEmptyState ? (
       <EmptyState message={NO_RESULTS_MESSAGE} />
-    ),
+    ) : undefined,
     ListFooterComponent: groupState.isLoadingMore ? (
       <ActivityIndicator style={FOOTER_STYLE} />
     ) : undefined,

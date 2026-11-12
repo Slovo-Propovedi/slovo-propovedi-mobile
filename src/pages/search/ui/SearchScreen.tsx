@@ -96,6 +96,7 @@ export const SearchScreen = ({
             <SearchResultsList
               group={group}
               paged={paged}
+              query={query}
               onSermonPress={handleSermonPress}
               onPlaylistPress={onPlaylistPress}
               onAddToPlaylist={onAddToPlaylist}
