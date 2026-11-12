@@ -77,7 +77,13 @@ export const AdminSermonDetailScreen = () => {
       <ScrollView contentContainerStyle={styles.listContent}>
         <SermonDetailHeader sermon={sermon} />
 
-        {sermon.description ? <SermonDescriptionCard description={sermon.description} /> : null}
+        {sermon.description ? (
+          <SermonDescriptionCard
+            player={player}
+            audioUrl={sermon.audioUrl}
+            description={sermon.description}
+          />
+        ) : null}
 
         <SermonMediaCard
           player={player}

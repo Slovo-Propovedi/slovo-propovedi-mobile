@@ -74,6 +74,9 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     marginTop: INDENTS.lowest,
   },
+  timecode: {
+    textDecorationLine: 'underline',
+  },
   title: {
     fontSize: FONT_SIZES.h2,
     fontWeight: '700',
