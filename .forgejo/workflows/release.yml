@@ -273,11 +273,18 @@ jobs:
             exit 1
           fi
 
+          PLIST_RT=$(grep 'EXUpdatesRuntimeVersion' -A1 ios/SlovoPropovedi/Supporting/Expo.plist | sed -n 's/.*<string>\([^<]*\)<\/string>.*/\1/p')
+          if [ "$PLIST_RT" != "$TAG_VERSION" ]; then
+            echo "::error::Expo.plist EXUpdatesRuntimeVersion ($PLIST_RT) does not match tag ($TAG_VERSION)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+
           echo "All versions match tag $TAG_VERSION (code: $EXPECTED_CODE)"
           echo "version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
 
           {
-            echo "- Versions: package.json ✅ · gradle versionName ✅ · versionCode \`$EXPECTED_CODE\` ✅ · strings.xml runtime ✅"
+            echo "- Versions: package.json ✅ · gradle versionName ✅ · versionCode \`$EXPECTED_CODE\` ✅ · strings.xml runtime ✅ · Expo.plist runtime ✅"
           } | scripts/ci/step-summary.sh
 
       - name: Extract changelog section
