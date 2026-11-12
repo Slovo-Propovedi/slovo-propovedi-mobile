@@ -11,9 +11,11 @@ on:
 #              android/, ios/, plugins/, modules/, or a change to yarn.lock,
 #              app.config.ts, ota.config.ts. Version metadata ALONE does not
 #              count — scripts/bump-version.mjs rewrites package.json, gradle
-#              versionName/versionCode and the pbxproj MARKETING_VERSION/
-#              CURRENT_PROJECT_VERSION on every release, so those files are
-#              judged by content (see the `changes` job). Native builds the APK
+#              versionName/versionCode, the pbxproj MARKETING_VERSION/
+#              CURRENT_PROJECT_VERSION and the android strings.xml
+#              expo_runtime_version on every release, so those files are
+#              judged by content (see the `changes` job); create-release then
+#              re-checks each of them against the tag. Native builds the APK
 #              (ZIP + SHA256SUMS), mirrors it to GitHub and Codeberg, and
 #              attaches it to the Forgejo release.
 #   JS-only  — only JS/TS/assets changed: deploy the web PWA and publish the
@@ -265,11 +267,18 @@ jobs:
             exit 1
           fi
 
+          STRINGS_RT=$(grep 'expo_runtime_version' android/app/src/main/res/values/strings.xml | sed 's/.*<string name="expo_runtime_version">\([^<]*\)<\/string>.*/\1/')
+          if [ "$STRINGS_RT" != "$TAG_VERSION" ]; then
+            echo "::error::strings.xml expo_runtime_version ($STRINGS_RT) does not match tag ($TAG_VERSION)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+
           echo "All versions match tag $TAG_VERSION (code: $EXPECTED_CODE)"
           echo "version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
 
           {
-            echo "- Versions: package.json ✅ · gradle versionName ✅ · versionCode \`$EXPECTED_CODE\` ✅"
+            echo "- Versions: package.json ✅ · gradle versionName ✅ · versionCode \`$EXPECTED_CODE\` ✅ · strings.xml runtime ✅"
           } | scripts/ci/step-summary.sh
 
       - name: Extract changelog section
