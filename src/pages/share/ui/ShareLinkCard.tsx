@@ -1,9 +1,11 @@
 import { Linking, Text } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { OnboardingTarget } from 'features/onboarding'
+import { isShareSupported } from 'shared/lib/isShareSupported'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme } from 'shared/ui/theme'
 import { CopyLinkButton } from './CopyLinkButton'
+import { ShareLinkButton } from './ShareLinkButton'
 import { styles } from './styles'
 
 const openUrl = (url: string) => {
@@ -43,6 +45,7 @@ export const ShareLinkCard = ({
         </Text>
       </PressableButton>
       <CopyLinkButton url={url} style={styles.copyButton} onboardingTargetId={copyTargetId} />
+      {isShareSupported && <ShareLinkButton url={url} style={styles.copyButton} />}
     </>
   )
 }

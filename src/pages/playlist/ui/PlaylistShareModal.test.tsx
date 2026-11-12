@@ -16,7 +16,7 @@ jest.mock('react-native-qrcode-svg', () => {
   }
 })
 
-jest.mock('../lib/isShareSupported', () => ({
+jest.mock('shared/lib/isShareSupported', () => ({
   get isShareSupported() {
     return mockIsShareSupported
   },

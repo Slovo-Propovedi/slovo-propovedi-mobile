@@ -1,4 +1,4 @@
-import { sharePlaylist } from './sharePlaylist.web'
+import { shareLink } from './shareLink.web'
 
 const SHARE_TEXT = 'Плейлист — ссылка'
 const SHARE_URL = 'https://example.test/listen/playlist?playlist=pl-1'
@@ -14,7 +14,7 @@ const makeDomException = (name: string, message: string) => new DOMException(mes
 
 const makeCancelledError = () => makeDomException('AbortError', 'Share cancelled')
 
-describe('sharePlaylist (web)', () => {
+describe('shareLink (web)', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     defineNavigatorValue('share', undefined)
@@ -30,7 +30,7 @@ describe('sharePlaylist (web)', () => {
     const share = jest.fn().mockResolvedValue(undefined)
     defineNavigatorValue('share', share)
 
-    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const result = await shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     expect(result).toBe('shared')
     expect(share).toHaveBeenCalledWith({ text: SHARE_TEXT, url: SHARE_URL })
@@ -41,7 +41,7 @@ describe('sharePlaylist (web)', () => {
     defineNavigatorValue('clipboard', clipboard)
     defineNavigatorValue('share', jest.fn().mockRejectedValue(makeCancelledError()))
 
-    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const result = await shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     expect(result).toBe('dismissed')
     expect(clipboard.writeText).not.toHaveBeenCalled()
@@ -55,7 +55,7 @@ describe('sharePlaylist (web)', () => {
       jest.fn().mockRejectedValue(makeDomException('AbortError', 'The user aborted a request')),
     )
 
-    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const result = await shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     expect(result).toBe('dismissed')
     expect(clipboard.writeText).not.toHaveBeenCalled()
@@ -66,7 +66,7 @@ describe('sharePlaylist (web)', () => {
     defineNavigatorValue('clipboard', clipboard)
     defineNavigatorValue('share', jest.fn().mockRejectedValue(makeDomException('AbortError', '')))
 
-    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const result = await shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     expect(result).toBe('dismissed')
     expect(clipboard.writeText).not.toHaveBeenCalled()
@@ -81,7 +81,7 @@ describe('sharePlaylist (web)', () => {
       jest.fn().mockRejectedValue(makeDomException('AbortError', 'Share failed')),
     )
 
-    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const result = await shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     expect(result).toBe('error')
     expect(clipboard.writeText).not.toHaveBeenCalled()
@@ -96,7 +96,7 @@ describe('sharePlaylist (web)', () => {
       jest.fn().mockRejectedValue(makeDomException('AbortError', 'Permission denied')),
     )
 
-    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const result = await shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     expect(result).toBe('error')
     expect(clipboard.writeText).not.toHaveBeenCalled()
@@ -115,7 +115,7 @@ describe('sharePlaylist (web)', () => {
         ),
     )
 
-    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const result = await shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     expect(result).toBe('error')
     expect(clipboard.writeText).not.toHaveBeenCalled()
@@ -126,7 +126,7 @@ describe('sharePlaylist (web)', () => {
     const clipboard = makeClipboard()
     defineNavigatorValue('clipboard', clipboard)
 
-    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const result = await shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     expect(result).toBe('copied')
     expect(clipboard.writeText).toHaveBeenCalledWith(SHARE_URL)
@@ -138,7 +138,7 @@ describe('sharePlaylist (web)', () => {
       writeText: jest.fn().mockRejectedValue(new Error('denied')),
     })
 
-    const result = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const result = await shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     expect(result).toBe('error')
   })
@@ -153,8 +153,8 @@ describe('sharePlaylist (web)', () => {
     )
     defineNavigatorValue('share', share)
 
-    const firstAttempt = sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
-    const secondResult = await sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const firstAttempt = shareLink({ text: SHARE_TEXT, url: SHARE_URL })
+    const secondResult = await shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     expect(secondResult).toBe('dismissed')
     expect(share).toHaveBeenCalledTimes(1)
@@ -174,11 +174,11 @@ describe('sharePlaylist (web)', () => {
     )
     defineNavigatorValue('share', share)
 
-    const firstAttempt = sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const firstAttempt = shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     await jest.advanceTimersByTimeAsync(PENDING_STALE_MS)
 
-    const retryAttempt = sharePlaylist({ text: SHARE_TEXT, url: SHARE_URL })
+    const retryAttempt = shareLink({ text: SHARE_TEXT, url: SHARE_URL })
 
     expect(share).toHaveBeenCalledTimes(2)
 

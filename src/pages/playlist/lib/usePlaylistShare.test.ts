@@ -20,8 +20,8 @@ jest.mock('expo-clipboard', () => ({
   setStringAsync: jest.fn(),
 }))
 
-jest.mock('./sharePlaylist', () => ({
-  sharePlaylist: (...args: unknown[]) => mockSharePlaylist(...args),
+jest.mock('shared/lib/shareLink', () => ({
+  shareLink: (...args: unknown[]) => mockSharePlaylist(...args),
 }))
 
 const VALID_UUID = '0f0e8d6c-1a2b-4c3d-9e8f-001122334455'

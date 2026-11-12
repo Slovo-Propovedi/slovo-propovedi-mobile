@@ -167,3 +167,7 @@
 - [ ] **OTA/xprem-переменные продублированы в GitHub org.** `.github/workflows/release.yml` — 4 значения (`EXPO_PUBLIC_OTA_URL`, `EXPO_PUBLIC_XPREM_APP_ID`, `EXPO_PUBLIC_XPREM_CHANNEL_NAME`, `EXPO_PUBLIC_XPREM_BRANCH_NAME`) должны совпадать с Forgejo vars; `EXPO_PUBLIC_*` host/mirror workflow выводит из 6 plain-переменных. Держать синхронными при изменении хостов/каналов, иначе APK/web уедут с пустыми или старыми значениями.
 - [ ] **`pull_request`-события не покрыты оркестрацией.** `.forgejo/workflows/ci.yml` (job `remote`), `scripts/ci/github-dispatch.sh` — диспетчер получает `github.ref_name`/`github.sha` в расчёте на push/тег; PR-семантика (merge-commit vs head, ref-нейминг) не адаптирована — CI на PR во всех репозиториях паттерна остаётся локальным/непроверенным.
 - [ ] **`CI_GITHUB_TOKEN` vs `MIRROR_GITHUB_TOKEN`: скоупы не проверены.** `.forgejo/workflows/ci.yml`, `.forgejo/workflows/release.yml` (`secrets.CI_GITHUB_TOKEN`), `scripts/ci/github-dispatch.sh` — решить на живой проверке, хватает ли прав существующего `MIRROR_GITHUB_TOKEN` (Actions RW + Contents RW); если нет — завести отдельный fine-grained PAT.
+
+## Поделиться приложением
+
+- [ ] Онбординг-шаг для кнопки «Поделиться ссылкой» на /share — src/pages/share/ui/ShareLinkButton.tsx — шаг не добавлен, т.к. кнопка рендерится условно (нет navigator.share на десктопе) и статичный targetId может подвесить тур; вернуться при пересмотре сценария share

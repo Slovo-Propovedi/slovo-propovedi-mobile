@@ -3,10 +3,10 @@ import * as Clipboard from 'expo-clipboard'
 import { useCallback, useState } from 'react'
 import { validate as uuidValidate } from 'uuid'
 import { FAVORITES_PLAYLIST, myPlaylistsAtom, type PlaylistData } from 'entities/playlist'
+import { shareLink } from 'shared/lib/shareLink'
 import { showToast } from 'shared/model'
 import { buildCustomPlaylistShareUrl } from './buildCustomPlaylistShareUrl'
 import { buildPlaylistShareUrl } from './buildPlaylistShareUrl'
-import { sharePlaylist } from './sharePlaylist'
 
 const COPIED_MESSAGE = 'Ссылка скопирована'
 const SHARE_ERROR_MESSAGE = 'Не удалось поделиться. Попробуйте ещё раз'
@@ -39,7 +39,7 @@ export const usePlaylistShare = (playlist: PlaylistData, onCloseMenu: () => void
 
   const sendShareLink = async () => {
     if (shareUrl === null) return
-    const result = await sharePlaylist({ text: `${playlist.title} — ${shareUrl}`, url: shareUrl })
+    const result = await shareLink({ text: `${playlist.title} — ${shareUrl}`, url: shareUrl })
     if (result === 'copied') showToastAction(COPIED_MESSAGE)
     if (result === 'error') showToastAction(SHARE_ERROR_MESSAGE)
   }

@@ -1,6 +1,6 @@
-import { type SharePlaylistInput, type ShareResult } from './sharePlaylist'
+import { type ShareLinkInput, type ShareResult } from './shareLink'
 
-export { type SharePlaylistInput, type ShareResult } from './sharePlaylist'
+export { type ShareLinkInput, type ShareResult } from './shareLink'
 
 // Chromium maps both a genuine user dismissal ("Share cancelled") and internal
 // share failures ("Share failed", "Permission denied") to AbortError; WebKit
@@ -42,24 +42,24 @@ const copyUrlToClipboard = async (url: string): Promise<ShareResult> => {
     await navigator.clipboard.writeText(url)
     return 'copied'
   } catch (error) {
-    console.warn('sharePlaylist clipboard fallback failed:', describeError(error))
+    console.warn('shareLink clipboard fallback failed:', describeError(error))
     return 'error'
   }
 }
 
-const shareViaWebShareApi = async ({ text, url }: SharePlaylistInput): Promise<ShareResult> => {
+const shareViaWebShareApi = async ({ text, url }: ShareLinkInput): Promise<ShareResult> => {
   try {
     await navigator.share({ text, url })
     return 'shared'
   } catch (error) {
     if (isUserCancellation(error)) return 'dismissed'
 
-    console.warn('sharePlaylist share failed:', describeError(error))
+    console.warn('shareLink share failed:', describeError(error))
     return 'error'
   }
 }
 
-export const sharePlaylist = async (input: SharePlaylistInput): Promise<ShareResult> => {
+export const shareLink = async (input: ShareLinkInput): Promise<ShareResult> => {
   const isPendingFresh = isSharePending && Date.now() - pendingSince < PENDING_STALE_MS
   if (isPendingFresh) return 'dismissed'
 
