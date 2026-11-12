@@ -140,6 +140,9 @@ const findPointerGate = (node: null | TestInstance): null | TestInstance => {
   return null
 }
 
+const layerOpacity = (node: null | TestInstance) =>
+  StyleSheet.flatten(findPointerGate(node)?.props.style)?.opacity
+
 const findPlayerRoot = () =>
   screen.root?.queryAll(instance => {
     const flat = StyleSheet.flatten(instance.props.style)
@@ -204,7 +207,7 @@ describe('<ExpandablePlayer>', () => {
     expect(ctx.get(isMiniPillCollapsedAtom)).toBe(false)
   })
 
-  test('tucks the mini player under the search row while the field is focused', async () => {
+  test('tucks the mini player under the search row and fades it out while focused', async () => {
     isBarCollapsedAtom(ctx, false)
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, '')
@@ -218,6 +221,9 @@ describe('<ExpandablePlayer>', () => {
     // and its subtree sits below the tab bar's floating container (zIndex 10).
     expect(button).toBeTruthy()
     expect(findPointerGate(button)?.props.pointerEvents).toBe('none')
+    // The glass above is translucent: at rest the pill must be fully invisible,
+    // not merely slid underneath it.
+    expect(layerOpacity(button)).toBe(0)
     expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(true)
     expect(tuckTransform()).toEqual([{ translateY: MINI_TUCK_DISTANCE }])
     expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_UNDER_BAR_Z)
@@ -230,6 +236,9 @@ describe('<ExpandablePlayer>', () => {
       findPointerGate(queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true }))?.props
         .pointerEvents,
     ).toBe('box-none')
+    expect(layerOpacity(queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true }))).toBe(
+      1,
+    )
     expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(false)
     expect(tuckTransform()).toEqual([{ translateY: 0 }])
     expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)

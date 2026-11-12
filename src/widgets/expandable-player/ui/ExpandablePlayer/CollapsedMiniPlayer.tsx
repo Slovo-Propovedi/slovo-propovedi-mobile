@@ -6,6 +6,7 @@ import Animated, {
   type AnimatedStyle,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withTiming,
 } from 'react-native-reanimated'
 import { useOnboardingTargetRef } from 'features/onboarding'
@@ -21,6 +22,9 @@ import { createMiniStyles } from './miniStyles'
 // Sliding the pill down by its own height plus the two outer gaps lands its top
 // on the focused full-width search pill's top, so it disappears behind it.
 const MINI_TUCK_DISTANCE = PLAYER_SIZES.miniPlayerHeight + BAR_OUTER_GAP * 2
+// The islands above are translucent glass, so the tucked pill must fade out
+// after the slide; 180 ms reads as one motion rather than a second step.
+const MINI_TUCK_FADE_MS = 180
 
 /**
  * The collapsed mini-player layer, split out of ExpandablePlayer so the
@@ -74,21 +78,29 @@ export const CollapsedMiniPlayer = ({
   const keyboardLiftStyle = useKeyboardLiftStyle()
   const [isHidden] = useAtom(isSearchFieldFocusedAtom)
   const focusProgress = useSharedValue(isHidden ? 1 : 0)
+  const pillOpacity = useSharedValue(isHidden ? 0 : 1)
   const tuckStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: MINI_TUCK_DISTANCE * focusProgress.value }],
   }))
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: pillOpacity.value }))
 
   // Starts after the commit so the player root's zIndex (dropped below the tab
   // bar) is in place before the first tucked frame. Stays mounted while hidden.
   useEffect(() => {
     focusProgress.value = withTiming(isHidden ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
-  }, [focusProgress, isHidden])
+    // Focus: slide under first, then fade out. Blur: fade back in while the
+    // pill slides up (simultaneous reverse, so the pill is visible as it rises).
+    // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in effect (withDelay/withTiming sequencing below)
+    pillOpacity.value = isHidden
+      ? withDelay(BAR_MORPH_DURATION_MS, withTiming(0, { duration: MINI_TUCK_FADE_MS }))
+      : withTiming(1, { duration: MINI_TUCK_FADE_MS })
+  }, [focusProgress, isHidden, pillOpacity])
 
   return (
     <Animated.View
       accessibilityElementsHidden={isHidden}
-      style={[miniLayerStyle, keyboardLiftStyle]}
       pointerEvents={isHidden ? 'none' : 'box-none'}
+      style={[miniLayerStyle, keyboardLiftStyle, fadeStyle]}
       importantForAccessibility={isHidden ? 'no-hide-descendants' : 'yes'}
     >
       <MiniPlayer
