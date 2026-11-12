@@ -10,10 +10,10 @@ const SMALL_GAP = INDENTS.low
 // The scope shadow is a dark copy of the pill shifted down under the track, so
 // it peeks out at the bottom, plus a larger backdrop-blur frame on top of it:
 // the blur smears the copy's edges and the shadow feathers along the contour.
-const SHADOW_OFFSET_Y = Math.round(TRACK_HEIGHT * 0.55)
+const SHADOW_OFFSET_Y = 18
 const SHADOW_FEATHER = INDENTS.medium + INDENTS.lowest
 const SHADOW_FILL = 'rgba(0, 0, 0, 0.09)'
-const SHADOW_BLUR_RADIUS = 6
+const SHADOW_BLUR_RADIUS = 10
 
 export const styles = StyleSheet.create({
   label: { fontSize: FONT_SIZES.base },

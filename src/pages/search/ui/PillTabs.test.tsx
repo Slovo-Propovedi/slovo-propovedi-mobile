@@ -23,7 +23,7 @@ const SHADOW_BODY_ID = 'pill-tabs-shadow-body'
 const SHADOW_BLUR_ID = 'pill-tabs-shadow-blur'
 const TRACK_HEIGHT = 48
 // Shadow body: the pill's shape shifted down so it peeks out under the track.
-const SHADOW_OFFSET_Y = 26
+const SHADOW_OFFSET_Y = 18
 // The backdrop blur frame is larger than the body on every side, which is what
 // feathers the body's edges.
 const SHADOW_FEATHER = 20
@@ -87,7 +87,7 @@ describe('<PillTabs>', () => {
     expect(Number(bodyStyle.top)).toBeLessThan(TRACK_HEIGHT)
     // RN 0.88 filter blur (RenderEffect on Android 12+) feathers the body's
     // edges in every direction, which BlurView alone cannot do without a target.
-    expect(bodyStyle.filter).toEqual([{ blur: 6 }])
+    expect(bodyStyle.filter).toEqual([{ blur: 10 }])
 
     const blur = screen.getByTestId(SHADOW_BLUR_ID)
     const blurStyle = StyleSheet.flatten(blur.props.style)
