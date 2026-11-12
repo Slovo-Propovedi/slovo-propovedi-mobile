@@ -271,17 +271,20 @@ Android воспроизводятся локальными config-плагин�
 Все инъекции идемпотентны; повторный `prebuild --clean` даёт идентичное
 дерево.
 
-После prebuild манифест не содержит `expo.modules.updates.*` meta-data
-(их инжектирует unversioned-плагин `@expo/prebuild-config` независимо от
-наличия `expo-updates` — пакет фактически не установлен, его нет в
-`yarn.lock`) и `com.google.firebase.messaging.*` meta-data: оба набора
-удаляет `plugins/withAndroidManifestCleanup.ts`. Плагин зарегистрирован
-первым в `app.config.ts`, т.к. manifest-моды применяются в обратном
-порядке регистрации — так он выполняется после `expo-notifications` и
-срезает его meta-data. `expo.autolinking.exclude: ["expo-updates"]` в
-`package.json` оставлен как страховка (сейчас no-op). Разрешение
-`POST_NOTIFICATIONS` объявлено явно в `android.permissions` в
-`app.config.ts`.
+После prebuild манифест не содержит `com.google.firebase.messaging.*`
+meta-data: их срезает `plugins/withAndroidManifestCleanup.ts`;
+`expo.modules.updates.*` плагин намеренно НЕ трогает — без этих записей
+не работает self-hosted OTA. Плагин зарегистрирован первым в `app.config.ts`,
+т.к. manifest-моды применяются в обратном порядке регистрации — так он
+выполняется после `expo-notifications` и срезает его meta-data.
+
+Закоммиченный baseline `android/` собран БЕЗ OTA: prebuild запускается с
+пустыми `EXPO_PUBLIC_OTA_URL`/`EXPO_PUBLIC_XPREM_*`, потому что локальный
+`.env` не должен протекать в baseline, — `ota.config.ts` видит неполный
+набор и отдаёт `updates.enabled: false`. Релизный CI пересобирает `android/`
+с реальными `EXPO_PUBLIC_*` значениями и получает полный OTA-набор (update
+url, request headers, code signing). Разрешение `POST_NOTIFICATIONS`
+объявлено явно в `android.permissions` в `app.config.ts`.
 
 `NODE_BINARY` — машинно-специфичная настройка, в плагин НЕ входит. Если
 Gradle не видит node, добавить `NODE_BINARY=/usr/bin/node` (путь от
