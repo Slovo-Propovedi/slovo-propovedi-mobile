@@ -325,6 +325,17 @@ describe('useStepNavigation skipIfMissing cards', () => {
     ],
     title: 'Синтетический сценарий',
   }
+  const REGISTERED_WHATS_NEW = scenariosById.whatsNew
+
+  // The tour actions resolve the deck by `scenarioId` from the registry, so the
+  // synthetic scenario must replace the real one for the duration of these tests.
+  beforeEach(() => {
+    scenariosById.whatsNew = DESKTOP_ONLY_SCENARIO
+  })
+
+  afterEach(() => {
+    scenariosById.whatsNew = REGISTERED_WHATS_NEW
+  })
 
   test('drops the desktop-only card when its target is absent', async () => {
     const { ctx } = await renderNavigation(DESKTOP_ONLY_SCENARIO, DESKTOP_ONLY_DECK_INDEX, {
