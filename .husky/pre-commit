@@ -1,1 +1,19 @@
+#!/usr/bin/env sh
+
+# Husky pre-commit hook: signed-commit guard + lint-staged/typecheck/patches.
+# Bypass with --no-verify.
+
+# 1. Signed-commit guard. `.git/config` is local and not shared by git, so the
+# guard cannot enable signing for everyone — it fails loudly until each
+# developer enables it locally. Set up once per clone:
+#   git config commit.gpgsign true
+#   git config tag.gpgsign true
+#   git config gpg.format ssh
+#   git config user.signingkey ~/.ssh/id_ed25519.pub
+if ! git config --get commit.gpgsign | grep -qi '^true$'; then
+  echo "✖ Commits must be signed. Enable: git config commit.gpgsign true && git config gpg.format ssh && git config user.signingkey ~/.ssh/id_ed25519.pub"
+  exit 1
+fi
+
+# 2. Staged-file lint + typecheck + patch sanity.
 yarn lint:staged && yarn check:types && yarn check:patches
