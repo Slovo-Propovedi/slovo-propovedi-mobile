@@ -1,6 +1,6 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type ReactElement, useCallback, useEffect, useState } from 'react'
-import { Keyboard, Pressable, StyleSheet } from 'react-native'
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native'
 import {
   isSearchFieldFocusedAtom,
   isSearchQueryActive,
@@ -81,18 +81,21 @@ export const SearchScreen = ({
 
   return (
     <Pressable style={styles.container} onPress={Keyboard.dismiss}>
-      <SearchScopeTabs value={scope} onChange={handleScopeChange} />
+      {!isActive && <SearchScopeTabs value={scope} onChange={handleScopeChange} />}
       {isActive ? (
         scope === 'read' ? (
           <EmptyState message={READ_PLACEHOLDER} />
         ) : (
           <>
-            <PillTabs
-              value={group}
-              items={GROUP_ITEMS}
-              wrapItem={wrapGroupPill}
-              onChange={handleGroupChange}
-            />
+            <View style={styles.groupTabs} testID='search-group-tabs'>
+              <PillTabs
+                value={group}
+                variant='results'
+                items={GROUP_ITEMS}
+                wrapItem={wrapGroupPill}
+                onChange={handleGroupChange}
+              />
+            </View>
             <SearchResultsList
               group={group}
               paged={paged}
@@ -121,4 +124,6 @@ const styles = StyleSheet.create({
     // wrapper already applies.
     paddingTop: INDENTS.low,
   },
+  // Extra gap under the results select, the only top row while a query is active.
+  groupTabs: { marginBottom: INDENTS.medium },
 })

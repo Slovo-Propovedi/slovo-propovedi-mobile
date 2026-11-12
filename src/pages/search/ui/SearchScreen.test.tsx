@@ -1,5 +1,5 @@
 import { createCtx } from '@reatom/framework'
-import { fireEvent, screen } from '@testing-library/react-native'
+import { act, fireEvent, screen } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
 import { StyleSheet } from 'react-native'
 import { isSearchFieldFocusedAtom, searchQueryAtom } from 'features/sermon-search'
@@ -11,6 +11,7 @@ import { showInfo } from 'shared/model/info-dialog'
 import { INDENTS } from 'shared/ui/theme'
 import { type PagedSearch } from '../lib/pagedGroup'
 import { usePagedSearch } from '../lib/usePagedSearch'
+import { PillTabs } from './PillTabs'
 import { SearchScreen } from './SearchScreen'
 
 const mockUsePagedSearch = usePagedSearch as jest.MockedFunction<typeof usePagedSearch>
@@ -20,6 +21,14 @@ const mockShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
 jest.mock('../lib/usePagedSearch', () => ({
   usePagedSearch: jest.fn(),
 }))
+
+// Spy on the real component: the screen's contract with the select is the props
+// it passes (which variant), while rendering behavior stays the real one.
+jest.mock('./PillTabs', () => {
+  const actual = jest.requireActual('./PillTabs')
+
+  return { ...actual, PillTabs: jest.fn(actual.PillTabs) }
+})
 
 jest.mock('entities/feature-flags', () => ({
   useFeatureFlag: jest.fn(() => false),
@@ -102,6 +111,14 @@ const createPaged = (overrides: Partial<PagedSearch> = {}): PagedSearch => ({
   sermons: createGroup([]),
   ...overrides,
 })
+
+// Props the screen handed to the real <PillTabs>: `variant` is the styling
+// contract, so find the call whose items contain the given key.
+const getTabsProps = (itemKey: string) =>
+  jest
+    .mocked(PillTabs)
+    .mock.calls.map(([props]) => props)
+    .find(props => props.items.some(item => item.key === itemKey))
 
 const renderScreen = async ({
   focused = false,
@@ -236,6 +253,42 @@ describe('<SearchScreen>', () => {
     expect(ctx.get(searchQueryAtom)).toBe(PREACHER)
   })
 
+  test('hides the scope tabs while the query is active', async () => {
+    await renderScreen({ focused: true, query: 'вера' })
+
+    expect(screen.queryByRole('button', { name: 'Слушать' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Читать' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Проповеди' })).toBeTruthy()
+  })
+
+  test('brings the scope tabs back when the query is cleared', async () => {
+    const { ctx } = await renderScreen({ focused: true, query: 'вера' })
+
+    await act(async () => {
+      searchQueryAtom(ctx, '')
+    })
+
+    expect(screen.getByRole('button', { name: 'Слушать' })).toBeTruthy()
+  })
+
+  test('renders the group select in the results style', async () => {
+    await renderScreen({ focused: true, query: 'вера' })
+
+    expect(getTabsProps('sermons')?.variant).toBe('results')
+  })
+
+  test('keeps the scope select in the default style', async () => {
+    await renderScreen({ focused: true })
+
+    expect(getTabsProps('listen')?.variant).toBeUndefined()
+  })
+
+  test('adds extra space below the results select', async () => {
+    await renderScreen({ focused: true, query: 'вера' })
+
+    expect(screen.getByTestId('search-group-tabs')).toHaveStyle({ marginBottom: INDENTS.medium })
+  })
+
   test('explains that the read scope is unavailable when its flag is off', async () => {
     await renderScreen({ focused: true })
 
@@ -258,9 +311,12 @@ describe('<SearchScreen>', () => {
   })
 
   test('shows the read placeholder and stops fetching when the flag is on', async () => {
-    await renderScreen({ focused: true, query: 'вера', readEnabled: true })
+    const { ctx } = await renderScreen({ focused: true, readEnabled: true })
 
     await fireEvent.press(screen.getByRole('button', { name: 'Читать' }))
+    await act(async () => {
+      searchQueryAtom(ctx, 'вера')
+    })
 
     expect(screen.getByText('Раздел «Читать» скоро появится')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Проповеди' })).toBeNull()
