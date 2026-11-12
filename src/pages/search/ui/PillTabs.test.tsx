@@ -16,7 +16,12 @@ const SCOPE_ITEMS = [
 ]
 
 const TRACK_ID = 'pill-tabs-track'
+const SCROLL_ID = 'pill-tabs-scroll'
+const STRETCH_ROW_ID = 'pill-tabs-stretch-row'
 const TRACK_HEIGHT = 48
+// The track shadow reaches ~35dp below the track (offsetY 16 + blur 38/2); the
+// wrappers must keep that room or the shadow is cut into a rim at the pill edge.
+const MIN_SHADOW_ROOM = 35
 // The active theme is resolved by ThemeProvider (light or dark), so expected
 // colors come from the same COLORS the component reads through `useTheme`.
 const SELECTED_FILL = () => withAlpha(COLORS.text, 0.1)
@@ -77,6 +82,50 @@ describe('<PillTabs>', () => {
     expect(unselected.borderWidth).toBeUndefined()
     expect(unselected.boxShadow).toBeUndefined()
     expect(unselected.elevation).toBeUndefined()
+  })
+
+  test('keeps shadow room inside the scroll viewport so the shadow is not clipped', async () => {
+    await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
+
+    const scroll = screen.getByTestId(SCROLL_ID)
+    const content = StyleSheet.flatten(scroll.props.contentContainerStyle)
+    const viewport = StyleSheet.flatten(scroll.props.style)
+
+    expect(content.paddingBottom).toBeGreaterThanOrEqual(MIN_SHADOW_ROOM)
+    expect(content.overflow).not.toBe('hidden')
+    // The added room is compensated so the on-screen spacing does not grow.
+    expect(viewport.marginBottom).toBeLessThan(0)
+    expect(viewport.overflow).not.toBe('hidden')
+  })
+
+  test('keeps shadow room around the full-width track', async () => {
+    await renderWithProviders(
+      <PillTabs stretch value='listen' items={SCOPE_ITEMS} onChange={jest.fn()} />,
+    )
+
+    const row = StyleSheet.flatten(screen.getByTestId(STRETCH_ROW_ID).props.style)
+
+    expect(row.paddingBottom).toBeGreaterThanOrEqual(MIN_SHADOW_ROOM)
+    expect(row.marginBottom).toBeLessThan(0)
+    expect(row.overflow).not.toBe('hidden')
+    expect(trackStyle().overflow).not.toBe('hidden')
+  })
+
+  test('results variant highlights the selection with the accent color and no track shadow', async () => {
+    await renderWithProviders(
+      <PillTabs items={ITEMS} variant='results' value='playlists' onChange={jest.fn()} />,
+    )
+
+    expect(segmentStyle('Плейлисты')).toMatchObject({
+      backgroundColor: COLORS.primary,
+      borderRadius: RADIUSES.round,
+    })
+    expect(screen.getByText('Плейлисты')).toHaveStyle({
+      color: COLORS.onPrimary,
+      fontWeight: '600',
+    })
+    expect(trackStyle().boxShadow).toBeUndefined()
+    expect(trackStyle().elevation).toBeUndefined()
   })
 
   test('stretches the track and splits it equally between the scope segments', async () => {

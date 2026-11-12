@@ -1,7 +1,8 @@
 import { Fragment, type ReactElement } from 'react'
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 import { PressableButton } from 'shared/ui/pressable-button'
-import { FONT_SIZES, INDENTS, RADIUSES, useTheme, withAlpha } from 'shared/ui/theme'
+import { useTheme, withAlpha } from 'shared/ui/theme'
+import { styles } from './PillTabs.styles'
 
 export interface PillTabItem {
   disabled?: boolean
@@ -16,12 +17,11 @@ interface PillTabsProps {
   /** Full-width track with equal segments (scope row) instead of a hugging, scrollable one. */
   stretch?: boolean
   value: string
+  /** `scope` — white track with a soft external shadow; `results` — flat track, accent selection. */
+  variant?: 'results' | 'scope'
   /** Page-owned wrapper around a single pill (e.g. An onboarding target). */
   wrapItem?: (item: PillTabItem, pill: ReactElement) => ReactElement
 }
-
-const TRACK_HEIGHT = 48
-const TRACK_PADDING = 3
 
 export const PillTabs = ({
   items,
@@ -29,14 +29,21 @@ export const PillTabs = ({
   onDisabledPress,
   stretch = false,
   value,
+  variant = 'scope',
   wrapItem,
 }: PillTabsProps) => {
   const { currentTheme } = useTheme()
+  const isResults = variant === 'results'
 
   const track = (
     <View
       testID='pill-tabs-track'
-      style={[styles.track, { backgroundColor: currentTheme.card }, stretch && styles.trackStretch]}
+      style={[
+        styles.track,
+        { backgroundColor: currentTheme.card },
+        !isResults && styles.trackShadow,
+        stretch && styles.trackStretch,
+      ]}
     >
       {items.map(item => {
         const isSelected = item.key === value
@@ -50,14 +57,22 @@ export const PillTabs = ({
             style={[
               styles.segment,
               stretch && styles.segmentStretch,
-              isSelected && { backgroundColor: withAlpha(currentTheme.text, 0.1) },
+              isSelected && {
+                backgroundColor: isResults
+                  ? currentTheme.primary
+                  : withAlpha(currentTheme.text, 0.1),
+              },
             ]}
           >
             <Text
               style={[
                 styles.label,
                 {
-                  color: isDisabled ? currentTheme.textMuted : currentTheme.text,
+                  color: isDisabled
+                    ? currentTheme.textMuted
+                    : isResults && isSelected
+                      ? currentTheme.onPrimary
+                      : currentTheme.text,
                   fontWeight: isSelected ? '600' : '400',
                 },
               ]}
@@ -72,50 +87,25 @@ export const PillTabs = ({
     </View>
   )
 
-  if (stretch) return <View style={styles.stretchRow}>{track}</View>
+  if (stretch)
+    return (
+      <View
+        testID='pill-tabs-stretch-row'
+        style={isResults ? styles.stretchRowCompact : styles.stretchRowRoom}
+      >
+        {track}
+      </View>
+    )
 
   return (
     <ScrollView
       horizontal
-      style={styles.scroll}
+      testID='pill-tabs-scroll'
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent}
+      style={isResults ? styles.scrollCompact : styles.scrollRoom}
+      contentContainerStyle={isResults ? styles.scrollContentCompact : styles.scrollContentRoom}
     >
       {track}
     </ScrollView>
   )
 }
-
-const styles = StyleSheet.create({
-  label: { fontSize: FONT_SIZES.base },
-  scroll: { flexGrow: 0 },
-  scrollContent: {
-    paddingHorizontal: INDENTS.medium,
-    paddingVertical: INDENTS.lowest,
-  },
-  segment: {
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-    borderRadius: RADIUSES.round,
-    height: '100%',
-    justifyContent: 'center',
-    paddingHorizontal: INDENTS.middle,
-  },
-  segmentStretch: { flex: 1, paddingHorizontal: 0 },
-  stretchRow: {
-    paddingHorizontal: INDENTS.medium,
-    paddingVertical: INDENTS.lowest,
-  },
-  track: {
-    borderRadius: RADIUSES.round,
-    // Deep downward-only drop shadow: a third of the 48dp track height, with a
-    // wide blur so the track reads as lifted, not outlined. boxShadow alone
-    // renders on Android too (New Architecture); elevation is intentionally
-    // absent — it hugs the view outline and reads as a border ring.
-    boxShadow: '0px 16px 38px rgba(0, 0, 0, 0.06)',
-    flexDirection: 'row',
-    height: TRACK_HEIGHT,
-    padding: TRACK_PADDING,
-  },
-  trackStretch: { flexGrow: 1 },
-})
