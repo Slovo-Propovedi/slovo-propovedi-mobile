@@ -393,12 +393,12 @@ Upstream-причины:
 
 ### Тапаемые таймкоды в описании
 
-В оверлее «Подробнее» полноэкранного плеера таймкоды в тексте описания — интерактивные ссылки: тап перематывает текущий трек на указанную позицию (`usePlayer().seekTo`).
+В оверлее «Подробнее» полноэкранного плеера таймкоды в тексте описания — интерактивные ссылки: тап перематывает текущий трек на указанную позицию (`usePlayer().seekTo`). Рендерер общий (`TimecodedText`) и от плеера не зависит, поэтому его же переиспользует превью аудио в админке (см. [../screens/admin-sermons.md](../screens/admin-sermons.md) → «Деталь»).
 
 - Поддерживаемые форматы: `M:SS` и `H:MM:SS`. В форме `M:SS` минуты могут превышать 59 (до двух цифр, трактуются как суммарные минуты, например `75:30` валиден); ограничению 00–59 подчиняются только секунды, а в форме `H:MM:SS` — минуты и секунды в среднем и последнем сегментах. Поэтому `1:75` и похожие числа остаются обычным текстом.
 - Парсер — `src/shared/lib/player/parseTimecode.ts`: `parseTimecodeSegments` делит описание на текстовые и таймкод-сегменты, `timecodeToMs` конвертирует валидный таймкод в миллисекунды; из barrel `shared/lib/player` экспортируется только `parseTimecodeSegments` (остальное — внутренние детали модуля).
-- Рендер — `DescriptionWithTimecodes` (`src/widgets/expandable-player/ui/FullscreenContent/DescriptionWithTimecodes.tsx`): вложенные `<Text>` с `onPress`, `accessibilityRole='link'`, акцентный цвет `COLORS.primary` и подчёркивание; для скринридера ссылка имеет `accessibilityLabel` «Перейти к ${таймкод}» (например, «Перейти к 5:00»).
-- Ошибка `seekTo` (например, трек не загружен) перехватывается, логируется в `console.error` и показывается пользователю через `reportError` — косметическая фича не роняет плеер.
+- Рендер — общий `TimecodedText` (`src/shared/ui/TimecodedText.tsx`, экспортируется из barrel `shared/ui`): пропсы `text`, `onTimecodePress(ms)`, `style`, `timecodeStyle`; зависимости от плеера у компонента нет. Таймкод-сегменты — вложенные `<Text>` с `onPress` и `accessibilityRole='link'`; вид (акцентный цвет `COLORS.primary`, подчёркивание) задаётся потребителем через `timecodeStyle`; для скринридера ссылка имеет `accessibilityLabel` «Перейти к ${таймкод}» (например, «Перейти к 5:00»). В полноэкранном плеере `DescriptionWithTimecodes` (`src/widgets/expandable-player/ui/FullscreenContent/DescriptionWithTimecodes.tsx`) — тонкая обёртка: связывает `onTimecodePress` с `usePlayer().seekTo(ms)` и передаёт стили плеера.
+- Ошибка `seekTo` (например, трек не загружен) перехватывается в обёртке, логируется в `console.error` и показывается пользователю через `reportError` — косметическая фича не роняет плеер.
 
 ### Виброотклик
 
