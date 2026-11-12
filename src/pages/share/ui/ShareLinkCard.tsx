@@ -17,10 +17,12 @@ const openUrl = (url: string) => {
 export const ShareLinkCard = ({
   copyTargetId,
   qrTargetId,
+  sendTargetId,
   url,
 }: {
   copyTargetId?: string
   qrTargetId?: string
+  sendTargetId?: string
   url: string
 }) => {
   const { currentTheme } = useTheme()
@@ -45,7 +47,9 @@ export const ShareLinkCard = ({
         </Text>
       </PressableButton>
       <CopyLinkButton url={url} style={styles.copyButton} onboardingTargetId={copyTargetId} />
-      {isShareSupported && <ShareLinkButton url={url} style={styles.copyButton} />}
+      {isShareSupported && (
+        <ShareLinkButton url={url} style={styles.copyButton} onboardingTargetId={sendTargetId} />
+      )}
     </>
   )
 }

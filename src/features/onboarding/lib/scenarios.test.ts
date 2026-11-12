@@ -77,7 +77,7 @@ describe('onboarding scenario data', () => {
 
     expect(share.screens).toEqual(['/more', '/share'])
     expect(share.globalFallback).toBe(true)
-    expect(share.steps).toHaveLength(7)
+    expect(share.steps).toHaveLength(8)
     expect(share.steps[0].targetId).toBeUndefined()
     expect(share.steps[0].tapTargetId).toBeUndefined()
     // The «Ещё» tab is an entry transition (blink + navigation), not a spotlight card.
@@ -94,14 +94,19 @@ describe('onboarding scenario data', () => {
     expect(share.steps[4].route).toBe('/share')
     expect(share.steps[4].targetId).toBe('share.qr')
     expect(share.steps[5].targetId).toBe('share.copy')
+    // The share button is feature-gated (no Web Share API on desktop web): the tour
+    // drops its card instead of spotlighting a missing target.
+    expect(share.steps[6].targetId).toBe('share.send')
+    expect(share.steps[6].skipIfMissing).toBe(true)
+    expect(share.steps[7].targetId).toBeUndefined()
   })
 
   test('share folds its tab and share-item lead-up into entry transitions', () => {
     const share = scenariosById.share
     const deck = buildTourDeck(share.steps)
 
-    expect(deck).toHaveLength(5)
-    expect(deck.map(entry => entry.cardIndex)).toEqual([0, 2, 4, 5, 6])
+    expect(deck).toHaveLength(6)
+    expect(deck.map(entry => entry.cardIndex)).toEqual([0, 2, 4, 5, 6, 7])
     expect(deck[1].entryStepIndexes).toEqual([1])
     expect(deck[2].entryStepIndexes).toEqual([3])
     expect(deck.filter(entry => entry.entryStepIndexes.length > 0)).toHaveLength(2)
@@ -691,7 +696,7 @@ describe('share scenario resume', () => {
     const fromShare = resolveDeckProgress(deck, [0, 1], 2)
 
     expect(fromShare.displayIndex).toBe(0)
-    expect(fromShare.displayTotal).toBe(3)
+    expect(fromShare.displayTotal).toBe(4)
   })
 })
 
