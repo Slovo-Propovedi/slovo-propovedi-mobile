@@ -57,8 +57,9 @@ on:
 #                     release and mirror that release to GitHub and Codeberg.
 #                     Re-running this job alone re-publishes WITHOUT rebuilding.
 #   ota             — needs: changes, JS-only — publish the OTA bundle to xprem
-# `android-package` and `web-package` never depend on each other, so they run in
-# whichever order the runner picks them up. The memory-heavy jobs
+# `web-package` depends on `android-package` (needs: [changes, android-package]):
+# in native mode it starts only after a successful APK sign, while JS-only tags
+# run it with `android-package` skipped. The memory-heavy jobs
 # (`android-package`, `web-package`, `ota`, and ci.yml's `local` fallback) share
 # the `memory-heavy-jobs` concurrency group and queue on the 4 GB host instead
 # of overlapping. `build-remote`, `create-release` and `publish-release` stay
