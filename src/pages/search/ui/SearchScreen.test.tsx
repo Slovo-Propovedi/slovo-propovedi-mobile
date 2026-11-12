@@ -1,5 +1,5 @@
 import { createCtx } from '@reatom/framework'
-import { act, fireEvent, screen } from '@testing-library/react-native'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
 import { StyleSheet } from 'react-native'
 import {
@@ -21,6 +21,21 @@ import { SearchScreen } from './SearchScreen'
 const mockUsePagedSearch = usePagedSearch as jest.MockedFunction<typeof usePagedSearch>
 const mockUseFeatureFlag = useFeatureFlag as jest.MockedFunction<typeof useFeatureFlag>
 const mockShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
+const mockClearSearchHistoryAction = jest.fn()
+
+// Spy through to the real action so the dialog's confirm path stays observable
+// while the history atom still empties.
+jest.mock('entities/search-history', () => {
+  const actual = jest.requireActual('entities/search-history')
+
+  return {
+    ...actual,
+    clearSearchHistoryAction: (...args: unknown[]) => {
+      mockClearSearchHistoryAction(...args)
+      return actual.clearSearchHistoryAction(...args)
+    },
+  }
+})
 
 jest.mock('../lib/usePagedSearch', () => ({
   usePagedSearch: jest.fn(),
@@ -84,6 +99,9 @@ jest.mock('entities/listening-history', () => ({
 }))
 
 const RECENT_SEARCHES_TITLE = 'Недавние поиски'
+const CLEAR_LABEL = 'Очистить'
+const CANCEL_LABEL = 'Отмена'
+const CLEAR_DIALOG_TITLE = 'Очистить историю поиска?'
 
 const SERMON: SermonData = {
   artist: 'Иван',
@@ -320,6 +338,53 @@ describe('<SearchScreen>', () => {
     onDismiss?.()
 
     expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(initialNonce + 2)
+  })
+
+  test('requests focus and opens the clear-history dialog', async () => {
+    const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
+    const initialNonce = ctx.get(searchFocusRequestAtom)?.nonce ?? 0
+
+    await fireEvent.press(screen.getByText(CLEAR_LABEL))
+
+    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(initialNonce + 1)
+    expect(screen.getByText(CLEAR_DIALOG_TITLE)).toBeTruthy()
+  })
+
+  test('keeps the clear-history dialog open when the field blurs', async () => {
+    const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
+
+    await fireEvent.press(screen.getByText(CLEAR_LABEL))
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, false)
+    })
+
+    expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
+    expect(screen.getByText(CLEAR_DIALOG_TITLE)).toBeTruthy()
+  })
+
+  test('refocuses the input when the clear-history dialog is cancelled', async () => {
+    const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
+
+    await fireEvent.press(screen.getByText(CLEAR_LABEL))
+    const afterOpenNonce = ctx.get(searchFocusRequestAtom)?.nonce ?? 0
+
+    await fireEvent.press(screen.getByText(CANCEL_LABEL))
+
+    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(afterOpenNonce + 1)
+    expect(screen.queryByText(CLEAR_DIALOG_TITLE)).toBeNull()
+  })
+
+  test('clears the history and refocuses on confirm', async () => {
+    const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
+
+    await fireEvent.press(screen.getByText(CLEAR_LABEL))
+    const afterOpenNonce = ctx.get(searchFocusRequestAtom)?.nonce ?? 0
+
+    await fireEvent.press(screen.getAllByText(CLEAR_LABEL).at(-1) as never)
+
+    await waitFor(() => expect(mockClearSearchHistoryAction).toHaveBeenCalled())
+    expect(ctx.get(searchFocusRequestAtom)?.nonce).toBe(afterOpenNonce + 1)
+    expect(screen.queryByText(CLEAR_DIALOG_TITLE)).toBeNull()
   })
 
   test('keeps the empty pose for a two-character query', async () => {

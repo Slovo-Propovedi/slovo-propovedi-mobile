@@ -1,27 +1,21 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { type ReactElement, useCallback, useEffect, useState } from 'react'
-import { Keyboard, Pressable, StyleSheet, View } from 'react-native'
+import { useCallback, useEffect, useState } from 'react'
+import { Keyboard, Pressable, StyleSheet } from 'react-native'
 import { isSearchFieldFocusedAtom, searchQueryAtom } from 'features/sermon-search'
 import { type PlaylistData } from 'entities/playlist'
 import { isSearchHistoryLoadedAtom, loadSearchHistoryAction } from 'entities/search-history'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { EmptyState, ScreenTitleRow } from 'shared/ui'
 import { INDENTS } from 'shared/ui/theme'
+import { openClearHistoryDialog } from '../lib/clearHistoryDialog'
 import { type SearchGroup } from '../lib/searchGroup'
 import { MIN_RESULTS_VIEW_LENGTH } from '../lib/searchThresholds'
 import { usePagedSearch } from '../lib/usePagedSearch'
 import { useSearchResultActions } from '../lib/useSearchResultActions'
-import { type PillTabItem, PillTabs } from './PillTabs'
+import { ClearHistoryDialog } from './ClearHistoryDialog'
 import { RecentSearchesSection } from './RecentSearchesSection'
-import { SearchResultsList } from './SearchResultsList'
+import { SearchResultsView } from './SearchResultsView'
 import { type SearchScope, SearchScopeTabs } from './SearchScopeTabs'
-import { wrapFirstSearchRow, wrapSearchGroupHeader, wrapSearchRowMenuButton } from './searchTargets'
-
-const GROUP_ITEMS: PillTabItem[] = [
-  { key: 'sermons', label: 'Проповеди' },
-  { key: 'playlists', label: 'Плейлисты' },
-  { key: 'preachers', label: 'Проповедники' },
-]
 
 const READ_PLACEHOLDER = 'Раздел «Читать» скоро появится'
 
@@ -31,9 +25,6 @@ const toSearchGroup = (key: string): SearchGroup => {
 
   return 'sermons'
 }
-
-const wrapGroupPill = (item: PillTabItem, pill: ReactElement) =>
-  item.key === 'sermons' ? wrapSearchGroupHeader(pill) : pill
 
 export const SearchScreen = ({
   onAddToPlaylist,
@@ -50,6 +41,7 @@ export const SearchScreen = ({
   const [isFocused] = useAtom(isSearchFieldFocusedAtom)
   const [isHistoryLoaded] = useAtom(isSearchHistoryLoadedAtom)
   const loadSearchHistory = useAction(loadSearchHistoryAction)
+  const openClearDialog = useAction(openClearHistoryDialog)
   const [scope, setScope] = useState<SearchScope>('listen')
   const [group, setGroup] = useState<SearchGroup>('sermons')
   const showResults = query.trim().length >= MIN_RESULTS_VIEW_LENGTH
@@ -74,43 +66,40 @@ export const SearchScreen = ({
     setGroup(toSearchGroup(key))
   }, [])
 
-  if (!isFocused && !showResults) return <ScreenTitleRow title='Поиск' />
-
   return (
-    <Pressable style={styles.container} onPress={Keyboard.dismiss}>
-      {!showResults && <SearchScopeTabs value={scope} onChange={handleScopeChange} />}
-      {showResults ? (
-        scope === 'read' ? (
-          <EmptyState message={READ_PLACEHOLDER} />
-        ) : (
-          <>
-            <View style={styles.groupTabs} testID='search-group-tabs'>
-              <PillTabs
-                value={group}
-                variant='results'
-                items={GROUP_ITEMS}
-                wrapItem={wrapGroupPill}
-                onChange={handleGroupChange}
+    <>
+      {isFocused || showResults ? (
+        <Pressable style={styles.container} onPress={Keyboard.dismiss}>
+          {!showResults && <SearchScopeTabs value={scope} onChange={handleScopeChange} />}
+          {showResults ? (
+            scope === 'read' ? (
+              <EmptyState message={READ_PLACEHOLDER} />
+            ) : (
+              <SearchResultsView
+                group={group}
+                paged={paged}
+                query={query}
+                onChangeGroup={handleGroupChange}
+                onSermonPress={handleSermonPress}
+                onPlaylistPress={onPlaylistPress}
+                onAddToPlaylist={onAddToPlaylist}
+                onPreacherPress={handlePreacherPress}
+                onRemoveFromSearchHistory={handleRemoveFromSearchHistory}
               />
-            </View>
-            <SearchResultsList
-              group={group}
-              paged={paged}
-              query={query}
-              onSermonPress={handleSermonPress}
-              onPlaylistPress={onPlaylistPress}
+            )
+          ) : (
+            <RecentSearchesSection
+              onPress={handleSermonPress}
+              onClearPress={openClearDialog}
               onAddToPlaylist={onAddToPlaylist}
-              wrapFirstRow={wrapFirstSearchRow}
-              onPreacherPress={handlePreacherPress}
-              wrapMenuButton={wrapSearchRowMenuButton}
-              onRemoveFromSearchHistory={handleRemoveFromSearchHistory}
             />
-          </>
-        )
+          )}
+        </Pressable>
       ) : (
-        <RecentSearchesSection onPress={handleSermonPress} onAddToPlaylist={onAddToPlaylist} />
+        <ScreenTitleRow title='Поиск' />
       )}
-    </Pressable>
+      <ClearHistoryDialog />
+    </>
   )
 }
 
@@ -121,6 +110,4 @@ const styles = StyleSheet.create({
     // wrapper already applies.
     paddingTop: INDENTS.low,
   },
-  // Extra gap under the results select, the only top row while a query is active.
-  groupTabs: { marginBottom: INDENTS.medium },
 })

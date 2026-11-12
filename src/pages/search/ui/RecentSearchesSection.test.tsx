@@ -66,7 +66,6 @@ const buildEntry = (id: string, title: string, savedAt: number): SearchHistoryEn
 
 const SECTION_TITLE = 'Недавние поиски'
 const CLEAR_LABEL = 'Очистить'
-const DIALOG_TITLE = 'Очистить историю поиска?'
 const REMOVE_FROM_SEARCH_HISTORY = 'Удалить из истории поиска'
 
 describe('<RecentSearchesSection>', () => {
@@ -74,7 +73,10 @@ describe('<RecentSearchesSection>', () => {
     const ctx = createCtx()
     searchHistoryAtom(ctx, [buildEntry('1', 'Первая', 2), buildEntry('2', 'Вторая', 1)])
 
-    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
+    await renderWithProviders(
+      <RecentSearchesSection onPress={jest.fn()} onClearPress={jest.fn()} />,
+      { ctx },
+    )
 
     expect(screen.getByText(SECTION_TITLE)).toBeTruthy()
     expect(screen.getByText(CLEAR_LABEL)).toBeTruthy()
@@ -83,9 +85,12 @@ describe('<RecentSearchesSection>', () => {
   })
 
   test('renders the header on the next size token above the old one', async () => {
-    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, {
-      ctx: createCtxWithHistory([buildEntry('1', 'Первая', 1)]),
-    })
+    await renderWithProviders(
+      <RecentSearchesSection onPress={jest.fn()} onClearPress={jest.fn()} />,
+      {
+        ctx: createCtxWithHistory([buildEntry('1', 'Первая', 1)]),
+      },
+    )
 
     const title = screen.getByText(SECTION_TITLE)
     const clear = screen.getByText(CLEAR_LABEL)
@@ -98,7 +103,9 @@ describe('<RecentSearchesSection>', () => {
   })
 
   test('renders nothing without history', async () => {
-    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />)
+    await renderWithProviders(
+      <RecentSearchesSection onPress={jest.fn()} onClearPress={jest.fn()} />,
+    )
 
     expect(screen.queryByText(SECTION_TITLE)).toBeNull()
   })
@@ -107,32 +114,38 @@ describe('<RecentSearchesSection>', () => {
     const onPress = jest.fn()
     const entry = buildEntry('1', 'Первая', 1)
 
-    await renderWithProviders(<RecentSearchesSection onPress={onPress} />, {
-      ctx: createCtxWithHistory([entry]),
-    })
+    await renderWithProviders(
+      <RecentSearchesSection onPress={onPress} onClearPress={jest.fn()} />,
+      {
+        ctx: createCtxWithHistory([entry]),
+      },
+    )
 
     await fireEvent.press(screen.getByText('Первая'))
 
     expect(onPress).toHaveBeenCalledWith(expect.objectContaining({ id: '1' }))
   })
 
-  test('clears the history after confirming the dialog', async () => {
-    const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 1)])
+  test('raises the clear intent without owning the dialog', async () => {
+    const onClearPress = jest.fn()
 
-    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
+    await renderWithProviders(
+      <RecentSearchesSection onPress={jest.fn()} onClearPress={onClearPress} />,
+      { ctx: createCtxWithHistory([buildEntry('1', 'Первая', 1)]) },
+    )
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
-    expect(screen.getByText(DIALOG_TITLE)).toBeTruthy()
 
-    await fireEvent.press(screen.getAllByText(CLEAR_LABEL).at(-1) as never)
-
-    await waitFor(() => expect(ctx.get(searchHistoryAtom)).toEqual([]))
+    expect(onClearPress).toHaveBeenCalledTimes(1)
   })
 
   test('removes a single entry through the row menu', async () => {
     const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 2), buildEntry('2', 'Вторая', 1)])
 
-    await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
+    await renderWithProviders(
+      <RecentSearchesSection onPress={jest.fn()} onClearPress={jest.fn()} />,
+      { ctx },
+    )
 
     await fireEvent.press(screen.getAllByText(REMOVE_FROM_SEARCH_HISTORY)[0])
 
