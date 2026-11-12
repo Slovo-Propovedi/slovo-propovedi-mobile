@@ -129,11 +129,15 @@ const getTabsProps = (itemKey: string) =>
     .mock.calls.map(([props]) => props)
     .find(props => props.items.some(item => item.key === itemKey))
 
-// Every scroll surface of the page opts into tap-through and dismisses the
+// Vertical list surfaces of the page opt into tap-through and dismiss the
 // keyboard on drag: the page poses are focus-invariant, so blurring mid-scroll
-// never changes the layout.
+// never changes the layout. The horizontal pill rows are excluded: they opt into
+// tap-through too, but a sideways drag should keep the keyboard up.
 const getScrollables = () =>
-  screen.root?.queryAll(instance => instance.props.keyboardShouldPersistTaps === 'handled') ?? []
+  screen.root?.queryAll(
+    instance =>
+      instance.props.keyboardShouldPersistTaps === 'handled' && instance.props.horizontal !== true,
+  ) ?? []
 
 const renderScreen = async ({
   focused = false,
@@ -250,6 +254,29 @@ describe('<SearchScreen>', () => {
     await fireEvent.press(screen.getByText(PLAYLIST.title))
 
     expect(onPlaylistPress).toHaveBeenCalledWith(expect.objectContaining({ id: PLAYLIST.id }))
+  })
+
+  test('keeps the category row tappable while the keyboard is up', async () => {
+    await renderScreen({
+      focused: true,
+      paged: createPaged({ playlists: createGroup([PLAYLIST]) }),
+      query: 'вера',
+    })
+
+    // The group row is the only pill row that is a horizontal ScrollView. Its
+    // default `keyboardShouldPersistTaps='never'` makes the ScrollView capture
+    // the first tap while the field is focused, dismiss the keyboard and swallow
+    // the press — the category never changes until the user taps again.
+    const groupRow = screen.root
+      ?.queryAll(instance => instance.props.testID === 'pill-tabs-scroll')
+      .find(instance => instance.props.keyboardShouldPersistTaps !== undefined)
+
+    expect(groupRow?.props.keyboardShouldPersistTaps).toBe('handled')
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Плейлисты' }))
+
+    expect(screen.getByRole('button', { name: 'Плейлисты' })).toBeSelected()
+    expect(screen.getByText(PLAYLIST.title)).toBeTruthy()
   })
 
   test('preacher press re-runs the search for that artist', async () => {

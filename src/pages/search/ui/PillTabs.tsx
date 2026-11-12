@@ -61,6 +61,11 @@ export const PillTabs = ({
       <ScrollView
         horizontal
         testID='pill-tabs-scroll'
+        // The page is driven by the bottom search field, so the keyboard is up
+        // while the user picks a category. The default 'never' would make this
+        // ScrollView capture that first tap to dismiss the keyboard and swallow
+        // the press; 'handled' lets the tapped pill fire.
+        keyboardShouldPersistTaps='handled'
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.resultsRow}
       >
