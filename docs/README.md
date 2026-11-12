@@ -59,7 +59,7 @@
 | [`screens/playlist-edit.md`](./screens/playlist-edit.md)               | Экран редактирования локального плейлиста                                   |
 | [`screens/playlist-list.md`](./screens/playlist-list.md)               | Экран списка плейлистов                                                     |
 | [`screens/my-playlists.md`](./screens/my-playlists.md)                 | Экран «Мои плейлисты» (редактирование порядка)                              |
-| [`screens/search-results.md`](./screens/search-results.md)             | Экран «Результаты поиска» (полные списки групп)                             |
+| [`screens/search.md`](./screens/search.md)                             | Страница поиска: состояния, области, недавние поиски, пагинация             |
 | [`screens/read.md`](./screens/read.md)                                 | Таб «Читать» (заблокирован)                                                 |
 | [`screens/more.md`](./screens/more.md)                                 | Экран «Ещё»                                                                 |
 | [`screens/settings.md`](./screens/settings.md)                         | Экран «Настройки»                                                           |

@@ -1,0 +1,73 @@
+# Экран «Поиск»
+
+**Маршрут:** отдельного маршрута нет — это состояние экрана `/listen`: пока `isSearchOpenAtom` истинно, `ListenScreen` рендерит страницу поиска вместо всего своего содержимого (включая верхнюю строку «Слушать»).
+**Файлы:** `app/(tabs)/listen/index.tsx` → `src/pages/listen/ui/ListenScreen.tsx` → `SearchScreen` из `pages/search` (`src/pages/search/ui/SearchScreen.tsx`)
+**Статус:** готов
+
+## Что делает
+
+Поиск по проповедям, плейлистам и проповедникам сервера. Поле ввода живёт не на странице, а в нижней строке — в морфящем поисковом компоненте `SearchIslandMorph` (`widgets/search-island`), поэтому страница описывает только область контента и реагирует на состояние поля: фокус и запрос читаются из атомов фичи `features/sermon-search` ([features/navigation.md](../features/navigation.md) → «Кастомный таб-бар»).
+
+## Что показывается
+
+Страница имеет три состояния, различаемых по фокусу поля и активности запроса (обрезанный запрос ≥ `MIN_QUERY_LENGTH = 2`, чистая `isSearchQueryActive`):
+
+1. **Поле не в фокусе, запрос пуст** — только крупный заголовок «Поиск» (`ScreenTitleRow`, `accessibilityRole='header'`). Больше ничего не рендерится.
+2. **Поле в фокусе, запрос пуст** — две «таблетки» области поиска (`SearchScopeTabs` на общем `PillTabs`): **«Слушать»** | **«Читать»**, ниже — секция **«Недавние поиски»** (`RecentSearchesSection`). Если история поиска пуста, секция не рендерится и экран остаётся с одними таблетками.
+3. **Запрос активен** — таблетки области поиска плюс (для области «Слушать») вторая строка таблеток-групп (`PillTabs`): **«Проповеди»** | **«Плейлисты»** | **«Проповедники»** — горизонтально прокручиваемая радиогруппа (выбрана ровно одна), и полный пагинируемый список выбранной группы (`SearchResultsList`). Смена фокуса при активном запросе состояние не меняет: выдача остаётся на экране.
+
+Детали состояния 3:
+
+- Строки проповедей — `SearchResultsRow`/`SermonSearchRow` на `TracksListItem` (`entities/track-list`): обложка, заголовок, сабтайтл «проповедник • книга+глава+стих» (`formatScripture`), бейдж кэша, полоса прогресса прослушивания и затемнение завершённых (`entities/listening-history`), сердечко «в избранном». Меню строки — `buildHistoryMenuActions` («Добавить в плейлист», «Пометить прослушанной»/«Удалить из истории»), к нему добавляется пункт **«Удалить из истории поиска»** (иконка `search-outline`).
+- Строки плейлистов — `SearchPlaylistRow` на `SearchListItem` (artwork, название, описание); строки проповедников — `SearchPreacherRow` (только имя, без обложки, высота строки та же).
+- При прокрутке вниз список дозагружает следующую страницу (порог `onEndReachedThreshold = 0.4`), в футере виден `ActivityIndicator`; прокрутка управляет сворачиванием нижнего бара (`useBarCollapseOnScroll`, драйвер приостановлен на активном запросе — см. [listen.md](./listen.md) → «Поиск»).
+- **Недавние поиски** — до 20 записей, новые сверху; пустая история секцию скрывает. Кнопка «Очистить» в заголовке секции открывает `ConfirmDialog` («Очистить историю поиска?») и очищает историю целиком.
+
+**Область «Читать» гейтится фича-флагом `read`** (`useFeatureFlag`): пока флаг выключен или не загружен, таблетка «Читать» показана, но disabled, а нажатие открывает тот же информационный диалог, что и заблокированный таб («Скоро будет доступно»). Когда флаг включён, выбор области «Читать» при активном запросе показывает заглушку `EmptyState` «Раздел «Читать» скоро появится»; сетевых запросов в этой области нет — страница запрашивает данные только для «Слушать». При пустом запросе область на содержимое не влияет: видны те же «Недавние поиски».
+
+## Откуда данные
+
+- Состояние поля и запроса — `src/features/sermon-search/model.ts` (`searchQueryAtom`, `isSearchOpenAtom`, `searchInputRequestAtom`) и `model-searchField.ts` (`isSearchFieldFocusedAtom`, чистая `isSearchQueryActive`). Локальные состояния страницы: выбранная область (`'listen' | 'read'`) и группа результатов (`'sermons' | 'playlists' | 'preachers'`) — `useState` внутри `SearchScreen`, живут до закрытия поиска.
+- Пагинация — `usePagedSearch` (`src/pages/search/lib/usePagedSearch.ts`) поверх сетевых функций `src/features/sermon-search/lib/searchSources.ts`:
+  - проповеди — keyset-курсор: `sermonControllerFindAll({ search, take: 20, cursor? })`, следующая страница по `nextCursor`;
+  - плейлисты — офсетные страницы: `playlistControllerFindAll({ search, page, limit: 20 })`, конец — по `count`;
+  - проповедники — производные **клиент-сайд** от накопленных страниц проповедей (`collectMatchingPreachers`, `src/features/sermon-search/lib/composeSearchResults.ts`): уникальные `artist`, чьё имя содержит запрос; своя дозагрузка тянет следующую страницу проповедей.
+- Первая страница обеих групп грузится параллельно (`fetchFirstPage`, `src/pages/search/lib/fetchFirstPage.ts`) после дебаунса **400 мс**; устаревший ответ отбрасывается счётчиком `requestId`, сброшенным на смене запроса. Дозагрузка дополнительно гейтится флагом «в полёте», чтобы `onEndReached` не дублировал страницу.
+- Офлайн-фолбэк — только для **первой** страницы: при сетевой ошибке читаются per-query кэши фичи (`cachedSermonSearch:q:<query>` / `cachedPlaylistSearch:q:<query>`, см. [contracts/storage.md](../contracts/storage.md)); последующие страницы при ошибке возвращают пустой результат. Успешная первая страница пишется в кэш fire-and-forget (пустые результаты не кэшируются). Сетевые функции не реджектят: ошибки логируются (`console.error`).
+- Недавние поиски — сущность `src/entities/search-history/`: записи `{ sermon: AudioPlayerData, savedAt }`, ключ `searchHistory` ([contracts/storage.md](../contracts/storage.md)), лимит 20, дедупликация по `sermon.id` (побеждает более свежий `savedAt`). Гидратация — при старте приложения (`app/_layout.tsx`) и на монтировании страницы (`loadSearchHistoryAction`, только пока `isSearchHistoryLoadedAtom === false`). Запись — тап по проповеди в выдаче или в недавних (`addSearchEntryAction`, дата = момент тапа), удаление одной записи — пункт меню, полная очистка — `clearSearchHistoryAction`. Формат и семантика — [features/settings-backup.md](../features/settings-backup.md) (секция входит в резервную копию).
+
+## Заголовок и навигация
+
+- Собственной шапки у страницы нет: она рендерится внутри таба «Слушать» без нативной шапки. В состоянии 1 крупный заголовок «Поиск» рисует `ScreenTitleRow`; в состояниях 2–3 заголовка нет — место занимают таблетки областей.
+- Закрытие — только через нижнюю строку: круглый «✕» (`SearchIslandCloseSlot`, виден пока поле в фокусе) или аппаратный «Назад» на Android (каскад `closeSearch`, см. [features/navigation.md](../features/navigation.md)). При закрытии страница размонтируется, её локальные состояния (область, группа, страницы выдачи) сбрасываются.
+- Уход на вложенный маршрут поиск не закрывает: поле поиска остаётся в баре на всех таб-экранах, но контент поиска существует только на `/listen`.
+
+## Куда можно перейти
+
+- Проповедь → воспроизведение (без перехода) через общий `useSermonPlayback`; при неоднозначном контексте сначала открывается пикер `SermonPlaylistPicker` (см. [listen.md](./listen.md) → «Поиск»). Тап также пишется в недавние поиски.
+- Строка в «Недавних поисках» → воспроизведение тем же путём; запись обновляется (переезжает наверх).
+- Плейлист → `/listen/playlist?playlist=<id плейлиста>` (`onPlaylistPress` → `navigateToPlaylist`, `src/pages/listen/lib/useListenNavigation.ts`).
+- Проповедник → перехода нет: имя проповедника подставляется в поле поиска (`typeSearchInput`), группа переключается на «Проповеди», выдача перезапрашивается по имени — тот же путь, что у ручного ввода и у тура онбординга.
+- «Читать» при выключенном флаге → информационный диалог «Скоро будет доступно».
+
+## Состояния
+
+- Загрузка: `SearchResultsSkeleton` (`src/pages/search/ui/SearchResultsSkeleton.tsx`) — 6 строк `TracksListItem.Skeleton`, пока первая страница группы в полёте.
+- Пусто: `EmptyState` «Ничего не найдено» (`ListEmptyComponent`); пустая история поиска просто не рендерит секцию недавних.
+- Дозагрузка: спиннер в футере списка (`isLoadingMore`).
+- Офлайн: первая страница — из per-query кэша (кап 30 запросов), дальнейшие страницы не грузятся; UI-индикатора источника данных нет (см. [debt.md](../debt.md)).
+- Ошибка сети: `console.error`, затем кэш первой страницы; без кэша — пустая выдача.
+- Область «Читать»: заглушка `EmptyState` при активном запросе, сеть не дёргается.
+
+## Онбординг
+
+Сценарий `search` играет на этой странице: те же tour-действия (`open-listen-search`, `type-search-query`, `press-first-sermon`, `close-sermon-playlist-picker` — регистрируются на `ListenScreen`) и те же id целей (`search-results.group-sermons` — таблетка «Проповеди», `search-results.first-sermon` и `search-results.first-sermon-menu` — первая строка и её меню, `search.picker-modal` — окно выбора плейлиста). Обёртки целей переехали в `src/pages/search/ui/searchTargets.tsx`; подробности — [features/onboarding.md](../features/onboarding.md) → сценарий `search`.
+
+## Связанные документы
+
+- [screens/listen.md](./listen.md) — главный экран, в котором рендерится поиск, и его раздел «Поиск»
+- [features/navigation.md](../features/navigation.md) — нижний бар, поисковый остров и его фокус-морф
+- [features/offline-and-network.md](../features/offline-and-network.md) — кэши поиска и офлайн-фолбэк
+- [features/settings-backup.md](../features/settings-backup.md) — резервная копия (секция `searchHistory`)
+- [contracts/storage.md](../contracts/storage.md) — ключ `searchHistory` и кэши поиска
+- [features/onboarding.md](../features/onboarding.md) — сценарий `search`
