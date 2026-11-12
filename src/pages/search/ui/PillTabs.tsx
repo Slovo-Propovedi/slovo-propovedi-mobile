@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import { Fragment, type ReactElement } from 'react'
 import { ScrollView, View } from 'react-native'
-import { useTheme } from 'shared/ui/theme'
+import { COLORS, useTheme } from 'shared/ui/theme'
 import { styles } from './PillTabs.styles'
 import { PillTabSegment } from './PillTabSegment'
 
@@ -29,11 +29,11 @@ interface PillTabsProps {
 
 const SHADOW_COLORS = [
   'rgba(0, 0, 0, 0)',
-  'rgba(0, 0, 0, 0.05)',
-  'rgba(0, 0, 0, 0.03)',
+  'rgba(0, 0, 0, 0.035)',
+  'rgba(0, 0, 0, 0.02)',
   'rgba(0, 0, 0, 0)',
 ] as const
-const SHADOW_LOCATIONS = [0, 0.4, 0.75, 1] as const
+const SHADOW_LOCATIONS = [0, 0.35, 0.8, 1] as const
 
 export const PillTabs = ({
   items,
@@ -44,8 +44,9 @@ export const PillTabs = ({
   variant = 'scope',
   wrapItem,
 }: PillTabsProps) => {
-  const { currentTheme } = useTheme()
+  const { isLight } = useTheme()
   const isResults = variant === 'results'
+  const trackFill = isLight ? COLORS.white : COLORS.black
 
   const content = items.map(item => {
     const pill = (
@@ -84,11 +85,7 @@ export const PillTabs = ({
       />
       <View
         testID='pill-tabs-track'
-        style={[
-          styles.track,
-          { backgroundColor: currentTheme.card },
-          stretch && styles.trackStretch,
-        ]}
+        style={[styles.track, { backgroundColor: trackFill }, stretch && styles.trackStretch]}
       >
         {content}
       </View>

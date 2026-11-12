@@ -26,9 +26,9 @@ const SCROLL_ID = 'pill-tabs-scroll'
 const STRETCH_ROW_ID = 'pill-tabs-stretch-row'
 const SHADOW_ID = 'pill-tabs-shadow'
 const TRACK_HEIGHT = 48
-// The shadow halo extends 22dp below the track; the wrappers must keep that as
-// real layout room (no negative-margin cancel) or the halo is cut off.
-const MIN_SHADOW_ROOM = 22
+// The shadow halo spreads 44dp below the track and 8dp to each side; wrappers
+// keep that much real layout room (no negative margins) so nothing cuts it off.
+const MIN_SHADOW_ROOM = 44
 // The active theme is resolved by ThemeProvider (light or dark), so expected
 // colors come from the same COLORS the component reads through `useTheme`.
 const SELECTED_FILL = () => withAlpha(COLORS.text, 0.1)
@@ -51,30 +51,40 @@ describe('<PillTabs>', () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
 
     expect(screen.getByTestId(TRACK_ID)).toHaveStyle({
-      backgroundColor: COLORS.card,
       borderRadius: RADIUSES.round,
       flexDirection: 'row',
       height: TRACK_HEIGHT,
     })
+    // Pure themed surface, not the off-white/dark-gray card token.
+    const fill = trackStyle().backgroundColor
+    expect(fill).not.toBe(COLORS.card)
+    expect([COLORS.white, COLORS.black]).toContain(fill)
     // Android draws boxShadow as a background drawable clipped to the view, so
     // an outset shadow degrades into an inner rim — the halo layer replaces it.
     expect(trackStyle().boxShadow).toBeUndefined()
     expect(trackStyle().elevation).toBeUndefined()
   })
 
-  test('draws the scope shadow as an outer halo behind the track', async () => {
+  test('draws a wide, soft scope halo strictly outside the track', async () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
 
-    const halo = StyleSheet.flatten(screen.getByTestId(SHADOW_ID).props.style)
+    const halo = screen.getByTestId(SHADOW_ID)
 
-    expect(halo).toMatchObject({
+    expect(StyleSheet.flatten(halo.props.style)).toMatchObject({
       borderRadius: RADIUSES.round,
+      bottom: -MIN_SHADOW_ROOM,
+      left: -8,
       position: 'absolute',
+      right: -8,
+      top: -2,
     })
-    // Expanded beyond the track on every side that can show a shadow.
-    expect(halo.bottom).toBeLessThan(0)
-    expect(halo.left).toBeLessThan(0)
-    expect(halo.right).toBeLessThan(0)
+    expect(halo.props.colors).toEqual([
+      'rgba(0, 0, 0, 0)',
+      'rgba(0, 0, 0, 0.035)',
+      'rgba(0, 0, 0, 0.02)',
+      'rgba(0, 0, 0, 0)',
+    ])
+    expect(halo.props.locations).toEqual([0, 0.35, 0.8, 1])
   })
 
   test('marks only the active pill as selected (radio semantics)', async () => {
