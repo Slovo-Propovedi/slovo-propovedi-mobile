@@ -1,6 +1,7 @@
-import { LinearGradient } from 'expo-linear-gradient'
+import { BlurView } from 'expo-blur'
 import { Fragment, type ReactElement } from 'react'
 import { ScrollView, View } from 'react-native'
+import { GLASS } from 'shared/ui'
 import { COLORS, useTheme } from 'shared/ui/theme'
 import { styles } from './PillTabs.styles'
 import { PillTabSegment } from './PillTabSegment'
@@ -19,23 +20,13 @@ interface PillTabsProps {
   stretch?: boolean
   value: string
   /**
-   * `scope` — card track with an external halo and gray selection.
+   * `scope` — card track with a blurred cast shadow and gray selection.
    * `results` — trackless row of standalone labels; the selected item is an accent pill.
    */
   variant?: 'results' | 'scope'
   /** Page-owned wrapper around a single pill (e.g. An onboarding target). */
   wrapItem?: (item: PillTabItem, pill: ReactElement) => ReactElement
 }
-
-const SHADOW_COLORS = [
-  'rgba(0, 0, 0, 0)',
-  'rgba(0, 0, 0, 0.08)',
-  'rgba(0, 0, 0, 0.02)',
-  'rgba(0, 0, 0, 0)',
-] as const
-// The box is 124dp tall and the pill's bottom edge sits at 60/124 ≈ 0.48, so the
-// profile starts at true 0 exactly there and peaks just under the pill.
-const SHADOW_LOCATIONS = [0.48, 0.56, 0.74, 1] as const
 
 export const PillTabs = ({
   items,
@@ -79,11 +70,13 @@ export const PillTabs = ({
 
   const shadowedTrack = (
     <View>
-      <LinearGradient
-        colors={SHADOW_COLORS}
-        testID='pill-tabs-shadow'
-        style={styles.shadowHalo}
-        locations={SHADOW_LOCATIONS}
+      <View style={styles.shadowBody} testID='pill-tabs-shadow-body' />
+      <BlurView
+        style={styles.shadowBlur}
+        testID='pill-tabs-shadow-blur'
+        intensity={GLASS.blur.intensity}
+        tint={isLight ? 'light' : 'dark'}
+        blurMethod={GLASS.blur.androidMethod}
       />
       <View
         testID='pill-tabs-track'

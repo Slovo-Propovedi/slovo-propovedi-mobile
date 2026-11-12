@@ -1,14 +1,9 @@
 import { fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
+import { GLASS } from 'shared/ui'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES, withAlpha } from 'shared/ui/theme'
 import { PillTabs } from './PillTabs'
-
-jest.mock('expo-linear-gradient', () => {
-  const { View } = jest.requireActual('react-native')
-
-  return { LinearGradient: (props: Record<string, unknown>) => <View {...props} /> }
-})
 
 const ITEMS = [
   { key: 'sermons', label: 'Проповеди' },
@@ -24,14 +19,15 @@ const SCOPE_ITEMS = [
 const TRACK_ID = 'pill-tabs-track'
 const SCROLL_ID = 'pill-tabs-scroll'
 const STRETCH_ROW_ID = 'pill-tabs-stretch-row'
-const SHADOW_ID = 'pill-tabs-shadow'
+const SHADOW_BODY_ID = 'pill-tabs-shadow-body'
+const SHADOW_BLUR_ID = 'pill-tabs-shadow-blur'
 const TRACK_HEIGHT = 48
-// The halo is a cast shadow: it overflows the row (64dp below the track and
-// 48dp to each side) and tints the content underneath instead of reserving room.
-const HALO_DEPTH = 64
-const HALO_SIDE = 48
-const HALO_TOP = 12
-const HALO_BOX_HEIGHT = TRACK_HEIGHT + HALO_TOP + HALO_DEPTH
+// Shadow body: the pill's shape shifted down so it peeks out under the track.
+const SHADOW_OFFSET_Y = 26
+// The backdrop blur frame is larger than the body on every side, which is what
+// feathers the body's edges.
+const SHADOW_FEATHER = 20
+const SHADOW_FILL = 'rgba(0, 0, 0, 0.09)'
 // The row itself only keeps a small shape-breathing gap under the pill.
 const SMALL_GAP = INDENTS.low
 // The active theme is resolved by ThemeProvider (light or dark), so expected
@@ -70,32 +66,38 @@ describe('<PillTabs>', () => {
     expect(trackStyle().elevation).toBeUndefined()
   })
 
-  test('draws a wide, soft scope halo strictly outside the track', async () => {
+  test('casts the scope shadow as a pill-shaped body feathered by a backdrop blur', async () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
 
-    const halo = screen.getByTestId(SHADOW_ID)
-    const haloStyle = StyleSheet.flatten(halo.props.style)
+    const body = screen.getByTestId(SHADOW_BODY_ID)
+    const bodyStyle = StyleSheet.flatten(body.props.style)
 
-    expect(haloStyle).toMatchObject({
+    expect(body).toHaveStyle({
+      backgroundColor: SHADOW_FILL,
       borderRadius: RADIUSES.round,
-      bottom: -HALO_DEPTH,
-      left: -HALO_SIDE,
+      height: TRACK_HEIGHT,
+      pointerEvents: 'none',
       position: 'absolute',
-      right: -HALO_SIDE,
-      top: -HALO_TOP,
     })
-    expect(-Number(haloStyle.top) + TRACK_HEIGHT - Number(haloStyle.bottom)).toBe(HALO_BOX_HEIGHT)
-    // It now overflows onto interactive content, so it must never swallow taps.
-    expect(halo).toHaveStyle({ pointerEvents: 'none' })
-    // Profile: true 0 exactly at the pill's contour (the pill bottom sits at
-    // 60/124 ≈ 0.48 of the box), peak 0.08 just under it, long smooth tail to 0.
-    expect(halo.props.colors).toEqual([
-      'rgba(0, 0, 0, 0)',
-      'rgba(0, 0, 0, 0.08)',
-      'rgba(0, 0, 0, 0.02)',
-      'rgba(0, 0, 0, 0)',
-    ])
-    expect(halo.props.locations).toEqual([0.48, 0.56, 0.74, 1])
+    // Same shape as the pill, shifted down so it peeks out under the track.
+    expect(bodyStyle.left).toBe(0)
+    expect(bodyStyle.right).toBe(0)
+    expect(bodyStyle.top).toBe(SHADOW_OFFSET_Y)
+    expect(Number(bodyStyle.top)).toBeGreaterThan(0)
+    expect(Number(bodyStyle.top)).toBeLessThan(TRACK_HEIGHT)
+
+    const blur = screen.getByTestId(SHADOW_BLUR_ID)
+    const blurStyle = StyleSheet.flatten(blur.props.style)
+
+    expect(blur.props.intensity).toBe(GLASS.blur.intensity)
+    expect(blur.props.blurMethod).toBe(GLASS.blur.androidMethod)
+    expect(['dark', 'light']).toContain(blur.props.tint)
+    expect(blur).toHaveStyle({ pointerEvents: 'none' })
+    // Larger frame than the body on every side — this is what feathers it.
+    expect(blurStyle.left).toBe(-SHADOW_FEATHER)
+    expect(blurStyle.right).toBe(-SHADOW_FEATHER)
+    expect(blurStyle.top).toBe(SHADOW_OFFSET_Y - SHADOW_FEATHER)
+    expect(blurStyle.bottom).toBe(-(SHADOW_OFFSET_Y + SHADOW_FEATHER))
   })
 
   test('marks only the active pill as selected (radio semantics)', async () => {
@@ -164,7 +166,8 @@ describe('<PillTabs>', () => {
     )
 
     expect(screen.queryByTestId(TRACK_ID)).toBeNull()
-    expect(screen.queryByTestId(SHADOW_ID)).toBeNull()
+    expect(screen.queryByTestId(SHADOW_BODY_ID)).toBeNull()
+    expect(screen.queryByTestId(SHADOW_BLUR_ID)).toBeNull()
 
     const row = StyleSheet.flatten(screen.getByTestId(SCROLL_ID).props.contentContainerStyle)
     expect(row.backgroundColor).toBeUndefined()

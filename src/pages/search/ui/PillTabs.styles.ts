@@ -7,12 +7,12 @@ const ITEM_HEIGHT = 36
 const PAGE_GUTTER = INDENTS.medium
 const ROW_GUTTER = INDENTS.lowest
 const SMALL_GAP = INDENTS.low
-// The halo is a cast shadow: it overflows its row and tints the content below,
-// so the row reserves only SMALL_GAP under the pill (no clipping, no negatives).
-// Sides reach past the falloff; the top sits behind the opaque pill.
-const HALO_DEPTH = 64
-const HALO_SIDE = 48
-const HALO_TOP = INDENTS.middle
+// The scope shadow is a dark copy of the pill shifted down under the track, so
+// it peeks out at the bottom, plus a larger backdrop-blur frame on top of it:
+// the blur smears the copy's edges and the shadow feathers along the contour.
+const SHADOW_OFFSET_Y = Math.round(TRACK_HEIGHT * 0.55)
+const SHADOW_FEATHER = INDENTS.medium + INDENTS.lowest
+const SHADOW_FILL = 'rgba(0, 0, 0, 0.09)'
 
 export const styles = StyleSheet.create({
   label: { fontSize: FONT_SIZES.base },
@@ -52,17 +52,26 @@ export const styles = StyleSheet.create({
     paddingHorizontal: INDENTS.middle,
   },
   segmentStretch: { flex: 1, paddingHorizontal: 0 },
-  // Outer halo standing in for boxShadow, which Android paints as a background
-  // drawable clipped to the view — an outset shadow there reads as an inner rim.
-  shadowHalo: {
-    borderRadius: RADIUSES.round,
-    bottom: -HALO_DEPTH,
-    left: -HALO_SIDE,
-    // The halo overflows onto interactive content; it must never eat taps.
+  // The blur frame is bigger than the shadow body on every side; layer order is
+  // body → blur → track, so the blur smears the body's edges under the pill.
+  shadowBlur: {
+    bottom: -(SHADOW_OFFSET_Y + SHADOW_FEATHER),
+    left: -SHADOW_FEATHER,
+    // Overlays interactive content, so it must never eat taps.
     pointerEvents: 'none',
     position: 'absolute',
-    right: -HALO_SIDE,
-    top: -HALO_TOP,
+    right: -SHADOW_FEATHER,
+    top: SHADOW_OFFSET_Y - SHADOW_FEATHER,
+  },
+  shadowBody: {
+    backgroundColor: SHADOW_FILL,
+    borderRadius: RADIUSES.round,
+    height: TRACK_HEIGHT,
+    left: 0,
+    pointerEvents: 'none',
+    position: 'absolute',
+    right: 0,
+    top: SHADOW_OFFSET_Y,
   },
   track: {
     borderRadius: RADIUSES.round,
