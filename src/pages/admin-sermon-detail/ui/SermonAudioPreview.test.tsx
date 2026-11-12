@@ -1,6 +1,6 @@
 import { fireEvent, waitFor } from '@testing-library/react-native'
 import { type AudioPlayer, type AudioStatus } from 'expo-audio'
-import { renderWithProviders } from 'shared/mocks'
+import { mockConsole, renderWithProviders } from 'shared/mocks'
 import { SermonAudioPreview } from './SermonAudioPreview'
 
 interface ProgressBarProps {
@@ -91,14 +91,18 @@ describe('<SermonAudioPreview>', () => {
   })
 
   test('reports a failed seek without crashing', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const { error: consoleError } = mockConsole('error')
     const player = buildMockPlayer()
     player.seekTo.mockRejectedValueOnce(new Error('seek failed'))
     await renderPreview(player)
 
     getProgressBarProps().onSeek(SEEK_MS)
 
-    await waitFor(() => expect(consoleError).toHaveBeenCalled())
-    consoleError.mockRestore()
+    await waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith(
+        '[SermonAudioPreview] seek failed:',
+        expect.any(Error),
+      ),
+    )
   })
 })
