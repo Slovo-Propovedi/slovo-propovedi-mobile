@@ -1,11 +1,16 @@
-import { useAtom } from '@reatom/npm-react'
+import { useAction, useAtom } from '@reatom/npm-react'
 import { usePathname, useRouter } from 'expo-router'
 import { useCallback, useRef } from 'react'
 import { StyleSheet } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { useTourActionRegistrar } from 'features/onboarding'
-import { isSearchOpenAtom, useOpenSearch, useSermonPlayback } from 'features/sermon-search'
+import {
+  closeSearch,
+  isSearchOpenAtom,
+  useOpenSearch,
+  useSermonPlayback,
+} from 'features/sermon-search'
 import { type PlaylistData } from 'entities/playlist'
 import { type SermonData } from 'entities/sermon'
 import { useNavigationGuard } from 'shared/routing'
@@ -29,6 +34,7 @@ export const SearchGate = () => {
   const { currentTheme } = useTheme()
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
   const openSearch = useOpenSearch()
+  const closeSearchAction = useAction(closeSearch)
   const router = useRouter()
   const runGuarded = useNavigationGuard()
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
@@ -53,14 +59,19 @@ export const SearchGate = () => {
 
   const navigateToPlaylist = useCallback(
     (playlist: PlaylistData) => {
-      runGuarded(() => {
+      runGuarded(async () => {
+        // The gate stays mounted while the session is open and covers every
+        // tab screen, so the playlist page would render underneath it. Close
+        // the session first — same semantics as leaving the search tab — then
+        // push the real page on top.
+        await closeSearchAction()
         router.push({
           params: { playlist: playlist.id },
           pathname: '/listen/playlist',
         })
       })
     },
-    [router, runGuarded],
+    [closeSearchAction, router, runGuarded],
   )
 
   if (!isSearchOpen) return null

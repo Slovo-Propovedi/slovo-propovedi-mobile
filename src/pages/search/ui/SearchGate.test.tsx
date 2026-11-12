@@ -1,10 +1,11 @@
-import { createCtx } from '@reatom/framework'
-import { act, screen } from '@testing-library/react-native'
+import { createCtx, type Ctx } from '@reatom/framework'
+import { act, fireEvent, screen } from '@testing-library/react-native'
 import { type ReactNode } from 'react'
 import { StyleSheet, Text } from 'react-native'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { useTourActionRegistrar } from 'features/onboarding'
 import { isSearchOpenAtom, useOpenSearch, useSermonPlayback } from 'features/sermon-search'
+import { type PlaylistData } from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks'
 import { DarkTheme, LightTheme } from 'shared/ui/theme'
 import { useSearchTourActions } from '../lib/useSearchTourActions'
@@ -13,6 +14,14 @@ import { SearchGate } from './SearchGate'
 const mockOpenSearch = jest.fn()
 const mockOnSermonPress = jest.fn()
 const mockClosePicker = jest.fn()
+const mockCloseSearch = jest.fn()
+const mockRouterPush = jest.fn()
+const mockPlaylist: PlaylistData = {
+  artwork: null,
+  id: 'search-playlist-1',
+  sermons: [],
+  title: 'Утренние проповеди',
+}
 
 const SEARCH_SCREEN = 'SEARCH_SCREEN'
 const PICKER_MODAL = 'PICKER_MODAL'
@@ -21,7 +30,7 @@ const CLOSE_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
 
 jest.mock('expo-router', () => ({
   usePathname: () => '/more',
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: mockRouterPush }),
 }))
 
 jest.mock('shared/ui', () => {
@@ -40,10 +49,18 @@ jest.mock('shared/ui', () => {
 })
 
 jest.mock('features/sermon-search', () => {
-  const { atom } = jest.requireActual('@reatom/framework')
+  const { action, atom } = jest.requireActual('@reatom/framework')
+  const searchOpenAtom = atom(false, 'mockIsSearchOpenAtom')
+  const closeSearch = action(async (ctx: Ctx) => {
+    await ctx.schedule(() => {
+      searchOpenAtom(ctx, false)
+    })
+    mockCloseSearch()
+  }, 'closeSearch')
 
   return {
-    isSearchOpenAtom: atom(false, 'mockIsSearchOpenAtom'),
+    closeSearch,
+    isSearchOpenAtom: searchOpenAtom,
     useOpenSearch: jest.fn(),
     useSermonPlayback: jest.fn(),
   }
@@ -62,9 +79,15 @@ jest.mock('../lib/useSearchTourActions', () => ({
 }))
 
 jest.mock('./SearchScreen', () => {
-  const { Text: MockText } = jest.requireActual('react-native')
+  const { Pressable, Text: MockText } = jest.requireActual('react-native')
 
-  return { SearchScreen: () => <MockText>SEARCH_SCREEN</MockText> }
+  return {
+    SearchScreen: ({ onPlaylistPress }: { onPlaylistPress: (playlist: PlaylistData) => void }) => (
+      <Pressable onPress={() => onPlaylistPress(mockPlaylist)}>
+        <MockText>SEARCH_SCREEN</MockText>
+      </Pressable>
+    ),
+  }
 })
 
 const mockedUseOpenSearch = jest.mocked(useOpenSearch)
@@ -158,6 +181,22 @@ describe('<SearchGate>', () => {
 
     expect(getByText(PICKER_MODAL)).toBeTruthy()
     expect(getByText(ADD_TO_PLAYLIST_MODAL)).toBeTruthy()
+  })
+
+  test('closes the search session before navigating to a pressed playlist', async () => {
+    const { ctx, getByText, queryByText } = await renderGate(true)
+
+    await act(async () => {
+      fireEvent.press(getByText(SEARCH_SCREEN))
+    })
+
+    expect(mockCloseSearch).toHaveBeenCalledTimes(1)
+    expect(mockRouterPush).toHaveBeenCalledWith({
+      params: { playlist: mockPlaylist.id },
+      pathname: '/listen/playlist',
+    })
+    expect(ctx.get(isSearchOpenAtom)).toBe(false)
+    expect(queryByText(SEARCH_SCREEN)).toBeNull()
   })
 
   test('unmounts the search content when the search closes', async () => {
