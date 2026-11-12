@@ -244,6 +244,37 @@ describe('<BarBackdropShade>', () => {
     expect(screen.queryByTestId(SHADE_TARGET_TEST_ID)).toBeNull()
   })
 
+  test('keeps the full-screen capture region transparent to touches', async () => {
+    setPlatform('android', 35)
+    await renderShade({ searchOpen: true })
+
+    const target = screen.getByTestId(SHADE_TARGET_TEST_ID)
+    const targetStyle = StyleSheet.flatten(target.props.style)
+
+    expect(target.props.pointerEvents).toBe('none')
+    expect(targetStyle?.pointerEvents).toBe('none')
+
+    // The native `BlurTargetView` is an Expo `LinearLayout`: it does not honour
+    // React Native's `pointerEvents` prop. The oversized capture region must be
+    // wrapped in a real RN view that excludes it from hit-testing, otherwise it
+    // swallows every tap on the search page underneath.
+    const hasTouchTransparentWrapper = () => {
+      let ancestor = target.parent
+
+      while (ancestor) {
+        const style = StyleSheet.flatten(ancestor.props.style)
+
+        if (ancestor.props.pointerEvents === 'none' && style?.pointerEvents === 'none') return true
+
+        ancestor = ancestor.parent
+      }
+
+      return false
+    }
+
+    expect(hasTouchTransparentWrapper()).toBe(true)
+  })
+
   test('paints one continuous gradient from the screen bottom to the detached pill top', async () => {
     await renderShade()
     const gradient = findGradient()

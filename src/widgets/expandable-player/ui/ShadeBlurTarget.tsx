@@ -1,7 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { BlurTargetView } from 'expo-blur'
 import { type ComponentRef, type PropsWithChildren, useEffect, useRef } from 'react'
-import { StyleSheet, useWindowDimensions, type View } from 'react-native'
+import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import { isSearchOpenAtom } from 'features/sermon-search/@x/barMorph'
 import {
   BOTTOM_CHROME_SHADE_KEY,
@@ -35,17 +35,22 @@ export const ShadeBlurTarget = ({ children }: PropsWithChildren) => {
   if (!isActive) return <>{children}</>
 
   return (
-    <BlurTargetView
-      ref={targetRef}
-      pointerEvents='none'
-      // The native target clips its children to its bounds, and the shade grows
-      // upward out of the tab-bar container: a negative top keeps the whole
-      // visible region inside the captured view.
-      style={[styles.layer, { top: -screenHeight }]}
-      onLayout={() => registerBlurTarget(BOTTOM_CHROME_SHADE_KEY, targetRef)}
-    >
-      {children}
-    </BlurTargetView>
+    // The native target is an Expo `LinearLayout` and ignores RN's
+    // `pointerEvents`; this real RN wrapper is what keeps the oversized capture
+    // region out of hit-testing so taps reach the search page underneath.
+    <View pointerEvents='none' style={[styles.layer, styles.touchThrough, { top: -screenHeight }]}>
+      <BlurTargetView
+        ref={targetRef}
+        pointerEvents='none'
+        // The native target clips its children to its bounds, and the shade
+        // grows upward out of the tab-bar container: a negative top keeps the
+        // whole visible region inside the captured view.
+        style={[StyleSheet.absoluteFill, styles.touchThrough]}
+        onLayout={() => registerBlurTarget(BOTTOM_CHROME_SHADE_KEY, targetRef)}
+      >
+        {children}
+      </BlurTargetView>
+    </View>
   )
 }
 
@@ -56,5 +61,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0,
+  },
+  touchThrough: {
+    pointerEvents: 'none',
   },
 })
