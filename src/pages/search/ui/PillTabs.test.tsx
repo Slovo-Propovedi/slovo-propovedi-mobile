@@ -40,10 +40,12 @@ describe('<PillTabs>', () => {
       backgroundColor: COLORS.card,
       borderRadius: RADIUSES.round,
       boxShadow: '0px 16px 38px rgba(0, 0, 0, 0.06)',
-      elevation: 3,
       flexDirection: 'row',
       height: TRACK_HEIGHT,
     })
+    // Android elevation draws a tight outline ring around the track — the soft
+    // shadow must come from boxShadow alone.
+    expect(trackStyle().elevation).toBeUndefined()
   })
 
   test('marks only the active pill as selected (radio semantics)', async () => {

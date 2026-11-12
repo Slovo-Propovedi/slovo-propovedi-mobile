@@ -109,11 +109,10 @@ const styles = StyleSheet.create({
   track: {
     borderRadius: RADIUSES.round,
     // Deep downward-only drop shadow: a third of the 48dp track height, with a
-    // wide blur so the track reads as lifted, not outlined.
+    // wide blur so the track reads as lifted, not outlined. boxShadow alone
+    // renders on Android too (New Architecture); elevation is intentionally
+    // absent — it hugs the view outline and reads as a border ring.
     boxShadow: '0px 16px 38px rgba(0, 0, 0, 0.06)',
-    // Android elevation cannot offset or blur like boxShadow; 3 is the closest
-    // modest approximation.
-    elevation: 3,
     flexDirection: 'row',
     height: TRACK_HEIGHT,
     padding: TRACK_PADDING,
