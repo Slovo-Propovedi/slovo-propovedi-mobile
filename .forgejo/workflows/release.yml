@@ -1293,6 +1293,23 @@ jobs:
             fi
             echo "Created Codeberg release for $TAG (id: $RELEASE_ID)"
             summary_row "- Codeberg mirror: ✅ release created"
+
+            # POST /releases is idempotent for an orphaned tag: the scheduled
+            # git mirror can re-point the tag between runs, which breaks the
+            # release-to-tag association, so releases/tags/$TAG 404s even
+            # though the release (and its assets) still exist - the create
+            # then returns the SAME release with the old assets attached.
+            # Dedup by asset name here too, like the 200 branch above.
+            CB_ASSETS=$(curl -s -H "$AUTH_HEADER" "$API_BASE/releases/$RELEASE_ID" | jq -r '.assets[]?.name' 2>/dev/null || true)
+            has_asset() { printf '%s\n' "$CB_ASSETS" | grep -Fxq -- "$1"; }
+            if has_asset "$ZIP_FILE"; then UPLOAD_ZIP=false; fi
+            if has_asset "SHA256SUMS.txt"; then UPLOAD_SUMS=false; fi
+            if has_asset "$WEB_ZIP_FILE"; then UPLOAD_WEB=false; fi
+            if [ "$UPLOAD_ZIP" = "false" ] && [ "$UPLOAD_SUMS" = "false" ] && [ "$UPLOAD_WEB" = "false" ]; then
+              echo "Assets already attached to re-created Codeberg release $RELEASE_ID - skipping upload"
+              summary_row "- Codeberg mirror: ✅ asset already attached"
+              exit 0
+            fi
           else
             echo "::warning::Codeberg mirror failed: unexpected status $RELEASE_STATUS for $API_BASE/releases/tags/$TAG"
             summary_row "- Codeberg mirror: ⚠️ failed (status $RELEASE_STATUS)"
