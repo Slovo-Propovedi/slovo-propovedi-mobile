@@ -16,7 +16,7 @@ interface PillTabsProps {
   /** Full-width track with equal segments (scope row) instead of a hugging, scrollable one. */
   stretch?: boolean
   value: string
-  /** Page-owned wrapper around a single pill (e.g. an onboarding target). */
+  /** Page-owned wrapper around a single pill (e.g. An onboarding target). */
   wrapItem?: (item: PillTabItem, pill: ReactElement) => ReactElement
 }
 
@@ -36,11 +36,7 @@ export const PillTabs = ({
   const track = (
     <View
       testID='pill-tabs-track'
-      style={[
-        styles.track,
-        { backgroundColor: withAlpha(currentTheme.text, 0.06) },
-        stretch && styles.trackStretch,
-      ]}
+      style={[styles.track, { backgroundColor: currentTheme.card }, stretch && styles.trackStretch]}
     >
       {items.map(item => {
         const isSelected = item.key === value
@@ -54,10 +50,7 @@ export const PillTabs = ({
             style={[
               styles.segment,
               stretch && styles.segmentStretch,
-              isSelected && [
-                styles.segmentSelected,
-                { backgroundColor: withAlpha(currentTheme.text, 0.1) },
-              ],
+              isSelected && { backgroundColor: withAlpha(currentTheme.text, 0.1) },
             ]}
           >
             <Text
@@ -108,10 +101,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: INDENTS.middle,
   },
-  segmentSelected: {
-    boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.1)',
-    elevation: 2,
-  },
   segmentStretch: { flex: 1, paddingHorizontal: 0 },
   stretchRow: {
     paddingHorizontal: INDENTS.medium,
@@ -119,6 +108,8 @@ const styles = StyleSheet.create({
   },
   track: {
     borderRadius: RADIUSES.round,
+    boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
     flexDirection: 'row',
     height: TRACK_HEIGHT,
     padding: TRACK_PADDING,

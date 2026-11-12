@@ -19,7 +19,6 @@ const TRACK_ID = 'pill-tabs-track'
 const TRACK_HEIGHT = 40
 // The active theme is resolved by ThemeProvider (light or dark), so expected
 // colors come from the same COLORS the component reads through `useTheme`.
-const CONTAINER_FILL = () => withAlpha(COLORS.text, 0.06)
 const SELECTED_FILL = () => withAlpha(COLORS.text, 0.1)
 
 const trackStyle = () => StyleSheet.flatten(screen.getByTestId(TRACK_ID).props.style)
@@ -34,12 +33,14 @@ describe('<PillTabs>', () => {
     for (const item of ITEMS) expect(screen.getByText(item.label)).toBeTruthy()
   })
 
-  test('renders the segments inside one compact pill-shaped track', async () => {
+  test('renders the segments inside one raised, pill-shaped track', async () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
 
     expect(screen.getByTestId(TRACK_ID)).toHaveStyle({
-      backgroundColor: CONTAINER_FILL(),
+      backgroundColor: COLORS.card,
       borderRadius: RADIUSES.round,
+      boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.1)',
+      elevation: 2,
       flexDirection: 'row',
       height: TRACK_HEIGHT,
     })
@@ -53,14 +54,15 @@ describe('<PillTabs>', () => {
     expect(screen.getByRole('button', { name: 'Проповедники' })).not.toBeSelected()
   })
 
-  test('highlights the selected segment with a subtle pill', async () => {
+  test('highlights the selected segment with a flat gray pill', async () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='playlists' onChange={jest.fn()} />)
 
-    expect(segmentStyle('Плейлисты')).toMatchObject({
-      backgroundColor: SELECTED_FILL(),
-      borderRadius: RADIUSES.round,
-      elevation: 2,
-    })
+    const selected = segmentStyle('Плейлисты')
+
+    expect(selected.backgroundColor).toBe(SELECTED_FILL())
+    expect(selected.borderRadius).toBe(RADIUSES.round)
+    expect(selected.boxShadow).toBeUndefined()
+    expect(selected.elevation).toBeUndefined()
     expect(screen.getByText('Плейлисты')).toHaveStyle({ fontWeight: '600' })
   })
 
