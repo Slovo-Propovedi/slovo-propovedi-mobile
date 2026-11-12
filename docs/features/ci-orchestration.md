@@ -97,7 +97,7 @@ dco --> remote --(exit 42, fallback=true)--> local
                         CI / checks (commit status)
 ```
 
-- `dco` — проверка `Signed-off-by`, без изменений.
+- `dco` — проверка `Signed-off-by`: наличие, совпадение email с автором и трейлер последней непустой строкой сообщения.
 - `remote` — checkout + `scripts/ci/github-dispatch.sh`; выход 0 → `fallback=false`, 42 → `fallback=true` + warning и `run_url`, 43 → `superseded=true` (нейтрально, без fallback); прочие коды проваливают job. В группе `memory-heavy-jobs` **не состоит** — это лёгкий сетевой job.
 - `local` — `needs: [dco, remote]`, `if: always() && needs.remote.outputs.fallback == 'true'`; запускает `./actions/checks` с `profile: constrained`; держит `memory-heavy-jobs`, чтобы не пересечься с релизной сборкой на общем хосте.
 - `gate` — `always()`, ставит статус и пишет таблицу в job summary (remote/local/verdict/ссылка на run); для superseded-рана ставит `warning`, а не `failure`. На тегах пропускается, чтобы не поставить ложный статус на коммит тега.

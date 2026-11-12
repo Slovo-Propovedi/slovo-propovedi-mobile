@@ -103,6 +103,16 @@ jobs:
               COMMIT_OK=0
             fi
 
+            # Check 3: Signed-off-by trailer must be the LAST non-empty line
+            LAST_BODY_LINE=$(git show -s --format='%b' "$COMMIT" | sed '/^[[:space:]]*$/d' | tail -n 1)
+            if ! printf '%s\n' "$LAST_BODY_LINE" | grep -qiE '^Signed-off-by: .+ <.+>$'; then
+              echo "::error::commit $SHORT_SHA: Signed-off-by trailer must be the last line of the message"
+              echo "  Subject: $SUBJECT"
+              echo "  Last body line: ${LAST_BODY_LINE:-<none>}"
+              FAILED=1
+              COMMIT_OK=0
+            fi
+
             if [ "$COMMIT_OK" -eq 0 ]; then
               AUTHOR_ESC=${AUTHOR_NAME//|/\\|}
               BAD_ROWS="${BAD_ROWS}| \`$SHORT_SHA\` | ${SUBJECT//|/\\|} | $AUTHOR_ESC <$AUTHOR_EMAIL> |"$'\n'

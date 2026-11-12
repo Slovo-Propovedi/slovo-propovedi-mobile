@@ -6,6 +6,7 @@
 
 - **Ветки:** feature-ветки от `main`. Именование — на усмотрение команды, но MR должен быть маленьким и самодостаточным.
 - **Формат коммита:** conventional commits. Типы и правила — в [`AGENTS.md`](../AGENTS.md) → «Commit Convention» (`feat`, `fix`, `refactor`, `test`, `docs`, `style`, `chore`, `build`, `ci`, `perf`, `revert`). Заголовок — максимум 100 символов. Валидация — commitlint.
+- **Трейлер `Signed-off-by`:** обязательная последняя строка сообщения, отделённая от body пустой строкой; проверяют правило commitlint `signed-off-by-last` и job `dco` в CI.
 - **Язык коммитов:** сообщения коммитов — только на английском (заголовок и body).
 - **Pre-commit:** Husky + lint-staged прогоняют `lint:staged`, `check:types` и `check:patches` (см. [`AGENTS.md`](../AGENTS.md)). `check:patches` — гвард патчей `patches/*.patch`: сверка версии из имени патча с установленной версией пакета плюс проверка состояния самого патча в целевом файле. Правила и tri-state семантика — в разделе «[Патчи и гвард `check:patches`](#патчи-и-гвард-checkpatches)» ниже. Ко-локализованный тест — `scripts/check-patches.test.js`.
 - **MR-процесс:** каждый MR сопровождается описанием «что и зачем», ссылками на изменённые экраны/модули и на обновлённые документы `docs/`.
