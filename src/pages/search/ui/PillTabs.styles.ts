@@ -9,7 +9,10 @@ const ROW_GUTTER = INDENTS.lowest
 const SMALL_GAP = INDENTS.low
 // The halo is a cast shadow: it overflows its row and tints the content below,
 // so the row reserves only SMALL_GAP under the pill (no clipping, no negatives).
-const HALO_DEPTH = 88
+// Sides reach far past the visible falloff; the top sits behind the opaque pill.
+const HALO_DEPTH = 124
+const HALO_SIDE = 72
+const HALO_TOP = INDENTS.middle
 
 export const styles = StyleSheet.create({
   label: { fontSize: FONT_SIZES.base },
@@ -54,12 +57,12 @@ export const styles = StyleSheet.create({
   shadowHalo: {
     borderRadius: RADIUSES.round,
     bottom: -HALO_DEPTH,
-    left: -INDENTS.medium,
+    left: -HALO_SIDE,
     // The halo overflows onto interactive content; it must never eat taps.
     pointerEvents: 'none',
     position: 'absolute',
-    right: -INDENTS.medium,
-    top: -INDENTS.lowest,
+    right: -HALO_SIDE,
+    top: -HALO_TOP,
   },
   track: {
     borderRadius: RADIUSES.round,
