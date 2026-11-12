@@ -1,6 +1,7 @@
 import { type SuspenseFallbackProps, Tabs } from 'expo-router'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { PlaylistSheetMenu } from 'pages/playlist'
+import { SearchGate } from 'pages/search'
 import { ExpandablePlayer } from 'widgets/expandable-player'
 import { CustomTabBar } from 'widgets/tab-bar'
 import { BlurTargetProvider } from 'shared/ui'
@@ -34,8 +35,10 @@ const Layout = () => {
           <Tabs.Screen name='read' options={{ title: 'Читать' }} />
           <Tabs.Screen name='more' options={{ title: 'Ещё' }} />
         </Tabs>
-        {/* CustomTabBar renders on every tab screen (including the listen
-            stack's playlist screens) and owns the search morph. */}
+        {/* Global search overlay: mounted once for every tab screen (the listen
+            stack's playlist pages included) so the island opens search
+            everywhere; the bar chrome and player stay above it. */}
+        <SearchGate />
         <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
       </View>
     </BlurTargetProvider>

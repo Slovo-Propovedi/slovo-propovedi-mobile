@@ -1,7 +1,7 @@
 # Экран «Поиск»
 
-**Маршрут:** отдельного маршрута нет — это состояние экрана `/listen`: пока `isSearchOpenAtom` истинно, `ListenScreen` рендерит страницу поиска вместо всего своего содержимого (включая верхнюю строку «Слушать»).
-**Файлы:** `app/(tabs)/listen/index.tsx` → `src/pages/listen/ui/ListenScreen.tsx` → `SearchScreen` из `pages/search` (`src/pages/search/ui/SearchScreen.tsx`)
+**Маршрут:** отдельного маршрута нет — это оверлей таб-лейаута: пока `isSearchOpenAtom` истинно, `SearchGate` (`app/(tabs)/_layout.tsx`) рендерит страницу поиска поверх контента **любого** таб-экрана и вложенных страниц стека «Слушать», оставаясь под нижним баром и плеером.
+**Файлы:** `app/(tabs)/_layout.tsx` → `src/pages/search/ui/SearchGate.tsx` → `src/pages/search/ui/SearchScreen.tsx`
 **Статус:** готов
 
 ## Что делает
@@ -40,15 +40,15 @@
 
 ## Заголовок и навигация
 
-- Собственной шапки у страницы нет: она рендерится внутри таба «Слушать» без нативной шапки. В состоянии 1 крупный заголовок «Поиск» рисует `ScreenTitleRow`; в состояниях 2–3 заголовка нет — место занимает переключатель области поиска.
-- Закрытие — только через нижнюю строку: круглый «✕» (`SearchIslandCloseSlot`, виден пока поле в фокусе) или аппаратный «Назад» на Android (каскад `closeSearch`, см. [features/navigation.md](../features/navigation.md)). При закрытии страница размонтируется, её локальные состояния (область, группа, страницы выдачи) сбрасываются.
-- Уход на вложенный маршрут поиск не закрывает: поле поиска остаётся в баре на всех таб-экранах, но контент поиска существует только на `/listen`.
+- Собственной шапки у страницы нет: оверлей рендерится в таб-лейауте поверх текущего экрана без нативной шапки (верхний safe-area инсет снимает его `SafeAreaView`). В состоянии 1 крупный заголовок «Поиск» рисует `ScreenTitleRow`; в состояниях 2–3 заголовка нет — место занимает переключатель области поиска.
+- Закрытие — только через нижнюю строку: круглый «✕» (`SearchIslandCloseSlot`, виден пока поле в фокусе), смена таба или аппаратный «Назад» на Android (каскад `closeSearch`, см. [features/navigation.md](../features/navigation.md)). При закрытии страница размонтируется, её локальные состояния (область, группа, страницы выдачи) сбрасываются.
+- Поиск открывается с любого экрана с нижним баром (`/listen`, вложенные страницы стека «Слушать», `/more`, `/read`) и уход на вложенный маршрут его не закрывает: оверлей живёт в таб-лейауте, а не в `ListenScreen`.
 
 ## Куда можно перейти
 
 - Проповедь → воспроизведение (без перехода) через общий `useSermonPlayback`; при неоднозначном контексте сначала открывается пикер `SermonPlaylistPicker` (см. [listen.md](./listen.md) → «Поиск»). Тап также пишется в недавние поиски.
 - Строка в «Недавних поисках» → воспроизведение тем же путём; запись обновляется (переезжает наверх).
-- Плейлист → `/listen/playlist?playlist=<id плейлиста>` (`onPlaylistPress` → `navigateToPlaylist`, `src/pages/listen/lib/useListenNavigation.ts`).
+- Плейлист → `/listen/playlist?playlist=<id плейлиста>` (`onPlaylistPress` → навигация с `useNavigationGuard`, живёт в `SearchGate`).
 - Проповедник → перехода нет: имя проповедника подставляется в поле поиска (`typeSearchInput`), группа переключается на «Проповеди», выдача перезапрашивается по имени — тот же путь, что у ручного ввода и у тура онбординга.
 - «Читать» при выключенном флаге → информационный диалог «Скоро будет доступно».
 
@@ -63,7 +63,7 @@
 
 ## Онбординг
 
-Сценарий `search` играет на этой странице: те же tour-действия (`open-listen-search`, `type-search-query`, `press-first-sermon`, `close-sermon-playlist-picker` — регистрируются на `ListenScreen`) и те же id целей (`search-results.group-sermons` — таблетка «Проповеди», `search-results.first-sermon` и `search-results.first-sermon-menu` — первая строка и её меню, `search.picker-modal` — окно выбора плейлиста). Обёртки целей переехали в `src/pages/search/ui/searchTargets.tsx`; подробности — [features/onboarding.md](../features/onboarding.md) → сценарий `search`.
+Сценарий `search` играет на этой странице: те же tour-действия (`open-listen-search`, `type-search-query`, `press-first-sermon`, `close-sermon-playlist-picker` — регистрируются в `SearchGate`, который смонтирован постоянно) и те же id целей (`search-results.group-sermons` — таблетка «Проповеди», `search-results.first-sermon` и `search-results.first-sermon-menu` — первая строка и её меню, `search.picker-modal` — окно выбора плейлиста). Хук действий — `src/pages/search/lib/useSearchTourActions.ts`, обёртки целей — `src/pages/search/ui/searchTargets.tsx`; подробности — [features/onboarding.md](../features/onboarding.md) → сценарий `search`.
 
 ## Связанные документы
 
