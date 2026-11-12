@@ -13,6 +13,7 @@ const SMALL_GAP = INDENTS.low
 const SHADOW_OFFSET_Y = Math.round(TRACK_HEIGHT * 0.55)
 const SHADOW_FEATHER = INDENTS.medium + INDENTS.lowest
 const SHADOW_FILL = 'rgba(0, 0, 0, 0.09)'
+const SHADOW_BLUR_RADIUS = 6
 
 export const styles = StyleSheet.create({
   label: { fontSize: FONT_SIZES.base },
@@ -66,6 +67,9 @@ export const styles = StyleSheet.create({
   shadowBody: {
     backgroundColor: SHADOW_FILL,
     borderRadius: RADIUSES.round,
+    // Filter blur (RN New Arch, RenderEffect on Android 12+) feathering the body
+    // in every direction; BlurView alone cannot blur without an Android target.
+    filter: [{ blur: SHADOW_BLUR_RADIUS }],
     height: TRACK_HEIGHT,
     left: 0,
     pointerEvents: 'none',

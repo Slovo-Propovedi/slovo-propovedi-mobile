@@ -85,6 +85,9 @@ describe('<PillTabs>', () => {
     expect(bodyStyle.top).toBe(SHADOW_OFFSET_Y)
     expect(Number(bodyStyle.top)).toBeGreaterThan(0)
     expect(Number(bodyStyle.top)).toBeLessThan(TRACK_HEIGHT)
+    // RN 0.88 filter blur (RenderEffect on Android 12+) feathers the body's
+    // edges in every direction, which BlurView alone cannot do without a target.
+    expect(bodyStyle.filter).toEqual([{ blur: 6 }])
 
     const blur = screen.getByTestId(SHADOW_BLUR_ID)
     const blurStyle = StyleSheet.flatten(blur.props.style)
