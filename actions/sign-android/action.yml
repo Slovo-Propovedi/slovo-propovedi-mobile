@@ -86,6 +86,15 @@ runs:
         ANDROID_SDK_PACKAGES: platform-tools build-tools;36.0.0 build-tools;37.0.0 platforms;android-37.0
       run: bash scripts/ci/setup-android-sdk.sh
 
+    # apksigner/zipalign wrappers need a JVM: apksigner is a Java tool, and the
+    # split from the old inline android job dropped this step (JAVA_HOME is not
+    # set on the Forgejo runner). Same pin as actions/release-android.
+    - name: Setup Java JDK
+      uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
     - name: Align APK
       id: zipalign
       shell: bash
