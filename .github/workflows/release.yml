@@ -94,23 +94,3 @@ jobs:
           path: unsigned-apk/
           if-no-files-found: error
           retention-days: 30
-
-  web:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Export web build
-        uses: ./actions/release-web
-        with:
-          profile: hosted
-
-      - name: Upload web build
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: web-dist
-          path: dist/
-          if-no-files-found: error
-          retention-days: 30

@@ -40,19 +40,17 @@ on:
 #   changes         — detect native-vs-JS mode + RUNTIME_VERSION guard (light)
 #   create-release  — needs: changes, native only — gate on CI, verify versions,
 #                     cut the Forgejo Release (`publish-release` attaches assets)
-#   build-remote    — needs: [changes, create-release] — strict sequence: the
-#                     GitHub build starts only after the CI gate (native) or
-#                     immediately on js-only (create-release skipped); dispatches
-#                     `.github/workflows/release.yml` and downloads its artifacts
-#                     as `unsigned-apk/` + `web-dist/`; sets fallback=true when
-#                     GitHub cannot run it (queue/infra)
+#   build-remote    — needs: [changes, create-release], native only — the
+#                     GitHub build starts only after the CI gate; dispatches
+#                     `.github/workflows/release.yml` and downloads its
+#                     `unsigned-apk/` artifact; sets fallback=true when GitHub
+#                     cannot run it (queue/infra)
 #   android-package — needs: [changes, build-remote], native only — sign the
 #                     remote unsigned APK (or build locally on fallback), zip it
 #                     with SHA256SUMS.txt into the `release-assets` artifact
 #                     (30-day retention)
-#   web-package     — needs: [changes, build-remote] — deploy the web PWA from
-#                     the remote `web-dist` artifact (or a local export on
-#                     fallback); attach the web zip in native mode only
+#   web-package     — needs: [changes] — always builds the web PWA on the local
+#                     runner; attaches the web zip in native mode only
 #   publish-release — needs: [create-release, android-package], native only —
 #                     download `release-assets`, attach them to the Forgejo
 #                     release and mirror that release to GitHub and Codeberg.
@@ -379,15 +377,16 @@ jobs:
         run: rm -f release-body.md release.json release-response.json
 
   build-remote:
-    # Light dispatcher: hands the whole build to GitHub-hosted runners. It is
-    # deliberately NOT in the memory-heavy-jobs group — the heavy local
+    # Light dispatcher: hands the native APK build to GitHub-hosted runners. It
+    # is deliberately NOT in the memory-heavy-jobs group — the heavy local
     # fallbacks (android-package / web-package) hold the group instead.
     #
     # Strict sequence: native tags wait for the CI gate (create-release polls
-    # `CI / checks`); js-only tags SKIP create-release, so build-remote must
-    # proceed when it was skipped (js-only was never CI-gated, same as before).
+    # `CI / checks`); js-only tags skip this job entirely (web is built locally).
     needs: [changes, create-release]
-    if: "!cancelled() && needs.changes.result == 'success' && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')"
+    # APK-only: web is built locally by web-package; js-only tags never contact
+    # GitHub (create-release is native-only, so it is always 'success' here).
+    if: "!cancelled() && needs.changes.result == 'success' && needs.changes.outputs.native == 'true' && needs.create-release.result == 'success'"
     runs-on: ubuntu-24.04
 
     outputs:
@@ -411,7 +410,6 @@ jobs:
           WORKFLOW: release.yml
           REF: ${{ github.ref_name }}
           SHA: ${{ github.sha }}
-          NATIVE: ${{ needs.changes.outputs.native }}
         run: |
           # An unconfigured secret must not fail the release dispatch: signal the
           # local fallback instead (uploads below are skipped when fallback=true).
@@ -422,13 +420,8 @@ jobs:
             exit 0
           fi
           set +e
-          if [ "$NATIVE" = "true" ]; then
-            export DISPATCH_INPUTS='{"mode":"native"}'
-            export ARTIFACTS="unsigned-apk=unsigned-apk,web-dist=web-dist"
-          else
-            export DISPATCH_INPUTS='{"mode":"js-only"}'
-            export ARTIFACTS="web-dist=web-dist"
-          fi
+          export DISPATCH_INPUTS='{"mode":"native"}'
+          export ARTIFACTS="unsigned-apk=unsigned-apk"
           OUTPUT=$(bash scripts/ci/github-dispatch.sh)
           STATUS=$?
           set -e
@@ -467,17 +460,6 @@ jobs:
           name: unsigned-apk
           path: unsigned-apk/
           # js-only mode produces no APK; ignore rather than fail the dispatcher.
-          if-no-files-found: ignore
-          retention-days: 30
-
-      - name: Upload web build from GitHub
-        if: steps.dispatch.outputs.fallback != 'true'
-        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
-        with:
-          name: web-dist
-          path: web-dist/
-          # Defensive: an unexpectedly empty web artifact must not fail the
-          # dispatcher job (the build succeeded; local fallback is unavailable).
           if-no-files-found: ignore
           retention-days: 30
 
@@ -641,15 +623,12 @@ jobs:
   web-package:
     # Deploy runs on every tag, including JS-only (no release exists there).
     # The release-asset steps below are gated on native mode separately.
-    needs: [changes, build-remote]
+    needs: [changes]
     runs-on: ubuntu-24.04
 
     concurrency:
       group: memory-heavy-jobs
       cancel-in-progress: false
-
-    env:
-      REMOTE_OK: ${{ needs.build-remote.outputs.fallback == 'false' }}
 
     steps:
       - name: Checkout repository
@@ -693,17 +672,8 @@ jobs:
           fi
           exit $missing
 
-      - name: Download web build from GitHub
-        id: web-download
-        if: env.REMOTE_OK == 'true'
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
-        with:
-          name: web-dist
-          path: dist/
-
-      - name: Export web (local fallback)
+      - name: Export web build
         id: web-export
-        if: env.REMOTE_OK != 'true'
         uses: ./actions/release-web
         with:
           profile: constrained
@@ -935,7 +905,6 @@ jobs:
       - name: Job summary
         if: always()
         env:
-          WEB_DOWNLOAD_OUTCOME: ${{ steps.web-download.outcome }}
           WEB_EXPORT_OUTCOME: ${{ steps.web-export.outcome }}
           DEPLOYCFG_OUTCOME: ${{ steps.deploycfg.outcome }}
           SSH_SETUP_OUTCOME: ${{ steps.ssh-setup.outcome }}
@@ -959,7 +928,6 @@ jobs:
             echo ''
             echo '| Step | Status |'
             echo '| --- | --- |'
-            summary_row web-download "$WEB_DOWNLOAD_OUTCOME"
             summary_row web-export "$WEB_EXPORT_OUTCOME"
             summary_row deploycfg "$DEPLOYCFG_OUTCOME"
             summary_row ssh-setup "$SSH_SETUP_OUTCOME"
