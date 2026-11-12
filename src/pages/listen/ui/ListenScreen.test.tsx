@@ -130,7 +130,7 @@ jest.mock('./DynamicSectionsSlider', () => {
   }
 })
 
-const SEARCH_PLACEHOLDER = 'Поиск проповедей'
+const SEARCH_PLACEHOLDER = 'Проповеди, проповедники, название книги'
 const CLEAR_LABEL = 'Очистить'
 const CLOSE_SEARCH_LABEL = 'Закрыть поиск'
 const SERMON_TITLE = 'Проповедь о вере'

@@ -10,10 +10,9 @@ import {
 } from 'shared/ui/layout'
 import { INDENTS } from 'shared/ui/theme'
 
-// The magnifier is the one always-mounted piece of the morph: it is centred in
-// the closed circle and shrinks into the pill's left inset as the field opens.
-const ICON_SIZE_CIRCLE = 32
-const ICON_SIZE_PILL = 22
+// The magnifier is the one always-mounted piece of the morph: it keeps one size
+// throughout, so opening the pill only moves it with the travelling left edge.
+const ICON_SIZE = 32
 
 interface SearchIslandGeometry {
   bottom: number
@@ -22,7 +21,7 @@ interface SearchIslandGeometry {
   height: number
   /** Distance from the container's left edge to the always-mounted magnifier. */
   iconInset: number
-  /** Diameter of the magnifier, interpolated between circle and pill. */
+  /** Diameter of the magnifier, constant in every state. */
   iconSize: number
   left: number
   radius: number
@@ -34,6 +33,8 @@ interface SearchIslandGeometryInput {
   barProgress: number
   /** 0 = no external close circle, 1 = the pill yields a full circle + gap to it. */
   closeProgress?: number
+  /** 0 = active-tab circle still shown, 1 = field focused and the pill owns the row. */
+  focusProgress?: number
   /** 0 = pill coincides with the search circle, 1 = pill fills its row slot. */
   openProgress: number
   screenWidth: number
@@ -44,23 +45,25 @@ interface SearchIslandGeometryInput {
  * Geometry of the bottom-bar search pill, mirroring the tab island's morph.
  *
  * `openProgress` owns left/width: at 0 the pill is exactly the search chip
- * circle at the row's right inner edge, at 1 it fills the slot between the
- * collapsed active-tab circle and that edge. Growing from the circle (left
- * moves left, width grows, right edge anchored) is the same motion as the
- * island collapsing into the circle, so both run off one frame-synced
- * `BAR_MORPH_DURATION_MS` progress.
+ * circle at the row's right inner edge, at 1 it fills the slot right of the
+ * collapsed active-tab circle. Growing from the circle (left moves left, width
+ * grows, right edge anchored) is the same motion as the island collapsing into
+ * the circle, so both run off one frame-synced `BAR_MORPH_DURATION_MS` progress.
  *
  * `barProgress` only owns vertical geometry (height/radius/bottom), so the pill
  * keeps matching the island height through the morph.
  *
- * The always-mounted magnifier is anchored to the frame's left edge at
- * `iconInset`; its `iconSize` shrinks from the circle size to the pill size, so
- * it travels with the animated edge instead of crossfading.
+ * `focusProgress` retracts the active-tab circle: at 1 the pill stretches to the
+ * row's left inner edge (still yielding the external close slot when shown).
+ *
+ * The always-mounted magnifier sits at `iconInset`; its constant `iconSize`
+ * makes it travel with the animated edge instead of crossfading or shrinking.
  *
  * Worklet-safe: called from the morph's Reanimated animated styles.
- * @param input - Screen geometry, open progress and bar morph progress.
+ * @param input - Screen geometry, morph progress and focus progress.
  * @param input.barProgress - 0 = island expanded, 1 = island collapsed.
  * @param input.closeProgress - 0..1 presence of the external close circle.
+ * @param input.focusProgress - 0..1 retraction of the active-tab circle.
  * @param input.openProgress - 0 = collapsed onto the search circle, 1 = full slot.
  * @param input.screenWidth - Current viewport width.
  * @param input.tabBarHeight - Measured height of the floating tab row.
@@ -68,6 +71,7 @@ interface SearchIslandGeometryInput {
 export const getSearchIslandGeometry = ({
   barProgress,
   closeProgress = 0,
+  focusProgress = 0,
   openProgress,
   screenWidth,
   tabBarHeight,
@@ -76,6 +80,7 @@ export const getSearchIslandGeometry = ({
   const bar = Math.min(Math.max(barProgress, 0), 1)
   const open = Math.min(Math.max(openProgress, 0), 1)
   const close = Math.min(Math.max(closeProgress, 0), 1)
+  const focus = Math.min(Math.max(focusProgress, 0), 1)
   // The islands row is capped to the content column and centered; absolute
   // offsets must follow the column, not the raw viewport edges.
   const rowLeft = getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH)
@@ -91,20 +96,22 @@ export const getSearchIslandGeometry = ({
   // The pill grows out of the search chip: a circle pinned to the row's right
   // inner edge, expanding leftwards into the slot right of the active-tab circle.
   const circleLeft = rowInnerLeft + rowInnerWidth - height
-  const slotLeft = rowInnerLeft + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
+  // The active-tab circle fades out of the layout as the field gains focus, so
+  // the pill's left target travels all the way to the row's inner edge.
+  const tabSlot = (BAR_CIRCLE_SIZE + BAR_OUTER_GAP) * (1 - focus)
+  const slotLeft = rowInnerLeft + tabSlot
   const left = circleLeft + (slotLeft - circleLeft) * open
   // The close circle sits at the same right inner edge; the pill shrinks
   // leftwards by exactly circle + gap so the outer gap stays constant. Weighted
   // by `open` so a closing pill never drifts away from the search chip.
   const closeSlot = (BAR_CIRCLE_SIZE + BAR_OUTER_GAP) * close * open
-  const openWidth = rowInnerWidth - BAR_CIRCLE_SIZE - BAR_OUTER_GAP - closeSlot
+  const openWidth = rowInnerWidth - tabSlot - closeSlot
   const width = height + (openWidth - height) * open
   // The icon is the first child of the morphing frame, so its inset defines how
   // far it travels with the moving left edge. Closed it is centred in the
   // circle (whose diameter follows the bar morph); open it keeps the pill's
-  // compact 8dp inset. Interpolating both keeps the glyph centred at every
-  // resting size instead of drifting off-centre when the bar is expanded.
-  const iconSize = ICON_SIZE_PILL + (ICON_SIZE_CIRCLE - ICON_SIZE_PILL) * (1 - open)
+  // compact 8dp inset. The glyph never changes size, so it stays crisp.
+  const iconSize = ICON_SIZE
   const circleIconInset = (height - iconSize) / 2
   const iconInset = INDENTS.low + (circleIconInset - INDENTS.low) * (1 - open)
 

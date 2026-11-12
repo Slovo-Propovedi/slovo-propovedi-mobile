@@ -27,7 +27,7 @@ jest.mock('shared/api', () => ({
   },
 }))
 
-const SEARCH_PLACEHOLDER = 'Поиск проповедей'
+const SEARCH_PLACEHOLDER = 'Проповеди, проповедники, название книги'
 const IVAN_ZLATOUST = 'Иван Златоуст'
 const DISTINCT_VALUES = sermonsMocks.getSermonControllerGetDistinctValuesResponseMock({
   artists: [IVAN_ZLATOUST, 'Иоанн Кронштадтский'],

@@ -2,6 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { isSearchOpenAtom } from 'features/sermon-search'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
 import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
@@ -370,6 +371,24 @@ describe('<CustomTabBar>', () => {
       paddingLeft: 0,
       paddingRight: 0,
     })
+  })
+
+  test('stops the tab island from receiving touches while the search field is focused', async () => {
+    const { ctx } = await renderTabBar()
+    const findIsland = () =>
+      screen.root?.queryAll(instance => {
+        const flat = StyleSheet.flatten(instance.props.style)
+
+        return flat?.borderRadius === RADIUSES.round && flat?.maxWidth === 600
+      })[0]
+
+    expect(findIsland()?.props.pointerEvents).toBeUndefined()
+
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, true)
+    })
+
+    expect(findIsland()?.props.pointerEvents).toBe('none')
   })
 
   test('renders a slot for every route in the navigator state', async () => {

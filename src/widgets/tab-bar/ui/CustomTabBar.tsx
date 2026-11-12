@@ -48,6 +48,7 @@ export const CustomTabBar = ({
     contentStyle,
     expandedTabWidth,
     isCollapsed,
+    isFocused,
     islandStyle,
     progress,
     restingContentStyle,
@@ -86,6 +87,7 @@ export const CustomTabBar = ({
         <GlassIsland
           isLight={isLight}
           hostStyle={styles.floatingIsland}
+          pointerEvents={isFocused ? 'none' : undefined}
           animatedStyle={[islandStyle, restingIslandStyle]}
         >
           <Animated.View style={[styles.islandContent, contentStyle, restingContentStyle]}>

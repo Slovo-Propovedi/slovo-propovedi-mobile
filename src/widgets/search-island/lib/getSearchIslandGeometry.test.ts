@@ -17,12 +17,14 @@ const PHONE_ROW_WIDTH = PHONE_WIDTH - BAR_SIDE_INSET * 2
 const geometry = (input: {
   barProgress?: number
   closeProgress?: number
+  focusProgress?: number
   openProgress: number
   screenWidth?: number
 }) =>
   getSearchIslandGeometry({
     barProgress: input.barProgress ?? 1,
     closeProgress: input.closeProgress,
+    focusProgress: input.focusProgress,
     openProgress: input.openProgress,
     screenWidth: input.screenWidth ?? PHONE_WIDTH,
     tabBarHeight: TAB_BAR_HEIGHT,
@@ -132,13 +134,29 @@ describe('getSearchIslandGeometry', () => {
     expect(collapsedBar.iconInset).toBe((TAB_BAR_ISLAND_HEIGHT - 32) / 2)
   })
 
-  test('shrinks the magnifier into the pill left inset as the field opens', () => {
+  test('keeps the magnifier at a constant size while it travels with the pill edge', () => {
+    const circle = geometry({ barProgress: 1, openProgress: 0 })
     const half = geometry({ barProgress: 1, openProgress: 0.5 })
     const pill = geometry({ barProgress: 1, openProgress: 1 })
 
-    expect(half.iconSize).toBe(27)
-    expect(pill.iconSize).toBe(22)
+    expect(circle.iconSize).toBe(32)
+    expect(half.iconSize).toBe(32)
+    expect(pill.iconSize).toBe(32)
     expect(pill.iconInset).toBe(8)
+  })
+
+  test('focus retracts the active-tab circle and stretches the pill to the left inner edge', () => {
+    const focused = geometry({ focusProgress: 1, openProgress: 1 })
+
+    expect(focused.left).toBe(BAR_SIDE_INSET)
+    expect(focused.width).toBe(PHONE_ROW_WIDTH)
+    expect(focused.left + focused.width).toBe(PHONE_WIDTH - BAR_SIDE_INSET)
+  })
+
+  test('focus keeps the external close slot free while the pill fills the rest', () => {
+    const focused = geometry({ closeProgress: 1, focusProgress: 1, openProgress: 1 })
+
+    expect(focused.width).toBe(PHONE_ROW_WIDTH - (BAR_CIRCLE_SIZE + BAR_OUTER_GAP))
   })
 
   test('centers the capped column on wide screens', () => {

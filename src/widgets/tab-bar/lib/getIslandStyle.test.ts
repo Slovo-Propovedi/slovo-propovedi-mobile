@@ -20,20 +20,31 @@ const TAB_LAYOUT = { collapsedWidth: 64, expandedWidth: EXPANDED_TAB_WIDTH }
 
 describe('getIslandStyle', () => {
   test('the expanded island spans the full row width and grows taller', () => {
-    expect(getIslandStyle(0, LAYOUT)).toEqual({ height: 76, width: 584 })
+    expect(getIslandStyle(0, LAYOUT)).toEqual({ height: 76, opacity: 1, width: 584 })
   })
 
   test('the collapsed island shrinks to the circle size and height', () => {
-    expect(getIslandStyle(1, LAYOUT)).toEqual({ height: 64, width: 64 })
+    expect(getIslandStyle(1, LAYOUT)).toEqual({ height: 64, opacity: 1, width: 64 })
   })
 
   test('width and height interpolate linearly between both states', () => {
-    expect(getIslandStyle(0.5, LAYOUT)).toEqual({ height: 70, width: 324 })
+    expect(getIslandStyle(0.5, LAYOUT)).toEqual({ height: 70, opacity: 1, width: 324 })
   })
 
   test('progress outside 0..1 is clamped', () => {
-    expect(getIslandStyle(-1, LAYOUT)).toEqual({ height: 76, width: 584 })
-    expect(getIslandStyle(2, LAYOUT)).toEqual({ height: 64, width: 64 })
+    expect(getIslandStyle(-1, LAYOUT)).toEqual({ height: 76, opacity: 1, width: 584 })
+    expect(getIslandStyle(2, LAYOUT)).toEqual({ height: 64, opacity: 1, width: 64 })
+  })
+
+  test('focus fades the island out and collapses its width to nothing', () => {
+    expect(getIslandStyle(0, LAYOUT, 1)).toEqual({ height: 76, opacity: 0, width: 0 })
+    expect(getIslandStyle(0, LAYOUT, 0.5)).toEqual({ height: 76, opacity: 0.5, width: 292 })
+    expect(getIslandStyle(1, LAYOUT, 1)).toEqual({ height: 64, opacity: 0, width: 0 })
+  })
+
+  test('focus progress outside 0..1 is clamped', () => {
+    expect(getIslandStyle(0, LAYOUT, -1)).toEqual({ height: 76, opacity: 1, width: 584 })
+    expect(getIslandStyle(0, LAYOUT, 2)).toEqual({ height: 76, opacity: 0, width: 0 })
   })
 })
 

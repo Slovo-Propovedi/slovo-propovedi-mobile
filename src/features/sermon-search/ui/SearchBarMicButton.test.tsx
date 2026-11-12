@@ -12,7 +12,7 @@ jest.mock('shared/ui/theme', () => {
 })
 
 const MIC_LABEL = 'Голосовой ввод'
-const MIC_ICON_SIZE = 22
+const MIC_ICON_SIZE = 32
 
 const getMicGlyphColor = () => {
   const glyph = screen.root?.queryAll(

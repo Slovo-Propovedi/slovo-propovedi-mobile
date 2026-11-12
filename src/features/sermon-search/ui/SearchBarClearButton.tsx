@@ -4,7 +4,7 @@ import { INDENTS, useTheme } from 'shared/ui/theme'
 import { styles } from './SearchBar.styles'
 
 const CLEAR_LABEL = 'Очистить'
-const CLEAR_ICON_SIZE = 18
+const CLEAR_ICON_SIZE = 28
 
 /**
  * The inline ⊗ chip: resets a non-empty query without closing the search.

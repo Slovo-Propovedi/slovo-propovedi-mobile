@@ -53,7 +53,7 @@ const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
 const mockedStartActivityAsync = IntentLauncher.startActivityAsync as jest.MockedFunction<
   typeof IntentLauncher.startActivityAsync
 >
-const SEARCH_PLACEHOLDER = 'Поиск проповедей'
+const SEARCH_PLACEHOLDER = 'Проповеди, проповедники, название книги'
 const IVAN_ZLATOUST = 'Иван Златоуст'
 const DISTINCT_VALUES = sermonsMocks.getSermonControllerGetDistinctValuesResponseMock({
   artists: [IVAN_ZLATOUST, 'Иоанн Кронштадтский'],

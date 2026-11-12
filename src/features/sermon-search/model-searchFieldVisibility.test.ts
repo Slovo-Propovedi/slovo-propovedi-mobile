@@ -1,8 +1,12 @@
 import { createCtx } from '@reatom/framework'
 import { isBarCollapsedAtom } from 'shared/ui/layout'
 import { isSearchOpenAtom, searchQueryAtom } from './model'
-import { isSearchBarCollapseSuspendedAtom, isSearchFieldVisibleAtom } from './model-searchField'
-import { closeSearchAndExpand, openSearch } from './model-session'
+import {
+  isSearchBarCollapseSuspendedAtom,
+  isSearchFieldFocusedAtom,
+  isSearchFieldVisibleAtom,
+} from './model-searchField'
+import { closeSearch, closeSearchAndExpand, openSearch } from './model-session'
 
 const renderVisibility = ({
   isCollapsed,
@@ -58,6 +62,17 @@ describe('search field visibility', () => {
     const ctx = renderVisibility({ isCollapsed: true, isOpen: true, query: 'в' })
 
     expect(ctx.get(isSearchFieldVisibleAtom)).toBe(false)
+  })
+})
+
+describe('search field focus', () => {
+  test('closing the search clears the focused flag', async () => {
+    const ctx = createCtx()
+    isSearchFieldFocusedAtom(ctx, true)
+
+    await closeSearch(ctx)
+
+    expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
   })
 })
 

@@ -4,7 +4,10 @@ import { Keyboard, useWindowDimensions } from 'react-native'
 import { useAnimatedStyle } from 'react-native-reanimated'
 import { isTabIslandCollapsedAtom } from 'widgets/tab-bar/@x/morph'
 import { closeSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
-import { isSearchFieldVisibleAtom } from 'features/sermon-search/@x/barMorph'
+import {
+  isSearchFieldFocusedAtom,
+  isSearchFieldVisibleAtom,
+} from 'features/sermon-search/@x/barMorph'
 import { useAtomMorph } from 'shared/lib/hooks/useAtomMorph'
 import { GlassIsland } from 'shared/ui'
 import { BAR_MORPH_DURATION_MS, tabBarHeightAtom } from 'shared/ui/layout'
@@ -40,6 +43,10 @@ export const SearchIslandMorph = () => {
     isSearchFieldVisibleAtom,
     BAR_MORPH_DURATION_MS,
   )
+  const { progress: focusProgress, settled: settledFocused } = useAtomMorph(
+    isSearchFieldFocusedAtom,
+    BAR_MORPH_DURATION_MS,
+  )
 
   const handleCloseSearch = useCallback(() => {
     Keyboard.dismiss()
@@ -50,6 +57,7 @@ export const SearchIslandMorph = () => {
     const { closeRight, iconInset, iconSize, radius, ...geometry } = getSearchIslandGeometry({
       barProgress: barProgress.value,
       closeProgress: closeProgress.value,
+      focusProgress: focusProgress.value,
       openProgress: openProgress.value,
       screenWidth,
       tabBarHeight,
@@ -69,6 +77,7 @@ export const SearchIslandMorph = () => {
     const { closeRight, iconInset, iconSize, radius, ...geometry } = getSearchIslandGeometry({
       barProgress: settledTabCollapsed ? 1 : 0,
       closeProgress: settledCloseProgress,
+      focusProgress: settledFocused ? 1 : 0,
       openProgress: settledOpenProgress,
       screenWidth,
       tabBarHeight,
@@ -86,7 +95,7 @@ export const SearchIslandMorph = () => {
       },
       restingFrameStyle: { ...geometry, borderRadius: radius, paddingLeft: iconInset },
     }
-  }, [settledClose, settledOpen, settledTabCollapsed, screenWidth, tabBarHeight])
+  }, [settledClose, settledFocused, settledOpen, settledTabCollapsed, screenWidth, tabBarHeight])
 
   return (
     <>
@@ -96,12 +105,7 @@ export const SearchIslandMorph = () => {
         hostStyle={styles.container}
         animatedStyle={[frameStyle, restingFrameStyle]}
       >
-        <SearchIslandMagnifier
-          barProgress={barProgress}
-          screenWidth={screenWidth}
-          openProgress={openProgress}
-          tabBarHeight={tabBarHeight}
-        />
+        <SearchIslandMagnifier />
         <SearchIslandContent
           onOpenSearch={openSearch}
           openProgress={openProgress}

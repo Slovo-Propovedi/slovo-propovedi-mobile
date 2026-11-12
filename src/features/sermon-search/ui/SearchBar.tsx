@@ -8,7 +8,7 @@ import { SearchBarClearButton } from './SearchBarClearButton'
 import { SearchBarMicButton } from './SearchBarMicButton'
 import { SearchSuggestions } from './SearchSuggestions'
 
-const SEARCH_PLACEHOLDER = 'Поиск проповедей'
+const SEARCH_PLACEHOLDER = 'Проповеди, проповедники, название книги'
 
 // The magnifier lives in the morphing search frame as its always-mounted first
 // child; this component is only the field's content row.

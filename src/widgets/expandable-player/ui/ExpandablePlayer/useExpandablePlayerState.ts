@@ -1,6 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRef } from 'react'
 import { useIsSearchFieldVisible } from 'features/sermon-search'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import {
   currentAudioAtom,
   currentPlaylistAtom,
@@ -36,6 +37,7 @@ export const useExpandablePlayerState = () => {
   const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
   const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
   const isSearchFieldVisible = useIsSearchFieldVisible()
+  const [isSearchFieldFocused] = useAtom(isSearchFieldFocusedAtom)
   const [playing] = useAtom(isPlayingAtom)
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [playlist] = useAtom(currentPlaylistAtom)
@@ -46,11 +48,11 @@ export const useExpandablePlayerState = () => {
     audio,
     currentTheme,
     expanded,
-    // While the search field is visible the bottom row is [active tab
-    // circle][search field], so the mini player rests detached above it instead
-    // of collapsing into it. A collapsed bar with an empty query hides the field
+    // While the search field is visible or focused the bottom row belongs to
+    // the search surface, so the mini player rests detached above it instead of
+    // collapsing into it. A collapsed bar with an empty query hides the field
     // and pulls the player back into the compact line.
-    isBarCollapsed: isBarCollapsed && !isSearchFieldVisible,
+    isBarCollapsed: isBarCollapsed && !isSearchFieldVisible && !isSearchFieldFocused,
     isBuffering,
     isLight,
     isTabBarMeasured,

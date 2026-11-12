@@ -5,6 +5,7 @@ import { getIslandStyle } from './getIslandStyle'
 interface TabIslandRestingInput {
   collapsedWidth: number
   expandedWidth: number
+  settledFocused: boolean
   settledIsCollapsed: boolean
 }
 
@@ -23,17 +24,22 @@ interface TabIslandRestingInput {
 export const getTabIslandRestingStyles = ({
   collapsedWidth,
   expandedWidth,
+  settledFocused,
   settledIsCollapsed,
 }: TabIslandRestingInput) => {
   const settledProgress = settledIsCollapsed ? 1 : 0
 
   return {
     content: getIslandContentStyle(settledProgress),
-    island: getIslandStyle(settledProgress, {
-      collapsedHeight: TAB_BAR_ISLAND_HEIGHT,
-      collapsedWidth,
-      expandedHeight: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
-      expandedWidth,
-    }),
+    island: getIslandStyle(
+      settledProgress,
+      {
+        collapsedHeight: TAB_BAR_ISLAND_HEIGHT,
+        collapsedWidth,
+        expandedHeight: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+        expandedWidth,
+      },
+      settledFocused ? 1 : 0,
+    ),
   }
 }

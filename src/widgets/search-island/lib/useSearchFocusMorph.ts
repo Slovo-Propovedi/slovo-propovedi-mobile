@@ -1,6 +1,8 @@
+import { useAction } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useSharedValue, withTiming } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { BAR_MORPH_DURATION_MS } from 'shared/ui/layout'
 
 /**
@@ -15,12 +17,18 @@ import { BAR_MORPH_DURATION_MS } from 'shared/ui/layout'
  * the flip land in one commit.
  */
 export const useSearchFocusMorph = () => {
+  const setFocusedAtom = useAction(isSearchFieldFocusedAtom)
   const [isFocused, setIsFocused] = useState(false)
   const [settledClose, setSettledClose] = useState(false)
   const closeProgress = useSharedValue(isFocused ? 1 : 0)
 
   const handleCloseFocusChange = useCallback(
     (nextIsFocused: boolean) => {
+      // The atom carries focus to the rest of the bottom bar (tab island, mini
+      // player). Writing a repeated value is a no-op, so it goes before the
+      // guard that protects an in-flight close fade.
+      setFocusedAtom(nextIsFocused)
+
       // A redundant focus event must not interrupt a settle that is in flight:
       // committing the START value now would desync `settledClose` until the
       // completion of the running fade corrects it on the next flip.
@@ -29,7 +37,7 @@ export const useSearchFocusMorph = () => {
       setSettledClose(isFocused)
       setIsFocused(nextIsFocused)
     },
-    [isFocused],
+    [isFocused, setFocusedAtom],
   )
 
   useEffect(() => {

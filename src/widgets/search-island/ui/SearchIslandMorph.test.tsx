@@ -1,12 +1,18 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
-import { StyleSheet } from 'react-native'
+import { Dimensions, StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
+import {
+  TAB_BAR_ISLAND_HEIGHT,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  tabBarHeightAtom,
+} from 'shared/ui/layout'
+import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { SearchIslandMorph } from './SearchIslandMorph'
 
 const mockedWithTiming = withTiming as jest.Mock
@@ -73,11 +79,12 @@ jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn(() => jest.fn()) }),
 }))
 
-const SEARCH_PLACEHOLDER = 'Поиск проповедей'
+const SEARCH_PLACEHOLDER = 'Проповеди, проповедники, название книги'
 const SEARCH_LABEL = 'Поиск'
 const CLOSE_LABEL = 'Закрыть поиск'
 const CIRCLE_ICON_SIZE = 32
-const PILL_ICON_SIZE = 22
+const PILL_ICON_SIZE = 32
+const CLOSE_ICON_SIZE = 32
 const MAGNIFIER_GLYPH = 'search'
 
 const findShadows = () =>
@@ -213,12 +220,77 @@ describe('<SearchIslandMorph>', () => {
       isSearchOpenAtom(ctx, true)
     })
 
-    // Open: the same glyph is re-rendered at the pill's compact size. Scaling a
-    // fixed 32px node down inside the 22px slot is what Android clipped.
+    // Open: the glyph keeps the same size and only travels with the left edge.
     expect(findMagnifierBox(PILL_ICON_SIZE)).toBeDefined()
     expect(magnifierTransform(PILL_ICON_SIZE)).toBeUndefined()
     expect(lastMagnifierGlyphSize()).toBe(PILL_ICON_SIZE)
     expect(StyleSheet.flatten(findMorphContainer().props.style).paddingLeft).toBe(8)
+  })
+
+  test('draws the external close glyph at the enlarged size', async () => {
+    await renderMorph()
+
+    expect(mockIoniconsSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'close', size: CLOSE_ICON_SIZE }),
+    )
+  })
+
+  test('stretches the pill to the left inner edge while the field is focused', async () => {
+    const { ctx } = await renderMorph()
+
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, true)
+    })
+
+    const frame = StyleSheet.flatten(findMorphContainer().props.style)
+    const expected = getSearchIslandGeometry({
+      barProgress: 1,
+      closeProgress: 0,
+      focusProgress: 1,
+      openProgress: 1,
+      screenWidth: Dimensions.get('window').width,
+      tabBarHeight: ctx.get(tabBarHeightAtom),
+    })
+
+    expect(frame.left).toBe(expected.left)
+    expect(frame.width).toBe(expected.width)
+  })
+
+  test('keeps the tab-slot frame of a focus flip until the morph settles', async () => {
+    const completions = captureCompletions()
+    const { ctx } = await renderMorph()
+
+    completions.length = 0
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+
+    const openFrame = StyleSheet.flatten(findMorphContainer().props.style)
+
+    completions.length = 0
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, true)
+    })
+
+    expect(StyleSheet.flatten(findMorphContainer().props.style)).toMatchObject({
+      left: openFrame.left,
+      width: openFrame.width,
+    })
+
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+
+    const settledFrame = StyleSheet.flatten(findMorphContainer().props.style)
+
+    expect(settledFrame.left).toBeLessThan(openFrame.left)
+    expect(settledFrame.width).toBeGreaterThan(openFrame.width)
   })
 
   test('keeps the input mounted but pointer-gated while search is closed', async () => {
@@ -266,6 +338,26 @@ describe('<SearchIslandMorph>', () => {
     const closeCircle = findContentWrapper(closeButton)
 
     expect(closeCircle.props.pointerEvents).toBe('none')
+  })
+
+  test('writes the shared focus flag while the input has focus', async () => {
+    const { ctx, getByPlaceholderText } = await renderMorph()
+
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER)
+    expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
+
+    await act(async () => {
+      fireEvent(input, 'focus')
+    })
+    expect(ctx.get(isSearchFieldFocusedAtom)).toBe(true)
+
+    await act(async () => {
+      fireEvent(input, 'blur')
+    })
+    expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
   })
 
   test('does not paint a second shadow when the close circle appears', async () => {

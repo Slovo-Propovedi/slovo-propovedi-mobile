@@ -1,5 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
 import { useAnimatedStyle } from 'react-native-reanimated'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { useAtomMorph } from 'shared/lib/hooks/useAtomMorph'
 import {
   BAR_CIRCLE_SIZE,
@@ -36,8 +37,13 @@ export const useTabIslandMorph = ({
   windowWidth,
 }: TabIslandMorphInput) => {
   const [isCollapsed] = useAtom(isTabIslandCollapsedAtom)
+  const [isFocused] = useAtom(isSearchFieldFocusedAtom)
   const { progress, settled: settledCollapsed } = useAtomMorph(
     isTabIslandCollapsedAtom,
+    BAR_MORPH_DURATION_MS,
+  )
+  const { progress: focusProgress, settled: settledFocused } = useAtomMorph(
+    isSearchFieldFocusedAtom,
     BAR_MORPH_DURATION_MS,
   )
 
@@ -49,12 +55,16 @@ export const useTabIslandMorph = ({
   )
 
   const islandStyle = useAnimatedStyle(() =>
-    getIslandStyle(progress.value, {
-      collapsedHeight: TAB_BAR_ISLAND_HEIGHT,
-      collapsedWidth: BAR_CIRCLE_SIZE,
-      expandedHeight: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
-      expandedWidth: expandedIslandWidth,
-    }),
+    getIslandStyle(
+      progress.value,
+      {
+        collapsedHeight: TAB_BAR_ISLAND_HEIGHT,
+        collapsedWidth: BAR_CIRCLE_SIZE,
+        expandedHeight: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+        expandedWidth: expandedIslandWidth,
+      },
+      focusProgress.value,
+    ),
   )
 
   // The island's inner row is padded only while expanded; the collapsed active
@@ -71,6 +81,7 @@ export const useTabIslandMorph = ({
   const { content: restingContentStyle, island: restingIslandStyle } = getTabIslandRestingStyles({
     collapsedWidth: BAR_CIRCLE_SIZE,
     expandedWidth: expandedIslandWidth,
+    settledFocused,
     settledIsCollapsed: settledCollapsed,
   })
 
@@ -83,6 +94,9 @@ export const useTabIslandMorph = ({
     // Target shape of the morph: hidden slots must stop receiving touches as
     // soon as the island is collapsing, not when their width animation lands.
     isCollapsed,
+    // Focus removes the island from the row altogether, so its host must stop
+    // receiving touches on the focus flip, not when it finishes fading out.
+    isFocused,
     islandStyle,
     progress,
     restingContentStyle,

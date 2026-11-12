@@ -4,7 +4,7 @@ import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
 
 const CLOSE_LABEL = 'Закрыть поиск'
-const CLOSE_ICON_SIZE = 24
+const CLOSE_ICON_SIZE = 32
 
 /**
  * Fills the circular slot beside the search pill and closes the search whole.

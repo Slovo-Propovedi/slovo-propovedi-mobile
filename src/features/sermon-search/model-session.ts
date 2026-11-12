@@ -10,6 +10,7 @@ import {
   searchQueryAtom,
   searchResultsAtom,
 } from './model'
+import { isSearchFieldFocusedAtom } from './model-searchField'
 
 // Every field a closed session owns. Cleared in ONE transaction by the close
 // actions so no subscriber renders a half-closed search.
@@ -20,6 +21,7 @@ const clearSearchSessionState = (ctx: Ctx): void => {
   searchPreachersAtom(ctx, [])
   isSearchingAtom(ctx, false)
   lastFetchedQueryAtom(ctx, '')
+  isSearchFieldFocusedAtom(ctx, false)
 }
 
 export const openSearch = action(async ctx => {

@@ -1,4 +1,5 @@
 import { act, fireEvent } from '@testing-library/react-native'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/model'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
@@ -119,6 +120,7 @@ describe('<ExpandablePlayer>', () => {
     currentAudioAtom(ctx, mockAudio)
     isPlayerExpandedAtom(ctx, false)
     isTabBarMeasuredAtom(ctx, true)
+    isSearchFieldFocusedAtom(ctx, false)
   })
 
   test('mini-player play/pause press delegates to useGuardedTogglePlay', async () => {
@@ -151,6 +153,20 @@ describe('<ExpandablePlayer>', () => {
     await renderWithProviders(<ExpandablePlayer />, { ctx })
 
     // The pill's collapse target keeps it detached: the field pins the row.
+    expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98)
+    expect(ctx.get(isMiniPillCollapsedAtom)).toBe(false)
+  })
+
+  test('keeps the mini player above the row while the search field is focused', async () => {
+    isBarCollapsedAtom(ctx, true)
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, '')
+    isSearchFieldFocusedAtom(ctx, true)
+    tabBarHeightAtom(ctx, 98)
+    await renderWithProviders(<ExpandablePlayer />, { ctx })
+
+    // Focus hands the whole row to the stretched search pill, so the player
+    // must stay in its detached pose instead of collapsing into that line.
     expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98)
     expect(ctx.get(isMiniPillCollapsedAtom)).toBe(false)
   })

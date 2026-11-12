@@ -18,6 +18,10 @@ export const isSearchFieldVisibleAtom = atom(ctx => {
   return !isBarCollapsed || isSearchQueryActive(ctx.spy(searchQueryAtom))
 }, 'isSearchFieldVisibleAtom')
 
+// The bar is a full-width search surface only while the keyboard owns the
+// field; the morph reads this flag to retract the active-tab circle.
+export const isSearchFieldFocusedAtom = atom(false, 'isSearchFieldFocusedAtom')
+
 // Search owns the scroll driver only while an active query pins the field: with
 // an empty query the driver must still collapse the whole line.
 export const isSearchBarCollapseSuspendedAtom = atom(

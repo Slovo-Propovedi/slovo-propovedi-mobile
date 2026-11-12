@@ -32,14 +32,18 @@ const TAB_ITEM_GAP = 10
 export const CAPSULE_HORIZONTAL_OVERHANG = 10
 
 // Width and height of the tab island: full row width and the expanded height
-// when open, a circle when collapsed.
-export const getIslandStyle = (progress: number, layout: IslandLayout) => {
+// when open, a circle when collapsed. Focus is a stronger state than collapse:
+// the whole island fades out and its width reaches zero, handing the row to the
+// focused search pill.
+export const getIslandStyle = (progress: number, layout: IslandLayout, focusProgress = 0) => {
   'worklet'
   const clamped = clampProgress(progress)
+  const focus = clampProgress(focusProgress)
 
   return {
     height: getIslandHeight(clamped),
-    width: interpolateSize(layout.expandedWidth, layout.collapsedWidth, clamped),
+    opacity: 1 - focus,
+    width: interpolateSize(layout.expandedWidth, layout.collapsedWidth, clamped) * (1 - focus),
   }
 }
 

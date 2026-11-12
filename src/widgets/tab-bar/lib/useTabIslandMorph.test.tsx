@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { withTiming } from 'react-native-reanimated'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import {
   setBarCollapsed,
@@ -56,6 +57,28 @@ describe('useTabIslandMorph', () => {
 
     expect(result.current.restingIslandStyle.height).toBe(TAB_BAR_ISLAND_HEIGHT)
     expect(result.current.restingContentStyle.paddingLeft).toBe(0)
+  })
+
+  test('fades the island out while the search field is focused', async () => {
+    const completions = captureCompletions()
+    const { ctx, result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT))
+
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, true)
+    })
+
+    // Pointer gating follows the live atom; the resting layer still carries the
+    // START shape until the morph lands.
+    expect(result.current.isFocused).toBe(true)
+    expect(result.current.restingIslandStyle.opacity).toBe(1)
+    expect(result.current.restingIslandStyle.width).toBeGreaterThan(0)
+
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+
+    expect(result.current.restingIslandStyle.opacity).toBe(0)
+    expect(result.current.restingIslandStyle.width).toBe(0)
   })
 
   test('seeds the resting shape from a collapsed bar at mount without animating', async () => {
