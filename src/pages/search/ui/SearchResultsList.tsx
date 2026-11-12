@@ -17,14 +17,11 @@ import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
 import { type PagedSearch } from '../lib/pagedGroup'
 import { type SearchGroup } from '../lib/searchGroup'
+import { MIN_RESULTS_VIEW_LENGTH } from '../lib/searchThresholds'
 import { SearchResultsSkeleton } from './SearchResultsSkeleton'
 
 const NO_RESULTS_MESSAGE = 'Ничего не найдено'
 const FOOTER_STYLE = { paddingVertical: INDENTS.medium }
-// The server effectively returns nothing for two-character searches, so the
-// message waits for a third character; fetching still starts at
-// `MIN_QUERY_LENGTH` (2).
-const MIN_EMPTY_STATE_LENGTH = 3
 
 export const SearchResultsList = ({
   group,
@@ -54,7 +51,7 @@ export const SearchResultsList = ({
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const { onScroll } = useBarCollapseOnScroll({ isSuspended: isBarCollapseSuspended })
-  const showEmptyState = query.trim().length >= MIN_EMPTY_STATE_LENGTH
+  const showEmptyState = query.trim().length >= MIN_RESULTS_VIEW_LENGTH
 
   const groupState =
     group === 'sermons' ? paged.sermons : group === 'playlists' ? paged.playlists : paged.preachers

@@ -79,6 +79,8 @@ jest.mock('entities/listening-history', () => ({
   useHistorySermonIds: jest.fn(() => new Set()),
 }))
 
+const RECENT_SEARCHES_TITLE = 'Недавние поиски'
+
 const SERMON: SermonData = {
   artist: 'Иван',
   artwork: null,
@@ -122,11 +124,13 @@ const getTabsProps = (itemKey: string) =>
 
 const renderScreen = async ({
   focused = false,
+  history,
   paged = createPaged(),
   query = '',
   readEnabled = false,
 }: {
   focused?: boolean
+  history?: SermonData[]
   paged?: PagedSearch
   query?: string
   readEnabled?: boolean
@@ -134,6 +138,7 @@ const renderScreen = async ({
   const ctx = createCtx()
   searchQueryAtom(ctx, query)
   isSearchFieldFocusedAtom(ctx, focused)
+  if (history) searchHistoryAtom(ctx, history.map(historyEntry))
   mockUsePagedSearch.mockReturnValue(paged)
   mockUseFeatureFlag.mockReturnValue(readEnabled)
 
@@ -169,7 +174,7 @@ describe('<SearchScreen>', () => {
 
     expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
     expect(screen.queryByText('Слушать')).toBeNull()
-    expect(screen.queryByText('Недавние поиски')).toBeNull()
+    expect(screen.queryByText(RECENT_SEARCHES_TITLE)).toBeNull()
   })
 
   test('shows scope pills and recent searches while the field is focused with an empty query', async () => {
@@ -187,7 +192,7 @@ describe('<SearchScreen>', () => {
     expect(screen.queryByRole('header', { name: 'Поиск' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Слушать' })).toBeSelected()
     expect(screen.getByRole('button', { name: 'Читать' })).toBeTruthy()
-    expect(screen.getByText('Недавние поиски')).toBeTruthy()
+    expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
     expect(screen.getByText(SERMON.title)).toBeTruthy()
   })
 
@@ -253,16 +258,17 @@ describe('<SearchScreen>', () => {
     expect(ctx.get(searchQueryAtom)).toBe(PREACHER)
   })
 
-  test('hides the scope tabs while the query is active', async () => {
-    await renderScreen({ focused: true, query: 'вера' })
+  test('hides the scope tabs and recents from three characters', async () => {
+    await renderScreen({ focused: true, history: [SERMON], query: 'вер' })
 
     expect(screen.queryByRole('button', { name: 'Слушать' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Читать' })).toBeNull()
+    expect(screen.queryByText(RECENT_SEARCHES_TITLE)).toBeNull()
     expect(screen.getByRole('button', { name: 'Проповеди' })).toBeTruthy()
   })
 
   test('brings the scope tabs back when the query is cleared', async () => {
-    const { ctx } = await renderScreen({ focused: true, query: 'вера' })
+    const { ctx } = await renderScreen({ focused: true, query: 'вер' })
 
     await act(async () => {
       searchQueryAtom(ctx, '')
@@ -297,11 +303,20 @@ describe('<SearchScreen>', () => {
     expect(mockShowInfo).toHaveBeenCalled()
   })
 
-  test('hides the empty state for a two-character query', async () => {
-    await renderScreen({ focused: true, query: 'ве' })
+  test('keeps the empty pose for a two-character query', async () => {
+    await renderScreen({ focused: true, history: [SERMON], query: 'ве' })
 
-    expect(screen.getByRole('button', { name: 'Проповеди' })).toBeTruthy()
-    expect(screen.queryByText('Ничего не найдено')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Слушать' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Читать' })).toBeTruthy()
+    expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Проповеди' })).toBeNull()
+  })
+
+  test('keeps the search title pose for a two-character query while blurred', async () => {
+    await renderScreen({ query: 'ве' })
+
+    expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Проповеди' })).toBeNull()
   })
 
   test('shows the empty state from three characters', async () => {

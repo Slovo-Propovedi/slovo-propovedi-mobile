@@ -1,17 +1,14 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { type ReactElement, useCallback, useEffect, useState } from 'react'
 import { Keyboard, Pressable, StyleSheet, View } from 'react-native'
-import {
-  isSearchFieldFocusedAtom,
-  isSearchQueryActive,
-  searchQueryAtom,
-} from 'features/sermon-search'
+import { isSearchFieldFocusedAtom, searchQueryAtom } from 'features/sermon-search'
 import { type PlaylistData } from 'entities/playlist'
 import { isSearchHistoryLoadedAtom, loadSearchHistoryAction } from 'entities/search-history'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { EmptyState, ScreenTitleRow } from 'shared/ui'
 import { INDENTS } from 'shared/ui/theme'
 import { type SearchGroup } from '../lib/searchGroup'
+import { MIN_RESULTS_VIEW_LENGTH } from '../lib/searchThresholds'
 import { usePagedSearch } from '../lib/usePagedSearch'
 import { useSearchResultActions } from '../lib/useSearchResultActions'
 import { type PillTabItem, PillTabs } from './PillTabs'
@@ -55,7 +52,7 @@ export const SearchScreen = ({
   const loadSearchHistory = useAction(loadSearchHistoryAction)
   const [scope, setScope] = useState<SearchScope>('listen')
   const [group, setGroup] = useState<SearchGroup>('sermons')
-  const isActive = isSearchQueryActive(query)
+  const showResults = query.trim().length >= MIN_RESULTS_VIEW_LENGTH
   const paged = usePagedSearch(scope === 'listen' ? query : '')
   const firstSermon = paged.sermons.items[0]
   const { handlePreacherPress, handleRemoveFromSearchHistory, handleSermonPress } =
@@ -77,12 +74,12 @@ export const SearchScreen = ({
     setGroup(toSearchGroup(key))
   }, [])
 
-  if (!isFocused && !isActive) return <ScreenTitleRow title='Поиск' />
+  if (!isFocused && !showResults) return <ScreenTitleRow title='Поиск' />
 
   return (
     <Pressable style={styles.container} onPress={Keyboard.dismiss}>
-      {!isActive && <SearchScopeTabs value={scope} onChange={handleScopeChange} />}
-      {isActive ? (
+      {!showResults && <SearchScopeTabs value={scope} onChange={handleScopeChange} />}
+      {showResults ? (
         scope === 'read' ? (
           <EmptyState message={READ_PLACEHOLDER} />
         ) : (
