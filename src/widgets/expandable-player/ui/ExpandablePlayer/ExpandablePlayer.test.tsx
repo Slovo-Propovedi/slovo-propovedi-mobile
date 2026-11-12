@@ -106,12 +106,12 @@ jest.mock('./miniStyles', () => ({ createMiniStyles: () => ({}) }))
 
 // Captures the animated props the real MiniPlayer would receive, so the tuck
 // transform is asserted without rendering the whole glass pill.
-const mockMiniPlayerProps: Array<{ tuckStyle?: ViewStyle }> = []
+const mockMiniPlayerProps: Array<{ isTucked?: boolean; tuckStyle?: ViewStyle }> = []
 
 jest.mock('./MiniPlayer', () => {
   const { PressableButton } = jest.requireActual('../../../../shared/ui/pressable-button')
   return {
-    MiniPlayer: (props: { onPlayPause: () => void; tuckStyle?: ViewStyle }) => {
+    MiniPlayer: (props: { isTucked?: boolean; onPlayPause: () => void; tuckStyle?: ViewStyle }) => {
       mockMiniPlayerProps.push(props)
 
       return <PressableButton onPress={props.onPlayPause} accessibilityLabel='play-pause' />
@@ -218,6 +218,7 @@ describe('<ExpandablePlayer>', () => {
     // and its subtree sits below the tab bar's floating container (zIndex 10).
     expect(button).toBeTruthy()
     expect(findPointerGate(button)?.props.pointerEvents).toBe('none')
+    expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(true)
     expect(tuckTransform()).toEqual([{ translateY: MINI_TUCK_DISTANCE }])
     expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_UNDER_BAR_Z)
 
@@ -229,6 +230,7 @@ describe('<ExpandablePlayer>', () => {
       findPointerGate(queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true }))?.props
         .pointerEvents,
     ).toBe('box-none')
+    expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(false)
     expect(tuckTransform()).toEqual([{ translateY: 0 }])
     expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)
   })

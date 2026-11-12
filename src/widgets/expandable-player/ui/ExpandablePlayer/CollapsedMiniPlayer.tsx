@@ -97,6 +97,7 @@ export const CollapsedMiniPlayer = ({
         miniPan={miniPan}
         onPress={onPress}
         isLight={isLight}
+        isTucked={isHidden}
         ref={miniTargetRef}
         playlist={playlist}
         miniStyle={miniStyle}

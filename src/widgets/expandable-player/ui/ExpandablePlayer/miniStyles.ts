@@ -57,6 +57,12 @@ export const createMiniStyles = (theme: ThemeColors) =>
     miniContainerCollapsed: {
       paddingRight: MINI_CONTENT_SIDE_INSET,
     },
+    // Tucked under the search row, the pill must cast no shadow: any bleed would
+    // visually connect it to the search pill and ✕ silhouettes.
+    miniContainerTucked: {
+      boxShadow: 'none',
+      elevation: 0,
+    },
     miniControls: {
       alignItems: 'center',
       flexDirection: 'row',

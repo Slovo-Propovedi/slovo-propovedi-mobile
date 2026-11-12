@@ -25,6 +25,8 @@ interface MiniPlayerProps {
   currentTheme: ThemeColors
   // Theme flag for the shared glass layers; the pill frosts like the tab island.
   isLight: boolean
+  /** Tucked under the focused search row: any own shadow would bleed around it. */
+  isTucked?: boolean
   miniBarRestingStyle: ViewStyle
   miniBarStyle: AnimatedStyle<ViewStyle>
   miniPan: GestureType
@@ -46,6 +48,7 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
       barCollapsed,
       currentTheme,
       isLight,
+      isTucked,
       miniBarRestingStyle,
       miniBarStyle,
       miniPan,
@@ -72,7 +75,11 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
           onPress={onPress}
           isLight={isLight}
           accessibilityRole={ROW_ACCESSIBILITY_ROLE}
-          hostStyle={[miniStyles.miniContainer, barCollapsed && miniStyles.miniContainerCollapsed]}
+          hostStyle={[
+            miniStyles.miniContainer,
+            barCollapsed && miniStyles.miniContainerCollapsed,
+            isTucked && miniStyles.miniContainerTucked,
+          ]}
           animatedStyle={[
             miniStyle,
             // Animated geometry wins at the native level; the React resting style

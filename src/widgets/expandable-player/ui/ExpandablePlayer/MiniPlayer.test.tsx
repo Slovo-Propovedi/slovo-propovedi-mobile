@@ -173,6 +173,18 @@ describe('<MiniPlayer>', () => {
     ).toHaveLength(0)
   })
 
+  test('drops its own shadow while tucked under the search row', async () => {
+    const { getByRole } = await renderMiniPlayer({ isTucked: true })
+
+    const row = getByRole('button', { name: TITLE_NAME_PATTERN })
+
+    // Nothing of the tucked pill may bleed a shadow around the search pill/✕.
+    expect(StyleSheet.flatten(row.props.style)).toMatchObject({
+      boxShadow: 'none',
+      elevation: 0,
+    })
+  })
+
   test('does not paint a solid background over the pill glass', async () => {
     // The pill itself must stay background-free; any opaque fill here (or in the
     // layers below it) hides the BlurView backdrop and the pill reads as solid.
