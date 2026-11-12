@@ -1,10 +1,12 @@
 import { createCtx } from '@reatom/framework'
 import { act, screen } from '@testing-library/react-native'
+import { type ReactNode } from 'react'
 import { StyleSheet, Text } from 'react-native'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { useTourActionRegistrar } from 'features/onboarding'
 import { isSearchOpenAtom, useOpenSearch, useSermonPlayback } from 'features/sermon-search'
 import { renderWithProviders } from 'shared/mocks'
+import { DarkTheme, LightTheme } from 'shared/ui/theme'
 import { useSearchTourActions } from '../lib/useSearchTourActions'
 import { SearchGate } from './SearchGate'
 
@@ -18,8 +20,24 @@ const ADD_TO_PLAYLIST_MODAL = 'ADD_TO_PLAYLIST_MODAL'
 const CLOSE_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
 
 jest.mock('expo-router', () => ({
+  usePathname: () => '/more',
   useRouter: () => ({ push: jest.fn() }),
 }))
+
+jest.mock('shared/ui', () => {
+  const actual = jest.requireActual('shared/ui')
+  const { Text: MockText } = jest.requireActual('react-native')
+
+  return {
+    ...actual,
+    BlurBackdrop: ({ children, routeKey }: { children: ReactNode; routeKey: string }) => (
+      <>
+        <MockText>{`BLUR_TARGET:${routeKey}`}</MockText>
+        {children}
+      </>
+    ),
+  }
+})
 
 jest.mock('features/sermon-search', () => {
   const { atom } = jest.requireActual('@reatom/framework')
@@ -108,7 +126,20 @@ describe('<SearchGate>', () => {
     )[0]
     const style = StyleSheet.flatten(layer?.props.style)
 
-    expect(style).toMatchObject({ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 })
+    expect([LightTheme.background, DarkTheme.background]).toContain(style?.backgroundColor)
+    expect(style).toMatchObject({
+      bottom: 0,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+    })
+  })
+
+  test('publishes the current route as the glass blur target while open', async () => {
+    const { getByText } = await renderGate(true)
+
+    expect(getByText('BLUR_TARGET:/more')).toBeTruthy()
   })
 
   test('hosts the playback picker and add-to-playlist modals', async () => {

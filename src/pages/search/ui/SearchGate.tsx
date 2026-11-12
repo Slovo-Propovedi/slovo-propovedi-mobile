@@ -1,5 +1,5 @@
 import { useAtom } from '@reatom/npm-react'
-import { useRouter } from 'expo-router'
+import { usePathname, useRouter } from 'expo-router'
 import { useCallback, useRef } from 'react'
 import { StyleSheet } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -9,6 +9,7 @@ import { isSearchOpenAtom, useOpenSearch, useSermonPlayback } from 'features/ser
 import { type PlaylistData } from 'entities/playlist'
 import { type SermonData } from 'entities/sermon'
 import { useNavigationGuard } from 'shared/routing'
+import { BlurBackdrop } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { useSearchTourActions } from '../lib/useSearchTourActions'
 import { SearchScreen } from './SearchScreen'
@@ -24,6 +25,7 @@ const CLOSE_SERMON_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
  */
 export const SearchGate = () => {
   const insets = useSafeAreaInsets()
+  const pathname = usePathname()
   const { currentTheme } = useTheme()
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
   const openSearch = useOpenSearch()
@@ -68,12 +70,17 @@ export const SearchGate = () => {
       edges={['left', 'right']}
       style={[styles.layer, { backgroundColor: currentTheme.background, paddingTop: insets.top }]}
     >
-      <SearchScreen
-        onSermonPress={onSermonPress}
-        onAddToPlaylist={openAddToPlaylist}
-        onPlaylistPress={navigateToPlaylist}
-        onFirstSermonChange={handleFirstSermonChange}
-      />
+      {/* The gate is the blur target for the current route while open: without
+          it the Android chrome keeps sampling the page underneath and shows its
+          silhouettes through the glass over the opaque cover layer. */}
+      <BlurBackdrop routeKey={pathname}>
+        <SearchScreen
+          onSermonPress={onSermonPress}
+          onAddToPlaylist={openAddToPlaylist}
+          onPlaylistPress={navigateToPlaylist}
+          onFirstSermonChange={handleFirstSermonChange}
+        />
+      </BlurBackdrop>
       {modal}
       {sermonPlaybackModal}
     </SafeAreaView>

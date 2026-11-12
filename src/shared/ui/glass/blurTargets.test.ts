@@ -79,6 +79,22 @@ describe('blur target registry', () => {
     unregisterBlurTarget('/listen', target)
   })
 
+  test('restores the page target when an overlay target unregisters', () => {
+    const pageTarget = createTargetRef()
+    const overlayTarget = createTargetRef()
+
+    registerBlurTarget('/more', pageTarget)
+    registerBlurTarget('/more', overlayTarget)
+
+    expect(getBlurTarget('/more')).toBe(overlayTarget)
+
+    unregisterBlurTarget('/more', overlayTarget)
+
+    expect(getBlurTarget('/more')).toBe(pageTarget)
+
+    unregisterBlurTarget('/more', pageTarget)
+  })
+
   test('keeps the newer target when an older page unregisters late', () => {
     const staleTarget = createTargetRef()
     const freshTarget = createTargetRef()
