@@ -26,9 +26,9 @@ const CLOSE_SERMON_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
 
 /**
  * Always-mounted search overlay composed into the Tabs tabBar element (before
- * `CustomTabBar`) so gate and bar share one stacking context: screens below it,
- * bar above it (zIndex 5 vs bar 10, player 9/20). Hooks live outside the open
- * guard — the tour registers `open-listen-search` long before it shows.
+ * `CustomTabBar`, alongside the player) so gate, bar and player share one
+ * stacking context: screens < gate (5) < tucked pill (9) < bar (10) < player
+ * (20). Hooks sit outside the open guard — the tour registers its action early.
  *
  * Navigating to a detail route keeps the session ALIVE: the layer stays visible
  * while that screen slides in, then is hidden with `display: none` instead of

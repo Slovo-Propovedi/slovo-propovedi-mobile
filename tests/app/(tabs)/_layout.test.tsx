@@ -3,7 +3,7 @@ import { renderWithProviders } from 'shared/mocks'
 import Layout from '../../../app/(tabs)/_layout'
 
 // Controls whether the navigator renders the tabBar element at all, so a test
-// can prove the search gate is composed INSIDE it.
+// can prove the search gate and the player are composed INSIDE it.
 let mockIsTabBarInvoked = true
 
 // The real SearchGate pulls the player entity and the whole navigation guard
@@ -60,12 +60,13 @@ describe('(tabs) layout', () => {
     expect(getAllByText('SEARCH_GATE')).toHaveLength(1)
   })
 
-  test('mounts the search gate only inside the tabBar element', async () => {
+  test('mounts the search gate and the player only inside the tabBar element', async () => {
     mockIsTabBarInvoked = false
 
     const { queryByText } = await renderWithProviders(<Layout />)
 
     expect(queryByText('SEARCH_GATE')).toBeNull()
     expect(queryByText('TAB_BAR')).toBeNull()
+    expect(queryByText('PLAYER')).toBeNull()
   })
 })

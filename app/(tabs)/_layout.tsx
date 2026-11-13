@@ -27,12 +27,19 @@ const Layout = () => {
   return (
     <BlurTargetProvider>
       <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
+        {/* Search overlay and the player are composed INSIDE the tabBar element:
+            on web every RN View is a stacking context, so a layout-level zIndex
+            could never beat the bar nested in the navigator wrapper. Sharing the
+            element gives one context — screens (-1/0) < gate (5) < tucked pill (9)
+            < bar (10) < normal/root player (20); native flattening preserves that
+            order, so the tucked pill slides under the search field on both. */}
         <Tabs
           screenOptions={{ headerShown: false }}
           tabBar={props => (
             <>
               <SearchGate />
               <CustomTabBar {...props} hasMiniPlayer />
+              <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
             </>
           )}
         >
@@ -40,13 +47,6 @@ const Layout = () => {
           <Tabs.Screen name='read' options={{ title: 'Читать' }} />
           <Tabs.Screen name='more' options={{ title: 'Ещё' }} />
         </Tabs>
-        {/* Search overlay lives INSIDE the tabBar element, before the bar: on web
-            every RN View is a stacking context, so a layout-level zIndex 5 could
-            never beat the bar nested in the navigator wrapper. Sharing the
-            tabBar element gives screens (-1/0) < gate (5) < bar (10) in one
-            context; native flattening preserves that order. The player stays a
-            layout-level sibling so its zIndex 20 covers everything. */}
-        <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
       </View>
     </BlurTargetProvider>
   )

@@ -23,11 +23,13 @@ export const createCommonStyles = (theme: ThemeColors) =>
     // classes; inline style.pointerEvents:'box-none' would emit the invalid CSS value
     // `pointer-events: box-none`, the browser drops it, the wrapper becomes
     // pointer-events:auto and swallows every touch on the page below the player.
-    // Android draw order: the tab-bar subtree (zIndex 10 + elevation 12, shade inside)
-    // empirically paints above this subtree, dimming the pill's frost in both themes.
-    // zIndex reorders this root among the layout's children (the Tabs subtree is its
-    // sibling), putting the player chrome above the bar chrome. Elevation could not do
-    // this - Android reorders elevation only within sibling groups (opaque-red probe,
+    // Draw order: the widget is composed into the Tabs tabBar element right after
+    // the bar, so on web both share ONE stacking context (every RN View is one; a
+    // layout-level zIndex could never beat the bar nested in the navigator
+    // wrapper). zIndex 20 keeps the normal/root states above the bar (10); the
+    // tucked state (9) drops below it, so the pill slides under the search field.
+    // Native flattening draws the same order. Elevation cannot carry this order:
+    // Android reorders elevation only within sibling groups (opaque-red probe,
     // 2026-11-10).
     recoveryOverlay: {
       ...StyleSheet.absoluteFill,
