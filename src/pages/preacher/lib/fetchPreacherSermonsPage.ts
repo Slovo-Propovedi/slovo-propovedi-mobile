@@ -1,11 +1,11 @@
 import { mapAllSermonsResponse, type SermonData } from 'entities/sermon'
 import { type APITypes, sermonsApi } from 'shared/api'
 
-export const PREACHER_PAGE_SIZE = 20
+const PREACHER_PAGE_SIZE = 20
 
 const AUTO_CONTINUE_PAGE_LIMIT = 10
 
-export interface PreacherSermonsPage {
+interface PreacherSermonsPage {
   nextCursor: null | string
   sermons: SermonData[]
 }
