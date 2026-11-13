@@ -71,12 +71,16 @@ const RETRY_LABEL = 'Повторить загрузку'
 const buildSermon = (id: string) =>
   mapSermonEntityToSermonData(sermonsMocks.getSermonControllerFindOneResponseMock({ id }))
 
-const createState = (overrides: Partial<ReturnType<typeof usePreacherSermons>> = {}) => ({
+const createState = (
+  overrides: Partial<Omit<ReturnType<typeof usePreacherSermons>, 'loadMore'>> = {},
+): {
+  loadMore: jest.Mock<Promise<void>, []>
+} & Omit<ReturnType<typeof usePreacherSermons>, 'loadMore'> => ({
   hasMore: false,
   isLoading: false,
   isLoadingMore: false,
   items: [],
-  loadMore: jest.fn(),
+  loadMore: jest.fn<Promise<void>, []>(),
   loadMoreFailed: false,
   ...overrides,
 })
