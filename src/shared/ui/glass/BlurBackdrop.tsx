@@ -26,6 +26,7 @@ export const BlurBackdrop = ({
   routeKey,
 }: PropsWithChildren<{ disabled?: boolean; routeKey: string }>) => {
   const targetRef = useRef<ComponentRef<typeof View> | null>(null)
+  const hasLaidOutRef = useRef(false)
   const hasBackdropBlur = supportsAndroidBackdropBlur()
   const isActive = hasBackdropBlur && !disabled
 
@@ -34,7 +35,8 @@ export const BlurBackdrop = ({
 
     // Re-register after the route becomes visible again: a `display: none`
     // parent does not relayout, so `onLayout` alone would never fire twice.
-    if (targetRef.current) registerBlurTarget(routeKey, targetRef)
+    // The first registration still waits for layout (the target must be measured).
+    if (hasLaidOutRef.current && targetRef.current) registerBlurTarget(routeKey, targetRef)
 
     return () => unregisterBlurTarget(routeKey, targetRef)
   }, [isActive, routeKey])
@@ -46,7 +48,10 @@ export const BlurBackdrop = ({
       ref={targetRef}
       style={styles.target}
       onLayout={() => {
-        if (isActive) registerBlurTarget(routeKey, targetRef)
+        if (!isActive) return
+
+        hasLaidOutRef.current = true
+        registerBlurTarget(routeKey, targetRef)
       }}
     >
       {children}
