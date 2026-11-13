@@ -51,25 +51,20 @@ describe('onboarding scenario data', () => {
     expect(Object.keys(whatsNewScenarioData)).toEqual(['whatsNewScenario'])
   })
 
-  test('whats-new announces the redesigned search in two plain cards', () => {
+  test('whats-new announces the preacher drill-down in one plain card', () => {
     const whatsNew = scenariosById.whatsNew
 
-    expect(whatsNew.steps).toHaveLength(2)
-    const [newSearch, groupedResults] = whatsNew.steps
+    expect(whatsNew.steps).toHaveLength(1)
+    const [preacherPage] = whatsNew.steps
 
     // Pure announcement cards: no route/target, so the tour starts on the first card
     // on any screen and never navigates.
-    expect(newSearch.targetId).toBeUndefined()
-    expect(newSearch.route).toBeUndefined()
-    expect(newSearch.tapTargetId).toBeUndefined()
-    expect(newSearch.title).toBe('Новый поиск')
-    expect(newSearch.text).toContain('отдельной страницей')
-    expect(newSearch.text).toContain('«Очистить»')
-    expect(groupedResults.targetId).toBeUndefined()
-    expect(groupedResults.route).toBeUndefined()
-    expect(groupedResults.title).toBe('Результаты по вкладкам')
-    expect(groupedResults.text).toContain('«Проповедники»')
-    expect(groupedResults.text).toContain('бесконечной прокруткой')
+    expect(preacherPage.targetId).toBeUndefined()
+    expect(preacherPage.route).toBeUndefined()
+    expect(preacherPage.tapTargetId).toBeUndefined()
+    expect(preacherPage.title).toBe('Проповеди проповедника')
+    expect(preacherPage.text).toContain('проповеднику')
+    expect(preacherPage.text).toContain('постраничная')
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {
@@ -112,12 +107,12 @@ describe('onboarding scenario data', () => {
     expect(deck.filter(entry => entry.entryStepIndexes.length > 0)).toHaveLength(2)
   })
 
-  test('whatsNew is two plain cards with no transitions between them', () => {
+  test('whatsNew is one plain card with no transitions', () => {
     const whatsNew = scenariosById.whatsNew
     const whatsNewDeck = buildTourDeck(whatsNew.steps)
 
-    expect(whatsNewDeck).toHaveLength(2)
-    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1])
+    expect(whatsNewDeck).toHaveLength(1)
+    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0])
     expect(whatsNewDeck.every(entry => entry.entryStepIndexes.length === 0)).toBe(true)
     expect(whatsNewDeck.every(entry => entry.exitStepIndexes.length === 0)).toBe(true)
   })

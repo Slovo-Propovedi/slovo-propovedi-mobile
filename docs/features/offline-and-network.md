@@ -88,6 +88,8 @@ isInternetReachable ?? isConnected
 
 `useOfflineRetry` для поиска **не** используется (нет UI-индикатора источника данных — см. `docs/debt.md`).
 
+**Экран проповедника** (`usePreacherSermons`, `src/pages/preacher/lib/`) ходит в тот же `sermonControllerFindAll({ search: artist, take: 20, cursor? })`, но per-query кэш поиска **не** использует: первая страница при сетевой ошибке показывает пустое состояние («Проповедей пока нет»), дозагрузка — футер «Повторить загрузку»; офлайн-фолбэка у этого drill-down нет. Кэшировать `search=<artist>` намеренно не стали: выдача нужна только внутри экрана, а ключ совпал бы с обычным поисковым запросом и вытеснял бы его из лимита 30 записей.
+
 ## Кэш поиска плейлистов
 
 `src/features/sermon-search/lib/playlistSearchCache.ts` — `getCachedPlaylistSearch` / `setCachedPlaylistSearch`, ключи `cachedPlaylistSearch:q:<query>` + индекс `cachedPlaylistSearch:index` (`src/shared/config/cache-storage-keys.ts`). Использует тот же параметризованный `createQueryCache` (`src/shared/lib/cache/createQueryCache.ts`), что и кэш проповедей: нормализация ключа (`trim` + `toLowerCase`), пустые результаты не кэшируются, индекс до 30 последних ключей с само-лечением повреждённого индекса, сериализованная очередь записей. Zod-валидация при чтении через `playlistsArraySchema` (`playlistDataSchema[]`). При создании кэша однократно выполняется проактивная чистка ключей префикса, отсутствующих в валидном индексе (в т.ч. legacy-ключей прошлой схемы без `:q:`). `useOfflineRetry` не используется (ветка живёт в той же сессии, что и поиск проповедей).

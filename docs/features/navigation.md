@@ -70,9 +70,10 @@
 - `my-playlists` — шапка **динамическая**: в обычном режиме прозрачная (`headerTransparent: true`, `title: ''`, большой заголовок «Мои плейлисты» рисует сам список) с `headerRight` (карандаш «Изменить порядок»); в режиме редактирования снова непрозрачная (`headerStyle.backgroundColor = currentTheme.background`), заголовок «Мои плейлисты» и `headerRight` (галочка «Сохранить»). Опции собирает `useMyPlaylistsHeader` (см. [../screens/my-playlists.md](../screens/my-playlists.md));
 - `playlist-list` — прозрачная шапка (`headerTransparent: true`, `title: ''`);
 - `playlist` — прозрачная шапка;
+- `preacher` — нативная шапка, заголовок задаётся именем проповедника из параметров (`useHeaderTitle`); вход — тап по проповеднику в выдаче поиска;
 - `playlist-edit` — нативная шапка с заголовком «Редактировать плейлист» (экран редактирования локального плейлиста, см. [../screens/playlist-edit.md](../screens/playlist-edit.md)).
 
-Экраны реэкспортируются из `src/pages/` (`app/(tabs)/listen/index.tsx` → `ListenScreen`, `my-playlists.tsx` → `MyPlaylistsScreen`, `playlist.tsx` → `PlaylistScreen`, `playlist-edit.tsx` → `PlaylistEditScreen`, `playlist-list.tsx` → `PlaylistListScreen`).
+Экраны реэкспортируются из `src/pages/` (`app/(tabs)/listen/index.tsx` → `ListenScreen`, `my-playlists.tsx` → `MyPlaylistsScreen`, `playlist.tsx` → `PlaylistScreen`, `playlist-edit.tsx` → `PlaylistEditScreen`, `playlist-list.tsx` → `PlaylistListScreen`, `preacher.tsx` → `PreacherScreen`).
 
 ## Передача параметров
 
@@ -81,11 +82,13 @@
 - `/listen/playlist?playlist=<UUID>` — `navigateToPlaylist` передаёт только `playlist.id`, полный `PlaylistData` экран достаёт через `usePlaylistById` (секции → кэш → API, см. [../screens/playlist.md](../screens/playlist.md));
 - `/listen/playlist-edit?playlist=<UUID>` — карандаш в шапке экрана плейлиста (`PlaylistHeaderActions`) передаёт `playlist.id`; экран редактирования берёт плейлист из `myPlaylistsAtom` (см. [../screens/playlist-edit.md](../screens/playlist-edit.md));
 - `/listen/playlist-list?sectionId=<строка>` — `navigateToPlaylistList` (параметр `title` в URL не передаётся, заголовок берётся из резолвнутого раздела);
+- `/listen/preacher?artist=<имя>` — `useSearchNavigation` (`src/pages/search/lib/useSearchNavigation.ts`) передаёт только имя проповедника; экран парсит его (trim, непустое, ≤ 200 символов) и сам грузит проповеди (см. [../screens/preacher.md](../screens/preacher.md));
 - `/listen/my-playlists` — `navigateToMyPlaylists` (без параметров) — экран редактирования порядка локальных плейлистов.
 
 Хелперы навигации:
 
 - `useListenNavigation.ts` (`src/pages/listen/lib/`) — `navigateToPlaylist`, `navigateToPlaylistList`, `navigateToMyPlaylists`;
+- `useSearchNavigation.ts` (`src/pages/search/lib/`) — `navigateToPlaylist`, `navigateToPreacher` (закрывают сессию поиска перед пушем);
 - `useReadNavigation.ts` (`src/pages/read/lib/`) — `navigateToBookReader` (`/read/book-reader`), `navigateToBooksList` (`/read/books-list`);
 - `src/shared/routing/` — `useColdStartLinkRecovery.ts` (Android-only safety net холодного старта, см. «Android App Links» ниже), `launchPath.ts` (pure-хелперы разбора launch URL: `extractLaunchPath`, `shouldAttemptRecovery`), `rootStackScreens.ts` (`SUB_SCREENS` корневого стека), `useHeaderTitle.ts`.
 
@@ -118,6 +121,7 @@
 | `/listen`                               | `ListenScreen`       | `pages/listen`              |
 | `/listen/playlist`                      | `PlaylistScreen`     | `pages/playlist`            |
 | `/listen/playlist-list`                 | `PlaylistListScreen` | `pages/playlist-list`       |
+| `/listen/preacher`                      | `PreacherScreen`     | `pages/preacher`            |
 | `/listen/my-playlists`                  | `MyPlaylistsScreen`  | `pages/my-playlists`        |
 | `/settings`                             | `SettingsScreen`     | `pages/settings`            |
 | `/about`                                | `AboutScreen`        | `pages/about`               |
