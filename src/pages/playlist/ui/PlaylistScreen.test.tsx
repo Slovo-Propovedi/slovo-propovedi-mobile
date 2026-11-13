@@ -30,6 +30,7 @@ const mockTogglePlaylistSermon = jest.fn()
 const mockUseIsLocalPlaylist = jest.fn()
 const mockOpenAddAllToPlaylist = jest.fn()
 const mockOpenAddToPlaylist = jest.fn()
+const mockUseScreenTransitionTracking = jest.fn()
 
 // The tour drives the row menu through the screen's registrations; the modal
 // itself is irrelevant here, so keep it unmounted and spy on the open handler.
@@ -57,6 +58,11 @@ jest.mock('expo-router', () => ({
 
 jest.mock('expo-router/react-navigation', () => ({
   useHeaderHeight: () => 100,
+}))
+
+jest.mock('shared/routing', () => ({
+  ...jest.requireActual('shared/routing'),
+  useScreenTransitionTracking: () => mockUseScreenTransitionTracking(),
 }))
 
 jest.mock('entities/section', () => {
@@ -357,6 +363,7 @@ describe('<PlaylistScreen>', () => {
     expect(getByText(PLAYLIST_TITLE)).toBeTruthy()
     expect(getByText(SERMON_1.title)).toBeTruthy()
     expect(getByText(SERMON_2.title)).toBeTruthy()
+    expect(mockUseScreenTransitionTracking).toHaveBeenCalledTimes(1)
   })
 
   test('shows the not-found state when the playlist param is missing', async () => {

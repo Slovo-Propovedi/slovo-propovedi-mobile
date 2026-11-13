@@ -13,9 +13,11 @@ import {
   useSermonPlayback,
 } from 'features/sermon-search'
 import { type SermonData } from 'entities/sermon'
+import { isScreenTransitioningAtom } from 'shared/model'
 import { BlurBackdrop } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { useSearchNavigation } from '../lib/useSearchNavigation'
+import { useSearchOverlayConceal } from '../lib/useSearchOverlayConceal'
 import { useSearchTourActions } from '../lib/useSearchTourActions'
 import { SearchScreen } from './SearchScreen'
 import { wrapSearchPicker } from './searchTargets'
@@ -28,18 +30,23 @@ const CLOSE_SERMON_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
  * floating above the search page on every screen. Hooks live outside the open
  * guard: the tour registers `open-listen-search` long before the overlay shows.
  *
- * Navigating to a detail route keeps the session ALIVE: the layer is hidden with
- * `display: none` instead of unmounting, so the query, active group and loaded
- * pages survive and come back untouched when the detail route pops. Closing the
- * session (bar gesture / hardware back on a tab root) still unmounts it, which
- * is what resets the page state.
+ * Navigating to a detail route keeps the session ALIVE: the layer stays visible
+ * while that screen slides in, then is hidden with `display: none` instead of
+ * unmounting, so the query, active group and loaded pages survive and come back
+ * untouched when the detail route pops. Closing the session (bar gesture /
+ * hardware back on a tab root) still unmounts it, which is what resets the page
+ * state.
  */
 export const SearchGate = () => {
   const insets = useSafeAreaInsets()
   const pathname = usePathname()
   const { currentTheme } = useTheme()
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
-  const isHidden = isDetailRouteOverSearch(pathname)
+  const [isTransitioning] = useAtom(isScreenTransitioningAtom)
+  // Covered = a detail route owns the screen; conceal waits for its push
+  // transition to finish so the overlay does not vanish before the page slides in.
+  const isCovered = isSearchOpen && isDetailRouteOverSearch(pathname)
+  const isConcealed = useSearchOverlayConceal(isCovered, isTransitioning)
   const setOverlayHidden = useAction(setSearchOverlayHidden)
   const openSearch = useOpenSearch()
   const { navigateToPlaylist, navigateToPreacher } = useSearchNavigation()
@@ -66,20 +73,20 @@ export const SearchGate = () => {
   // The field pill, bar suspension and chrome shade read this flag. The action
   // no-ops on an unchanged value, so the effect cannot loop.
   useEffect(() => {
-    setOverlayHidden(isHidden)
-  }, [isHidden, setOverlayHidden])
+    setOverlayHidden(isConcealed)
+  }, [isConcealed, setOverlayHidden])
 
   if (!isSearchOpen) return null
 
   return (
-    <SafeAreaView edges={['left', 'right']} style={[styles.layer, isHidden && styles.hidden]}>
+    <SafeAreaView edges={['left', 'right']} style={[styles.layer, isConcealed && styles.hidden]}>
       {/* Surfaces floating over the page (the mini pill) resolve this target
           via the route stack; the tab-bar chrome keeps sampling its own shade.
           The themed background must live INSIDE the target, otherwise the
           pill's blur samples the window background (bright gray in dark).
-          While covered, the gate stops publishing so the detail page's own
+          While concealed, the gate stops publishing so the detail page's own
           target wins; the subtree stays mounted. */}
-      <BlurBackdrop routeKey={pathname} disabled={isHidden}>
+      <BlurBackdrop routeKey={pathname} disabled={isConcealed}>
         <View
           style={[
             styles.page,

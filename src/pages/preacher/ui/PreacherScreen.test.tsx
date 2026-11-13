@@ -7,6 +7,7 @@ import { PreacherScreen } from './PreacherScreen'
 
 const mockUsePreacherSermons = usePreacherSermons as jest.MockedFunction<typeof usePreacherSermons>
 const mockSetHeaderTitle = jest.fn()
+const mockUseScreenTransitionTracking = jest.fn()
 const mockParams: { artist?: string } = {}
 
 jest.mock('expo-router', () => ({
@@ -15,6 +16,11 @@ jest.mock('expo-router', () => ({
 
 jest.mock('shared/routing/useHeaderTitle', () => ({
   useHeaderTitle: () => mockSetHeaderTitle,
+}))
+
+jest.mock('shared/routing', () => ({
+  ...jest.requireActual('shared/routing'),
+  useScreenTransitionTracking: () => mockUseScreenTransitionTracking(),
 }))
 
 jest.mock('../lib/usePreacherSermons', () => ({
@@ -98,6 +104,7 @@ describe('<PreacherScreen>', () => {
     expect(screen.getByText(items[1].title)).toBeTruthy()
     expect(mockUsePreacherSermons).toHaveBeenCalledWith(ARTIST)
     expect(mockSetHeaderTitle).toHaveBeenCalledWith(ARTIST)
+    expect(mockUseScreenTransitionTracking).toHaveBeenCalledTimes(1)
   })
 
   test('loads the next page when the list end is reached', async () => {

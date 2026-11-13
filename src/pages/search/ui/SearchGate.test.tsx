@@ -7,6 +7,7 @@ import { useTourActionRegistrar } from 'features/onboarding'
 import { isSearchOpenAtom, useOpenSearch, useSermonPlayback } from 'features/sermon-search'
 import { type PlaylistData } from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks'
+import { isScreenTransitioningAtom } from 'shared/model'
 import { DarkTheme, LightTheme } from 'shared/ui/theme'
 import { useSearchTourActions } from '../lib/useSearchTourActions'
 import { SearchGate } from './SearchGate'
@@ -216,34 +217,77 @@ describe('<SearchGate>', () => {
   })
 
   test.each(['/listen/preacher', '/listen/playlist'])(
-    'keeps the search page mounted but hides the overlay under %s',
+    'keeps the overlay visible until the detail transition ends under %s',
     async pathname => {
       mockPathname = pathname
+      const { ctx } = await renderGate(true)
 
-      await renderGate(true)
+      await act(async () => {
+        isScreenTransitioningAtom(ctx, true)
+      })
 
-      // The layer is display:none, so the query must opt into hidden elements:
-      // the page itself is still mounted (that is the whole point).
+      // While the covered screen is still sliding in, the overlay stays fully
+      // visible (blur target published, no display:none) and the atom says so.
+      expect(getLayerStyle()?.display).not.toBe('none')
+      expect(screen.getByText(`BLUR_TARGET:${pathname}`)).toBeTruthy()
+      expect(mockOverlayHidden.mock.calls.flat()).toContain(false)
+
+      await act(async () => {
+        isScreenTransitioningAtom(ctx, false)
+      })
+
+      // The query must opt into hidden elements: the page itself stays mounted.
       expect(screen.getByText(SEARCH_SCREEN, { includeHiddenElements: true })).toBeTruthy()
       expect(getLayerStyle()).toMatchObject({ display: 'none' })
+      expect(screen.queryByText(`BLUR_TARGET:${pathname}`)).toBeNull()
+      expect(mockOverlayHidden.mock.calls.flat()).toContain(true)
     },
   )
 
-  test('does not publish the detail page blur target while the overlay is hidden', async () => {
+  test('conceals at the fallback cap when transitionEnd never arrives', async () => {
     mockPathname = '/listen/preacher'
+    const { ctx } = await renderGate(true)
+    jest.useFakeTimers()
 
-    await renderGate(true)
+    try {
+      await act(async () => {
+        isScreenTransitioningAtom(ctx, true)
+      })
+      expect(getLayerStyle()?.display).not.toBe('none')
 
-    expect(screen.getByText(SEARCH_SCREEN, { includeHiddenElements: true })).toBeTruthy()
-    expect(screen.queryByText('BLUR_TARGET:/listen/preacher')).toBeNull()
+      await act(async () => {
+        jest.advanceTimersByTime(600)
+      })
+
+      expect(getLayerStyle()).toMatchObject({ display: 'none' })
+      expect(screen.getByText(SEARCH_SCREEN, { includeHiddenElements: true })).toBeTruthy()
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
-  test('syncs the overlay visibility with the current route', async () => {
+  test('shows the overlay immediately when the route returns to a tab root', async () => {
     mockPathname = '/listen/preacher'
+    const { ctx, rerender } = await renderGate(true)
 
-    await renderGate(true)
+    await act(async () => {
+      isScreenTransitioningAtom(ctx, true)
+    })
+    await act(async () => {
+      isScreenTransitioningAtom(ctx, false)
+    })
+    expect(getLayerStyle()).toMatchObject({ display: 'none' })
 
-    expect(mockOverlayHidden).toHaveBeenCalled()
+    await act(async () => {
+      mockPathname = '/listen'
+      rerender(<SearchGate />)
+    })
+
+    // Back is not gated on the transition (or any effect): the same render shows
+    // the overlay again with its blur target.
+    expect(getLayerStyle()?.display).not.toBe('none')
+    expect(screen.getByText('BLUR_TARGET:/listen')).toBeTruthy()
+    expect(mockOverlayHidden.mock.calls.flat()).toContain(false)
   })
 
   test('hosts the playback picker and add-to-playlist modals', async () => {
@@ -277,6 +321,7 @@ describe('<SearchGate>', () => {
       pathname: '/listen/playlist',
     })
     expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    expect(ctx.get(isScreenTransitioningAtom)).toBe(true)
     expect(queryByText(SEARCH_SCREEN)).toBeTruthy()
   })
 
@@ -293,6 +338,7 @@ describe('<SearchGate>', () => {
       pathname: '/listen/preacher',
     })
     expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    expect(ctx.get(isScreenTransitioningAtom)).toBe(true)
     expect(queryByText(SEARCH_SCREEN)).toBeTruthy()
   })
 

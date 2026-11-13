@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from 'expo-router'
 import { useEffect } from 'react'
 import { StyleSheet, View } from 'react-native'
+import { useScreenTransitionTracking } from 'shared/routing'
 import { useHeaderTitle } from 'shared/routing/useHeaderTitle'
 import { BLUR_TARGET_ROUTES, BlurBackdrop, EmptyState } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
@@ -25,6 +26,7 @@ export const PreacherScreen = () => {
   const { artist: artistParam } = useLocalSearchParams<{ artist?: string }>()
   const artist = parseArtist(artistParam)
   const setHeaderTitle = useHeaderTitle()
+  useScreenTransitionTracking()
   const { currentTheme } = useTheme()
   const { hasMore, isLoading, isLoadingMore, items, loadMore, loadMoreFailed } = usePreacherSermons(
     artist ?? '',

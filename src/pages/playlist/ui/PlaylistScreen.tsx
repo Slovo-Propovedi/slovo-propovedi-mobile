@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { useHistoryProgressMap, useHistorySermonIds } from 'entities/listening-history'
 import { FAVORITES_PLAYLIST } from 'entities/playlist'
 import { createTracksListStyles } from 'entities/track-list'
+import { useScreenTransitionTracking } from 'shared/routing'
 import { BLUR_TARGET_ROUTES, BlurBackdrop } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { useCollapsingHeader } from '../lib/useCollapsingHeader'
@@ -24,6 +25,7 @@ import { buildTracksListData, usePlaylistNavigationOptions } from './usePlaylist
 const EMPTY_PLAYLIST = { artwork: null, description: '', id: 'default', sermons: [], title: '' }
 
 export const PlaylistScreen = () => {
+  useScreenTransitionTracking()
   const { currentTheme } = useTheme()
   const {
     isImportingCustomPlaylist,
