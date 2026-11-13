@@ -84,11 +84,21 @@ describe('<SearchIslandCloseSlot>', () => {
 
     expect(findSlotGate(findCloseButton(getByLabelText)).props.pointerEvents).toBe('auto')
 
+    // Hide again so the gate rests on the grace alone, not on `isVisible`.
+    await rerender(<SearchIslandCloseSlot {...props} isVisible={false} />)
+    await act(async () => {
+      jest.advanceTimersByTime(WITHIN_GRACE_MS)
+    })
+
+    // 100 ms into the second grace, yet past the first timer's full window: a
+    // grace timer that survived the re-show would have flipped the gate here.
+    expect(findSlotGate(findCloseButton(getByLabelText)).props.pointerEvents).toBe('auto')
+
     await act(async () => {
       jest.advanceTimersByTime(AFTER_GRACE_MS)
     })
 
-    expect(findSlotGate(findCloseButton(getByLabelText)).props.pointerEvents).toBe('auto')
+    expect(findSlotGate(findCloseButton(getByLabelText)).props.pointerEvents).toBe('none')
   })
 
   test('clears the pending grace on unmount', async () => {
