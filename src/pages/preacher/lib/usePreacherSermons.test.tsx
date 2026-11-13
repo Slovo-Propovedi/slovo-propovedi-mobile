@@ -17,6 +17,7 @@ jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 jest.setTimeout(30_000)
 
 const ARTIST = 'Иван Иванов'
+const OTHER_ARTIST = 'Пётр Петров'
 const PAGE_SIZE = 20
 const AUTO_CONTINUE_PAGE_LIMIT = 10
 
@@ -155,5 +156,32 @@ describe('usePreacherSermons', () => {
 
     expect(result.current.loadMoreFailed).toBe(false)
     expect(result.current.items.map(sermon => sermon.id)).toEqual(['first', 'second'])
+  })
+
+  test('drops the late response of the previous artist after an artist change', async () => {
+    const firstArtistPage = deferred<APITypes.AllSermonsResponse>()
+    const secondArtistSermon = buildSermon('second-artist', OTHER_ARTIST)
+    mockFindAll.mockImplementation(({ search }: { search: string }) => {
+      if (search === ARTIST) return firstArtistPage.promise
+
+      return Promise.resolve(buildPage([secondArtistSermon], null))
+    })
+
+    const { rerender, result } = await renderHookWithProviders(
+      ({ artist }: { artist: string }) => usePreacherSermons(artist),
+      { initialProps: { artist: ARTIST } },
+    )
+
+    await rerender({ artist: OTHER_ARTIST })
+    await waitFor(() =>
+      expect(result.current.items.map(sermon => sermon.id)).toEqual(['second-artist']),
+    )
+
+    await act(async () => {
+      firstArtistPage.resolve(buildPage([buildSermon('first-artist', ARTIST)], null))
+    })
+
+    expect(result.current.items.map(sermon => sermon.id)).toEqual(['second-artist'])
+    expect(result.current.hasMore).toBe(false)
   })
 })
