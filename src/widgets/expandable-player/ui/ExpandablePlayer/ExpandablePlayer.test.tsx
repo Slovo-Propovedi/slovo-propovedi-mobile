@@ -1,6 +1,8 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet, type ViewStyle } from 'react-native'
+import { withTiming } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
+import { searchFocusMorphDriver } from 'widgets/search-island/@x/morphDrivers'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/model'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
@@ -125,6 +127,27 @@ const PLAY_PAUSE_LABEL = 'play-pause'
 const MINI_TUCK_DISTANCE = 76
 const PLAYER_UNDER_BAR_Z = 9
 const PLAYER_OVER_BAR_Z = 20
+// Slide (300 ms) plus the delayed fade (180 ms): the hidden pill leaves the tree
+// only after the whole tuck has landed.
+const TUCK_TEARDOWN_MS = 480
+
+const mockedWithTiming = withTiming as jest.Mock
+const defaultWithTimingImpl = mockedWithTiming.getMockImplementation()
+
+// Defers the morph completions so the mid-flight window is observable. The
+// shared reanimated mock otherwise settles every timing synchronously.
+const captureTimingCompletions = () => {
+  const completions: Array<(finished: boolean) => void> = []
+  mockedWithTiming.mockImplementation(
+    (toValue: number, _config: unknown, callback?: (finished: boolean) => void) => {
+      if (typeof callback === 'function') completions.push(callback)
+
+      return toValue
+    },
+  )
+
+  return completions
+}
 
 const tuckTransform = () => StyleSheet.flatten(mockMiniPlayerProps.at(-1)?.tuckStyle)?.transform
 
@@ -139,9 +162,6 @@ const findPointerGate = (node: null | TestInstance): null | TestInstance => {
 
   return null
 }
-
-const layerOpacity = (node: null | TestInstance) =>
-  StyleSheet.flatten(findPointerGate(node)?.props.style)?.opacity
 
 const findPlayerRoot = () =>
   screen.root?.queryAll(instance => {
@@ -167,10 +187,17 @@ describe('<ExpandablePlayer>', () => {
     jest.clearAllMocks()
     mockTogglePlay.mockResolvedValue(undefined)
     mockMiniPlayerProps.length = 0
+    searchFocusMorphDriver.reset()
+    miniPillOpacitySv.value = 1
     currentAudioAtom(ctx, mockAudio)
     isPlayerExpandedAtom(ctx, false)
     isTabBarMeasuredAtom(ctx, true)
     isSearchFieldFocusedAtom(ctx, false)
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+    mockedWithTiming.mockImplementation(defaultWithTimingImpl)
   })
 
   test('mini-player play/pause press delegates to useGuardedTogglePlay', async () => {
@@ -207,40 +234,84 @@ describe('<ExpandablePlayer>', () => {
     expect(ctx.get(isMiniPillCollapsedAtom)).toBe(false)
   })
 
-  test('tucks the mini player under the search row and fades it out while focused', async () => {
+  test('keeps the tucked pill through the slide, then drops it from the tree', async () => {
     isBarCollapsedAtom(ctx, false)
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, '')
-    isSearchFieldFocusedAtom(ctx, true)
     tabBarHeightAtom(ctx, 98)
     const { queryByLabelText } = await renderWithProviders(<ExpandablePlayer />, { ctx })
+    jest.useFakeTimers()
+
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, true)
+    })
 
     const button = queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })
 
-    // The pill stays mounted and slides under the row: no invisible hit area,
-    // and its subtree sits below the tab bar's floating container (zIndex 10).
+    // The tuck flight keeps the pill mounted: it slides under the row, takes no
+    // touches, and its subtree sits below the tab bar's floating container.
     expect(button).toBeTruthy()
     expect(findPointerGate(button)?.props.pointerEvents).toBe('none')
     // The glass above is translucent: at rest the pill must be fully invisible,
-    // not merely slid underneath it.
-    expect(layerOpacity(button)).toBe(0)
+    // not merely slid underneath it (the style samples the shared value at
+    // render time, so assert the fade driver itself).
+    expect(miniPillOpacitySv.value).toBe(0)
     expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(true)
     expect(tuckTransform()).toEqual([{ translateY: MINI_TUCK_DISTANCE }])
     expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_UNDER_BAR_Z)
 
     await act(async () => {
+      jest.advanceTimersByTime(TUCK_TEARDOWN_MS)
+    })
+
+    // The ✕ that closes search is centred exactly on the pill's play/pause
+    // button, so a hidden pill left in the tree catches the resolving click.
+    // Once the slide and the delayed fade have landed it must not exist at all.
+    expect(queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })).toBeNull()
+  })
+
+  test('brings the pill back on blur but keeps it pointer-inert until the morph lands', async () => {
+    isBarCollapsedAtom(ctx, false)
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, '')
+    tabBarHeightAtom(ctx, 98)
+    const { queryByLabelText } = await renderWithProviders(<ExpandablePlayer />, { ctx })
+    jest.useFakeTimers()
+
+    await act(async () => {
+      isSearchFieldFocusedAtom(ctx, true)
+    })
+    await act(async () => {
+      jest.advanceTimersByTime(TUCK_TEARDOWN_MS)
+    })
+    expect(queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })).toBeNull()
+
+    const completions = captureTimingCompletions()
+
+    await act(async () => {
       isSearchFieldFocusedAtom(ctx, false)
     })
 
-    expect(
-      findPointerGate(queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true }))?.props
-        .pointerEvents,
-    ).toBe('box-none')
+    // The returning pill exists for the rise animation, but it must not catch
+    // the click that closed search: the morph's settled flag still holds the
+    // old landed (hidden) value until the un-tuck completes.
+    const returning = queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })
+
+    expect(returning).toBeTruthy()
+    expect(findPointerGate(returning)?.props.pointerEvents).toBe('none')
+    expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)
+
+    await act(async () => {
+      completions.forEach(complete => complete(true))
+    })
+
+    const landed = queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })
+
+    expect(findPointerGate(landed)?.props.pointerEvents).toBe('box-none')
     // Same render-time sampling caveat as below: assert the shared fade driver.
     expect(miniPillOpacitySv.value).toBe(1)
     expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(false)
     expect(tuckTransform()).toEqual([{ translateY: 0 }])
-    expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)
   })
 
   test('keeps the mini player in place while the field is blurred', async () => {

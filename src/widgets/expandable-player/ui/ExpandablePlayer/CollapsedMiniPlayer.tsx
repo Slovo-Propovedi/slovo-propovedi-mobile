@@ -12,6 +12,7 @@ import { useKeyboardLiftStyle } from 'shared/ui/layout'
 import { type ThemeColors } from 'shared/ui/theme'
 import { MINI_PILL_TUCK_DISTANCE } from '../../lib/getMiniPlayerGeometry'
 import { useMiniPillFade } from '../../model/useMiniPillFade'
+import { useMiniPlayerMount } from '../../model/useMiniPlayerMount'
 import { miniLayerStyle } from './commonStyles'
 import { MiniPlayer } from './MiniPlayer'
 import { createMiniStyles } from './miniStyles'
@@ -68,17 +69,28 @@ export const CollapsedMiniPlayer = ({
   const keyboardLiftStyle = useKeyboardLiftStyle()
   const [isHidden] = useAtom(isSearchFieldFocusedAtom)
   // Same shared value the search frame and the shade's pill cutout read.
-  const { progress: focusProgress } = useAtomMorphDriver(searchFocusMorphDriver)
-  const pillOpacity = useMiniPillFade(isHidden)
+  const { progress: focusProgress, settled: focusSettled } =
+    useAtomMorphDriver(searchFocusMorphDriver)
+  const pillOpacity = useMiniPillFade(isHidden, focusProgress)
+  const isMounted = useMiniPlayerMount(isHidden)
   const tuckStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: MINI_PILL_TUCK_DISTANCE * focusProgress.value }],
   }))
   const fadeStyle = useAnimatedStyle(() => ({ opacity: pillOpacity.value }))
 
+  // `settled` holds the last LANDED driver value, so it stays `true` through
+  // the un-tuck flight: the pill reappears for the rise but cannot catch the ✕
+  // click that closed search. It flips back only when the morph lands.
+  const acceptsPointer = !isHidden && !focusSettled
+
+  // Once the tuck lands the pill leaves the tree entirely: the ✕ closing search
+  // is centred exactly on the hidden play/pause button.
+  if (!isMounted) return null
+
   return (
     <Animated.View
       accessibilityElementsHidden={isHidden}
-      pointerEvents={isHidden ? 'none' : 'box-none'}
+      pointerEvents={acceptsPointer ? 'box-none' : 'none'}
       style={[miniLayerStyle, keyboardLiftStyle, fadeStyle]}
       importantForAccessibility={isHidden ? 'no-hide-descendants' : 'yes'}
     >
