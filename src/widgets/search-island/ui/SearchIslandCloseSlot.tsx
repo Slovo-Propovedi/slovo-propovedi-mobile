@@ -1,9 +1,16 @@
+import { useEffect, useRef, useState } from 'react'
 import { type ViewStyle } from 'react-native'
 import { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import { GlassIsland } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { SearchIslandCloseButton } from './SearchIslandCloseButton'
+
+// Web commits `closeSearch` on press-in, while the finger is still down. The
+// browser then hit-tests the resolving click, so the slot must stay
+// pointer-capable until that click lands — otherwise it re-targets onto the
+// results row below and opens a playlist. The re-fired close is idempotent.
+const PRESS_RESOLUTION_GRACE_MS = 150
 
 interface SearchIslandCloseSlotProps {
   closeProgress: SharedValue<number>
@@ -45,6 +52,32 @@ export const SearchIslandCloseSlot = ({
   tabBarHeight,
 }: SearchIslandCloseSlotProps) => {
   const { isLight } = useTheme()
+  const [isPointerGraceActive, setIsPointerGraceActive] = useState(false)
+  const hasBeenVisibleRef = useRef(isVisible)
+  const graceTimerRef = useRef<null | ReturnType<typeof setTimeout>>(null)
+
+  useEffect(() => {
+    if (isVisible) {
+      hasBeenVisibleRef.current = true
+      // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks-extra/no-direct-set-state-in-use-effect -- the pointer gate follows the visibility flip, not a render derivation
+      setIsPointerGraceActive(false)
+      return
+    }
+    // A slot that mounts hidden stays inert: the grace follows a real flip.
+    if (!hasBeenVisibleRef.current) return
+    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- the pointer gate follows the visibility flip, not a render derivation
+    setIsPointerGraceActive(true)
+    graceTimerRef.current = setTimeout(() => {
+      graceTimerRef.current = null
+      setIsPointerGraceActive(false)
+    }, PRESS_RESOLUTION_GRACE_MS)
+    return () => {
+      if (graceTimerRef.current) {
+        clearTimeout(graceTimerRef.current)
+        graceTimerRef.current = null
+      }
+    }
+  }, [isVisible])
 
   const style = useAnimatedStyle(() => {
     const { bottom, closeRight, height } = getSearchIslandGeometry({
@@ -71,7 +104,7 @@ export const SearchIslandCloseSlot = ({
       hostStyle={styles.closeCircle}
       animatedStyle={[style, restingStyle]}
       accessibilityElementsHidden={!isVisible}
-      pointerEvents={isVisible ? 'auto' : 'none'}
+      pointerEvents={isVisible || isPointerGraceActive ? 'auto' : 'none'}
       importantForAccessibility={isVisible ? 'yes' : 'no-hide-descendants'}
     >
       <SearchIslandCloseButton onPress={onPress} />
