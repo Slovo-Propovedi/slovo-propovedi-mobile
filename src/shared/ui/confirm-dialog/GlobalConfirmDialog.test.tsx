@@ -3,6 +3,7 @@ import { Platform } from 'react-native'
 import { createKeyDownEvent, installFakeDom } from '../../lib/testing'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { globalInfoAtom } from '../../model/info-dialog'
+import { DarkTheme } from '../theme/constants'
 import { GlobalConfirmDialog } from './GlobalConfirmDialog'
 
 const DEFAULT_TITLE = 'Информация'
@@ -28,6 +29,18 @@ describe('<GlobalConfirmDialog>', () => {
     expect(screen.getByText(MESSAGE)).toBeTruthy()
     expect(screen.getByText(DEFAULT_TITLE)).toBeTruthy()
     expect(screen.getByText(CONFIRM_TEXT)).toBeTruthy()
+  })
+
+  test('shows the confirm label in the themed onPrimary color', async () => {
+    const { ctx } = await renderWithProviders(<GlobalConfirmDialog />)
+
+    await act(async () => {
+      globalInfoAtom(ctx, { message: MESSAGE, title: CUSTOM_TITLE })
+    })
+
+    // The accent button label follows the theme token, not a hardcoded white:
+    // the dark theme's onPrimary is black.
+    expect(screen.getByText(CONFIRM_TEXT)).toHaveStyle({ color: DarkTheme.onPrimary })
   })
 
   test('pressing confirm dismisses the dialog', async () => {
