@@ -29,6 +29,8 @@ interface ShadeMorphFrame {
   islandProgress: number
   /** Search open, 0..1. */
   openProgress: number
+  /** Opacity of the tucked mini pill, 0..1; the pill cutout fades with it. */
+  pillOpacity: number
   /** Mini-pill collapse into the bottom line, 0..1. */
   pillProgress: number
 }
@@ -84,6 +86,7 @@ export const getShadeHoles = (layout: ShadeHoleLayout, frame: ShadeMorphFrame): 
       focusProgress: frame.focusProgress,
       fullScreenHeight: layout.fullScreenHeight,
       hasPill: layout.hasPill,
+      pillOpacity: frame.pillOpacity,
       pillProgress: frame.pillProgress,
       screenWidth: layout.screenWidth,
       tabBarHeight: layout.tabBarHeight,

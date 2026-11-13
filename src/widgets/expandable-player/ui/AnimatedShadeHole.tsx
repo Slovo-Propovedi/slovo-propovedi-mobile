@@ -31,10 +31,18 @@ export const AnimatedShadeHole = ({
       focusProgress: sources.focusProgress.value,
       islandProgress: sources.islandProgress.value,
       openProgress: sources.openProgress.value,
+      pillOpacity: sources.pillOpacity.value,
       pillProgress: sources.pillProgress.value,
     })[slot]
 
-    return { height: hole.height, rx: hole.height / 2, width: hole.width, x: hole.x, y: hole.y }
+    return {
+      height: hole.height,
+      opacity: hole.opacity,
+      rx: hole.height / 2,
+      width: hole.width,
+      x: hole.x,
+      y: hole.y,
+    }
   })
 
   return <AnimatedRect fill='black' animatedProps={animatedProps} />

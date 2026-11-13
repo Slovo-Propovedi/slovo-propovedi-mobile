@@ -1,4 +1,5 @@
 jest.mock('react-native-reanimated', () => {
+  const React = require('react')
   const { FlatList, ScrollView, View } = require('react-native')
 
   // Registrations are exposed so tests can drive frames through the callback
@@ -17,12 +18,21 @@ jest.mock('react-native-reanimated', () => {
     return mutable
   }
 
+  // Real Animated components apply `animatedProps` to the wrapped node on every
+  // frame; mirror that by merging them so rendered props are observable in tests.
+  const createAnimatedComponent = Component =>
+    React.forwardRef((props, ref) => {
+      const { animatedProps, ...rest } = props
+
+      return React.createElement(Component, { ...rest, ...animatedProps, ref })
+    })
+
   return {
     __esModule: true,
     __frameCallbacks: frameCallbacks,
-    default: { FlatList, ScrollView, View, createAnimatedComponent: Component => Component },
+    default: { FlatList, ScrollView, View, createAnimatedComponent },
     cancelAnimation: () => {},
-    createAnimatedComponent: Component => Component,
+    createAnimatedComponent,
     Easing: {
       in: fn => fn,
       inOut: fn => fn,

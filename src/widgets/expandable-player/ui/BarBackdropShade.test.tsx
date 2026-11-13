@@ -26,6 +26,7 @@ import {
 import { PLAYER_SIZES, themeModeAtom } from 'shared/ui/theme'
 import { type ShadeHoleKey } from '../lib/getShadeHoles'
 import { barMorphProgressSv, resetBarMorphDriver } from '../model/barMorphDriver'
+import { miniPillOpacitySv } from '../model/miniPillFade'
 import { type ShadeMorphSources } from '../model/useShadeGeometry'
 import { BarBackdropShade } from './BarBackdropShade'
 
@@ -162,6 +163,12 @@ const maskChildren = (): Array<ReactElement<MaskChildProps>> => {
 const findMaskHoles = () =>
   maskChildren().flatMap(node => (node.props.slot ? [node.props.slot] : []))
 
+// The rendered hole rects in SHADE_HOLE_KEYS order; the white base rect has no
+// opacity. `opacity` is the mask strength: 1 cuts the glass footprint out, 0
+// paints nothing.
+const findHoleRects = () =>
+  screen.root?.queryAll(instance => instance.props.opacity !== undefined) ?? []
+
 // The pass-through full-screen layer: absolute inset 0, no height, no svg.
 const findLayer = () =>
   screen.root?.queryAll(instance => {
@@ -218,6 +225,7 @@ describe('<BarBackdropShade>', () => {
     searchOpenMorphDriver.reset()
     searchFocusMorphDriver.reset()
     searchCloseMorphDriver.reset()
+    miniPillOpacitySv.value = 1
     keyboardBottomInsetSv.value = 0
   })
 
@@ -277,11 +285,27 @@ describe('<BarBackdropShade>', () => {
         expect(sources.focusProgress).toBe(searchFocusMorphDriver.progress)
         expect(sources.islandProgress).toBe(tabIslandMorphDriver.progress)
         expect(sources.openProgress).toBe(searchOpenMorphDriver.progress)
+        expect(sources.pillOpacity).toBe(miniPillOpacitySv)
         expect(sources.pillProgress).toBe(barMorphProgressSv)
       })
     const painted = screen.root?.queryAll(instance => instance.props.mask === MASK_NAME)[0]
 
     expect(painted?.props.fill).toMatchObject({ brushRef: GRADIENT_NAME })
+  })
+
+  test('fades the pill cutout with the mini-pill fade', async () => {
+    miniPillOpacitySv.value = 0.35
+    const { rerender } = await renderShade()
+
+    // Slots render in SHADE_HOLE_KEYS order (island, search, close, pill); the
+    // close circle is absent here, so only the pill strength follows the fade.
+    expect(findHoleRects().map(rect => rect.props.opacity)).toEqual([1, 1, 0, 0.35])
+
+    miniPillOpacitySv.value = 0
+    await rerender(<BarBackdropShade hasSearch hasMiniPlayer />)
+
+    // Fully faded glass leaves no cutout: the gradient closes behind it.
+    expect(findHoleRects().map(rect => rect.props.opacity)).toEqual([1, 1, 0, 0])
   })
 
   test('lets document order inside the tab bar own stacking: no zIndex, never intercepts touches', async () => {

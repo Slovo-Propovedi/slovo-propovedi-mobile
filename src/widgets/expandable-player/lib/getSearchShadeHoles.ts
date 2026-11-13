@@ -42,6 +42,7 @@ const getCloseHole = (
 
   return {
     height: size,
+    opacity: 1,
     width: size,
     x: centerX - size / 2,
     y: row.shadeHeight - centerYFromBottom - size / 2,

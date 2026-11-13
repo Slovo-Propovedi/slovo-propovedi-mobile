@@ -10,6 +10,7 @@ import { getShadeLocations } from '../lib/getBarShadeHeight'
 import { getShadeFrameHeight } from '../lib/getShadeFrameHeight'
 import { type ShadeHoleLayout } from '../lib/getShadeHoles'
 import { barMorphDriver } from './barMorphDriver'
+import { miniPillOpacitySv } from './miniPillFade'
 
 /** Shared morph values every mask rect derives its geometry from. */
 export interface ShadeMorphSources {
@@ -17,6 +18,8 @@ export interface ShadeMorphSources {
   focusProgress: SharedValue<number>
   islandProgress: SharedValue<number>
   openProgress: SharedValue<number>
+  /** Fade of the tucked mini pill; its cutout loses strength with it. */
+  pillOpacity: SharedValue<number>
   pillProgress: SharedValue<number>
 }
 
@@ -95,6 +98,13 @@ export const useShadeGeometry = ({
     layout,
     locations: getShadeLocations(settledShadeHeight),
     shadeStyle,
-    sources: { closeProgress, focusProgress, islandProgress, openProgress, pillProgress },
+    sources: {
+      closeProgress,
+      focusProgress,
+      islandProgress,
+      openProgress,
+      pillOpacity: miniPillOpacitySv,
+      pillProgress,
+    },
   }
 }

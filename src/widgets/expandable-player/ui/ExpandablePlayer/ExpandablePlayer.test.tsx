@@ -8,6 +8,7 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isBarCollapsedAtom, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
 import { isMiniPillCollapsedAtom } from '../../model/barMorph'
+import { miniPillOpacitySv } from '../../model/miniPillFade'
 import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { ExpandablePlayer } from './ExpandablePlayer'
 
@@ -236,9 +237,8 @@ describe('<ExpandablePlayer>', () => {
       findPointerGate(queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true }))?.props
         .pointerEvents,
     ).toBe('box-none')
-    expect(layerOpacity(queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true }))).toBe(
-      1,
-    )
+    // Same render-time sampling caveat as below: assert the shared fade driver.
+    expect(miniPillOpacitySv.value).toBe(1)
     expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(false)
     expect(tuckTransform()).toEqual([{ translateY: 0 }])
     expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)
@@ -256,7 +256,10 @@ describe('<ExpandablePlayer>', () => {
     const button = queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })
 
     expect(findPointerGate(button)?.props.pointerEvents).toBe('box-none')
-    expect(layerOpacity(button)).toBe(1)
+    // The mocked `useAnimatedStyle` samples shared values at render time, while
+    // the fade back in is driven from the effect (the style re-evaluates on the
+    // UI thread in production), so assert the shared fade itself.
+    expect(miniPillOpacitySv.value).toBe(1)
     expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(false)
     expect(tuckTransform()).toEqual([{ translateY: 0 }])
     expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)

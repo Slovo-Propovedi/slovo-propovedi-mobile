@@ -12,6 +12,8 @@ import {
 /** Rounded cutout of the shade, in the shade box's top-left coordinate space. */
 export interface ShadeHole {
   height: number
+  /** Mask strength: 1 cuts the footprint out, 0 paints nothing (faded glass). */
+  opacity: number
   width: number
   x: number
   y: number
@@ -31,7 +33,7 @@ export interface ShadeRow {
 export const SEARCH_SLOT_WIDTH = BAR_CIRCLE_SIZE + BAR_OUTER_GAP
 
 /** A slot that is not on screen cuts nothing. */
-export const EMPTY_SHADE_HOLE: ShadeHole = { height: 0, width: 0, x: 0, y: 0 }
+export const EMPTY_SHADE_HOLE: ShadeHole = { height: 0, opacity: 0, width: 0, x: 0, y: 0 }
 
 const clampProgress = (progress: number) => {
   'worklet'
@@ -96,5 +98,5 @@ export const toShadeHole = (
 ): ShadeHole => {
   'worklet'
 
-  return { height, width, x, y: row.shadeHeight - (row.bottom + height) }
+  return { height, opacity: 1, width, x, y: row.shadeHeight - (row.bottom + height) }
 }
