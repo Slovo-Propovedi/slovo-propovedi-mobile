@@ -5,6 +5,5 @@ export { isSearchOpenAtom, searchQueryAtom } from '../model'
 export {
   isSearchFieldFocusedAtom,
   isSearchFieldVisibleAtom,
-  isSearchOverlayVisibleAtom,
   isSearchQueryActive,
 } from '../model-searchField'
