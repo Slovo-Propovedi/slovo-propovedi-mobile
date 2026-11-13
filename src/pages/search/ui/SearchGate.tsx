@@ -1,11 +1,17 @@
-import { useAtom } from '@reatom/npm-react'
+import { useAction, useAtom } from '@reatom/npm-react'
 import { usePathname } from 'expo-router'
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { useTourActionRegistrar } from 'features/onboarding'
-import { isSearchOpenAtom, useOpenSearch, useSermonPlayback } from 'features/sermon-search'
+import {
+  isDetailRouteOverSearch,
+  isSearchOpenAtom,
+  setSearchOverlayHidden,
+  useOpenSearch,
+  useSermonPlayback,
+} from 'features/sermon-search'
 import { type SermonData } from 'entities/sermon'
 import { BlurBackdrop } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
@@ -21,12 +27,20 @@ const CLOSE_SERMON_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
  * chrome (zIndex 5 vs the bar's 10 and the player's 9/20) so the islands keep
  * floating above the search page on every screen. Hooks live outside the open
  * guard: the tour registers `open-listen-search` long before the overlay shows.
+ *
+ * Navigating to a detail route keeps the session ALIVE: the layer is hidden with
+ * `display: none` instead of unmounting, so the query, active group and loaded
+ * pages survive and come back untouched when the detail route pops. Closing the
+ * session (bar gesture / hardware back on a tab root) still unmounts it, which
+ * is what resets the page state.
  */
 export const SearchGate = () => {
   const insets = useSafeAreaInsets()
   const pathname = usePathname()
   const { currentTheme } = useTheme()
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
+  const isHidden = isDetailRouteOverSearch(pathname)
+  const setOverlayHidden = useAction(setSearchOverlayHidden)
   const openSearch = useOpenSearch()
   const { navigateToPlaylist, navigateToPreacher } = useSearchNavigation()
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
@@ -49,15 +63,23 @@ export const SearchGate = () => {
   })
   useTourActionRegistrar(CLOSE_SERMON_PICKER_ACTION_ID, closePicker)
 
+  // The field pill, bar suspension and chrome shade read this flag. The action
+  // no-ops on an unchanged value, so the effect cannot loop.
+  useEffect(() => {
+    setOverlayHidden(isHidden)
+  }, [isHidden, setOverlayHidden])
+
   if (!isSearchOpen) return null
 
   return (
-    <SafeAreaView style={styles.layer} edges={['left', 'right']}>
+    <SafeAreaView edges={['left', 'right']} style={[styles.layer, isHidden && styles.hidden]}>
       {/* Surfaces floating over the page (the mini pill) resolve this target
           via the route stack; the tab-bar chrome keeps sampling its own shade.
           The themed background must live INSIDE the target, otherwise the
-          pill's blur samples the window background (bright gray in dark). */}
-      <BlurBackdrop routeKey={pathname}>
+          pill's blur samples the window background (bright gray in dark).
+          While covered, the gate stops publishing so the detail page's own
+          target wins; the subtree stays mounted. */}
+      <BlurBackdrop routeKey={pathname} disabled={isHidden}>
         <View
           style={[
             styles.page,
@@ -80,6 +102,10 @@ export const SearchGate = () => {
 }
 
 const styles = StyleSheet.create({
+  // Hidden under a detail route: children stay mounted, touches fall through.
+  hidden: {
+    display: 'none',
+  },
   // Full-cover layer inside the tab layout: above the Tabs screens, below the
   // bottom chrome (bar container zIndex 10, player root 9/20).
   layer: {

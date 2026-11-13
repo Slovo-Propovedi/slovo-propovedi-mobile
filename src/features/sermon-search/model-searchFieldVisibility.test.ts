@@ -5,6 +5,8 @@ import {
   isSearchBarCollapseSuspendedAtom,
   isSearchFieldFocusedAtom,
   isSearchFieldVisibleAtom,
+  isSearchOverlayVisibleAtom,
+  setSearchOverlayHidden,
 } from './model-searchField'
 import { closeSearch, closeSearchAndExpand, openSearch } from './model-session'
 
@@ -99,6 +101,33 @@ describe('search bar collapse suspension', () => {
     const ctx = renderVisibility({ isCollapsed: false, isOpen: true, query: '  ' })
 
     expect(ctx.get(isSearchBarCollapseSuspendedAtom)).toBe(true)
+  })
+})
+
+describe('overlay visibility under detail routes', () => {
+  test('hides the field and lifts bar suspension while a detail route covers search', () => {
+    const ctx = renderVisibility({ isCollapsed: false, isOpen: true, query: 'вера' })
+    setSearchOverlayHidden(ctx, true)
+
+    expect(ctx.get(isSearchOverlayVisibleAtom)).toBe(false)
+    expect(ctx.get(isSearchFieldVisibleAtom)).toBe(false)
+    expect(ctx.get(isSearchBarCollapseSuspendedAtom)).toBe(false)
+  })
+
+  test('restores the field and suspension when the overlay is visible again', () => {
+    const ctx = renderVisibility({ isCollapsed: false, isOpen: true, query: 'вера' })
+    setSearchOverlayHidden(ctx, true)
+    setSearchOverlayHidden(ctx, false)
+
+    expect(ctx.get(isSearchOverlayVisibleAtom)).toBe(true)
+    expect(ctx.get(isSearchFieldVisibleAtom)).toBe(true)
+    expect(ctx.get(isSearchBarCollapseSuspendedAtom)).toBe(true)
+  })
+
+  test('stays hidden while search is closed even without a covering route', () => {
+    const ctx = renderVisibility({ isCollapsed: false, isOpen: false, query: 'вера' })
+
+    expect(ctx.get(isSearchOverlayVisibleAtom)).toBe(false)
   })
 })
 

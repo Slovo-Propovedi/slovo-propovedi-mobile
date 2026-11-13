@@ -2,7 +2,7 @@ import { useAtom } from '@reatom/npm-react'
 import { BlurTargetView } from 'expo-blur'
 import { type ComponentRef, type PropsWithChildren, useEffect, useRef } from 'react'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
-import { isSearchOpenAtom } from 'features/sermon-search/@x/barMorph'
+import { isSearchOverlayVisibleAtom } from 'features/sermon-search/@x/barMorph'
 import {
   BOTTOM_CHROME_SHADE_KEY,
   registerBlurTarget,
@@ -11,9 +11,10 @@ import {
 } from 'shared/ui/glass/blurTargets'
 
 /**
- * Publishes the bottom chrome's own backdrop while the search page is open: the
- * always-mounted `BarBackdropShade` gradient, registered under
- * `BOTTOM_CHROME_SHADE_KEY`. The chrome glass then samples the shade instead of
+ * Publishes the bottom chrome's own backdrop while the search overlay is visible:
+ * the always-mounted `BarBackdropShade` gradient, registered under
+ * `BOTTOM_CHROME_SHADE_KEY`. While a detail route covers the search, the overlay
+ * publishes nothing and the chrome falls back to the page target underneath. The chrome glass then samples the shade instead of
  * the page, so the white search background never bleeds through and route or
  * overlay transitions cannot swap the backdrop mid-session. Off Android and
  * below Android 12 the shade renders untouched (tint fallback, as before).
@@ -21,10 +22,10 @@ import {
  * @param root0.children - The shade content to expose as the blur backdrop.
  */
 export const ShadeBlurTarget = ({ children }: PropsWithChildren) => {
-  const [isSearchOpen] = useAtom(isSearchOpenAtom)
+  const [isOverlayVisible] = useAtom(isSearchOverlayVisibleAtom)
   const { height: screenHeight } = useWindowDimensions()
   const targetRef = useRef<ComponentRef<typeof View> | null>(null)
-  const isActive = isSearchOpen && supportsAndroidBackdropBlur()
+  const isActive = isOverlayVisible && supportsAndroidBackdropBlur()
 
   useEffect(() => {
     if (!isActive) return

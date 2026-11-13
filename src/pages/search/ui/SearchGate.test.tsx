@@ -16,6 +16,8 @@ const mockOnSermonPress = jest.fn()
 const mockClosePicker = jest.fn()
 const mockCloseSearch = jest.fn()
 const mockRouterPush = jest.fn()
+const mockOverlayHidden = jest.fn()
+let mockPathname = '/more'
 const mockPlaylist: PlaylistData = {
   artwork: null,
   id: 'search-playlist-1',
@@ -31,7 +33,7 @@ const CLOSE_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
 const mockArtist = 'Иван Иванов'
 
 jest.mock('expo-router', () => ({
-  usePathname: () => '/more',
+  usePathname: () => mockPathname,
   useRouter: () => ({ push: mockRouterPush }),
 }))
 
@@ -41,9 +43,17 @@ jest.mock('shared/ui', () => {
 
   return {
     ...actual,
-    BlurBackdrop: ({ children, routeKey }: { children: ReactNode; routeKey: string }) => (
+    BlurBackdrop: ({
+      children,
+      disabled,
+      routeKey,
+    }: {
+      children: ReactNode
+      disabled?: boolean
+      routeKey: string
+    }) => (
       <>
-        <MockText>{`BLUR_TARGET:${routeKey}`}</MockText>
+        {disabled ? null : <MockText>{`BLUR_TARGET:${routeKey}`}</MockText>}
         {children}
       </>
     ),
@@ -52,6 +62,9 @@ jest.mock('shared/ui', () => {
 
 jest.mock('features/sermon-search', () => {
   const { action, atom } = jest.requireActual('@reatom/framework')
+  const { isDetailRouteOverSearch } = jest.requireActual(
+    'features/sermon-search/lib/detailRouteOverSearch',
+  )
   const searchOpenAtom = atom(false, 'mockIsSearchOpenAtom')
   const closeSearch = action(async (ctx: Ctx) => {
     await ctx.schedule(() => {
@@ -62,7 +75,9 @@ jest.mock('features/sermon-search', () => {
 
   return {
     closeSearch,
+    isDetailRouteOverSearch,
     isSearchOpenAtom: searchOpenAtom,
+    setSearchOverlayHidden: (...args: unknown[]) => mockOverlayHidden(...args),
     useOpenSearch: jest.fn(),
     useSermonPlayback: jest.fn(),
   }
@@ -116,9 +131,18 @@ const renderGate = async (isOpen: boolean) => {
   return renderWithProviders(<SearchGate />, { ctx })
 }
 
+const getLayerStyle = () => {
+  const layer = screen.root?.queryAll(
+    instance => StyleSheet.flatten(instance.props.style)?.zIndex === 5,
+  )[0]
+
+  return StyleSheet.flatten(layer?.props.style)
+}
+
 describe('<SearchGate>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockPathname = '/more'
     mockedUseOpenSearch.mockReturnValue(mockOpenSearch)
     mockedUseSermonPlayback.mockReturnValue({
       closePicker: mockClosePicker,
@@ -157,10 +181,7 @@ describe('<SearchGate>', () => {
   test('covers the tab screens below the bottom chrome', async () => {
     await renderGate(true)
 
-    const layer = screen.root?.queryAll(
-      instance => StyleSheet.flatten(instance.props.style)?.zIndex === 5,
-    )[0]
-    const style = StyleSheet.flatten(layer?.props.style)
+    const style = getLayerStyle()
 
     expect(style).toMatchObject({
       bottom: 0,
@@ -169,6 +190,7 @@ describe('<SearchGate>', () => {
       right: 0,
       top: 0,
     })
+    expect(style?.display).not.toBe('none')
 
     // The themed page background lives INSIDE the blur target: the pill frosts
     // the page it floats over, and a transparent target would blur the window
@@ -185,12 +207,43 @@ describe('<SearchGate>', () => {
     expect(page).toBeDefined()
   })
 
-  test('publishes the page as a glass blur target while open', async () => {
+  test('publishes the page as a glass blur target while open on a tab root', async () => {
     await renderGate(true)
 
     // Surfaces that float over the page (the mini pill) resolve this target,
     // while the tab-bar chrome keeps its own shade target.
     expect(screen.getByText('BLUR_TARGET:/more')).toBeTruthy()
+  })
+
+  test.each(['/listen/preacher', '/listen/playlist'])(
+    'keeps the search page mounted but hides the overlay under %s',
+    async pathname => {
+      mockPathname = pathname
+
+      await renderGate(true)
+
+      // The layer is display:none, so the query must opt into hidden elements:
+      // the page itself is still mounted (that is the whole point).
+      expect(screen.getByText(SEARCH_SCREEN, { includeHiddenElements: true })).toBeTruthy()
+      expect(getLayerStyle()).toMatchObject({ display: 'none' })
+    },
+  )
+
+  test('does not publish the detail page blur target while the overlay is hidden', async () => {
+    mockPathname = '/listen/preacher'
+
+    await renderGate(true)
+
+    expect(screen.getByText(SEARCH_SCREEN, { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.queryByText('BLUR_TARGET:/listen/preacher')).toBeNull()
+  })
+
+  test('syncs the overlay visibility with the current route', async () => {
+    mockPathname = '/listen/preacher'
+
+    await renderGate(true)
+
+    expect(mockOverlayHidden).toHaveBeenCalled()
   })
 
   test('hosts the playback picker and add-to-playlist modals', async () => {
@@ -211,39 +264,36 @@ describe('<SearchGate>', () => {
     expect(getByText(ADD_TO_PLAYLIST_MODAL)).toBeTruthy()
   })
 
-  test('closes the search session before navigating to a pressed playlist', async () => {
+  test('navigates to a pressed playlist without closing the search session', async () => {
     const { ctx, getByText, queryByText } = await renderGate(true)
 
     await act(async () => {
       fireEvent.press(getByText(SEARCH_SCREEN))
     })
 
-    expect(mockCloseSearch).toHaveBeenCalledTimes(1)
+    expect(mockCloseSearch).not.toHaveBeenCalled()
     expect(mockRouterPush).toHaveBeenCalledWith({
       params: { playlist: mockPlaylist.id },
       pathname: '/listen/playlist',
     })
-    expect(ctx.get(isSearchOpenAtom)).toBe(false)
-    expect(queryByText(SEARCH_SCREEN)).toBeNull()
+    expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    expect(queryByText(SEARCH_SCREEN)).toBeTruthy()
   })
 
-  test('closes the search session before navigating to a pressed preacher', async () => {
+  test('navigates to a pressed preacher without closing the search session', async () => {
     const { ctx, getByText, queryByText } = await renderGate(true)
 
     await act(async () => {
       fireEvent.press(getByText(PREACHER_PRESS))
     })
 
-    expect(mockCloseSearch).toHaveBeenCalledTimes(1)
+    expect(mockCloseSearch).not.toHaveBeenCalled()
     expect(mockRouterPush).toHaveBeenCalledWith({
       params: { artist: mockArtist },
       pathname: '/listen/preacher',
     })
-    expect(mockCloseSearch.mock.invocationCallOrder[0]).toBeLessThan(
-      mockRouterPush.mock.invocationCallOrder[0],
-    )
-    expect(ctx.get(isSearchOpenAtom)).toBe(false)
-    expect(queryByText(SEARCH_SCREEN)).toBeNull()
+    expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    expect(queryByText(SEARCH_SCREEN)).toBeTruthy()
   })
 
   test('unmounts the search content when the search closes', async () => {

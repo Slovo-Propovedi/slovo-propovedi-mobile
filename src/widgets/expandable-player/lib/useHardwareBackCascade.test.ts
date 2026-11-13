@@ -17,7 +17,10 @@ jest.mock('expo-router', () => ({
     back: jest.fn(),
     canGoBack: jest.fn(() => true),
   },
+  usePathname: () => mockPathname,
 }))
+
+let mockPathname = '/more'
 
 const mockedRouter = router as unknown as {
   back: jest.Mock
@@ -37,6 +40,7 @@ const pressBack = () => {
 describe('useHardwareBackCascade', () => {
   beforeEach(() => {
     backHandler = null
+    mockPathname = '/more'
     isPlayerExpandedAtom(ctx, false)
     isSearchOpenAtom(ctx, false)
     searchQueryAtom(ctx, '')
@@ -67,6 +71,21 @@ describe('useHardwareBackCascade', () => {
     await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
     expect(ctx.get(searchQueryAtom)).toBe('')
     expect(mockedRouter.back).not.toHaveBeenCalled()
+  })
+
+  test('pops a covered detail route and keeps the search session open', async () => {
+    mockPathname = '/listen/preacher'
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'вера')
+    await renderHookWithProviders(() => useHardwareBackCascade(), { ctx })
+
+    await act(async () => {
+      expect(pressBack()).toBe(true)
+    })
+
+    expect(mockedRouter.back).toHaveBeenCalledTimes(1)
+    expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    expect(ctx.get(searchQueryAtom)).toBe('вера')
   })
 
   test('falls through to router history when search is closed', async () => {
