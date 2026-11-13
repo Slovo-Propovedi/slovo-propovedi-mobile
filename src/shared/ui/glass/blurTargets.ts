@@ -42,6 +42,7 @@ export const BLUR_TARGET_ROUTES = {
   playlist: '/listen/playlist',
   playlistEdit: '/listen/playlist-edit',
   playlistList: '/listen/playlist-list',
+  preacher: '/listen/preacher',
   read: '/read',
 } as const
 
