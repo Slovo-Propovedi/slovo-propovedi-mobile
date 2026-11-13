@@ -33,8 +33,9 @@ const notify = (listeners: Set<BarMorphListener>, isTarget: boolean) => {
  * The subscription fires once on attach with the current atom value; that first
  * callback mirrors it into the shared value instead of animating from a stale
  * module default. Later flips start the timing and dispatch start/settle events
- * with the same contract as `useAtomMorphProgress`: an interrupted animation
- * reports no settle, and start fires before the timing starts.
+ * with the same contract as `createAtomMorphDriver` (`shared/lib/hooks`): an
+ * interrupted animation reports no settle, and start fires before the timing
+ * starts.
  * @param ctx - Reatom context the atom subscription runs in.
  */
 export const ensureBarMorphDriver = (ctx: Ctx) => {
