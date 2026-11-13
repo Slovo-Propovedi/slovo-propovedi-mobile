@@ -1,16 +1,18 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { withTiming } from 'react-native-reanimated'
+import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/@x/barMorph'
+import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { BAR_MORPH_DURATION_MS, setBarCollapsed } from 'shared/ui/layout'
 import {
+  barMorphDriver,
   barMorphProgressSv,
   ensureBarMorphDriver,
   registerBarMorphSettleListener,
   registerBarMorphStartListener,
   resetBarMorphDriver,
 } from './barMorphDriver'
-import { useBarMorphProgress } from './useBarMorphProgress'
 
 const mockedWithTiming = withTiming as jest.Mock
 const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
@@ -42,8 +44,8 @@ describe('barMorphDriver', () => {
 
   test('attaches one subscription no matter how many hooks mount', async () => {
     const ctx = createCtx()
-    await renderHookWithProviders(() => useBarMorphProgress(), { ctx })
-    await renderHookWithProviders(() => useBarMorphProgress(), { ctx })
+    await renderHookWithProviders(() => useAtomMorphDriver(barMorphDriver), { ctx })
+    await renderHookWithProviders(() => useAtomMorphDriver(barMorphDriver), { ctx })
 
     await act(async () => {
       setBarCollapsed(ctx, true)
@@ -59,8 +61,8 @@ describe('barMorphDriver', () => {
 
   test('every surface reads the same shared progress value', async () => {
     const ctx = createCtx()
-    const first = await renderHookWithProviders(() => useBarMorphProgress(), { ctx })
-    const second = await renderHookWithProviders(() => useBarMorphProgress(), { ctx })
+    const first = await renderHookWithProviders(() => useAtomMorphDriver(barMorphDriver), { ctx })
+    const second = await renderHookWithProviders(() => useAtomMorphDriver(barMorphDriver), { ctx })
 
     expect(first.result.current.progress).toBe(barMorphProgressSv)
     expect(second.result.current.progress).toBe(barMorphProgressSv)
@@ -99,7 +101,9 @@ describe('barMorphDriver', () => {
   test('a remount cannot lose a mid-flight morph', async () => {
     const completions = captureCompletions()
     const ctx = createCtx()
-    const firstMount = await renderHookWithProviders(() => useBarMorphProgress(), { ctx })
+    const firstMount = await renderHookWithProviders(() => useAtomMorphDriver(barMorphDriver), {
+      ctx,
+    })
 
     // Morph 1 starts while the first mount owns the listeners; hold its landing.
     await act(async () => {
@@ -120,7 +124,9 @@ describe('barMorphDriver', () => {
     // the settle dispatch reads the live listener set, not a snapshot.
     const lateSettle = jest.fn()
     registerBarMorphSettleListener(lateSettle)
-    const secondMount = await renderHookWithProviders(() => useBarMorphProgress(), { ctx })
+    const secondMount = await renderHookWithProviders(() => useAtomMorphDriver(barMorphDriver), {
+      ctx,
+    })
 
     // The interrupted morph reports nothing...
     await act(async () => {
@@ -170,5 +176,54 @@ describe('barMorphDriver', () => {
 
     expect(barMorphProgressSv.value).toBe(1)
     expect(mockedWithTiming).not.toHaveBeenCalled()
+  })
+
+  test('stays expanded when a collapsed bar still shows the search field', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    searchQueryAtom(ctx, 'проповедь')
+
+    await renderHookWithProviders(() => useAtomMorphDriver(barMorphDriver), { ctx })
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+
+    // The visible field keeps the pill detached, so the bar flip is not a pill
+    // morph and must not start a timing.
+    expect(barMorphProgressSv.value).toBe(0)
+    expect(mockedWithTiming).not.toHaveBeenCalled()
+  })
+
+  test('commits the start state of a flip that interrupts an in-flight morph', async () => {
+    const completions = captureCompletions()
+    const ctx = createCtx()
+    setBarCollapsed(ctx, true)
+    const { result } = await renderHookWithProviders(() => useAtomMorphDriver(barMorphDriver), {
+      ctx,
+    })
+
+    // Morph 1→0 (collapse → detached) starts; its start state is collapsed.
+    await act(async () => {
+      setBarCollapsed(ctx, false)
+    })
+    expect(result.current.settled).toBe(true)
+
+    // Flip back before morph 1 lands: the new animation starts from the
+    // detached state, so the flag must commit that start immediately.
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    expect(result.current.settled).toBe(false)
+
+    await act(async () => {
+      completions[0](false)
+    })
+    expect(result.current.settled).toBe(false)
+
+    await act(async () => {
+      completions[1](true)
+    })
+    expect(result.current.settled).toBe(true)
   })
 })

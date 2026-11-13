@@ -3,7 +3,7 @@ import { getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 
 interface UseRestingStylesInput {
-  /** Bar state the morph has settled into (see `useBarMorphProgress.settledCollapsed`). */
+  /** Bar state the morph has settled into (see `useAtomMorphDriver(barMorphDriver)`). */
   barCollapsed: boolean
   expanded: boolean
   fullScreenHeight: number

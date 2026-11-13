@@ -4,13 +4,20 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 /**
  * One module-level 0→1 progress shared by every surface of an atom-driven
- * morph. Mirrors the in-repo `barMorphDriver` precedent: the timing starts in
- * the atom subscription (same tick as the atom flip), so no surface has to wait
- * for a React commit before it starts moving.
+ * morph. The in-repo bar morph (`barMorphDriver`) is built on this factory: the
+ * timing starts in the atom subscription (same tick as the atom flip), so no
+ * surface has to wait for a React commit before it starts moving.
  */
 export interface AtomMorphDriver {
   atom: Atom<boolean>
-  /** Attaches the one atom subscription; idempotent until {@link AtomMorphDriver.reset}. */
+  /**
+   * Attaches the one atom subscription; idempotent until {@link AtomMorphDriver.reset}.
+   *
+   * Latches to the FIRST ctx it receives and stays latched for the app
+   * lifetime: later calls ignore their ctx. Swapping the Reatom context
+   * therefore requires {@link AtomMorphDriver.reset} first (driver tests reset
+   * in `beforeEach`).
+   */
   ensure: (ctx: Ctx) => void
   /** Whether the shared atom subscription is attached. */
   isAttached: () => boolean
@@ -52,6 +59,14 @@ export const createAtomMorphDriver = ({
     for (const listener of listeners) listener(isTarget)
   }
 
+  /**
+   * Attaches the one atom subscription; idempotent until `reset`.
+   *
+   * The subscription latches to the FIRST ctx it receives: a later call with a
+   * different ctx is a no-op, so a ctx swap requires `reset()` first (drivers'
+   * tests reset in `beforeEach`).
+   * @param ctx - Reatom context the atom subscription runs in.
+   */
   const ensure = (ctx: Ctx) => {
     if (detachAtomSubscription) return
 

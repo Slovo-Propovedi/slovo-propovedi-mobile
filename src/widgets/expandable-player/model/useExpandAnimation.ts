@@ -1,12 +1,13 @@
 import { useCallback } from 'react'
 import { Dimensions, useWindowDimensions } from 'react-native'
 import { type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
+import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
 import { getContainerOpacity } from '../lib/getContainerOpacity'
 import { getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { type getRestingContainerStyle } from '../lib/getRestingContainerStyle'
+import { barMorphDriver } from './barMorphDriver'
 import { useAppStateSnap } from './useAppStateSnap'
-import { useBarMorphProgress } from './useBarMorphProgress'
 import { useGeometrySharedValues } from './useGeometrySharedValues'
 import { useOpacityStyles } from './useOpacityStyles'
 import { useProgressAnimation } from './useProgressAnimation'
@@ -38,8 +39,8 @@ export const useExpandAnimation = (
   tabBarHeight: number,
 ): UseExpandAnimationResult => {
   const progress = useSharedValue(0)
-  // UI-thread mirror of the bar collapse (see `useBarMorphProgress`).
-  const barMorph = useBarMorphProgress()
+  // UI-thread mirror of the bar collapse (axis D).
+  const { progress: barProgress, settled: settledCollapsed } = useAtomMorphDriver(barMorphDriver)
   const geometryReapplyTick = useSharedValue(0)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
   // On web `Dimensions.get('screen')` is the physical `window.screen.height`,
@@ -54,7 +55,7 @@ export const useExpandAnimation = (
   // Resting geometry follows the SETTLED expand state (like `settledCollapsed`).
   const { barCollapsedTop, barExpandedTop, miniBarRestingStyle, restingContainerStyle } =
     useRestingStyles({
-      barCollapsed: barMorph.settledCollapsed,
+      barCollapsed: settledCollapsed,
       expanded: settledExpanded,
       fullScreenHeight,
       screenWidth,
@@ -70,7 +71,7 @@ export const useExpandAnimation = (
     // Interpolates from the CURRENT mini geometry (expanded or collapsed pill),
     // so expanding out of the collapsed bottom line stays continuous.
     const style = getContainerGeometryStyle({
-      barProgress: barMorph.progress.value,
+      barProgress: barProgress.value,
       fullScreenHeight: fullScreenHeightShared.value,
       progress: progress.value,
       screenWidth: screenWidthShared.value,
@@ -85,7 +86,7 @@ export const useExpandAnimation = (
   })
   const miniBarStyle = useAnimatedStyle(() =>
     getMiniBarStyle({
-      barProgress: barMorph.progress.value,
+      barProgress: barProgress.value,
       fullScreenHeight: fullScreenHeightShared.value,
       screenWidth: screenWidthShared.value,
       tabBarHeight: tabBarHeightShared.value,

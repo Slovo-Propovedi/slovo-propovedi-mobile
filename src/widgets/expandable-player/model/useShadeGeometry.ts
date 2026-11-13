@@ -9,7 +9,7 @@ import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { getShadeLocations } from '../lib/getBarShadeHeight'
 import { getShadeFrameHeight } from '../lib/getShadeFrameHeight'
 import { type ShadeHoleLayout } from '../lib/getShadeHoles'
-import { useBarMorphProgress } from './useBarMorphProgress'
+import { barMorphDriver } from './barMorphDriver'
 
 /** Shared morph values every mask rect derives its geometry from. */
 export interface ShadeMorphSources {
@@ -33,10 +33,11 @@ interface ShadeGeometryInput {
  * Animated shade height, gradient stops and the shared progress sources of the
  * chrome cutouts.
  *
- * All four morph axes are module-level drivers (axes A/B/C mirror the pill's
- * `barMorphDriver`), so the animated height and the mask rects read the same
- * values as the glass surfaces they cut around. The stops stay plain React
- * values recomputed on state commits, so they never fight the animation.
+ * All four morph axes are module-level drivers on the shared
+ * `createAtomMorphDriver` factory, so the animated height and the mask rects
+ * read the same values as the glass surfaces they cut around. The stops stay
+ * plain React values recomputed on state commits, so they never fight the
+ * animation.
  * @param input - Chrome mounting state and viewport geometry.
  * @param input.bottomPadding - Bottom clearance below the islands.
  * @param input.fullScreenHeight - Full device screen height.
@@ -53,7 +54,7 @@ export const useShadeGeometry = ({
   screenWidth,
   tabBarHeight,
 }: ShadeGeometryInput) => {
-  const { progress: pillProgress, settledCollapsed } = useBarMorphProgress()
+  const { progress: pillProgress, settled: settledCollapsed } = useAtomMorphDriver(barMorphDriver)
   const { progress: islandProgress } = useAtomMorphDriver(tabIslandMorphDriver)
   const { progress: openProgress } = useAtomMorphDriver(searchOpenMorphDriver)
   const { progress: focusProgress, settled: settledFocused } =
