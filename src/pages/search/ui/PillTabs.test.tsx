@@ -41,6 +41,7 @@ const STRETCH_ROW_ID = 'pill-tabs-stretch-row'
 const SHADOW_BODY_ID = 'pill-tabs-shadow-body'
 const SHADOW_BLUR_ID = 'pill-tabs-shadow-blur'
 const TRACK_HEIGHT = 48
+const SEGMENT_HEIGHT = 42
 // Shadow body: the pill's shape shifted down so it peeks out under the track.
 const SHADOW_OFFSET_Y = 18
 // The backdrop blur frame is larger than the body on every side, which is what
@@ -272,11 +273,12 @@ describe('<PillTabs>', () => {
     for (const label of ['Слушать', 'Читать']) {
       const segment = segmentStyle(label)
 
-      // The button IS the highlight: full half-width (flex) and full inner
-      // track height (stretch), so empty parts of the cell respond to taps.
+      // The button IS the highlight: the Pressable node itself carries a
+      // definite numeric height (track inner height) and fills half the track
+      // width with flex, so empty parts of the cell respond to taps.
       expect(segment.flex).toBe(1)
-      expect(segment.alignSelf).toBe('stretch')
-      expect(segment.height).toBeUndefined()
+      expect(segment.height).toBe(SEGMENT_HEIGHT)
+      expect(segment.alignSelf).toBeUndefined()
       expect(segment.margin).toBeUndefined()
     }
   })

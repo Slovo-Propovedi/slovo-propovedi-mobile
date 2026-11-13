@@ -3,6 +3,9 @@ import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 const TRACK_HEIGHT = 48
 const TRACK_PADDING = 3
+// Definite numeric height for the pressable cell: stretch/percentage sizing
+// does not reliably define the Android hit rect, an explicit size does.
+const SEGMENT_HEIGHT = TRACK_HEIGHT - 2 * TRACK_PADDING
 const ITEM_HEIGHT = 36
 const PAGE_GUTTER = INDENTS.medium
 const ROW_GUTTER = INDENTS.lowest
@@ -46,12 +49,11 @@ export const styles = StyleSheet.create({
   },
   segment: {
     alignItems: 'center',
-    // The button is the highlight: stretch it to the track's inner height (no
-    // percentage height) and let flex fill the segment's width, so the empty
-    // parts of a cell are tappable too.
-    alignSelf: 'stretch',
     backgroundColor: 'transparent',
     borderRadius: RADIUSES.round,
+    // The Pressable itself is the cell: numeric height + flex width make the
+    // hit rect exactly the highlighted segment, padding-free.
+    height: SEGMENT_HEIGHT,
     justifyContent: 'center',
     paddingHorizontal: INDENTS.middle,
   },
