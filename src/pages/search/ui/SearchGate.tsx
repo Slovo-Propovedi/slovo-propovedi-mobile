@@ -85,7 +85,7 @@ export const SearchGate = () => {
           The themed background must live INSIDE the target, otherwise the
           pill's blur samples the window background (bright gray in dark).
           While concealed, the gate stops publishing so the detail page's own
-          target wins; the subtree stays mounted. */}
+          target wins; the subtree stays mounted. During the push it registers under the incoming route until conceal; chrome keeps its shade. */}
       <BlurBackdrop routeKey={pathname} disabled={isConcealed}>
         <View
           style={[
