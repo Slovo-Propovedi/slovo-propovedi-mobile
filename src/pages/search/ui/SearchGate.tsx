@@ -80,12 +80,12 @@ export const SearchGate = () => {
 
   return (
     <SafeAreaView edges={['left', 'right']} style={[styles.layer, isConcealed && styles.hidden]}>
-      {/* Surfaces floating over the page (the mini pill) resolve this target
-          via the route stack; the tab-bar chrome keeps sampling its own shade.
-          The themed background must live INSIDE the target, otherwise the
-          pill's blur samples the window background (bright gray in dark).
-          While concealed, the gate stops publishing so the detail page's own
-          target wins; the subtree stays mounted. During the push it registers under the incoming route until conceal; chrome keeps its shade. */}
+      {/* Surfaces floating over the page (the mini pill and the bottom chrome)
+          resolve this target via the route stack; the themed background must
+          live INSIDE it, otherwise their blur samples the window background
+          (bright gray in dark). While concealed, the gate stops publishing so
+          the detail page's own target wins; the subtree stays mounted. During
+          the push it registers under the incoming route until conceal. */}
       <BlurBackdrop routeKey={pathname} disabled={isConcealed}>
         <View
           style={[
