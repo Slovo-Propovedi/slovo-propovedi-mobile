@@ -77,10 +77,20 @@ const NO_PILL_EXPANDED_HEIGHT =
   TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2 + SHADE_TOP_OVERSCAN_PX
 const NO_PILL_COLLAPSED_HEIGHT =
   TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT) / 2 + SHADE_TOP_OVERSCAN_PX
-const LIGHT_SHADE_OPAQUE = 'rgba(0, 0, 0, 0.12)'
-const LIGHT_SHADE_COLORS = ['rgba(0, 0, 0, 0)', LIGHT_SHADE_OPAQUE, LIGHT_SHADE_OPAQUE]
-const DARK_SHADE_OPAQUE = 'rgba(255, 255, 255, 0.12)'
-const DARK_SHADE_COLORS = ['rgba(255, 255, 255, 0)', DARK_SHADE_OPAQUE, DARK_SHADE_OPAQUE]
+// The tint is opaque and the alpha rides `stopOpacity`: react-native-svg masks
+// stopColor alpha out on native, and only stopOpacity reaches Android.
+const LIGHT_SHADE_OPAQUE = '#000000'
+const LIGHT_SHADE_STOPS = [
+  { color: LIGHT_SHADE_OPAQUE, opacity: 0 },
+  { color: LIGHT_SHADE_OPAQUE, opacity: 0.12 },
+  { color: LIGHT_SHADE_OPAQUE, opacity: 0.12 },
+]
+const DARK_SHADE_OPAQUE = '#ffffff'
+const DARK_SHADE_STOPS = [
+  { color: DARK_SHADE_OPAQUE, opacity: 0 },
+  { color: DARK_SHADE_OPAQUE, opacity: 0.12 },
+  { color: DARK_SHADE_OPAQUE, opacity: 0.12 },
+]
 // One continuous gradient: transparent at the shade top, opaque from the pill's
 // midline down. The middle stop is the fixed ramp height over the settled shade
 // height — no cap/fill junction to seam on some panels.
@@ -142,12 +152,17 @@ interface SvgRectProps {
 interface SvgStopProps {
   offset: number
   stopColor: string
+  stopOpacity?: number
 }
 
 const findGradientStops = (): Array<ReactElement<SvgStopProps>> =>
   screen.root?.queryAll(instance => instance.props.name === GRADIENT_NAME)[0]?.props.children ?? []
 
-const stopColors = () => findGradientStops().map(stop => stop.props.stopColor)
+const shadeStops = () =>
+  findGradientStops().map(stop => ({
+    color: stop.props.stopColor,
+    opacity: stop.props.stopOpacity,
+  }))
 const stopOffsets = () => findGradientStops().map(stop => stop.props.offset)
 
 // The svg host nests the mapped hole rects as a child array, so flatten it.
@@ -247,7 +262,7 @@ describe('<BarBackdropShade>', () => {
       height: '100%',
       width: '100%',
     })
-    expect(stopColors()).toEqual(LIGHT_SHADE_COLORS)
+    expect(shadeStops()).toEqual(LIGHT_SHADE_STOPS)
     // A single layer spans the whole shade: transparent at the top, opaque from
     // the pill's vertical middle down — there is no cap/fill junction left.
     expect(stopOffsets()).toEqual(EXPANDED_LOCATIONS)
@@ -256,7 +271,7 @@ describe('<BarBackdropShade>', () => {
   test('swaps to a same-shape white gradient in the dark theme', async () => {
     await renderShade({ isDark: true })
 
-    expect(stopColors()).toEqual(DARK_SHADE_COLORS)
+    expect(shadeStops()).toEqual(DARK_SHADE_STOPS)
     expect(stopOffsets()).toEqual(EXPANDED_LOCATIONS)
   })
 
@@ -383,7 +398,7 @@ describe('<BarBackdropShade>', () => {
       left: 0,
       right: 0,
     })
-    expect(stopColors()).toEqual(LIGHT_SHADE_COLORS)
+    expect(shadeStops()).toEqual(LIGHT_SHADE_STOPS)
     expect(stopOffsets()).toEqual(NO_PILL_EXPANDED_LOCATIONS)
   })
 
