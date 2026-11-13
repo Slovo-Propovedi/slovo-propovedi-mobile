@@ -1,5 +1,5 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
-import { type SermonData } from 'entities/sermon'
+import { mapSermonEntityToSermonData } from 'entities/sermon'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { usePreacherSermons } from '../lib/usePreacherSermons'
@@ -62,7 +62,7 @@ const INVALID_ARTIST_MESSAGE = 'Проповедник не найден'
 const RETRY_LABEL = 'Повторить загрузку'
 
 const buildSermon = (id: string) =>
-  sermonsMocks.getSermonControllerFindOneResponseMock({ id }) as SermonData
+  mapSermonEntityToSermonData(sermonsMocks.getSermonControllerFindOneResponseMock({ id }))
 
 const createState = (overrides: Partial<ReturnType<typeof usePreacherSermons>> = {}) => ({
   hasMore: false,
