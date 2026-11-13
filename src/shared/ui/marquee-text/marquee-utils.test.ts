@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   clampMarqueeOffset,
+  getPartnerLoopDistance,
   getSyncedOffset,
   isRealDrag,
   MARQUEE_EPSILON_PX,
@@ -69,6 +70,24 @@ describe('shouldMarquee', () => {
     // overflows geometrically yet never marqueed because its character length
     // was below the old animation threshold. Eligibility is overflow only.
     expect(shouldMarquee(2)).toBe(true)
+  })
+})
+
+describe('getPartnerLoopDistance', () => {
+  test('adds the repeat spacer to the measured follower text width', () => {
+    expect(getPartnerLoopDistance(true, 250)).toBe(300)
+  })
+
+  test('contributes nothing while the follower text is unmeasured', () => {
+    expect(getPartnerLoopDistance(true, 0)).toBe(0)
+  })
+
+  test('contributes nothing when the follower is static', () => {
+    expect(getPartnerLoopDistance(false, 250)).toBe(0)
+  })
+
+  test('stays at zero for a static, unmeasured follower', () => {
+    expect(getPartnerLoopDistance(false, 0)).toBe(0)
   })
 })
 
@@ -156,5 +175,6 @@ describe('worklet directives', () => {
     expect(source).toMatch(/export const shouldMarquee[\s\S]*?'worklet'/)
     expect(source).toMatch(/export const isRealDrag[\s\S]*?'worklet'/)
     expect(source).toMatch(/export const getSyncedOffset[\s\S]*?'worklet'/)
+    expect(source).toMatch(/export const getPartnerLoopDistance[\s\S]*?'worklet'/)
   })
 })

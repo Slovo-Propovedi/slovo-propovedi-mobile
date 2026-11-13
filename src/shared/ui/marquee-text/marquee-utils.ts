@@ -34,6 +34,17 @@ export const shouldMarquee = (maxOffset: number): boolean => {
   return maxOffset > MARQUEE_EPSILON_PX
 }
 
+// The follower's contribution to the pair cycle: its measured loop distance
+// (text + spacer) while it actually travels — JS-confirmed overflow with the
+// duplicate copy mounted; 0 when it is static or unmeasured, so the leader
+// keeps its own loop length. Pure (like getSyncedOffset) so the partner-sync
+// math stays unit-testable: the jest reanimated mock cannot execute
+// useAnimatedReaction, which only plumbs this into the cycle shared value.
+export const getPartnerLoopDistance = (overflows: boolean, textWidth: number): number => {
+  'worklet'
+  return overflows && textWidth > 0 ? textWidth + REPEAT_SPACER : 0
+}
+
 // Followers (the mini-player subtitle) do not own a clock: their offset is a
 // pure function of the leader's (title's) scroll phase. Both lines advance at
 // the leader's constant px/ms speed, so a shorter follower reaches its own loop
