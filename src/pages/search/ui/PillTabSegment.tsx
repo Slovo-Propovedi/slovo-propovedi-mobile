@@ -1,14 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
-import {
-  type ColorValue,
-  type GestureResponderEvent,
-  type LayoutChangeEvent,
-  type StyleProp,
-  StyleSheet,
-  Text,
-  type ViewInstance,
-  type ViewStyle,
-} from 'react-native'
+import { type ColorValue, type StyleProp, Text, type ViewStyle } from 'react-native'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme, withAlpha } from 'shared/ui/theme'
 import { styles } from './PillTabs.styles'
@@ -16,9 +6,16 @@ import { styles } from './PillTabs.styles'
 // Gray selection overlay on the scope track: subtle on the white track, clearly
 // lighter on the pure-black one where a 10% black overlay disappears.
 const SCOPE_SELECTED_ALPHA = { dark: 0.18, light: 0.1 } as const
+// Android only routes touches across a view that has a real background drawable;
+// a `transparent` background counts as none, so an unselected segment would react
+// only over its text. A near-invisible themed fill gives the whole cell a
+// drawable without reading as a highlight.
+const UNSELECTED_FILL_ALPHA = 0.004
 
 const getScopeSelectedFill = (isLight: boolean, text: ColorValue) =>
   withAlpha(text, isLight ? SCOPE_SELECTED_ALPHA.light : SCOPE_SELECTED_ALPHA.dark)
+
+const getUnselectedFill = (text: ColorValue) => withAlpha(text, UNSELECTED_FILL_ALPHA)
 
 // In results the accent fill marks the selection, so the contrast comes from
 // boldness of the unselected labels instead of the selected one.
@@ -44,12 +41,14 @@ export const PillTabSegment = ({
   stretch?: boolean
 }) => {
   const { currentTheme, isLight } = useTheme()
-  const buttonRef = useRef<ViewInstance>(null)
 
   const segmentStyle: StyleProp<ViewStyle> = [
     isResults ? styles.resultsItem : styles.segment,
     !isResults && stretch && styles.segmentStretch,
     isResults && selected && styles.resultsItemSelected,
+    // Results unselected items stay background-free (their row has no Android
+    // hit-area problem); scope segments always carry a drawable.
+    !isResults && !selected && { backgroundColor: getUnselectedFill(currentTheme.text) },
     selected && {
       backgroundColor: isResults
         ? currentTheme.primary
@@ -57,48 +56,13 @@ export const PillTabSegment = ({
     },
   ]
 
-  // TEMPORARY device diagnostics: remove after the hit-area investigation.
-  useEffect(() => {
-    if (!__DEV__) return
-
-    console.debug('[pilltap] style', label, JSON.stringify(StyleSheet.flatten(segmentStyle)))
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- diagnostic snapshot of the first render
-  }, [])
-
-  const handleLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      if (!__DEV__) return
-
-      console.debug('[pilltap] layout', label, JSON.stringify(event.nativeEvent.layout))
-      buttonRef.current?.measureInWindow((x, y, width, height) => {
-        console.debug('[pilltap] window', label, JSON.stringify({ height, width, x, y }))
-      })
-    },
-    [label],
-  )
-
-  const handlePressIn = useCallback(
-    (event: GestureResponderEvent) => {
-      if (!__DEV__) return
-
-      const { locationX, locationY, pageX, pageY } = event.nativeEvent
-
-      console.debug(
-        '[pilltap] press-in',
-        label,
-        JSON.stringify({ locationX, locationY, pageX, pageY }),
-      )
-    },
-    [label],
-  )
-
   return (
     <PressableButton
-      ref={buttonRef}
       onPress={onPress}
+      // RN Pressable already sets this on its inner View; repeated explicitly so
+      // the segment cell is never collapsed away from the native hit test.
+      collapsable={false}
       style={segmentStyle}
-      onLayout={handleLayout}
-      onPressIn={handlePressIn}
       accessibilityLabel={label}
       accessibilityState={{ disabled, selected }}
     >

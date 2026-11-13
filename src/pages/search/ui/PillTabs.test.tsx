@@ -53,6 +53,11 @@ const SMALL_GAP = INDENTS.low
 // Theme-aware selection: subtle gray on the white track, clearly lighter on the
 // pure-black one. The theme is mocked so both branches are deterministic.
 const SELECTED_FILL = () => withAlpha(DarkTheme.text, 0.18)
+// Unselected scope segments keep a real (near-invisible) drawable: Android only
+// routes touches across the full view when it has a background drawable, and a
+// `transparent` background counts as none. Jest cannot assert hit-testing, so
+// this fill is the regression guard for the device bug.
+const UNSELECTED_FILL = () => withAlpha(DarkTheme.text, 0.004)
 
 const trackStyle = () => StyleSheet.flatten(screen.getByTestId(TRACK_ID).props.style)
 
@@ -167,12 +172,14 @@ describe('<PillTabs>', () => {
     expect(screen.getByText('Плейлисты')).toHaveStyle({ fontWeight: '600' })
   })
 
-  test('leaves unselected segments visually bare', async () => {
+  test('gives unselected segments a real near-invisible drawable for the hit area', async () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
 
     const unselected = segmentStyle('Плейлисты')
 
-    expect(unselected.backgroundColor).toBe('transparent')
+    // NOT 'transparent': Android needs a real background drawable to route a
+    // tap across the whole segment rather than only over its text.
+    expect(unselected.backgroundColor).toBe(UNSELECTED_FILL())
     expect(unselected.borderWidth).toBeUndefined()
     expect(unselected.boxShadow).toBeUndefined()
     expect(unselected.elevation).toBeUndefined()

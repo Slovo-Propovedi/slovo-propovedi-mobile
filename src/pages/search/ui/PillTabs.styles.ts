@@ -49,10 +49,11 @@ export const styles = StyleSheet.create({
   },
   segment: {
     alignItems: 'center',
-    backgroundColor: 'transparent',
     borderRadius: RADIUSES.round,
     // The Pressable itself is the cell: numeric height + flex width make the
-    // hit rect exactly the highlighted segment, padding-free.
+    // hit rect exactly the highlighted segment, padding-free. The background is
+    // committed per state in PillTabSegment (unselected keeps a near-invisible
+    // themed fill: Android needs a real drawable to route full-area taps).
     height: SEGMENT_HEIGHT,
     justifyContent: 'center',
     paddingHorizontal: INDENTS.middle,
