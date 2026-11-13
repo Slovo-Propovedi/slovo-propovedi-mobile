@@ -98,9 +98,10 @@ jobs:
             echo ''
           } | scripts/ci/step-summary.sh
 
-          # Previous tag by creator date, excluding the tag being released.
+          # Previous release tag by version (not tagger date: bulk re-tags tie
+          # tagger dates), excluding the tag being released.
           # `|| true`: grep exits 1 when nothing is left (first ever tag).
-          PREV=$(git tag --sort=-creatordate | grep -v -x "${{ github.ref_name }}" | sed -n '1p' || true)
+          PREV=$(git tag --sort=-v:refname | grep -v -x "${{ github.ref_name }}" | sed -n '1p' || true)
 
           # Native-vs-JS detection lives in scripts/ci/detect-native-changes.sh
           # — one implementation shared with ota-publish.yml. An empty PREV

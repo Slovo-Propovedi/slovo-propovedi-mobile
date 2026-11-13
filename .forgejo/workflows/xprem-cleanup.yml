@@ -93,8 +93,10 @@ jobs:
             echo ''
           } | scripts/ci/step-summary.sh || true
 
-          # Latest tag by creator date is the last released APK's baseline.
-          PREV_TAG=$(git tag --sort=-creatordate | sed -n '1p' || true)
+          # Highest release tag (version sort, not tagger date: bulk re-tags give
+          # annotated tags identical tagger dates, e.g. the mirror re-tag that tied
+          # v0.33.1 with v0.34.0) is the last released APK's baseline.
+          PREV_TAG=$(git tag --sort=-v:refname | sed -n '1p' || true)
           if [ -z "$PREV_TAG" ]; then
             echo "::error::no release tags — nothing can be outdated relative to nothing; cut a native release first"
             echo "result=blocked" >> "$GITHUB_OUTPUT"

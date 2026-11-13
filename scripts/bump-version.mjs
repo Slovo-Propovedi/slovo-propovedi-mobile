@@ -80,10 +80,11 @@ if (otherChanges) {
 }
 
 // --- Determine release mode (native vs js-only) ---
-// The newest tag is the last release: this bump's tag does not exist yet.
+// The highest-version tag is the last release (version sort, not tagger date:
+// bulk re-tags tie tagger dates). This bump's tag does not exist yet.
 // No tags at all means a bootstrap release — treat it as native, matching the
 // CI default in scripts/ci/detect-native-changes.sh.
-const lastTag = execSync("git tag --sort=-creatordate | sed -n '1p'", {
+const lastTag = execSync("git tag --sort=-v:refname | sed -n '1p'", {
   encoding: 'utf-8',
 }).trim()
 
