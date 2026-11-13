@@ -176,5 +176,12 @@ describe('worklet directives', () => {
     expect(source).toMatch(/export const isRealDrag[\s\S]*?'worklet'/)
     expect(source).toMatch(/export const getSyncedOffset[\s\S]*?'worklet'/)
     expect(source).toMatch(/export const getPartnerLoopDistance[\s\S]*?'worklet'/)
+
+    // getMarqueeFrameStep runs from the handleFrame worklet, so it needs the
+    // directive too: without it native throws "non-worklet function on the UI
+    // thread" while JS tests keep passing.
+    const frameStepSource = readFileSync(join(__dirname, 'marquee-frame-step.ts'), 'utf8')
+
+    expect(frameStepSource).toMatch(/export const getMarqueeFrameStep[\s\S]*?'worklet'/)
   })
 })
