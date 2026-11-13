@@ -28,7 +28,7 @@ const CAP_RATIO_MAX = 0.99
  * Worklet-safe: called from Reanimated animated styles.
  * @param bottom - Mini-pill bottom edge (see `getMiniPlayerGeometry`).
  */
-export const getShadeHeight = (bottom: number) => {
+const getShadeHeight = (bottom: number) => {
   'worklet'
   return bottom + PLAYER_SIZES.miniPlayerHeight + SHADE_TOP_OVERSCAN_PX
 }
