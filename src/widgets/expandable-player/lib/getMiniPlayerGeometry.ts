@@ -10,6 +10,13 @@ import {
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 
+/**
+ * Slide-down distance that tucks the pill behind the focused search row: its
+ * own height plus the two outer gaps lands its top on the row's top edge. The
+ * shade's pill cutout mirrors the same distance.
+ */
+export const MINI_PILL_TUCK_DISTANCE = PLAYER_SIZES.miniPlayerHeight + BAR_OUTER_GAP * 2
+
 interface MiniPlayerGeometry {
   bottom: number
   left: number

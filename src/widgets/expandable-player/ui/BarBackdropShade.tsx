@@ -2,12 +2,6 @@ import { useAtom } from '@reatom/npm-react'
 import { StyleSheet, useWindowDimensions } from 'react-native'
 import Animated, { useSharedValue } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import {
-  isSearchFieldFocusedAtom,
-  isSearchFieldVisibleAtom,
-  isSearchQueryActive,
-  searchQueryAtom,
-} from 'features/sermon-search/@x/barMorph'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { BAR_BOTTOM_INSET_MIN, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
@@ -20,10 +14,11 @@ import { ShadeGradient } from './ShadeGradient'
  * Vertical gradient behind the bottom chrome, rendered as the first child of the
  * tab-bar floating container. It is pill-anchored only where this zone mounts
  * the mini player (`hasMiniPlayer`) and retracts to the islands row while the
- * search field is focused. The settled chrome shapes are cut out of the
- * gradient, so the glass islands read the page through them instead of tinting
- * their own backdrop. Hidden on settled fullscreen expansion in the player
- * zone, or before the tab bar has been measured.
+ * search field is focused. The chrome shapes are cut out of the gradient by
+ * animated mask rects driven by the same morph values as the glass, so the
+ * cutouts follow every frame instead of jumping on settle. Hidden on settled
+ * fullscreen expansion in the player zone, or before the tab bar has been
+ * measured.
  * @param root0 - Component props.
  * @param root0.hasMiniPlayer - Whether this zone mounts the mini-player pill.
  * @param root0.hasSearch - Whether this zone renders the search chrome.
@@ -41,23 +36,17 @@ export const BarBackdropShade = ({
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const [isFocused] = useAtom(isSearchFieldFocusedAtom)
-  const [isSearchVisible] = useAtom(isSearchFieldVisibleAtom)
-  const [query] = useAtom(searchQueryAtom)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
   // A boolean keeps the worklet closure free of the whole audio object.
   const hasAudio = !!audio
   // Pill geometry is only real in zones that mount the mini player.
   const hasPill = hasAudio && hasMiniPlayer
   const bottomPadding = Math.max(bottom, BAR_BOTTOM_INSET_MIN)
-  const { holes, locations, shadeStyle } = useShadeGeometry({
+  const { layout, locations, shadeStyle, sources } = useShadeGeometry({
     bottomPadding,
     fullScreenHeight: screenHeight,
-    hasClose: isFocused || isSearchQueryActive(query),
     hasPill,
     hasSearch,
-    isFocused,
-    isSearchVisible,
     screenWidth,
     tabBarHeight,
   })
@@ -72,7 +61,12 @@ export const BarBackdropShade = ({
   return (
     <Animated.View pointerEvents='none' style={styles.layer}>
       <Animated.View style={[styles.shade, shadeStyle]}>
-        <ShadeGradient holes={holes} locations={locations} colors={getShadeColors(isLight)} />
+        <ShadeGradient
+          layout={layout}
+          sources={sources}
+          locations={locations}
+          colors={getShadeColors(isLight)}
+        />
       </Animated.View>
     </Animated.View>
   )

@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { withTiming } from 'react-native-reanimated'
+import { searchFocusMorphDriver } from 'widgets/search-island/@x/morphDrivers'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import {
@@ -8,6 +9,7 @@ import {
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
+import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
 import { ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
 import { useTabIslandMorph } from './useTabIslandMorph'
 
@@ -31,6 +33,11 @@ const captureCompletions = () => {
 }
 
 describe('useTabIslandMorph', () => {
+  beforeEach(() => {
+    tabIslandMorphDriver.reset()
+    searchFocusMorphDriver.reset()
+  })
+
   afterEach(() => {
     mockedWithTiming.mockImplementation(defaultWithTimingImpl)
   })

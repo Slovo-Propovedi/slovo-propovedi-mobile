@@ -9,19 +9,19 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated'
+import { searchFocusMorphDriver } from 'widgets/search-island/@x/morphDrivers'
 import { useOnboardingTargetRef } from 'features/onboarding'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
-import { BAR_MORPH_DURATION_MS, BAR_OUTER_GAP, useKeyboardLiftStyle } from 'shared/ui/layout'
-import { PLAYER_SIZES, type ThemeColors } from 'shared/ui/theme'
+import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
+import { BAR_MORPH_DURATION_MS, useKeyboardLiftStyle } from 'shared/ui/layout'
+import { type ThemeColors } from 'shared/ui/theme'
+import { MINI_PILL_TUCK_DISTANCE } from '../../lib/getMiniPlayerGeometry'
 import { miniLayerStyle } from './commonStyles'
 import { MiniPlayer } from './MiniPlayer'
 import { createMiniStyles } from './miniStyles'
 
-// Sliding the pill down by its own height plus the two outer gaps lands its top
-// on the focused full-width search pill's top, so it disappears behind it.
-const MINI_TUCK_DISTANCE = PLAYER_SIZES.miniPlayerHeight + BAR_OUTER_GAP * 2
 // The islands above are translucent glass, so the tucked pill must fade out
 // after the slide; 180 ms reads as one motion rather than a second step.
 const MINI_TUCK_FADE_MS = 180
@@ -77,24 +77,24 @@ export const CollapsedMiniPlayer = ({
   const miniStyles = createMiniStyles(currentTheme)
   const keyboardLiftStyle = useKeyboardLiftStyle()
   const [isHidden] = useAtom(isSearchFieldFocusedAtom)
-  const focusProgress = useSharedValue(isHidden ? 1 : 0)
+  // Same shared value the search frame and the shade's pill cutout read.
+  const { progress: focusProgress } = useAtomMorphDriver(searchFocusMorphDriver)
   const pillOpacity = useSharedValue(isHidden ? 0 : 1)
   const tuckStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: MINI_TUCK_DISTANCE * focusProgress.value }],
+    transform: [{ translateY: MINI_PILL_TUCK_DISTANCE * focusProgress.value }],
   }))
   const fadeStyle = useAnimatedStyle(() => ({ opacity: pillOpacity.value }))
 
   // Starts after the commit so the player root's zIndex (dropped below the tab
   // bar) is in place before the first tucked frame. Stays mounted while hidden.
   useEffect(() => {
-    focusProgress.value = withTiming(isHidden ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
     // Focus: slide under first, then fade out. Blur: fade back in while the
     // pill slides up (simultaneous reverse, so the pill is visible as it rises).
     // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in effect (withDelay/withTiming sequencing below)
     pillOpacity.value = isHidden
       ? withDelay(BAR_MORPH_DURATION_MS, withTiming(0, { duration: MINI_TUCK_FADE_MS }))
       : withTiming(1, { duration: MINI_TUCK_FADE_MS })
-  }, [focusProgress, isHidden, pillOpacity])
+  }, [isHidden, pillOpacity])
 
   return (
     <Animated.View

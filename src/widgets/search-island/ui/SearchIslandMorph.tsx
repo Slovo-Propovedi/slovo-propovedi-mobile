@@ -2,18 +2,16 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useMemo } from 'react'
 import { Keyboard, useWindowDimensions } from 'react-native'
 import { useAnimatedStyle } from 'react-native-reanimated'
-import { isTabIslandCollapsedAtom } from 'widgets/tab-bar/@x/morph'
+import { tabIslandMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { closeSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
-import {
-  isSearchFieldFocusedAtom,
-  isSearchFieldVisibleAtom,
-} from 'features/sermon-search/@x/barMorph'
-import { useAtomMorph } from 'shared/lib/hooks/useAtomMorph'
+import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { GlassIsland } from 'shared/ui'
-import { BAR_MORPH_DURATION_MS, tabBarHeightAtom } from 'shared/ui/layout'
+import { tabBarHeightAtom } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { useSearchFocusMorph } from '../lib/useSearchFocusMorph'
+import { searchFocusMorphDriver } from '../model/searchFocusDriver'
+import { searchOpenMorphDriver } from '../model/searchOpenDriver'
 import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
 import { SearchIslandContent } from './SearchIslandContent'
 import { SearchIslandMagnifier } from './SearchIslandMagnifier'
@@ -33,21 +31,14 @@ export const SearchIslandMorph = () => {
   const closeSearchAction = useAction(closeSearch)
   const { closeProgress, handleCloseFocusChange, settledClose, shouldShowClose } =
     useSearchFocusMorph()
-  // Both morphs subscribe to their atom, so they start in the same tick as the
-  // tab island instead of waiting for a React commit. Their SETTLED flags feed
-  // the resting layer; the live progress drives the animated layer.
-  const { progress: barProgress, settled: settledTabCollapsed } = useAtomMorph(
-    isTabIslandCollapsedAtom,
-    BAR_MORPH_DURATION_MS,
-  )
-  const { progress: openProgress, settled: settledOpen } = useAtomMorph(
-    isSearchFieldVisibleAtom,
-    BAR_MORPH_DURATION_MS,
-  )
-  const { progress: focusProgress, settled: settledFocused } = useAtomMorph(
-    isSearchFieldFocusedAtom,
-    BAR_MORPH_DURATION_MS,
-  )
+  // Every morph is a module-level driver, so this frame and the glass surfaces
+  // it sits next to read the same progress values. Their SETTLED flags feed the
+  // resting layer; the live progress drives the animated layer.
+  const { progress: barProgress, settled: settledTabCollapsed } =
+    useAtomMorphDriver(tabIslandMorphDriver)
+  const { progress: openProgress, settled: settledOpen } = useAtomMorphDriver(searchOpenMorphDriver)
+  const { progress: focusProgress, settled: settledFocused } =
+    useAtomMorphDriver(searchFocusMorphDriver)
 
   const handleCloseSearch = useCallback(() => {
     Keyboard.dismiss()

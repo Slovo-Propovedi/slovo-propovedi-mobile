@@ -1,11 +1,11 @@
 import { useAtom } from '@reatom/npm-react'
 import { useAnimatedStyle } from 'react-native-reanimated'
+import { searchFocusMorphDriver } from 'widgets/search-island/@x/morphDrivers'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
-import { useAtomMorph } from 'shared/lib/hooks/useAtomMorph'
+import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import {
   BAR_CIRCLE_SIZE,
   BAR_CIRCLE_SIZE_EXPANDED,
-  BAR_MORPH_DURATION_MS,
   BAR_OUTER_GAP,
   BAR_SIDE_INSET,
   CONTENT_COLUMN_WIDTH,
@@ -13,6 +13,7 @@ import {
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
 import { isTabIslandCollapsedAtom } from '../model/barMorph'
+import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
 import { getIslandContentStyle } from './getBarMorphStyles'
 import { getIslandStyle, ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
 import { getTabIslandRestingStyles } from './getTabIslandRestingStyles'
@@ -38,14 +39,9 @@ export const useTabIslandMorph = ({
 }: TabIslandMorphInput) => {
   const [isCollapsed] = useAtom(isTabIslandCollapsedAtom)
   const [isFocused] = useAtom(isSearchFieldFocusedAtom)
-  const { progress, settled: settledCollapsed } = useAtomMorph(
-    isTabIslandCollapsedAtom,
-    BAR_MORPH_DURATION_MS,
-  )
-  const { progress: focusProgress, settled: settledFocused } = useAtomMorph(
-    isSearchFieldFocusedAtom,
-    BAR_MORPH_DURATION_MS,
-  )
+  const { progress, settled: settledCollapsed } = useAtomMorphDriver(tabIslandMorphDriver)
+  const { progress: focusProgress, settled: settledFocused } =
+    useAtomMorphDriver(searchFocusMorphDriver)
 
   const rowContentWidth =
     Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2

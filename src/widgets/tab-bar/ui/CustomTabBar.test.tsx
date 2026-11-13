@@ -1,6 +1,12 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
+import {
+  searchCloseMorphDriver,
+  searchFocusMorphDriver,
+  searchOpenMorphDriver,
+} from 'widgets/search-island/@x/morphDrivers'
+import { tabIslandMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { isSearchOpenAtom } from 'features/sermon-search'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
@@ -132,6 +138,10 @@ describe('<CustomTabBar>', () => {
     mockBottomInset = 0
     mockIsSearchFieldVisible = false
     mockShadeProps.length = 0
+    tabIslandMorphDriver.reset()
+    searchOpenMorphDriver.reset()
+    searchFocusMorphDriver.reset()
+    searchCloseMorphDriver.reset()
   })
 
   const findIslandsRow = () =>

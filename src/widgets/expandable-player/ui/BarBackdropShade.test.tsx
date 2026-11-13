@@ -3,6 +3,12 @@ import { act, screen } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
 import { StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
+import {
+  searchCloseMorphDriver,
+  searchFocusMorphDriver,
+  searchOpenMorphDriver,
+} from 'widgets/search-island/@x/morphDrivers'
+import { tabIslandMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
@@ -18,7 +24,9 @@ import {
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES, themeModeAtom } from 'shared/ui/theme'
-import { resetBarMorphDriver } from '../model/barMorphDriver'
+import { type ShadeHoleKey } from '../lib/getShadeHoles'
+import { barMorphProgressSv, resetBarMorphDriver } from '../model/barMorphDriver'
+import { type ShadeMorphSources } from '../model/useShadeGeometry'
 import { BarBackdropShade } from './BarBackdropShade'
 
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
@@ -116,6 +124,11 @@ const findShade = () =>
     )
   })[0]
 
+interface MaskChildProps extends SvgRectProps {
+  slot?: ShadeHoleKey
+  sources?: ShadeMorphSources
+}
+
 interface SvgRectProps {
   fill?: string
   height?: number | string
@@ -137,7 +150,7 @@ const stopColors = () => findGradientStops().map(stop => stop.props.stopColor)
 const stopOffsets = () => findGradientStops().map(stop => stop.props.offset)
 
 // The svg host nests the mapped hole rects as a child array, so flatten it.
-const maskChildren = (): Array<ReactElement<SvgRectProps>> => {
+const maskChildren = (): Array<ReactElement<MaskChildProps>> => {
   const children = screen.root?.queryAll(instance => instance.props.name === MASK_NAME)[0]?.props
     .children
 
@@ -146,7 +159,8 @@ const maskChildren = (): Array<ReactElement<SvgRectProps>> => {
   return children.flatMap(child => (Array.isArray(child) ? child : [child]))
 }
 
-const findMaskHoles = () => maskChildren().filter(node => node.props.fill === 'black')
+const findMaskHoles = () =>
+  maskChildren().flatMap(node => (node.props.slot ? [node.props.slot] : []))
 
 // The pass-through full-screen layer: absolute inset 0, no height, no svg.
 const findLayer = () =>
@@ -200,6 +214,10 @@ const renderShade = async ({
 describe('<BarBackdropShade>', () => {
   beforeEach(() => {
     resetBarMorphDriver()
+    tabIslandMorphDriver.reset()
+    searchOpenMorphDriver.reset()
+    searchFocusMorphDriver.reset()
+    searchCloseMorphDriver.reset()
     keyboardBottomInsetSv.value = 0
   })
 
@@ -243,19 +261,24 @@ describe('<BarBackdropShade>', () => {
       height: '100%',
       width: '100%',
     })
-    // Expanded island, resting search circle and the detached pill, all
-    // bottom-anchored inside the settled shade box.
-    expect(
-      findMaskHoles().map(node => {
-        const { height, rx, width, x, y } = node.props
+    // Four FIXED animated slots: island, search frame, close circle and pill.
+    // The slots never unmount, so a morph can never remount a mask node. Their
+    // per-frame geometry is unit-tested in getShadeHoles.test.ts.
+    expect(findMaskHoles()).toEqual(['island', 'search', 'close', 'pill'])
+    // Every slot reads the SAME shared value instances as the glass surfaces.
+    maskChildren()
+      .filter(node => node.props.slot)
+      .forEach(node => {
+        const { sources } = node.props
 
-        return { height, rx, width, x, y }
-      }),
-    ).toEqual([
-      { height: 76, rx: 38, width: 286, x: 16, y: 80 },
-      { height: 76, rx: 38, width: 76, x: 308, y: 80 },
-      { height: 64, rx: 32, width: 368, x: 16, y: 10 },
-    ])
+        if (!sources) throw new Error('Animated shade slot has no morph sources')
+
+        expect(sources.closeProgress).toBe(searchCloseMorphDriver.progress)
+        expect(sources.focusProgress).toBe(searchFocusMorphDriver.progress)
+        expect(sources.islandProgress).toBe(tabIslandMorphDriver.progress)
+        expect(sources.openProgress).toBe(searchOpenMorphDriver.progress)
+        expect(sources.pillProgress).toBe(barMorphProgressSv)
+      })
     const painted = screen.root?.queryAll(instance => instance.props.mask === MASK_NAME)[0]
 
     expect(painted?.props.fill).toMatchObject({ brushRef: GRADIENT_NAME })
