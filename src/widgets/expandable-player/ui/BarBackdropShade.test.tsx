@@ -2,12 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Platform, StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
-import {
-  holdSearchFocus,
-  isSearchFieldFocusedAtom,
-  isSearchOpenAtom,
-  releaseSearchFocusHold,
-} from 'features/sermon-search/@x/barMorph'
+import { isSearchFieldFocusedAtom, isSearchOpenAtom } from 'features/sermon-search/@x/barMorph'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
@@ -369,34 +364,6 @@ describe('<BarBackdropShade>', () => {
       height: EXPANDED_HEIGHT,
     })
     expect(findGradient()?.props.locations).toEqual(EXPANDED_LOCATIONS)
-  })
-
-  test('keeps the retracted shade while the focus is held after a blur', async () => {
-    const { ctx, rerender } = await renderShade()
-
-    await act(async () => {
-      isSearchFieldFocusedAtom(ctx, true)
-    })
-    await act(async () => {
-      holdSearchFocus(ctx)
-    })
-    await act(async () => {
-      isSearchFieldFocusedAtom(ctx, false)
-    })
-    await rerender(<BarBackdropShade hasMiniPlayer />)
-
-    expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
-      height: NO_PILL_EXPANDED_HEIGHT,
-    })
-
-    await act(async () => {
-      releaseSearchFocusHold(ctx)
-    })
-    await rerender(<BarBackdropShade hasMiniPlayer />)
-
-    expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
-      height: EXPANDED_HEIGHT,
-    })
   })
 
   test('anchors to the islands row top while no pill is active', async () => {

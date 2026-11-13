@@ -2,13 +2,9 @@ import { createCtx } from '@reatom/framework'
 import { isBarCollapsedAtom } from 'shared/ui/layout'
 import { isSearchOpenAtom, searchQueryAtom } from './model'
 import {
-  holdSearchFocus,
   isSearchBarCollapseSuspendedAtom,
   isSearchFieldFocusedAtom,
   isSearchFieldVisibleAtom,
-  isSearchFocusActiveAtom,
-  isSearchFocusHeldAtom,
-  releaseSearchFocusHold,
 } from './model-searchField'
 import { closeSearch, closeSearchAndExpand, openSearch } from './model-session'
 
@@ -77,53 +73,6 @@ describe('search field focus', () => {
     await closeSearch(ctx)
 
     expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
-  })
-})
-
-describe('search focus hold', () => {
-  test('the active flag tracks the field focus while no hold is set', () => {
-    const ctx = createCtx()
-
-    expect(ctx.get(isSearchFocusActiveAtom)).toBe(false)
-
-    isSearchFieldFocusedAtom(ctx, true)
-    expect(ctx.get(isSearchFocusActiveAtom)).toBe(true)
-
-    isSearchFieldFocusedAtom(ctx, false)
-    expect(ctx.get(isSearchFocusActiveAtom)).toBe(false)
-  })
-
-  test('holding keeps the active flag while the field is blurred', () => {
-    const ctx = createCtx()
-
-    holdSearchFocus(ctx)
-
-    expect(ctx.get(isSearchFocusHeldAtom)).toBe(true)
-    expect(ctx.get(isSearchFocusActiveAtom)).toBe(true)
-
-    isSearchFieldFocusedAtom(ctx, true)
-    isSearchFieldFocusedAtom(ctx, false)
-    expect(ctx.get(isSearchFocusActiveAtom)).toBe(true)
-  })
-
-  test('releasing the hold drops the active flag when the field is blurred', () => {
-    const ctx = createCtx()
-    holdSearchFocus(ctx)
-
-    releaseSearchFocusHold(ctx)
-
-    expect(ctx.get(isSearchFocusHeldAtom)).toBe(false)
-    expect(ctx.get(isSearchFocusActiveAtom)).toBe(false)
-  })
-
-  test('closing the search releases the hold', async () => {
-    const ctx = createCtx()
-    holdSearchFocus(ctx)
-
-    await closeSearch(ctx)
-
-    expect(ctx.get(isSearchFocusHeldAtom)).toBe(false)
-    expect(ctx.get(isSearchFocusActiveAtom)).toBe(false)
   })
 })
 

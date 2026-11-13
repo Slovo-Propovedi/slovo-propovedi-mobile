@@ -1,6 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
 import { useAnimatedStyle } from 'react-native-reanimated'
-import { isSearchFocusActiveAtom } from 'features/sermon-search/@x/barMorph'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { useAtomMorph } from 'shared/lib/hooks/useAtomMorph'
 import {
   BAR_CIRCLE_SIZE,
@@ -37,13 +37,13 @@ export const useTabIslandMorph = ({
   windowWidth,
 }: TabIslandMorphInput) => {
   const [isCollapsed] = useAtom(isTabIslandCollapsedAtom)
-  const [isFocused] = useAtom(isSearchFocusActiveAtom)
+  const [isFocused] = useAtom(isSearchFieldFocusedAtom)
   const { progress, settled: settledCollapsed } = useAtomMorph(
     isTabIslandCollapsedAtom,
     BAR_MORPH_DURATION_MS,
   )
   const { progress: focusProgress, settled: settledFocused } = useAtomMorph(
-    isSearchFocusActiveAtom,
+    isSearchFieldFocusedAtom,
     BAR_MORPH_DURATION_MS,
   )
 

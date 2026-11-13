@@ -4,7 +4,6 @@ import { useSharedValue, withTiming } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import {
   isSearchFieldFocusedAtom,
-  isSearchFocusActiveAtom,
   isSearchQueryActive,
   searchQueryAtom,
 } from 'features/sermon-search/@x/barMorph'
@@ -25,12 +24,9 @@ import { BAR_MORPH_DURATION_MS } from 'shared/ui/layout'
 export const useSearchFocusMorph = () => {
   const setFocusedAtom = useAction(isSearchFieldFocusedAtom)
   const [query] = useAtom(searchQueryAtom)
-  // The held focus keeps this morph's target at "focused", so a dialog that
-  // blurs the field cannot fade the ✕ out and in again.
-  const [isFocusActive] = useAtom(isSearchFocusActiveAtom)
   const [isFocused, setIsFocused] = useState(false)
   const hasActiveQuery = isSearchQueryActive(query)
-  const shouldShowClose = isFocusActive || hasActiveQuery
+  const shouldShowClose = isFocused || hasActiveQuery
   const [settledClose, setSettledClose] = useState(shouldShowClose)
   const closeProgress = useSharedValue(shouldShowClose ? 1 : 0)
 

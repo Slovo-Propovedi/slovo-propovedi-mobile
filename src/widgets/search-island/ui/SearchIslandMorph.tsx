@@ -5,8 +5,8 @@ import { useAnimatedStyle } from 'react-native-reanimated'
 import { isTabIslandCollapsedAtom } from 'widgets/tab-bar/@x/morph'
 import { closeSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import {
+  isSearchFieldFocusedAtom,
   isSearchFieldVisibleAtom,
-  isSearchFocusActiveAtom,
 } from 'features/sermon-search/@x/barMorph'
 import { useAtomMorph } from 'shared/lib/hooks/useAtomMorph'
 import { GlassIsland } from 'shared/ui'
@@ -45,7 +45,7 @@ export const SearchIslandMorph = () => {
     BAR_MORPH_DURATION_MS,
   )
   const { progress: focusProgress, settled: settledFocused } = useAtomMorph(
-    isSearchFocusActiveAtom,
+    isSearchFieldFocusedAtom,
     BAR_MORPH_DURATION_MS,
   )
 

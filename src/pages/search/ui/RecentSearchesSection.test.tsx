@@ -1,7 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
-import { isSearchFocusHeldAtom } from 'features/sermon-search'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search'
 import { searchHistoryAtom, type SearchHistoryEntry } from 'entities/search-history'
 import { type AudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
@@ -118,18 +118,20 @@ describe('<RecentSearchesSection>', () => {
     expect(onPress).toHaveBeenCalledWith(expect.objectContaining({ id: '1' }))
   })
 
-  test('opens its own dialog and holds the search focus', async () => {
+  test('opens its own dialog without touching the field focus', async () => {
     const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 1)])
 
     await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
 
     await fireEvent.press(screen.getByText(CLEAR_LABEL))
 
+    // Regression: tapping «Очистить» while the field is blurred must not put
+    // the bar into the focused arrangement (tab hide + ✕).
     expect(screen.getByText(DIALOG_TITLE)).toBeTruthy()
-    expect(ctx.get(isSearchFocusHeldAtom)).toBe(true)
+    expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
   })
 
-  test('releases the hold on cancel', async () => {
+  test('closes on cancel without touching the field focus', async () => {
     const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 1)])
 
     await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
@@ -138,10 +140,10 @@ describe('<RecentSearchesSection>', () => {
     await fireEvent.press(screen.getByText(CANCEL_LABEL))
 
     expect(screen.queryByText(DIALOG_TITLE)).toBeNull()
-    expect(ctx.get(isSearchFocusHeldAtom)).toBe(false)
+    expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
   })
 
-  test('clears the history and releases the hold on confirm', async () => {
+  test('clears the history on confirm without touching the field focus', async () => {
     const ctx = createCtxWithHistory([buildEntry('1', 'Первая', 1)])
 
     await renderWithProviders(<RecentSearchesSection onPress={jest.fn()} />, { ctx })
@@ -150,7 +152,7 @@ describe('<RecentSearchesSection>', () => {
     await fireEvent.press(screen.getAllByText(CLEAR_LABEL).at(-1) as never)
 
     await waitFor(() => expect(ctx.get(searchHistoryAtom)).toEqual([]))
-    expect(ctx.get(isSearchFocusHeldAtom)).toBe(false)
+    expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
   })
 
   test('removes a single entry through the row menu', async () => {

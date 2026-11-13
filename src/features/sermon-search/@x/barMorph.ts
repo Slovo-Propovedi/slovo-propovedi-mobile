@@ -3,11 +3,7 @@
 // bare model tests that exercise the morph.
 export { isSearchOpenAtom, searchQueryAtom } from '../model'
 export {
-  holdSearchFocus,
   isSearchFieldFocusedAtom,
   isSearchFieldVisibleAtom,
-  isSearchFocusActiveAtom,
-  isSearchFocusHeldAtom,
   isSearchQueryActive,
-  releaseSearchFocusHold,
 } from '../model-searchField'

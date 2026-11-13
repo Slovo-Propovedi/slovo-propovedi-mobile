@@ -1,7 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { withTiming } from 'react-native-reanimated'
-import { holdSearchFocus, isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import {
   setBarCollapsed,
@@ -81,19 +81,16 @@ describe('useTabIslandMorph', () => {
     expect(result.current.restingIslandStyle.width).toBe(0)
   })
 
-  test('keeps the island hidden while the focus is held', async () => {
-    const { ctx, result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT))
+  test('keeps the island visible while the field is blurred', async () => {
+    // Fresh ctx: the shared test context may carry focus from an earlier test.
+    const ctx = createCtx()
+    const { result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT), { ctx })
 
-    await act(async () => {
-      holdSearchFocus(ctx)
-    })
-    await act(async () => {
-      isSearchFieldFocusedAtom(ctx, false)
-    })
-
-    expect(result.current.isFocused).toBe(true)
-    expect(result.current.restingIslandStyle.opacity).toBe(0)
-    expect(result.current.restingIslandStyle.width).toBe(0)
+    // Regression: nothing but real field focus may hide the island, so a dialog
+    // opened over a blurred field leaves it in place.
+    expect(result.current.isFocused).toBe(false)
+    expect(result.current.restingIslandStyle.opacity).toBe(1)
+    expect(result.current.restingIslandStyle.width).toBeGreaterThan(0)
   })
 
   test('seeds the resting shape from a collapsed bar at mount without animating', async () => {

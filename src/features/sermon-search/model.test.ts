@@ -1,7 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { isBarCollapsedAtom, setBarCollapsed } from 'shared/ui/layout'
 import { isSearchOpenAtom, searchInputRequestAtom, searchQueryAtom, typeSearchInput } from './model'
-import { isSearchFieldFocusedAtom, isSearchFocusHeldAtom } from './model-searchField'
+import { isSearchFieldFocusedAtom } from './model-searchField'
 import { closeSearch, closeSearchAndExpand, openSearch } from './model-session'
 
 describe('sermon-search model', () => {
@@ -42,7 +42,6 @@ describe('sermon-search model', () => {
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, 'вера')
     isSearchFieldFocusedAtom(ctx, true)
-    isSearchFocusHeldAtom(ctx, true)
     setBarCollapsed(ctx, true)
 
     await closeSearchAndExpand(ctx)
@@ -50,7 +49,6 @@ describe('sermon-search model', () => {
     expect(ctx.get(isSearchOpenAtom)).toBe(false)
     expect(ctx.get(searchQueryAtom)).toBe('')
     expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
-    expect(ctx.get(isSearchFocusHeldAtom)).toBe(false)
     expect(ctx.get(isBarCollapsedAtom)).toBe(false)
   })
 })

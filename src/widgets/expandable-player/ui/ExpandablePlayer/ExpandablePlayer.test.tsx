@@ -1,7 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { StyleSheet, type ViewStyle } from 'react-native'
 import { type TestInstance } from 'test-renderer'
-import { holdSearchFocus, isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/model'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
@@ -244,40 +244,22 @@ describe('<ExpandablePlayer>', () => {
     expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)
   })
 
-  test('keeps the mini player in place while only the focus hold is set', async () => {
+  test('keeps the mini player in place while the field is blurred', async () => {
     isBarCollapsedAtom(ctx, false)
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, '')
     tabBarHeightAtom(ctx, 98)
     const { queryByLabelText } = await renderWithProviders(<ExpandablePlayer />, { ctx })
 
-    // A dialog raised the hold; the input field itself never got focus.
-    await act(async () => {
-      holdSearchFocus(ctx)
-    })
+    // Regression: only real input focus tucks the pill; a dialog opened over an
+    // unfocused field must leave it in place.
+    const button = queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })
 
-    const findButton = () => queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })
-
-    expect(findPointerGate(findButton())?.props.pointerEvents).toBe('box-none')
-    expect(layerOpacity(findButton())).toBe(1)
+    expect(findPointerGate(button)?.props.pointerEvents).toBe('box-none')
+    expect(layerOpacity(button)).toBe(1)
     expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(false)
     expect(tuckTransform()).toEqual([{ translateY: 0 }])
     expect(StyleSheet.flatten(findPlayerRoot()?.props.style)?.zIndex).toBe(PLAYER_OVER_BAR_Z)
-
-    // The real field focus still tucks it, hold or no hold.
-    await act(async () => {
-      isSearchFieldFocusedAtom(ctx, true)
-    })
-    expect(findPointerGate(findButton())?.props.pointerEvents).toBe('none')
-
-    // And a blur returns it even while the hold is still raised.
-    await act(async () => {
-      isSearchFieldFocusedAtom(ctx, false)
-    })
-    expect(findPointerGate(findButton())?.props.pointerEvents).toBe('box-none')
-    expect(layerOpacity(findButton())).toBe(1)
-    expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(false)
-    expect(tuckTransform()).toEqual([{ translateY: 0 }])
   })
 
   test('keeps the last real tab bar height when a hidden screen reports zero', async () => {

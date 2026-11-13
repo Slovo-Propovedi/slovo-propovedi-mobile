@@ -1,12 +1,7 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
 import { Fragment, useCallback, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
-import {
-  holdSearchFocus,
-  releaseSearchFocusHold,
-  SearchResultsRow,
-  SearchRowSeparator,
-} from 'features/sermon-search'
+import { SearchResultsRow, SearchRowSeparator } from 'features/sermon-search'
 import {
   clearSearchHistoryAction,
   removeSearchEntryAction,
@@ -44,19 +39,16 @@ export const RecentSearchesSection = ({
     [ctx],
   )
 
-  // The dialog steals the field's focus: hold the focused chrome so none of the
-  // islands morph while it is open.
+  // The dialog never steals the text focus itself: opening or closing it must
+  // not touch the search field's focus state in any way.
   const handleOpenDialog = useCallback(() => {
     setDialogVisible(true)
-    holdSearchFocus(ctx)
-  }, [ctx])
+  }, [])
 
-  // Cancel, Android back and web Escape all dismiss through this path; releasing
-  // the hold restores the normal focus-driven chrome.
+  // Cancel, Android back and web Escape all dismiss through this path.
   const closeDialog = useCallback(() => {
     setDialogVisible(false)
-    releaseSearchFocusHold(ctx)
-  }, [ctx])
+  }, [])
 
   const handleConfirm = useCallback(() => {
     closeDialog()
