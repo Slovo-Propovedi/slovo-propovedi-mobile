@@ -26,7 +26,6 @@ interface UseExpandAnimationResult {
   fullStyle: ReturnType<typeof useAnimatedStyle>
   miniBarRestingStyle: ReturnType<typeof getMiniBarStyle>
   miniBarStyle: ReturnType<typeof useAnimatedStyle>
-  miniOverlayStyle: ReturnType<typeof useAnimatedStyle>
   miniStyle: ReturnType<typeof useAnimatedStyle>
   progress: SharedValue<number>
   restingContainerStyle: ReturnType<typeof getRestingContainerStyle>
@@ -92,8 +91,7 @@ export const useExpandAnimation = (
       tabBarHeight: tabBarHeightShared.value,
     }),
   )
-  const { backdropStyle, backgroundImageStyle, fullStyle, miniOverlayStyle, miniStyle } =
-    useOpacityStyles(progress)
+  const { backdropStyle, backgroundImageStyle, fullStyle, miniStyle } = useOpacityStyles(progress)
 
   /**
    * Forces the containerStyle worklet to re-run and re-apply current (correct)
@@ -117,7 +115,6 @@ export const useExpandAnimation = (
     fullStyle,
     miniBarRestingStyle,
     miniBarStyle,
-    miniOverlayStyle,
     miniStyle,
     progress,
     restingContainerStyle,

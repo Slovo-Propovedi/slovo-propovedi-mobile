@@ -69,12 +69,11 @@ describe('mini player vertical alignment', () => {
     expect(styles.miniContainer.height).toBe(PLAYER_SIZES.miniPlayerHeight)
   })
 
-  test('the pill host and its overlay use the shared full-round radius', () => {
-    // The platform clamps a full-round radius to min(w, h) / 2, so both the
-    // pill host and the overlay stay strict half-cylinders at any height
-    // without a per-surface radius constant.
+  test('the pill host uses the shared full-round radius', () => {
+    // The platform clamps a full-round radius to min(w, h) / 2, so the pill host
+    // stays a strict half-cylinder at any height without a per-surface radius
+    // constant.
     expect(styles.miniContainer.borderRadius).toBe(RADIUSES.round)
-    expect(styles.miniOverlay.borderRadius).toBe(RADIUSES.round)
   })
 })
 

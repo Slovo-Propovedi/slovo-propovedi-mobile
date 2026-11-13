@@ -70,7 +70,6 @@ jest.mock('../../model/useExpandAnimation', () => ({
     fullStyle: {},
     miniBarRestingStyle: {},
     miniBarStyle: {},
-    miniOverlayStyle: {},
     miniStyle: {},
     progress: { value: 0 },
     restingContainerStyle: {},

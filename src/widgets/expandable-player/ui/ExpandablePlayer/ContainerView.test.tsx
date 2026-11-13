@@ -4,7 +4,7 @@ import { type GestureType } from 'react-native-gesture-handler'
 import { type AudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { keyboardBottomInsetSv } from 'shared/ui/layout'
-import { LightTheme } from 'shared/ui/theme'
+import { LightTheme, RADIUSES } from 'shared/ui/theme'
 import { COLLAPSE_DURATION_MS } from '../../model/expandDurations'
 import { ContainerView } from './ContainerView'
 import { createStyles } from './styles'
@@ -44,7 +44,6 @@ const baseProps = {
   currentTheme: LightTheme,
   expanded: false,
   fullStyle: {},
-  miniOverlayStyle: {},
   onLayout: jest.fn(),
   panGesture: {} as GestureType,
   restingContainerStyle: {},
@@ -89,6 +88,22 @@ describe('<ContainerView> pointer events', () => {
     await renderWithProviders(<ContainerView {...baseProps} expanded />)
 
     expect(findContainerNode()?.props.pointerEvents).toBe('auto')
+  })
+})
+
+describe('<ContainerView> background artwork layers', () => {
+  test('renders no surface overlay above the background artwork', async () => {
+    // Regression: the legacy miniOverlay (theme.surface + RADIUSES.round, absoluteFill,
+    // mounted above the artwork) painted an oval sheet over the expanding artwork
+    // during the expand/collapse morph. It is dead at rest (container opacity 0) —
+    // the layer must not exist at all.
+    await renderWithProviders(<ContainerView {...baseProps} expanded={false} />)
+
+    const overlayNodes = screen.root?.queryAll(
+      instance => StyleSheet.flatten(instance.props.style)?.borderRadius === RADIUSES.round,
+    )
+
+    expect(overlayNodes ?? []).toHaveLength(0)
   })
 })
 

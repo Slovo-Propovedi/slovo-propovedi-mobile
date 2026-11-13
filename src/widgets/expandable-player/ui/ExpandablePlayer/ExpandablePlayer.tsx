@@ -49,7 +49,6 @@ export const ExpandablePlayer = ({
     fullStyle,
     miniBarRestingStyle,
     miniBarStyle,
-    miniOverlayStyle,
     miniStyle,
     progress,
     restingContainerStyle,
@@ -117,7 +116,6 @@ export const ExpandablePlayer = ({
         containerStyle={containerStyle}
         panGesture={gesture.panGesture}
         onLayout={guardedContainerLayout}
-        miniOverlayStyle={miniOverlayStyle}
         onAddToPlaylist={openAddToPlaylist}
         backgroundImageStyle={backgroundImageStyle}
         restingContainerStyle={restingContainerStyle}

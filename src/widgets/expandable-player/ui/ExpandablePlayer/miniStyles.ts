@@ -76,11 +76,6 @@ export const createMiniStyles = (theme: ThemeColors) =>
       height: MINI_ARTWORK_SIZE,
       width: MINI_ARTWORK_SIZE,
     },
-    miniOverlay: {
-      ...StyleSheet.absoluteFill,
-      backgroundColor: theme.surface,
-      borderRadius: RADIUSES.round,
-    },
     miniPlayButton: {
       height: MINI_PLAY_BOX_SIZE,
       minHeight: MINI_PLAY_BOX_SIZE,

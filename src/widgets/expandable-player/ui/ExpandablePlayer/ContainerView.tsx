@@ -9,7 +9,6 @@ import { type ThemeColors } from 'shared/ui/theme'
 import { useFullscreenContentMount } from '../../model/useFullscreenContentMount'
 import { FullscreenContent } from '../FullscreenContent/FullscreenContent'
 import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
-import { createMiniStyles } from './miniStyles'
 import { type createStyles } from './styles'
 
 /** Consumer style must not carry geometry keys — enforced by compiler (Issue #63 invariant). */
@@ -23,7 +22,6 @@ export const ContainerView = ({
   currentTheme,
   expanded,
   fullStyle,
-  miniOverlayStyle,
   onAddToPlaylist,
   onLayout,
   panGesture,
@@ -39,7 +37,6 @@ export const ContainerView = ({
   currentTheme: ThemeColors
   expanded: boolean
   fullStyle: AnimatedStyle<ViewStyle>
-  miniOverlayStyle: AnimatedStyle<ViewStyle>
   onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onLayout: (event: LayoutChangeEvent) => void
   panGesture: GestureType
@@ -50,7 +47,6 @@ export const ContainerView = ({
 }) => {
   // FullscreenContent stays mounted through the collapse animation so the exit
   // fade is visible, then unmounts to stop its per-tick re-render storm (Issue #100).
-  const miniOverlay = createMiniStyles(currentTheme).miniOverlay
   const isFullscreenContentMounted = useFullscreenContentMount(expanded)
   // The collapsed container doubles as the mini overlay under the pill, so it
   // follows the keyboard with the rest of the bottom chrome. At fullscreen the
@@ -95,7 +91,6 @@ export const ContainerView = ({
         <Animated.View style={[styles.backgroundContainer, backgroundImageStyle]}>
           <CoverImage eager transition={0} uri={audio.artwork} style={styles.backgroundImage} />
         </Animated.View>
-        <Animated.View style={[miniOverlay, miniOverlayStyle, { pointerEvents: 'none' }]} />
         {expanded && <StatusBar style='light' />}
         {isFullscreenContentMounted && (
           <FullscreenContent

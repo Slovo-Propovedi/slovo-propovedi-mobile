@@ -7,10 +7,6 @@ export const useOpacityStyles = (progress: SharedValue<number>) => {
   const backgroundImageStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0, 0.3], [0, 1]),
   }))
-  // Dark overlay for mini player - fades out as it expands
-  const miniOverlayStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.5], [1, 0]),
-  }))
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0, 0.5], [0, 0.5]),
   }))
@@ -25,7 +21,6 @@ export const useOpacityStyles = (progress: SharedValue<number>) => {
     backdropStyle,
     backgroundImageStyle,
     fullStyle,
-    miniOverlayStyle,
     miniStyle,
   }
 }
