@@ -278,7 +278,7 @@ API base: `https://codeberg.org/api/v1/repos/Slovo_Propovedi/slovo-propovedi-mob
 | `error`       | «Ошибка обновления»    | текст ошибки, кнопки «Повторить» / «Открыть в браузере» / «Закрыть» (порядок и акцент зависят от `updateErrorKindAtom`) |
 
 - «Обновить» → `startUpdate()`; во время загрузки закрытие диалога заблокировано (`onRequestClose` — no-op).
-- Закрытие («Не обновлять», «Закрыть», «Не сейчас», back) вызывает `reset()` хука и `onClose`.
+- Закрытие («Не обновлять», «Закрыть», «Не сейчас», back) вызывает `onClose` и `reset()`; диалог остаётся смонтированным и на время fade рендерит последнее показанное состояние (снимок `DialogSnapshot`), поэтому текст не пропадает во время анимации закрытия.
 - Ссылки открывают `releaseUrlAtom` (страница релиза ответившего источника) через `openReleaseUrl` (`lib/openReleaseUrl.ts`) с защитой: только `https://`.
 
 Составные части: `UpdateDialogConfirm.tsx`, `UpdateDialogProgress.tsx`, `UpdateDialogPermission.tsx`, `UpdateDialogError.tsx`, общие стили — `updateDialogStyles.ts`. Кнопки переиспользуют `shared/ui/confirm-dialog/ConfirmDialogButton`.

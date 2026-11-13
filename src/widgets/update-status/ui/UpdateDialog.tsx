@@ -1,7 +1,12 @@
 import { useAtom } from '@reatom/npm-react'
+import { useState } from 'react'
 import { Modal, Text, View } from 'react-native'
 import { useUpdateInstall } from 'features/app-update'
-import { GENERIC_ERROR_MESSAGE, openInstallPermissionSettings } from 'shared/lib/update-service'
+import {
+  GENERIC_ERROR_MESSAGE,
+  openInstallPermissionSettings,
+  type UpdateErrorKind,
+} from 'shared/lib/update-service'
 import {
   isBusyUpdateState,
   latestVersionAtom,
@@ -19,6 +24,13 @@ import { updateDialogStyles as styles } from './updateDialogStyles'
 export interface UpdateDialogProps {
   onClose: () => void
   visible: boolean
+}
+
+interface DialogSnapshot {
+  error: null | string
+  errorKind: null | UpdateErrorKind
+  progress: number
+  updateState: UpdateState
 }
 
 const CONFIRM_TITLE = 'Доступно обновление'
@@ -40,31 +52,36 @@ export const UpdateDialog = ({ onClose, visible }: UpdateDialogProps) => {
   const [latestVersion] = useAtom(latestVersionAtom)
   const [releaseUrl] = useAtom(releaseUrlAtom)
   const { error, errorKind, progress, reset, startUpdate, updateState } = useUpdateInstall()
+  const [lastShown, setLastShown] = useState<DialogSnapshot | null>(null)
 
-  if (!visible) return null
-
-  const isBusy = isBusyUpdateState(updateState)
+  // The modal keeps rendering while it fades out: reset() in the same commit would
+  // swap the content to the idle state. Render the last live state until hidden.
+  const live: DialogSnapshot = { error, errorKind, progress, updateState }
+  const shown = visible ? live : (lastShown ?? live)
 
   const handleClose = () => {
-    reset()
+    setLastShown(live)
     onClose()
+    reset()
   }
+
+  const isBusy = isBusyUpdateState(shown.updateState)
 
   const handleOpenReleases = () => openReleaseUrl(releaseUrl)
 
   const renderContent = () => {
-    if (updateState === 'error')
+    if (shown.updateState === 'error')
       return (
         <UpdateDialogError
           onClose={handleClose}
           onRetry={startUpdate}
-          errorKind={errorKind ?? 'unknown'}
           onOpenReleases={handleOpenReleases}
-          errorMessage={error ?? GENERIC_ERROR_MESSAGE}
+          errorKind={shown.errorKind ?? 'unknown'}
+          errorMessage={shown.error ?? GENERIC_ERROR_MESSAGE}
         />
       )
 
-    if (updateState === 'permission')
+    if (shown.updateState === 'permission')
       return (
         <UpdateDialogPermission
           onClose={handleClose}
@@ -72,7 +89,8 @@ export const UpdateDialog = ({ onClose, visible }: UpdateDialogProps) => {
         />
       )
 
-    if (isBusy) return <UpdateDialogProgress progress={progress} updateState={updateState} />
+    if (isBusyUpdateState(shown.updateState))
+      return <UpdateDialogProgress progress={shown.progress} updateState={shown.updateState} />
 
     return (
       <UpdateDialogConfirm
@@ -95,7 +113,7 @@ export const UpdateDialog = ({ onClose, visible }: UpdateDialogProps) => {
       <View style={[styles.backdrop, { backgroundColor: currentTheme.backdrop }]}>
         <View style={[styles.dialog, { backgroundColor: currentTheme.surface }]}>
           <Text style={[styles.title, { color: currentTheme.text }]}>
-            {getDialogTitle(updateState)}
+            {getDialogTitle(shown.updateState)}
           </Text>
           {renderContent()}
         </View>
