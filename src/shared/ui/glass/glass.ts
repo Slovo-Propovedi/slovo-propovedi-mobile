@@ -31,8 +31,9 @@ export const GLASS = {
   },
   border: { alpha: { dark: 0.12, light: 0.25 }, color: '255, 255, 255' },
   // Clear glass: the blurred backdrop smears read through the fill, which is
-  // the perceived refraction. A milky slab would hide them.
-  fillAlpha: { dark: 0.36, light: 0.5 },
+  // the perceived refraction. A milky slab would hide them, so the fill stays
+  // thin enough for page content to show through on every platform.
+  fillAlpha: { dark: 0.26, light: 0.38 },
   web: {
     // Classic glassmorphism: `backdrop-filter: blur(12px) saturate(140%)`.
     // GlassSurface bypasses BlurView on web and emits both this property and its
@@ -44,7 +45,7 @@ export const GLASS = {
     // Translucent tint: light glass whitens the backdrop slightly, dark glass
     // darkens it so white text keeps its contrast. Thinner than the native fill:
     // the backdrop-filter blur already carries the refraction.
-    tintAlpha: { dark: 0.3, light: 0.2 },
+    tintAlpha: { dark: 0.22, light: 0.14 },
   },
 } as const
 

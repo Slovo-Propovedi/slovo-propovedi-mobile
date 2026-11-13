@@ -31,13 +31,13 @@ jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn(() => jest.fn()) }),
 }))
 
-const mockShadeProps: Array<{ hasMiniPlayer?: boolean }> = []
+const mockShadeProps: Array<{ hasMiniPlayer?: boolean; hasSearch?: boolean }> = []
 
 jest.mock('widgets/expandable-player/@x/barShade', () => {
   const { View } = jest.requireActual('react-native')
 
   return {
-    BarBackdropShade: (props: { hasMiniPlayer?: boolean }) => {
+    BarBackdropShade: (props: { hasMiniPlayer?: boolean; hasSearch?: boolean }) => {
       mockShadeProps.push(props)
 
       return <View style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }} />
@@ -220,12 +220,18 @@ describe('<CustomTabBar>', () => {
 
     // Only the user zone mounts the mini-player pill; the admin zone must tell
     // the shade to anchor to the islands row instead.
-    expect(mockShadeProps.at(-1)).toEqual({ hasMiniPlayer: false })
+    expect(mockShadeProps.at(-1)).toEqual({ hasMiniPlayer: false, hasSearch: true })
 
     mockShadeProps.length = 0
     await renderTabBar(0, { hasMiniPlayer: true })
 
-    expect(mockShadeProps.at(-1)).toEqual({ hasMiniPlayer: true })
+    expect(mockShadeProps.at(-1)).toEqual({ hasMiniPlayer: true, hasSearch: true })
+
+    mockShadeProps.length = 0
+    await renderTabBar(0, { hideSearch: true })
+
+    // The admin row has no search chrome, so the shade spans its inner width.
+    expect(mockShadeProps.at(-1)).toEqual({ hasMiniPlayer: false, hasSearch: false })
   })
 
   test('ignores a zero-height layout report', async () => {

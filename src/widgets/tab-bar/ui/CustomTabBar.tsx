@@ -66,7 +66,7 @@ export const CustomTabBar = ({
     <Animated.View pointerEvents='box-none' style={[styles.floatingContainer, keyboardLiftStyle]}>
       {/* First child: the tab-bar layer paints above the screens. It carries no
           zIndex, so the positioned zIndex-1 islands row paints above it on web. */}
-      <BarBackdropShade hasMiniPlayer={hasMiniPlayer} />
+      <BarBackdropShade hasSearch={!hideSearch} hasMiniPlayer={hasMiniPlayer} />
       <View
         pointerEvents='box-none'
         style={[

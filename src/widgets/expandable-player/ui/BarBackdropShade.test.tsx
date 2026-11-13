@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { act, screen } from '@testing-library/react-native'
+import { type ReactElement } from 'react'
 import { StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
@@ -20,12 +21,6 @@ import { PLAYER_SIZES, themeModeAtom } from 'shared/ui/theme'
 import { resetBarMorphDriver } from '../model/barMorphDriver'
 import { BarBackdropShade } from './BarBackdropShade'
 
-jest.mock('expo-linear-gradient', () => {
-  const { View } = jest.requireActual('react-native')
-
-  return { LinearGradient: (props: Record<string, unknown>) => <View {...props} /> }
-})
-
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
   default: () => ({ fontScale: 1, height: 800, width: 400 }),
@@ -40,6 +35,11 @@ jest.mock('react-native-safe-area-context', () => {
     useSafeAreaInsets: () => ({ bottom: 14, left: 0, right: 0, top: 0 }),
   }
 })
+
+const SVG_TEST_ID = 'bar-backdrop-shade-svg'
+// The svg `id` reaches the host node as `name` (react-native-svg renames it).
+const GRADIENT_NAME = 'bottom-chrome-shade-gradient'
+const MASK_NAME = 'bottom-chrome-shade-holes'
 
 // Fixture row height: BAR_ROW_MIN_HEIGHT content box plus the device safe-area
 // padding CustomTabBar adds (mirrors a phone with a 14dp bottom inset).
@@ -68,9 +68,9 @@ const NO_PILL_EXPANDED_HEIGHT =
   TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2 + SHADE_TOP_OVERSCAN_PX
 const NO_PILL_COLLAPSED_HEIGHT =
   TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT) / 2 + SHADE_TOP_OVERSCAN_PX
-const LIGHT_SHADE_OPAQUE = 'rgba(0, 0, 0, 0.08)'
+const LIGHT_SHADE_OPAQUE = 'rgba(0, 0, 0, 0.12)'
 const LIGHT_SHADE_COLORS = ['rgba(0, 0, 0, 0)', LIGHT_SHADE_OPAQUE, LIGHT_SHADE_OPAQUE]
-const DARK_SHADE_OPAQUE = 'rgba(128, 128, 128, 0.15)'
+const DARK_SHADE_OPAQUE = 'rgba(128, 128, 128, 0.10)'
 const DARK_SHADE_COLORS = ['rgba(128, 128, 128, 0)', DARK_SHADE_OPAQUE, DARK_SHADE_OPAQUE]
 // One continuous gradient: transparent at the shade top, opaque from the pill's
 // midline down. The middle stop is the fixed ramp height over the settled shade
@@ -116,20 +116,45 @@ const findShade = () =>
     )
   })[0]
 
-const findGradient = (colors = LIGHT_SHADE_COLORS) =>
-  screen.root?.queryAll(
-    instance =>
-      Array.isArray(instance.props.colors) && instance.props.colors.join('|') === colors.join('|'),
-  )[0]
+interface SvgRectProps {
+  fill?: string
+  height?: number | string
+  rx?: number
+  width?: number | string
+  x?: number
+  y?: number
+}
 
-// The pass-through full-screen layer: absolute inset 0, no height, no gradient.
+interface SvgStopProps {
+  offset: number
+  stopColor: string
+}
+
+const findGradientStops = (): Array<ReactElement<SvgStopProps>> =>
+  screen.root?.queryAll(instance => instance.props.name === GRADIENT_NAME)[0]?.props.children ?? []
+
+const stopColors = () => findGradientStops().map(stop => stop.props.stopColor)
+const stopOffsets = () => findGradientStops().map(stop => stop.props.offset)
+
+// The svg host nests the mapped hole rects as a child array, so flatten it.
+const maskChildren = (): Array<ReactElement<SvgRectProps>> => {
+  const children = screen.root?.queryAll(instance => instance.props.name === MASK_NAME)[0]?.props
+    .children
+
+  if (!Array.isArray(children)) return []
+
+  return children.flatMap(child => (Array.isArray(child) ? child : [child]))
+}
+
+const findMaskHoles = () => maskChildren().filter(node => node.props.fill === 'black')
+
+// The pass-through full-screen layer: absolute inset 0, no height, no svg.
 const findLayer = () =>
   screen.root?.queryAll(instance => {
     const flat = StyleSheet.flatten(instance.props.style)
 
     return (
       instance.props.pointerEvents === 'none' &&
-      !Array.isArray(instance.props.colors) &&
       flat?.position === 'absolute' &&
       flat?.top === 0 &&
       flat?.bottom === 0 &&
@@ -143,12 +168,14 @@ const renderShade = async ({
   audio = AUDIO,
   expanded = false,
   hasMiniPlayer = true,
+  hasSearch = true,
   isDark = false,
   measured = true,
 }: {
   audio?: AudioPlayerData | null
   expanded?: boolean
   hasMiniPlayer?: boolean
+  hasSearch?: boolean
   isDark?: boolean
   measured?: boolean
 } = {}) => {
@@ -157,9 +184,10 @@ const renderShade = async ({
   isPlayerExpandedAtom(ctx, expanded)
   if (measured) setTabBarHeight(ctx, TAB_BAR_HEIGHT)
 
-  const result = await renderWithProviders(<BarBackdropShade hasMiniPlayer={hasMiniPlayer} />, {
-    ctx,
-  })
+  const result = await renderWithProviders(
+    <BarBackdropShade hasSearch={hasSearch} hasMiniPlayer={hasMiniPlayer} />,
+    { ctx },
+  )
 
   if (isDark)
     await act(async () => {
@@ -181,7 +209,6 @@ describe('<BarBackdropShade>', () => {
 
   test('paints one continuous gradient from the screen bottom to the detached pill top', async () => {
     await renderShade()
-    const gradient = findGradient()
 
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       bottom: 0,
@@ -189,26 +216,49 @@ describe('<BarBackdropShade>', () => {
       left: 0,
       right: 0,
     })
-    expect(gradient?.props.colors).toEqual(LIGHT_SHADE_COLORS)
+    // Percent sizing keeps the svg stretched over the morphing shade box.
+    expect(screen.getByTestId(SVG_TEST_ID).props).toMatchObject({
+      height: '100%',
+      width: '100%',
+    })
+    expect(stopColors()).toEqual(LIGHT_SHADE_COLORS)
     // A single layer spans the whole shade: transparent at the top, opaque from
     // the pill's vertical middle down — there is no cap/fill junction left.
-    expect(gradient?.props.locations).toEqual(EXPANDED_LOCATIONS)
-    expect(StyleSheet.flatten(gradient?.props.style)).toMatchObject({
-      bottom: 0,
-      left: 0,
-      position: 'absolute',
-      right: 0,
-      top: 0,
-    })
+    expect(stopOffsets()).toEqual(EXPANDED_LOCATIONS)
   })
 
   test('swaps to a same-shape gray gradient in the dark theme', async () => {
     await renderShade({ isDark: true })
-    const gradient = findGradient(DARK_SHADE_COLORS)
 
-    expect(gradient?.props.colors).toEqual(DARK_SHADE_COLORS)
-    expect(gradient?.props.locations).toEqual(EXPANDED_LOCATIONS)
-    expect(findGradient()).toBeUndefined()
+    expect(stopColors()).toEqual(DARK_SHADE_COLORS)
+    expect(stopOffsets()).toEqual(EXPANDED_LOCATIONS)
+  })
+
+  test('cuts the settled chrome shapes out of the shade with a mask', async () => {
+    await renderShade()
+
+    // White base paints the gradient everywhere except under the islands.
+    expect(maskChildren()[0]?.props).toMatchObject({
+      fill: 'white',
+      height: '100%',
+      width: '100%',
+    })
+    // Expanded island, resting search circle and the detached pill, all
+    // bottom-anchored inside the settled shade box.
+    expect(
+      findMaskHoles().map(node => {
+        const { height, rx, width, x, y } = node.props
+
+        return { height, rx, width, x, y }
+      }),
+    ).toEqual([
+      { height: 76, rx: 38, width: 286, x: 16, y: 80 },
+      { height: 76, rx: 38, width: 76, x: 308, y: 80 },
+      { height: 64, rx: 32, width: 368, x: 16, y: 10 },
+    ])
+    const painted = screen.root?.queryAll(instance => instance.props.mask === MASK_NAME)[0]
+
+    expect(painted?.props.fill).toMatchObject({ brushRef: GRADIENT_NAME })
   })
 
   test('lets document order inside the tab bar own stacking: no zIndex, never intercepts touches', async () => {
@@ -226,7 +276,7 @@ describe('<BarBackdropShade>', () => {
     const { rerender } = await renderShade()
 
     keyboardBottomInsetSv.value = KEYBOARD_INSET
-    await rerender(<BarBackdropShade hasMiniPlayer />)
+    await rerender(<BarBackdropShade hasSearch hasMiniPlayer />)
 
     // The floating container already lifts; lifting here too would double-shift
     // the shade away from the pill.
@@ -239,14 +289,14 @@ describe('<BarBackdropShade>', () => {
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
-    await rerender(<BarBackdropShade hasMiniPlayer />)
+    await rerender(<BarBackdropShade hasSearch hasMiniPlayer />)
 
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: COLLAPSED_HEIGHT,
     })
     // The middle stop is recomputed for the settled collapsed height, so the
     // ramp still ends exactly on the pill's midline.
-    expect(findGradient()?.props.locations).toEqual(COLLAPSED_LOCATIONS)
+    expect(stopOffsets()).toEqual(COLLAPSED_LOCATIONS)
   })
 
   test('retracts to the islands row while the search field is focused and grows back on blur', async () => {
@@ -255,24 +305,24 @@ describe('<BarBackdropShade>', () => {
     await act(async () => {
       isSearchFieldFocusedAtom(ctx, true)
     })
-    await rerender(<BarBackdropShade hasMiniPlayer />)
+    await rerender(<BarBackdropShade hasSearch hasMiniPlayer />)
 
     // The pill tucks under the row, so the shade's top follows it down to the
     // search pill + close row instead of keeping the pill-extended extent.
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: NO_PILL_EXPANDED_HEIGHT,
     })
-    expect(findGradient()?.props.locations).toEqual(NO_PILL_EXPANDED_LOCATIONS)
+    expect(stopOffsets()).toEqual(NO_PILL_EXPANDED_LOCATIONS)
 
     await act(async () => {
       isSearchFieldFocusedAtom(ctx, false)
     })
-    await rerender(<BarBackdropShade hasMiniPlayer />)
+    await rerender(<BarBackdropShade hasSearch hasMiniPlayer />)
 
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: EXPANDED_HEIGHT,
     })
-    expect(findGradient()?.props.locations).toEqual(EXPANDED_LOCATIONS)
+    expect(stopOffsets()).toEqual(EXPANDED_LOCATIONS)
   })
 
   test('anchors to the islands row top while no pill is active', async () => {
@@ -286,8 +336,8 @@ describe('<BarBackdropShade>', () => {
       left: 0,
       right: 0,
     })
-    expect(findGradient()).toBeDefined()
-    expect(findGradient()?.props.locations).toEqual(NO_PILL_EXPANDED_LOCATIONS)
+    expect(stopColors()).toEqual(LIGHT_SHADE_COLORS)
+    expect(stopOffsets()).toEqual(NO_PILL_EXPANDED_LOCATIONS)
   })
 
   test('anchors to the islands row top when audio exists but no mini player mounts', async () => {
@@ -298,7 +348,7 @@ describe('<BarBackdropShade>', () => {
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: NO_PILL_EXPANDED_HEIGHT,
     })
-    expect(findGradient()?.props.locations).toEqual(NO_PILL_EXPANDED_LOCATIONS)
+    expect(stopOffsets()).toEqual(NO_PILL_EXPANDED_LOCATIONS)
   })
 
   test('ignores fullscreen expansion outside the player zone', async () => {
@@ -316,12 +366,12 @@ describe('<BarBackdropShade>', () => {
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
-    await rerender(<BarBackdropShade hasMiniPlayer />)
+    await rerender(<BarBackdropShade hasSearch hasMiniPlayer />)
 
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: NO_PILL_COLLAPSED_HEIGHT,
     })
-    expect(findGradient()?.props.locations).toEqual(NO_PILL_COLLAPSED_LOCATIONS)
+    expect(stopOffsets()).toEqual(NO_PILL_COLLAPSED_LOCATIONS)
   })
 
   test('renders nothing while the player is expanded to fullscreen', async () => {
