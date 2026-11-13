@@ -16,7 +16,7 @@ export const usePreacherSermons = (artist: string) => {
   const trimmedArtist = artist.trim()
   const [items, setItems] = useState<SermonData[]>([])
   const [hasMore, setHasMore] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(() => Boolean(trimmedArtist))
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [loadMoreFailed, setLoadMoreFailed] = useState(false)
 
