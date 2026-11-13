@@ -89,10 +89,9 @@ jobs:
             echo ''
           } | scripts/ci/step-summary.sh || true
 
-          # Highest release tag (version sort, not tagger date: bulk re-tags give
-          # annotated tags identical tagger dates, e.g. the mirror re-tag that tied
-          # v0.33.1 with v0.34.0) is the last released APK's baseline.
-          PREV_TAG=$(git tag --sort=-v:refname | sed -n '1p' || true)
+          # Latest release tag: scripts/ci/latest-release-tag.sh picks the
+          # highest version (tagger dates tie after bulk re-tags).
+          PREV_TAG=$(scripts/ci/latest-release-tag.sh)
           if [ -z "$PREV_TAG" ]; then
             echo "::warning::no tags yet — skipping js-only verification"
             echo "result=skipped" >> "$GITHUB_OUTPUT"
