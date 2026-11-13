@@ -5,7 +5,7 @@ import { isScreenTransitioningAtom } from '../model/screenTransition'
 import { useScreenTransitionTracking } from './useScreenTransitionTracking'
 
 const mockUnsubscribe = jest.fn()
-const mockAddListener = jest.fn(() => mockUnsubscribe)
+const mockAddListener = jest.fn((_event: string, _listener: () => void) => mockUnsubscribe)
 
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: mockAddListener }),
@@ -31,7 +31,7 @@ describe('useScreenTransitionTracking', () => {
 
     await renderHookWithProviders(() => useScreenTransitionTracking(), { ctx })
 
-    const listener = mockAddListener.mock.calls[0][1] as () => void
+    const listener = mockAddListener.mock.calls[0][1]
     await act(async () => {
       listener()
     })
