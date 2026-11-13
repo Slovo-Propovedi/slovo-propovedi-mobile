@@ -46,9 +46,12 @@ export const styles = StyleSheet.create({
   },
   segment: {
     alignItems: 'center',
+    // The button is the highlight: stretch it to the track's inner height (no
+    // percentage height) and let flex fill the segment's width, so the empty
+    // parts of a cell are tappable too.
+    alignSelf: 'stretch',
     backgroundColor: 'transparent',
     borderRadius: RADIUSES.round,
-    height: '100%',
     justifyContent: 'center',
     paddingHorizontal: INDENTS.middle,
   },

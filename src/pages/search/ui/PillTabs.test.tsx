@@ -236,10 +236,49 @@ describe('<PillTabs>', () => {
     expect(unselected.borderWidth).toBeUndefined()
     expect(unselected.boxShadow).toBeUndefined()
     expect(unselected.elevation).toBeUndefined()
+    expect(unselected.margin).toBeUndefined()
     expect(screen.getByText('Проповеди')).toHaveStyle({ fontWeight: '700' })
 
     // Results labels are a step larger than the scope track labels.
     expect(screen.getByText('Проповеди')).toHaveStyle({ fontSize: FONT_SIZES.md })
+  })
+
+  test('results pills are their own tap target (button bounds = pill bounds)', async () => {
+    await renderWithProviders(
+      <PillTabs items={ITEMS} variant='results' value='playlists' onChange={jest.fn()} />,
+    )
+
+    // The PressableButton carries the pill's own box (height + horizontal
+    // padding) — there is no inner wrapper shrinking the hit area, so taps on
+    // the pill's padding register too.
+    const selected = segmentStyle('Плейлисты')
+    expect(selected).toMatchObject({ height: 36, paddingHorizontal: INDENTS.medium })
+    expect(selected.margin).toBeUndefined()
+    expect(selected.width).toBeUndefined()
+    expect(selected.flex).toBeUndefined()
+
+    const unselected = segmentStyle('Проповеди')
+    expect(unselected).toMatchObject({ height: 36, paddingHorizontal: INDENTS.low })
+    expect(unselected.margin).toBeUndefined()
+    expect(unselected.width).toBeUndefined()
+    expect(unselected.flex).toBeUndefined()
+  })
+
+  test('makes the whole highlighted half of the track the tap target', async () => {
+    await renderWithProviders(
+      <PillTabs stretch value='listen' items={SCOPE_ITEMS} onChange={jest.fn()} />,
+    )
+
+    for (const label of ['Слушать', 'Читать']) {
+      const segment = segmentStyle(label)
+
+      // The button IS the highlight: full half-width (flex) and full inner
+      // track height (stretch), so empty parts of the cell respond to taps.
+      expect(segment.flex).toBe(1)
+      expect(segment.alignSelf).toBe('stretch')
+      expect(segment.height).toBeUndefined()
+      expect(segment.margin).toBeUndefined()
+    }
   })
 
   test('stretches the track and splits it equally between the scope segments', async () => {
