@@ -130,7 +130,9 @@ describe('<GlassSurface>', () => {
 
     const blurs = findBlur()
 
-    expect(blurs?.[0]?.props.blurMethod).toBeUndefined()
+    // Explicit `none` instead of an unset prop: expo-blur logs a warning when a
+    // dimezis method is paired with a missing `blurTarget`.
+    expect(blurs?.[0]?.props.blurMethod).toBe('none')
     expect(blurs?.[0]?.props.blurTarget).toBeUndefined()
   })
 
@@ -139,7 +141,7 @@ describe('<GlassSurface>', () => {
 
     await render(<GlassSurface isLight radius={28} blurTarget={createBlurTarget()} />)
 
-    expect(findBlur()?.[0]?.props.blurMethod).toBeUndefined()
+    expect(findBlur()?.[0]?.props.blurMethod).toBe('none')
     expect(findBlur()?.[0]?.props.blurTarget).toBeUndefined()
   })
 })

@@ -116,7 +116,11 @@ describe('<PillTabs>', () => {
     const blurStyle = StyleSheet.flatten(blur.props.style)
 
     expect(blur.props.intensity).toBe(GLASS.blur.intensity)
-    expect(blur.props.blurMethod).toBe(GLASS.blur.androidMethod)
+    // A decorative feather layer has no blur target to capture, so it must ask
+    // for `none` explicitly: a dimezis method without `blurTarget` makes
+    // expo-blur warn and fall back anyway.
+    expect(blur.props.blurMethod).toBe('none')
+    expect(blur.props.blurTarget).toBeUndefined()
     expect(['dark', 'light']).toContain(blur.props.tint)
     expect(blur).toHaveStyle({ pointerEvents: 'none' })
     // Larger frame than the body on every side — this is what feathers it.

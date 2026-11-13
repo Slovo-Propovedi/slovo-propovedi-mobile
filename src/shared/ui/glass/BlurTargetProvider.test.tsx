@@ -46,7 +46,7 @@ describe('<BlurTargetProvider>', () => {
         <GlassSurface isLight radius={28} />
       </BlurTargetProvider>,
     )
-    expect(findBlur()?.[0]?.props.blurMethod).toBeUndefined()
+    expect(findBlur()?.[0]?.props.blurMethod).toBe('none')
 
     await act(async () => registerBlurTarget('/listen', target))
 
@@ -68,7 +68,7 @@ describe('<BlurTargetProvider>', () => {
 
     // Used by surfaces floating over the page (the mini pill): they resolve
     // their own page target instead of inheriting the chrome shade.
-    expect(findBlur()?.[0]?.props.blurMethod).toBeUndefined()
+    expect(findBlur()?.[0]?.props.blurMethod).toBe('none')
     expect(findBlur()?.[0]?.props.blurTarget).toBeUndefined()
   })
 })

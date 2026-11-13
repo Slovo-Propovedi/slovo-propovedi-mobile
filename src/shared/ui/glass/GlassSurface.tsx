@@ -71,7 +71,10 @@ export const GlassSurface = ({
           intensity={glass.blur.intensity}
           style={[StyleSheet.absoluteFill, tint]}
           blurTarget={realBlurTarget ?? undefined}
-          blurMethod={realBlurTarget ? GLASS.blur.androidMethod : undefined}
+          // Ask for no native blur explicitly when there is no target: a
+          // dimezis method without `blurTarget` makes expo-blur warn and fall
+          // back to `none` anyway.
+          blurMethod={realBlurTarget ? GLASS.blur.androidMethod : 'none'}
         />
       )}
       <LinearGradient

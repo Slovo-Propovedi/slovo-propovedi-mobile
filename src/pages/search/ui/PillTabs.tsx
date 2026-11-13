@@ -77,11 +77,13 @@ export const PillTabs = ({
     <View>
       <View style={styles.shadowBody} testID='pill-tabs-shadow-body' />
       <BlurView
+        // Decorative feather layer with no blur target: selecting a dimezis
+        // method would make expo-blur warn and fall back to `none` anyway.
+        blurMethod='none'
         style={styles.shadowBlur}
         testID='pill-tabs-shadow-blur'
         intensity={GLASS.blur.intensity}
         tint={isLight ? 'light' : 'dark'}
-        blurMethod={GLASS.blur.androidMethod}
       />
       <View
         testID='pill-tabs-track'
