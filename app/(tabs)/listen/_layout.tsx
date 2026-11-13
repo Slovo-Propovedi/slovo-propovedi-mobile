@@ -42,6 +42,7 @@ const ListenStackLayout = () => {
           title: '',
         }}
       />
+      <Stack.Screen name='preacher' options={{ title: '' }} />
       <Stack.Screen
         name='playlist'
         options={{

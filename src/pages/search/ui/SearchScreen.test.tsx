@@ -158,17 +158,19 @@ const renderScreen = async ({
   const onSermonPress = jest.fn()
   const onPlaylistPress = jest.fn()
   const onAddToPlaylist = jest.fn()
+  const onPreacherPress = jest.fn()
 
   const result = await renderWithProviders(
     <SearchScreen
       onSermonPress={onSermonPress}
       onAddToPlaylist={onAddToPlaylist}
       onPlaylistPress={onPlaylistPress}
+      onPreacherPress={onPreacherPress}
     />,
     { ctx },
   )
 
-  return { ...result, ctx, onAddToPlaylist, onPlaylistPress, onSermonPress }
+  return { ...result, ctx, onAddToPlaylist, onPlaylistPress, onPreacherPress, onSermonPress }
 }
 
 const historyEntry = (sermon: SermonData): { savedAt: number; sermon: AudioPlayerData } => ({
@@ -275,8 +277,8 @@ describe('<SearchScreen>', () => {
     expect(screen.getByText(PLAYLIST.title)).toBeTruthy()
   })
 
-  test('preacher press re-runs the search for that artist', async () => {
-    const { ctx } = await renderScreen({
+  test('opens the preacher screen for a pressed preacher', async () => {
+    const { onPreacherPress } = await renderScreen({
       focused: true,
       paged: createPaged({ preachers: createGroup([PREACHER]) }),
       query: 'вера',
@@ -285,7 +287,7 @@ describe('<SearchScreen>', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Проповедники' }))
     await fireEvent.press(screen.getByText(PREACHER))
 
-    expect(ctx.get(searchQueryAtom)).toBe(PREACHER)
+    expect(onPreacherPress).toHaveBeenCalledWith(PREACHER)
   })
 
   test('hides the scope tabs and recents from three characters', async () => {

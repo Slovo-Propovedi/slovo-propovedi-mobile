@@ -24,9 +24,11 @@ const mockPlaylist: PlaylistData = {
 }
 
 const SEARCH_SCREEN = 'SEARCH_SCREEN'
+const PREACHER_PRESS = 'PREACHER_PRESS'
 const PICKER_MODAL = 'PICKER_MODAL'
 const ADD_TO_PLAYLIST_MODAL = 'ADD_TO_PLAYLIST_MODAL'
 const CLOSE_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
+const mockArtist = 'Иван Иванов'
 
 jest.mock('expo-router', () => ({
   usePathname: () => '/more',
@@ -82,10 +84,21 @@ jest.mock('./SearchScreen', () => {
   const { Pressable, Text: MockText } = jest.requireActual('react-native')
 
   return {
-    SearchScreen: ({ onPlaylistPress }: { onPlaylistPress: (playlist: PlaylistData) => void }) => (
-      <Pressable onPress={() => onPlaylistPress(mockPlaylist)}>
-        <MockText>SEARCH_SCREEN</MockText>
-      </Pressable>
+    SearchScreen: ({
+      onPlaylistPress,
+      onPreacherPress,
+    }: {
+      onPlaylistPress: (playlist: PlaylistData) => void
+      onPreacherPress: (artist: string) => void
+    }) => (
+      <>
+        <Pressable onPress={() => onPlaylistPress(mockPlaylist)}>
+          <MockText>SEARCH_SCREEN</MockText>
+        </Pressable>
+        <Pressable onPress={() => onPreacherPress(mockArtist)}>
+          <MockText>PREACHER_PRESS</MockText>
+        </Pressable>
+      </>
     ),
   }
 })
@@ -210,6 +223,25 @@ describe('<SearchGate>', () => {
       params: { playlist: mockPlaylist.id },
       pathname: '/listen/playlist',
     })
+    expect(ctx.get(isSearchOpenAtom)).toBe(false)
+    expect(queryByText(SEARCH_SCREEN)).toBeNull()
+  })
+
+  test('closes the search session before navigating to a pressed preacher', async () => {
+    const { ctx, getByText, queryByText } = await renderGate(true)
+
+    await act(async () => {
+      fireEvent.press(getByText(PREACHER_PRESS))
+    })
+
+    expect(mockCloseSearch).toHaveBeenCalledTimes(1)
+    expect(mockRouterPush).toHaveBeenCalledWith({
+      params: { artist: mockArtist },
+      pathname: '/listen/preacher',
+    })
+    expect(mockCloseSearch.mock.invocationCallOrder[0]).toBeLessThan(
+      mockRouterPush.mock.invocationCallOrder[0],
+    )
     expect(ctx.get(isSearchOpenAtom)).toBe(false)
     expect(queryByText(SEARCH_SCREEN)).toBeNull()
   })

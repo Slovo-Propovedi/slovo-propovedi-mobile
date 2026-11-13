@@ -1,21 +1,15 @@
-import { useAction, useAtom } from '@reatom/npm-react'
-import { usePathname, useRouter } from 'expo-router'
+import { useAtom } from '@reatom/npm-react'
+import { usePathname } from 'expo-router'
 import { useCallback, useRef } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { useTourActionRegistrar } from 'features/onboarding'
-import {
-  closeSearch,
-  isSearchOpenAtom,
-  useOpenSearch,
-  useSermonPlayback,
-} from 'features/sermon-search'
-import { type PlaylistData } from 'entities/playlist'
+import { isSearchOpenAtom, useOpenSearch, useSermonPlayback } from 'features/sermon-search'
 import { type SermonData } from 'entities/sermon'
-import { useNavigationGuard } from 'shared/routing'
 import { BlurBackdrop } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
+import { useSearchNavigation } from '../lib/useSearchNavigation'
 import { useSearchTourActions } from '../lib/useSearchTourActions'
 import { SearchScreen } from './SearchScreen'
 import { wrapSearchPicker } from './searchTargets'
@@ -34,9 +28,7 @@ export const SearchGate = () => {
   const { currentTheme } = useTheme()
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
   const openSearch = useOpenSearch()
-  const closeSearchAction = useAction(closeSearch)
-  const router = useRouter()
-  const runGuarded = useNavigationGuard()
+  const { navigateToPlaylist, navigateToPreacher } = useSearchNavigation()
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
   const {
     closePicker,
@@ -57,23 +49,6 @@ export const SearchGate = () => {
   })
   useTourActionRegistrar(CLOSE_SERMON_PICKER_ACTION_ID, closePicker)
 
-  const navigateToPlaylist = useCallback(
-    (playlist: PlaylistData) => {
-      runGuarded(async () => {
-        // The gate stays mounted while the session is open and covers every
-        // tab screen, so the playlist page would render underneath it. Close
-        // the session first — same semantics as leaving the search tab — then
-        // push the real page on top.
-        await closeSearchAction()
-        router.push({
-          params: { playlist: playlist.id },
-          pathname: '/listen/playlist',
-        })
-      })
-    },
-    [closeSearchAction, router, runGuarded],
-  )
-
   if (!isSearchOpen) return null
 
   return (
@@ -93,6 +68,7 @@ export const SearchGate = () => {
             onSermonPress={onSermonPress}
             onAddToPlaylist={openAddToPlaylist}
             onPlaylistPress={navigateToPlaylist}
+            onPreacherPress={navigateToPreacher}
             onFirstSermonChange={handleFirstSermonChange}
           />
         </View>

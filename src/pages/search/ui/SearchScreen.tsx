@@ -28,11 +28,13 @@ export const SearchScreen = ({
   onAddToPlaylist,
   onFirstSermonChange,
   onPlaylistPress,
+  onPreacherPress,
   onSermonPress,
 }: {
   onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onFirstSermonChange?: (sermon: SermonData | undefined) => void
   onPlaylistPress: (playlist: PlaylistData) => void
+  onPreacherPress: (artist: string) => void
   onSermonPress: (sermon: SermonData) => void
 }) => {
   const [query] = useAtom(searchQueryAtom)
@@ -44,7 +46,7 @@ export const SearchScreen = ({
   const paged = usePagedSearch(scope === 'listen' ? query : '')
   const firstSermon = paged.sermons.items[0]
   const { handlePreacherPress, handleRemoveFromSearchHistory, handleSermonPress } =
-    useSearchResultActions({ onSermonPress, setGroup })
+    useSearchResultActions({ onPreacherPress, onSermonPress })
 
   useEffect(() => {
     if (!isHistoryLoaded) void loadSearchHistory()
