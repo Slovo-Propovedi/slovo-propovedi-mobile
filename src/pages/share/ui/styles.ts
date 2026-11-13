@@ -6,10 +6,6 @@ export const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginTop: INDENTS.high,
   },
-  actionButtonTight: {
-    alignSelf: 'stretch',
-    marginTop: INDENTS.low,
-  },
   centered: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -23,7 +19,6 @@ export const styles = StyleSheet.create({
     alignItems: 'stretch',
     paddingBottom: INDENTS.high,
     paddingHorizontal: INDENTS.high,
-    paddingTop: INDENTS.middle,
   },
   errorText: {
     fontSize: FONT_SIZES.base,
