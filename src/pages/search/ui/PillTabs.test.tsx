@@ -53,11 +53,11 @@ const SMALL_GAP = INDENTS.low
 // Theme-aware selection: subtle gray on the white track, clearly lighter on the
 // pure-black one. The theme is mocked so both branches are deterministic.
 const SELECTED_FILL = () => withAlpha(DarkTheme.text, 0.18)
-// Unselected scope segments keep a real (near-invisible) drawable: Android only
-// routes touches across the full view when it has a background drawable, and a
-// `transparent` background counts as none. Jest cannot assert hit-testing, so
-// this fill is the regression guard for the device bug.
-const UNSELECTED_FILL = () => withAlpha(DarkTheme.text, 0.004)
+// Unselected cells paint the surface they sit on (the scope track / the page):
+// Android routes touches across the full view only when it has a background
+// drawable, and `transparent`/near-invisible alpha counts as none (device-
+// verified). Painting the surrounding color keeps the cell invisible by design.
+const TRACK_FILL = { dark: COLORS.black, light: COLORS.white } as const
 
 const trackStyle = () => StyleSheet.flatten(screen.getByTestId(TRACK_ID).props.style)
 
@@ -150,6 +150,8 @@ describe('<PillTabs>', () => {
 
     expect(trackStyle().backgroundColor).toBe(COLORS.white)
     expect(segmentStyle('Плейлисты').backgroundColor).toBe(withAlpha(LightTheme.text, 0.1))
+    // Unselected segments blend into the track with the track color itself.
+    expect(segmentStyle('Проповеди').backgroundColor).toBe(TRACK_FILL.light)
   })
 
   test('strengthens the scope selection fill on a dark track', async () => {
@@ -172,14 +174,12 @@ describe('<PillTabs>', () => {
     expect(screen.getByText('Плейлисты')).toHaveStyle({ fontWeight: '600' })
   })
 
-  test('gives unselected segments a real near-invisible drawable for the hit area', async () => {
+  test('gives unselected scope segments the track color as their drawable', async () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
 
     const unselected = segmentStyle('Плейлисты')
 
-    // NOT 'transparent': Android needs a real background drawable to route a
-    // tap across the whole segment rather than only over its text.
-    expect(unselected.backgroundColor).toBe(UNSELECTED_FILL())
+    expect(unselected.backgroundColor).toBe(TRACK_FILL.dark)
     expect(unselected.borderWidth).toBeUndefined()
     expect(unselected.boxShadow).toBeUndefined()
     expect(unselected.elevation).toBeUndefined()
@@ -238,9 +238,10 @@ describe('<PillTabs>', () => {
       fontWeight: '400',
     })
 
-    // Unselected items are plain but bold labels: no fill, no border, no shadow.
+    // Unselected items are plain but bold labels: no border, no shadow — they
+    // paint the page background so the drawable keeps their whole pill hit-testable.
     const unselected = segmentStyle('Проповеди')
-    expect(unselected.backgroundColor).toBeUndefined()
+    expect(unselected.backgroundColor).toBe(DarkTheme.background)
     expect(unselected.borderWidth).toBeUndefined()
     expect(unselected.boxShadow).toBeUndefined()
     expect(unselected.elevation).toBeUndefined()
@@ -322,7 +323,11 @@ describe('<PillTabs>', () => {
     )
 
     const readPill = screen.getByRole('button', { name: 'Читать' })
-    expect(readPill).toBeDisabled()
+    // NOT accessibilityState.disabled: RN maps it to native setEnabled(false),
+    // and Android then treats the view as BOX_NONE in pointer hit-testing
+    // (TouchTargetHelper), so only the label stays reachable. Disabled semantics
+    // come from the muted label + the info dialog instead.
+    expect(readPill).not.toBeDisabled()
     expect(screen.getByText('Читать')).toHaveStyle({ color: DarkTheme.textMuted })
 
     await fireEvent.press(readPill)

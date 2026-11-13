@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
+import { COLORS, FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 const TRACK_HEIGHT = 48
 const TRACK_PADDING = 3
@@ -17,6 +17,10 @@ const SHADOW_OFFSET_Y = 18
 const SHADOW_FEATHER = INDENTS.medium + INDENTS.lowest
 const SHADOW_FILL = 'rgba(0, 0, 0, 0.09)'
 const SHADOW_BLUR_RADIUS = 10
+
+// Pure themed track surface (not the off-white `card` token). Shared with the
+// unselected segments, which paint the surface they sit on.
+export const getScopeTrackFill = (isLight: boolean) => (isLight ? COLORS.white : COLORS.black)
 
 export const styles = StyleSheet.create({
   label: { fontSize: FONT_SIZES.base },
@@ -47,6 +51,8 @@ export const styles = StyleSheet.create({
     paddingHorizontal: PAGE_GUTTER,
     paddingTop: ROW_GUTTER,
   },
+  // No cross-stretch ambiguity: the shadow stack spans the full row width.
+  scopeTrackWrapper: { width: '100%' },
   segment: {
     alignItems: 'center',
     borderRadius: RADIUSES.round,
@@ -90,5 +96,5 @@ export const styles = StyleSheet.create({
     overflow: 'visible',
     padding: TRACK_PADDING,
   },
-  trackStretch: { flexGrow: 1 },
+  trackStretch: { flexGrow: 1, width: '100%' },
 })

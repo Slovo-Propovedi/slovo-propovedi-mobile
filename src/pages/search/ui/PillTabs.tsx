@@ -2,8 +2,8 @@ import { BlurView } from 'expo-blur'
 import { Fragment, type ReactElement } from 'react'
 import { ScrollView, View } from 'react-native'
 import { GLASS } from 'shared/ui'
-import { COLORS, useTheme } from 'shared/ui/theme'
-import { styles } from './PillTabs.styles'
+import { useTheme } from 'shared/ui/theme'
+import { getScopeTrackFill, styles } from './PillTabs.styles'
 import { PillTabSegment } from './PillTabSegment'
 
 export interface PillTabItem {
@@ -39,7 +39,7 @@ export const PillTabs = ({
 }: PillTabsProps) => {
   const { isLight } = useTheme()
   const isResults = variant === 'results'
-  const trackFill = isLight ? COLORS.white : COLORS.black
+  const trackFill = getScopeTrackFill(isLight)
 
   const content = items.map(item => {
     const pill = (
@@ -74,7 +74,7 @@ export const PillTabs = ({
     )
 
   const shadowedTrack = (
-    <View>
+    <View style={stretch ? styles.scopeTrackWrapper : undefined}>
       <View style={styles.shadowBody} testID='pill-tabs-shadow-body' />
       <BlurView
         // Decorative feather layer with no blur target: selecting a dimezis

@@ -1,6 +1,6 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
-import { Keyboard, Pressable, StyleSheet } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { searchQueryAtom } from 'features/sermon-search'
 import { type PlaylistData } from 'entities/playlist'
 import { isSearchHistoryLoadedAtom, loadSearchHistoryAction } from 'entities/search-history'
@@ -66,7 +66,7 @@ export const SearchScreen = ({
   // place, and only the results list changes with focus.
   if (showResults)
     return (
-      <Pressable style={styles.container} onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
         {scope === 'read' ? (
           <EmptyState message={READ_PLACEHOLDER} />
         ) : (
@@ -82,13 +82,13 @@ export const SearchScreen = ({
             onRemoveFromSearchHistory={handleRemoveFromSearchHistory}
           />
         )}
-      </Pressable>
+      </View>
     )
 
   // One main page for every short query, focused or not: title, scope select
   // and recents never unmount on focus changes.
   return (
-    <Pressable style={styles.container} onPress={Keyboard.dismiss}>
+    <View style={styles.container}>
       <ScreenTitleRow title='Поиск' />
       <SearchScopeTabs value={scope} onChange={handleScopeChange} />
       {scope === 'read' ? (
@@ -96,7 +96,7 @@ export const SearchScreen = ({
       ) : (
         <RecentSearchesSection onPress={handleSermonPress} onAddToPlaylist={onAddToPlaylist} />
       )}
-    </Pressable>
+    </View>
   )
 }
 

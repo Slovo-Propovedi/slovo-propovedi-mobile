@@ -1,21 +1,22 @@
 import { type ColorValue, type StyleProp, Text, type ViewStyle } from 'react-native'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme, withAlpha } from 'shared/ui/theme'
-import { styles } from './PillTabs.styles'
+import { getScopeTrackFill, styles } from './PillTabs.styles'
 
 // Gray selection overlay on the scope track: subtle on the white track, clearly
 // lighter on the pure-black one where a 10% black overlay disappears.
 const SCOPE_SELECTED_ALPHA = { dark: 0.18, light: 0.1 } as const
-// Android only routes touches across a view that has a real background drawable;
-// a `transparent` background counts as none, so an unselected segment would react
-// only over its text. A near-invisible themed fill gives the whole cell a
-// drawable without reading as a highlight.
-const UNSELECTED_FILL_ALPHA = 0.004
 
 const getScopeSelectedFill = (isLight: boolean, text: ColorValue) =>
   withAlpha(text, isLight ? SCOPE_SELECTED_ALPHA.light : SCOPE_SELECTED_ALPHA.dark)
 
-const getUnselectedFill = (text: ColorValue) => withAlpha(text, UNSELECTED_FILL_ALPHA)
+// Unselected cells paint the surface they sit on — the scope track or the page
+// background. Android routes touches across a view only when it has a real
+// background drawable (transparent and near-invisible alphas behave as none —
+// user-verified on device), so the fill is needed for the hit area even though
+// it is invisible by design: it blends with the surrounding surface.
+const getUnselectedFill = (isResults: boolean, isLight: boolean, background: ColorValue) =>
+  isResults ? background : getScopeTrackFill(isLight)
 
 // In results the accent fill marks the selection, so the contrast comes from
 // boldness of the unselected labels instead of the selected one.
@@ -46,9 +47,9 @@ export const PillTabSegment = ({
     isResults ? styles.resultsItem : styles.segment,
     !isResults && stretch && styles.segmentStretch,
     isResults && selected && styles.resultsItemSelected,
-    // Results unselected items stay background-free (their row has no Android
-    // hit-area problem); scope segments always carry a drawable.
-    !isResults && !selected && { backgroundColor: getUnselectedFill(currentTheme.text) },
+    !selected && {
+      backgroundColor: getUnselectedFill(isResults, isLight, currentTheme.background),
+    },
     selected && {
       backgroundColor: isResults
         ? currentTheme.primary
@@ -64,7 +65,10 @@ export const PillTabSegment = ({
       collapsable={false}
       style={segmentStyle}
       accessibilityLabel={label}
-      accessibilityState={{ disabled, selected }}
+      // No `disabled` here: RN maps it to native setEnabled(false), and Android's
+      // TouchTargetHelper then treats the view as BOX_NONE (only the Text child
+      // stays reachable). The muted label + info dialog convey the locked state.
+      accessibilityState={{ selected }}
     >
       <Text
         style={[
