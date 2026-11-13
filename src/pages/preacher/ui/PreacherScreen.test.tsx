@@ -65,6 +65,7 @@ jest.mock('entities/listening-history', () => ({
 const ARTIST = 'Иван Иванов'
 const EMPTY_MESSAGE = 'Проповедей пока нет'
 const INVALID_ARTIST_MESSAGE = 'Проповедник не найден'
+const LOAD_MORE_LABEL = 'Загрузить ещё'
 const RETRY_LABEL = 'Повторить загрузку'
 
 const buildSermon = (id: string) =>
@@ -140,6 +141,33 @@ describe('<PreacherScreen>', () => {
     })
 
     expect(state.loadMore).toHaveBeenCalledTimes(1)
+  })
+
+  test('offers a manual load more when an exhausted run has no rows yet', async () => {
+    const nextPageSermon = buildSermon('next-page')
+    const state = createState({ hasMore: true })
+    state.loadMore.mockImplementation(async () => {
+      mockUsePreacherSermons.mockReturnValue(
+        createState({ hasMore: true, items: [nextPageSermon] }),
+      )
+    })
+    mockUsePreacherSermons.mockReturnValue(state)
+
+    const { getByText, queryByText, rerender } = await renderScreen()
+
+    // An empty list cannot scroll, so onEndReached would never reach pages 11+.
+    expect(queryByText(EMPTY_MESSAGE)).toBeNull()
+    expect(getByText(LOAD_MORE_LABEL)).toBeTruthy()
+
+    await act(async () => {
+      fireEvent.press(getByText(LOAD_MORE_LABEL))
+    })
+    expect(state.loadMore).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      rerender(<PreacherScreen />)
+    })
+    expect(getByText(nextPageSermon.title)).toBeTruthy()
   })
 
   test('shows the empty state when the preacher has no sermons', async () => {

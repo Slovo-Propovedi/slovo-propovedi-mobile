@@ -1,15 +1,16 @@
 import { useAtom } from '@reatom/npm-react'
 import { useCallback } from 'react'
-import { ActivityIndicator, FlatList, StyleSheet, Text } from 'react-native'
+import { ActivityIndicator, FlatList, StyleSheet } from 'react-native'
 import { SearchResultsRow, SearchRowSeparator, useSermonPlayback } from 'features/sermon-search'
 import { type SermonData } from 'entities/sermon'
 import { EmptyState } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
-import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
+import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
+import { PreacherListActionRow } from './PreacherListActionRow'
 import { PreacherSermonsSkeleton } from './PreacherSermonsSkeleton'
 
 const EMPTY_MESSAGE = 'Проповедей пока нет'
+const LOAD_MORE_LABEL = 'Загрузить ещё'
 const RETRY_LABEL = 'Повторить загрузку'
 const FOOTER_STYLE = { paddingVertical: INDENTS.medium }
 
@@ -28,9 +29,11 @@ export const PreacherSermonsList = ({
   loadMore: () => Promise<void>
   loadMoreFailed: boolean
 }) => {
-  const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { modal, onSermonPress } = useSermonPlayback()
+  // An exhausted auto-continue run can end with hasMore but no rows; an empty
+  // list cannot scroll, so onEndReached would never reach the remaining pages.
+  const showManualLoadMore = hasMore && !isLoading && items.length === 0
 
   const renderItem = useCallback(
     ({ item }: { item: SermonData }) => (
@@ -50,9 +53,6 @@ export const PreacherSermonsList = ({
         onEndReached={() => {
           if (hasMore && !isLoadingMore) void loadMore()
         }}
-        ListEmptyComponent={
-          isLoading ? <PreacherSermonsSkeleton /> : <EmptyState message={EMPTY_MESSAGE} />
-        }
         contentContainerStyle={[
           styles.content,
           { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
@@ -61,13 +61,17 @@ export const PreacherSermonsList = ({
           isLoadingMore ? (
             <ActivityIndicator style={FOOTER_STYLE} />
           ) : loadMoreFailed ? (
-            <TouchableItem
-              onPress={() => void loadMore()}
-              style={[styles.retry, { backgroundColor: currentTheme.surface }]}
-            >
-              <Text style={[styles.retryText, { color: currentTheme.primary }]}>{RETRY_LABEL}</Text>
-            </TouchableItem>
+            <PreacherListActionRow label={RETRY_LABEL} onPress={() => void loadMore()} />
           ) : undefined
+        }
+        ListEmptyComponent={
+          isLoading ? (
+            <PreacherSermonsSkeleton />
+          ) : showManualLoadMore ? (
+            <PreacherListActionRow label={LOAD_MORE_LABEL} onPress={() => void loadMore()} />
+          ) : (
+            <EmptyState message={EMPTY_MESSAGE} />
+          )
         }
       />
       {modal}
@@ -77,6 +81,4 @@ export const PreacherSermonsList = ({
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1 },
-  retry: { alignItems: 'center', paddingVertical: INDENTS.medium },
-  retryText: { fontSize: FONT_SIZES.base },
 })
