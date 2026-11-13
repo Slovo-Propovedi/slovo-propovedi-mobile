@@ -56,13 +56,8 @@ const SELECTED_FILL = () => withAlpha(DarkTheme.text, 0.18)
 
 const trackStyle = () => StyleSheet.flatten(screen.getByTestId(TRACK_ID).props.style)
 
-const touchNode = (label: string) => screen.getByRole('button', { name: label })
-
-const touchStyle = (label: string) => StyleSheet.flatten(touchNode(label).props.style)
-
-// The paint node is the segment's cell: the touch layer is its only pressable
-// child, so the parent of the button carries the geometry and the fill.
-const paintStyleOf = (label: string) => StyleSheet.flatten(touchNode(label).parent?.props.style)
+const segmentStyle = (label: string) =>
+  StyleSheet.flatten(screen.getByRole('button', { name: label }).props.style)
 
 describe('<PillTabs>', () => {
   beforeEach(() => {
@@ -149,7 +144,7 @@ describe('<PillTabs>', () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='playlists' onChange={jest.fn()} />)
 
     expect(trackStyle().backgroundColor).toBe(COLORS.white)
-    expect(paintStyleOf('Плейлисты').backgroundColor).toBe(withAlpha(LightTheme.text, 0.1))
+    expect(segmentStyle('Плейлисты').backgroundColor).toBe(withAlpha(LightTheme.text, 0.1))
   })
 
   test('strengthens the scope selection fill on a dark track', async () => {
@@ -157,13 +152,13 @@ describe('<PillTabs>', () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='playlists' onChange={jest.fn()} />)
 
     expect(trackStyle().backgroundColor).toBe(COLORS.black)
-    expect(paintStyleOf('Плейлисты').backgroundColor).toBe(SELECTED_FILL())
+    expect(segmentStyle('Плейлисты').backgroundColor).toBe(SELECTED_FILL())
   })
 
   test('highlights the selected segment with a flat gray pill', async () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='playlists' onChange={jest.fn()} />)
 
-    const selected = paintStyleOf('Плейлисты')
+    const selected = segmentStyle('Плейлисты')
 
     expect(selected.backgroundColor).toBe(SELECTED_FILL())
     expect(selected.borderRadius).toBe(RADIUSES.round)
@@ -175,7 +170,7 @@ describe('<PillTabs>', () => {
   test('leaves unselected segments visually bare', async () => {
     await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
 
-    const unselected = paintStyleOf('Плейлисты')
+    const unselected = segmentStyle('Плейлисты')
 
     expect(unselected.backgroundColor).toBe('transparent')
     expect(unselected.borderWidth).toBeUndefined()
@@ -227,7 +222,7 @@ describe('<PillTabs>', () => {
     // No shadow means no reserved shadow room either.
     expect(row.paddingBottom).toBeUndefined()
 
-    expect(paintStyleOf('Плейлисты')).toMatchObject({
+    expect(segmentStyle('Плейлисты')).toMatchObject({
       backgroundColor: DarkTheme.primary,
       borderRadius: RADIUSES.round,
     })
@@ -237,7 +232,7 @@ describe('<PillTabs>', () => {
     })
 
     // Unselected items are plain but bold labels: no fill, no border, no shadow.
-    const unselected = paintStyleOf('Проповеди')
+    const unselected = segmentStyle('Проповеди')
     expect(unselected.backgroundColor).toBeUndefined()
     expect(unselected.borderWidth).toBeUndefined()
     expect(unselected.boxShadow).toBeUndefined()
@@ -254,53 +249,20 @@ describe('<PillTabs>', () => {
       <PillTabs items={ITEMS} variant='results' value='playlists' onChange={jest.fn()} />,
     )
 
-    // The paint node carries the pill's own box (height + horizontal padding).
-    const selected = paintStyleOf('Плейлисты')
+    // The PressableButton carries the pill's own box (height + horizontal
+    // padding) — there is no inner wrapper shrinking the hit area, so taps on
+    // the pill's padding register too.
+    const selected = segmentStyle('Плейлисты')
     expect(selected).toMatchObject({ height: 36, paddingHorizontal: INDENTS.medium })
     expect(selected.margin).toBeUndefined()
     expect(selected.width).toBeUndefined()
     expect(selected.flex).toBeUndefined()
 
-    const unselected = paintStyleOf('Проповеди')
+    const unselected = segmentStyle('Проповеди')
     expect(unselected).toMatchObject({ height: 36, paddingHorizontal: INDENTS.low })
     expect(unselected.margin).toBeUndefined()
     expect(unselected.width).toBeUndefined()
     expect(unselected.flex).toBeUndefined()
-
-    // Each pill is fully covered by its absolute-fill touch layer, padding
-    // included, drawn last so hit-testing always finds it.
-    for (const label of ['Плейлисты', 'Проповеди']) {
-      expect(touchNode(label).parent?.children.at(-1)).toBe(touchNode(label))
-      expect(touchStyle(label)).toMatchObject({
-        bottom: 0,
-        left: 0,
-        position: 'absolute',
-        right: 0,
-        top: 0,
-      })
-    }
-  })
-
-  test('covers each segment with an absolute-fill touch layer painted last', async () => {
-    await renderWithProviders(
-      <PillTabs stretch value='listen' items={SCOPE_ITEMS} onChange={jest.fn()} />,
-    )
-
-    for (const label of ['Слушать', 'Читать']) {
-      const touch = touchNode(label)
-      const paint = touch.parent
-
-      // The touch layer is the LAST child of the paint node, so hit-testing hits
-      // it at every point of the cell (over the label, over empty space).
-      expect(paint?.children.at(-1)).toBe(touch)
-      expect(touchStyle(label)).toMatchObject({
-        bottom: 0,
-        left: 0,
-        position: 'absolute',
-        right: 0,
-        top: 0,
-      })
-    }
   })
 
   test('makes the whole highlighted half of the track the tap target', async () => {
@@ -309,13 +271,15 @@ describe('<PillTabs>', () => {
     )
 
     for (const label of ['Слушать', 'Читать']) {
-      const paint = paintStyleOf(label)
+      const segment = segmentStyle(label)
 
-      // The paint node owns the cell: a definite numeric height (track inner
-      // height) and half the track width via flex.
-      expect(paint.flex).toBe(1)
-      expect(paint.height).toBe(SEGMENT_HEIGHT)
-      expect(paint.margin).toBeUndefined()
+      // The button IS the highlight: the Pressable node itself carries a
+      // definite numeric height (track inner height) and fills half the track
+      // width with flex, so empty parts of the cell respond to taps.
+      expect(segment.flex).toBe(1)
+      expect(segment.height).toBe(SEGMENT_HEIGHT)
+      expect(segment.alignSelf).toBeUndefined()
+      expect(segment.margin).toBeUndefined()
     }
   })
 
@@ -325,8 +289,8 @@ describe('<PillTabs>', () => {
     )
 
     expect(trackStyle().flexGrow).toBe(1)
-    expect(paintStyleOf('Слушать').flex).toBe(1)
-    expect(paintStyleOf('Читать').flex).toBe(1)
+    expect(segmentStyle('Слушать').flex).toBe(1)
+    expect(segmentStyle('Читать').flex).toBe(1)
   })
 
   test('reports the pressed pill key', async () => {

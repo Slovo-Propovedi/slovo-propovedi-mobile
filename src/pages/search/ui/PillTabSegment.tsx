@@ -1,4 +1,4 @@
-import { type ColorValue, StyleSheet, Text, View } from 'react-native'
+import { type ColorValue, Text } from 'react-native'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme, withAlpha } from 'shared/ui/theme'
 import { styles } from './PillTabs.styles'
@@ -18,11 +18,6 @@ const getFontWeight = (isResults: boolean, selected: boolean) => {
   return selected ? '600' : '400'
 }
 
-// A segment is painted by a plain View and touched by an absolute-fill press
-// layer drawn last: hit-testing always resolves to that topmost layer, so the
-// whole cell (label, padding, empty space) is the tap target on every platform.
-// A pressable that is also the paint node relied on stretch/percentage sizing,
-// which did not define the Android hit rect.
 export const PillTabSegment = ({
   disabled = false,
   isResults,
@@ -41,7 +36,10 @@ export const PillTabSegment = ({
   const { currentTheme, isLight } = useTheme()
 
   return (
-    <View
+    <PressableButton
+      onPress={onPress}
+      accessibilityLabel={label}
+      accessibilityState={{ disabled, selected }}
       style={[
         isResults ? styles.resultsItem : styles.segment,
         !isResults && stretch && styles.segmentStretch,
@@ -54,7 +52,6 @@ export const PillTabSegment = ({
       ]}
     >
       <Text
-        accessible={false}
         style={[
           styles.label,
           isResults && styles.resultsLabel,
@@ -70,12 +67,6 @@ export const PillTabSegment = ({
       >
         {label}
       </Text>
-      <PressableButton
-        onPress={onPress}
-        accessibilityLabel={label}
-        style={StyleSheet.absoluteFill}
-        accessibilityState={{ disabled, selected }}
-      />
-    </View>
+    </PressableButton>
   )
 }
