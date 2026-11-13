@@ -47,8 +47,7 @@ export const GlassSurface = ({
   const isWeb = Platform.OS === 'web'
   const isAndroid = Platform.OS === 'android'
   const contextTarget = useGlassBlurTarget()
-  // `undefined` inherits the provider; an explicit `null` opts out of it (a
-  // surface floating over the page must not sample the chrome shade).
+  // `undefined` inherits the provider; an explicit `null` opts out of it.
   const target = blurTarget === undefined ? contextTarget : blurTarget
   // Never ask expo-blur for a native blur without a target: the native view
   // would silently fall back and log a warning on every mount.

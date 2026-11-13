@@ -1,16 +1,11 @@
 import { createCtx } from '@reatom/framework'
-import { act, fireEvent, screen } from '@testing-library/react-native'
-import { Platform, StyleSheet } from 'react-native'
+import { act, screen } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
-import { isSearchFieldFocusedAtom, isSearchOpenAtom } from 'features/sermon-search/@x/barMorph'
+import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import {
-  BOTTOM_CHROME_SHADE_KEY,
-  getBlurTarget,
-  unregisterBlurTarget,
-} from 'shared/ui/glass/blurTargets'
 import {
   BAR_EXPANDED_ISLAND_TOP_MARGIN,
   BAR_OUTER_GAP,
@@ -29,17 +24,6 @@ jest.mock('expo-linear-gradient', () => {
   const { View } = jest.requireActual('react-native')
 
   return { LinearGradient: (props: Record<string, unknown>) => <View {...props} /> }
-})
-
-jest.mock('expo-blur', () => {
-  const { forwardRef } = jest.requireActual('react')
-  const { View: MockView } = jest.requireActual('react-native')
-
-  return {
-    BlurTargetView: forwardRef((props: Record<string, unknown>, ref: unknown) => (
-      <MockView {...props} ref={ref} testID='shade-blur-target' />
-    )),
-  }
 })
 
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
@@ -97,16 +81,6 @@ const COLLAPSED_LOCATIONS = [0, CAP_HEIGHT / COLLAPSED_HEIGHT, 1]
 const NO_PILL_EXPANDED_LOCATIONS = [0, CAP_HEIGHT / NO_PILL_EXPANDED_HEIGHT, 1]
 const NO_PILL_COLLAPSED_LOCATIONS = [0, CAP_HEIGHT / NO_PILL_COLLAPSED_HEIGHT, 1]
 const KEYBOARD_INSET = 320
-const SHADE_TARGET_TEST_ID = 'shade-blur-target'
-
-const setPlatform = (os: 'android' | 'ios', version?: number) => {
-  Object.defineProperty(Platform, 'OS', { configurable: true, value: os })
-  Object.defineProperty(Platform, 'Version', { configurable: true, value: version })
-}
-
-const layoutShadeTarget = async () => {
-  await act(async () => fireEvent(screen.getByTestId(SHADE_TARGET_TEST_ID), 'layout'))
-}
 
 // Mirrors the shared reanimated mock: timings complete synchronously. Tests
 // that need a mid-morph window override it and restore this afterwards.
@@ -171,19 +145,16 @@ const renderShade = async ({
   hasMiniPlayer = true,
   isDark = false,
   measured = true,
-  searchOpen = false,
 }: {
   audio?: AudioPlayerData | null
   expanded?: boolean
   hasMiniPlayer?: boolean
   isDark?: boolean
   measured?: boolean
-  searchOpen?: boolean
 } = {}) => {
   const ctx = createCtx()
   currentAudioAtom(ctx, audio)
   isPlayerExpandedAtom(ctx, expanded)
-  isSearchOpenAtom(ctx, searchOpen)
   if (measured) setTabBarHeight(ctx, TAB_BAR_HEIGHT)
 
   const result = await renderWithProviders(<BarBackdropShade hasMiniPlayer={hasMiniPlayer} />, {
@@ -206,68 +177,6 @@ describe('<BarBackdropShade>', () => {
 
   afterEach(() => {
     mockedWithTiming.mockImplementation(completeTimingImmediately)
-    const shadeTarget = getBlurTarget(BOTTOM_CHROME_SHADE_KEY)
-
-    if (shadeTarget) unregisterBlurTarget(BOTTOM_CHROME_SHADE_KEY, shadeTarget)
-
-    setPlatform('ios', undefined)
-  })
-
-  test('registers a dedicated glass target while the search page is open', async () => {
-    setPlatform('android', 35)
-    const { ctx } = await renderShade({ searchOpen: true })
-
-    expect(screen.getByTestId(SHADE_TARGET_TEST_ID)).toBeTruthy()
-    expect(getBlurTarget(BOTTOM_CHROME_SHADE_KEY)).toBeNull()
-
-    await layoutShadeTarget()
-
-    expect(getBlurTarget(BOTTOM_CHROME_SHADE_KEY)).not.toBeNull()
-
-    await act(async () => {
-      isSearchOpenAtom(ctx, false)
-    })
-
-    expect(getBlurTarget(BOTTOM_CHROME_SHADE_KEY)).toBeNull()
-  })
-
-  test('renders the shade without a target wrapper while the search page is closed', async () => {
-    setPlatform('android', 35)
-
-    await renderShade()
-
-    expect(screen.queryByTestId(SHADE_TARGET_TEST_ID)).toBeNull()
-  })
-
-  test('keeps the full-screen capture region transparent to touches', async () => {
-    setPlatform('android', 35)
-    await renderShade({ searchOpen: true })
-
-    const target = screen.getByTestId(SHADE_TARGET_TEST_ID)
-    const targetStyle = StyleSheet.flatten(target.props.style)
-
-    expect(target.props.pointerEvents).toBe('none')
-    expect(targetStyle?.pointerEvents).toBe('none')
-
-    // The native `BlurTargetView` is an Expo `LinearLayout`: it does not honour
-    // React Native's `pointerEvents` prop. The oversized capture region must be
-    // wrapped in a real RN view that excludes it from hit-testing, otherwise it
-    // swallows every tap on the search page underneath.
-    const hasTouchTransparentWrapper = () => {
-      let ancestor = target.parent
-
-      while (ancestor) {
-        const style = StyleSheet.flatten(ancestor.props.style)
-
-        if (ancestor.props.pointerEvents === 'none' && style?.pointerEvents === 'none') return true
-
-        ancestor = ancestor.parent
-      }
-
-      return false
-    }
-
-    expect(hasTouchTransparentWrapper()).toBe(true)
   })
 
   test('paints one continuous gradient from the screen bottom to the detached pill top', async () => {

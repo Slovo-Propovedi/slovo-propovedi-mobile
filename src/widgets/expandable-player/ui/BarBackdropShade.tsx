@@ -17,7 +17,6 @@ import { getBarShadeHeight, getPillShadeHeight, getShadeLocations } from '../lib
 import { getShadeColors } from '../lib/getShadeColors'
 import { useBarMorphProgress } from '../model/useBarMorphProgress'
 import { useProgressAnimation } from '../model/useProgressAnimation'
-import { ShadeBlurTarget } from './ShadeBlurTarget'
 
 /**
  * Vertical gradient behind the bottom chrome, rendered as the first child of the
@@ -87,18 +86,16 @@ export const BarBackdropShade = ({ hasMiniPlayer }: { hasMiniPlayer: boolean }) 
   if ((hasPill && expanded && settledExpanded) || !isTabBarMeasured) return null
 
   return (
-    <ShadeBlurTarget>
-      <Animated.View pointerEvents='none' style={styles.layer}>
-        <Animated.View style={[styles.shade, shadeStyle]}>
-          <LinearGradient
-            pointerEvents='none'
-            style={StyleSheet.absoluteFill}
-            colors={getShadeColors(isLight)}
-            locations={getShadeLocations(settledShadeHeight)}
-          />
-        </Animated.View>
+    <Animated.View pointerEvents='none' style={styles.layer}>
+      <Animated.View style={[styles.shade, shadeStyle]}>
+        <LinearGradient
+          pointerEvents='none'
+          style={StyleSheet.absoluteFill}
+          colors={getShadeColors(isLight)}
+          locations={getShadeLocations(settledShadeHeight)}
+        />
       </Animated.View>
-    </ShadeBlurTarget>
+    </Animated.View>
   )
 }
 

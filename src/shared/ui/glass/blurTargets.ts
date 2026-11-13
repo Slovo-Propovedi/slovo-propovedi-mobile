@@ -11,24 +11,10 @@ import { Platform, type View } from 'react-native'
 // full-cover overlay (the search gate) may publish its own on top while it is
 // open. The chrome always blurs the top target, and closing the overlay restores
 // the page target without waiting for the page to relayout.
-//
-// The bottom chrome also owns a dedicated backdrop of its own: the always-mounted
-// `BarBackdropShade` gradient registers under `BOTTOM_CHROME_SHADE_KEY` while the
-// search page is open, and `getChromeBlurTarget` prefers it over any route
-// target. Capturing the shade instead of the page keeps the white search
-// background out of the glass and makes the backdrop immune to route/overlay
-// registration churn during transitions.
 export type BlurTargetRef = RefObject<ComponentRef<typeof View> | null>
 
 /** Dimezis hardware blur is reliable from Android 12 (API 31) up. */
 export const ANDROID_BLUR_MIN_SDK = 31
-
-/**
- * Registry key of the bottom chrome's own backdrop: the `BarBackdropShade`
- * gradient region. It is not a route — the chrome resolves it ahead of the
- * current page while it is registered.
- */
-export const BOTTOM_CHROME_SHADE_KEY = 'bottom-chrome-shade'
 
 /** Route keys of the pages that expose their content as a blur target. */
 export const BLUR_TARGET_ROUTES = {
@@ -104,17 +90,6 @@ export const unregisterBlurTarget = (routeKey: string, target: BlurTargetRef) =>
 
 export const getBlurTarget = (routeKey: string): BlurTargetRef | null =>
   targets.get(routeKey)?.at(-1) ?? null
-
-/**
- * Resolves the backdrop the floating bottom chrome should sample. The dedicated
- * shade target wins whenever it is registered (the search page is open and the
- * shade is mounted); otherwise the page target for the current route, exactly
- * as before. Preferring a live registration keeps the rule in the registry, so
- * `GlassSurface` consumers need no knowledge of search state.
- * @param routeKey - Current `usePathname()` value.
- */
-export const getChromeBlurTarget = (routeKey: string): BlurTargetRef | null =>
-  getBlurTarget(BOTTOM_CHROME_SHADE_KEY) ?? getBlurTarget(routeKey)
 
 export const subscribeBlurTargets = (listener: () => void) => {
   listeners.add(listener)

@@ -9,11 +9,7 @@ import { type AudioPlayerData } from 'entities/sermon'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { BlurTargetProvider, getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
-import {
-  BOTTOM_CHROME_SHADE_KEY,
-  registerBlurTarget,
-  unregisterBlurTarget,
-} from 'shared/ui/glass/blurTargets'
+import { registerBlurTarget, unregisterBlurTarget } from 'shared/ui/glass/blurTargets'
 import { DarkTheme, FONT_SIZES, LightTheme } from 'shared/ui/theme'
 import { MiniPlayer } from './MiniPlayer'
 import {
@@ -225,14 +221,12 @@ describe('<MiniPlayer>', () => {
     ).toHaveLength(1)
   })
 
-  test('frosts the page, never the chrome shade, while the search page is open', async () => {
+  test('frosts the page the current route publishes', async () => {
     Object.defineProperty(Platform, 'OS', { configurable: true, value: 'android' })
     Object.defineProperty(Platform, 'Version', { configurable: true, value: 35 })
     const pageTarget = createRef<ComponentRef<typeof View>>()
-    const shadeTarget = createRef<ComponentRef<typeof View>>()
     await act(async () => {
       registerBlurTarget('/listen', pageTarget)
-      registerBlurTarget(BOTTOM_CHROME_SHADE_KEY, shadeTarget)
     })
 
     try {
@@ -244,14 +238,12 @@ describe('<MiniPlayer>', () => {
         instance => instance.props.intensity === GLASS.blur.intensity,
       )[0]
 
-      // The pill floats over the page, not over the tab-bar shade: sampling the
-      // shade would frost it with the gray gradient while the page behind it is
-      // black (the bright-gray slab in the dark theme).
+      // The pill floats over the page, not over the tab-bar shade, so it samples
+      // the page target the route publishes.
       expect(blur?.props.blurTarget).toBe(pageTarget)
     } finally {
       await act(async () => {
         unregisterBlurTarget('/listen', pageTarget)
-        unregisterBlurTarget(BOTTOM_CHROME_SHADE_KEY, shadeTarget)
       })
       Object.defineProperty(Platform, 'OS', { configurable: true, value: 'ios' })
       Object.defineProperty(Platform, 'Version', { configurable: true, value: undefined })
