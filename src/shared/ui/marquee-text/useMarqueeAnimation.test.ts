@@ -38,6 +38,7 @@ const fillPause = () => {
 
 const createCycle = (): MarqueeCycle => ({
   msPerPx: { value: 0 } as SharedValue<number>,
+  partnerLoopDistance: { value: 0 } as SharedValue<number>,
   scrollElapsed: { value: 0 } as SharedValue<number>,
   scrollMs: { value: 0 } as SharedValue<number>,
   startToken: { value: 0 } as SharedValue<number>,
@@ -578,5 +579,154 @@ describe('useMarqueeAnimation', () => {
     )
 
     expect(readTransform(result.current.animatedStyle)).toBe(0)
+  })
+
+  test('a follower without a duplicate copy never travels even when the UI flag claims overflow', async () => {
+    // The reported bug: a dead worklet onLayout leaves containerWidth at 0, so
+    // the UI-thread needsMarquee reads the line as overflowing while JS
+    // needsRepeat (which also needs a measured container) says no duplicate
+    // copy exists. The follower travelled with nothing to land on, scrolled out
+    // and stayed blank until the leader's cycle reset.
+    const cycle = createCycle()
+    cycle.msPerPx.value = 18
+    cycle.scrollElapsed.value = 900
+
+    const { result } = await renderHook(() =>
+      useMarqueeAnimation(
+        { value: 0 } as SharedValue<number>,
+        { value: 100 } as SharedValue<number>,
+        { value: true } as SharedValue<boolean>,
+        'subtitle',
+        false,
+        false,
+        false,
+        false,
+        undefined,
+        cycle,
+      ),
+    )
+
+    expect(readTransform(result.current.animatedStyle)).toBe(0)
+  })
+
+  test('the leader stretches its scroll phase to the longer partner and holds at its own line start', async () => {
+    // The subtitle (550px loop) is longer than the title (300px loop). The pair
+    // cycle lasts 550 * 18ms; the title finishes its own pass at 5400ms and
+    // waits at its line start (the duplicate copy aligned with it) while the
+    // subtitle keeps moving.
+    const cycle = createCycle()
+    cycle.partnerLoopDistance.value = 550
+    const { result } = await renderHook(() =>
+      useMarqueeAnimation(
+        { value: 200 } as SharedValue<number>,
+        { value: 250 } as SharedValue<number>,
+        { value: true } as SharedValue<boolean>,
+        'title',
+        false,
+        false,
+        true,
+        true,
+        cycle,
+      ),
+    )
+
+    result.current.startIdleMarquee()
+    fillPause()
+    // 54 * 100ms = 5400ms = the title's own 300px pass at 18 ms/px.
+    for (let i = 0; i < 54; i++) driveFrame(100)
+
+    expect(result.current.translateX.value).toBe(-300)
+    expect(cycle.scrollElapsed.value).toBe(5400)
+    // Still published so the longer follower keeps advancing.
+    expect(cycle.msPerPx.value).toBe(18)
+  })
+
+  test('the pair cycle ends only after the longer partner finishes', async () => {
+    const cycle = createCycle()
+    cycle.partnerLoopDistance.value = 550
+    const { result } = await renderHook(() =>
+      useMarqueeAnimation(
+        { value: 200 } as SharedValue<number>,
+        { value: 250 } as SharedValue<number>,
+        { value: true } as SharedValue<boolean>,
+        'title',
+        false,
+        false,
+        true,
+        true,
+        cycle,
+      ),
+    )
+
+    result.current.startIdleMarquee()
+    fillPause()
+    for (let i = 0; i < 98; i++) driveFrame(100)
+    expect(result.current.translateX.value).toBe(-300)
+
+    // 9900ms = 550px * 18ms/px: the longest pass completes, cycle resets.
+    driveFrame(100)
+    expect(result.current.translateX.value).toBe(0)
+    expect(cycle.scrollElapsed.value).toBe(0)
+    expect(cycle.msPerPx.value).toBe(0)
+
+    fillPause()
+    driveFrame(100)
+    expect(cycle.scrollMs.value).toBe(9900)
+  })
+
+  test('a partner no longer than the own loop keeps the scroll phase unchanged', async () => {
+    // A row with a synced follower no longer than itself (and every row without
+    // one) scrolls exactly as before: the own loop only.
+    const cycle = createCycle()
+    cycle.partnerLoopDistance.value = 300
+    const { result } = await renderHook(() =>
+      useMarqueeAnimation(
+        { value: 200 } as SharedValue<number>,
+        { value: 250 } as SharedValue<number>,
+        { value: true } as SharedValue<boolean>,
+        'title',
+        false,
+        false,
+        true,
+        true,
+        cycle,
+      ),
+    )
+
+    result.current.startIdleMarquee()
+    fillPause()
+    driveFrame(100)
+    expect(cycle.scrollMs.value).toBe(5400)
+
+    for (let i = 0; i < 53; i++) driveFrame(100)
+    expect(cycle.scrollElapsed.value).toBe(0)
+    expect(result.current.translateX.value).toBe(0)
+  })
+
+  test('a shorter partner keeps the scroll phase unchanged', async () => {
+    const cycle = createCycle()
+    cycle.partnerLoopDistance.value = 100
+    const { result } = await renderHook(() =>
+      useMarqueeAnimation(
+        { value: 200 } as SharedValue<number>,
+        { value: 250 } as SharedValue<number>,
+        { value: true } as SharedValue<boolean>,
+        'title',
+        false,
+        false,
+        true,
+        true,
+        cycle,
+      ),
+    )
+
+    result.current.startIdleMarquee()
+    fillPause()
+    driveFrame(100)
+    expect(cycle.scrollMs.value).toBe(5400)
+
+    for (let i = 0; i < 53; i++) driveFrame(100)
+    expect(cycle.scrollElapsed.value).toBe(0)
+    expect(result.current.translateX.value).toBe(0)
   })
 })

@@ -37,10 +37,11 @@ export const shouldMarquee = (maxOffset: number): boolean => {
 // Followers (the mini-player subtitle) do not own a clock: their offset is a
 // pure function of the leader's (title's) scroll phase. Both lines advance at
 // the leader's constant px/ms speed, so a shorter follower reaches its own loop
-// end early and holds there (faded at the clip edge) until the title's cycle
-// resets; the next cycle then restarts both together. A follower longer than
-// the title never reaches its loop end and snaps at the cycle boundary, exactly
-// as before.
+// end early and holds there (its duplicate copy at the line start) until the
+// pair cycle ends; the pair cycle covers the longer of the two loops, so a
+// longer follower finishes its own pass before the reset. `overflowing` is the
+// JS-confirmed overflow that gates the duplicate copy, so a travelling follower
+// always has a copy to land on.
 export const getSyncedOffset = (
   scrollElapsed: number,
   msPerPx: number,

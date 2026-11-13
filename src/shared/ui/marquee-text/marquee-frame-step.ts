@@ -24,6 +24,8 @@ interface MarqueeFrameStepInput {
   /** Milliseconds into the current cycle (pause + scroll). */
   cycleElapsed: number
   delta: number
+  /** Partner (follower) loop distance in px; 0 when unknown, static, or not synced. */
+  partnerLoopDistance?: number
   textWidth: number
 }
 
@@ -34,13 +36,17 @@ export const getMarqueeFrameStep = ({
   containerWidth,
   cycleElapsed,
   delta,
+  partnerLoopDistance = 0,
   textWidth,
 }: MarqueeFrameStepInput): MarqueeFrameStep | null => {
   'worklet'
   const loopDistance = textWidth + REPEAT_SPACER
   const msPerPx =
     containerWidth < NARROW_WIDTH_THRESHOLD ? MARQUEE_MS_PER_PX_NARROW : MARQUEE_MS_PER_PX
-  const scrollMs = loopDistance * msPerPx
+  // The pair cycle lasts the LONGER line's pass: the shorter one finishes and
+  // holds at its line start while its partner completes.
+  const totalLoopDistance = Math.max(loopDistance, partnerLoopDistance)
+  const scrollMs = totalLoopDistance * msPerPx
 
   if (scrollMs <= 0) return null
 
@@ -71,6 +77,8 @@ export const getMarqueeFrameStep = ({
     scrollElapsed: scrolled,
     scrollMs,
     started,
-    translateX: -(scrolled / scrollMs) * loopDistance,
+    // Constant px/ms speed. Once the own pass is complete the row holds at its
+    // line start (the duplicate copy sits at 0) while a longer partner finishes.
+    translateX: -Math.min(scrolled / msPerPx, loopDistance),
   }
 }

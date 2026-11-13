@@ -63,6 +63,7 @@ export const useMarqueeFrameClock = ({
         containerWidth: containerWidth.value,
         cycleElapsed: cycleElapsed.value,
         delta: Math.min(frameInfo.timeSincePreviousFrame ?? 0, MAX_FRAME_DELTA_MS),
+        partnerLoopDistance: publishCycle?.partnerLoopDistance.value ?? 0,
         textWidth: textWidth.value,
       })
 

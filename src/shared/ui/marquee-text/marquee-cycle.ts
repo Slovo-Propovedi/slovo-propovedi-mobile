@@ -10,6 +10,8 @@ import { type SharedValue, useSharedValue } from 'react-native-reanimated'
 export interface MarqueeCycle {
   /** Leader speed in milliseconds per pixel; 0 while the leader is static. */
   msPerPx: SharedValue<number>
+  /** The follower's measured loop distance in px (its textWidth + REPEAT_SPACER); 0 while the follower does not overflow or has not measured yet. Written by the follower, read by the leader's frame step; mirrors follower measurement, so resetMarqueeCycle deliberately leaves it alone. */
+  partnerLoopDistance: SharedValue<number>
   /** Milliseconds into the leader's current scroll phase; 0 during the pause. */
   scrollElapsed: SharedValue<number>
   /** Duration of the leader's scroll phase; 0 while the leader is static. */
@@ -45,6 +47,7 @@ export const publishMarqueePhase = (
 
 export const useMarqueeCycle = (): MarqueeCycle => {
   const msPerPx = useSharedValue(0)
+  const partnerLoopDistance = useSharedValue(0)
   const scrollElapsed = useSharedValue(0)
   const scrollMs = useSharedValue(0)
   const startToken = useSharedValue(0)
@@ -52,7 +55,7 @@ export const useMarqueeCycle = (): MarqueeCycle => {
   // useSharedValue identities are stable for the component lifetime, so the
   // cycle object is stable too — memoised consumers do not re-render.
   return useMemo(
-    () => ({ msPerPx, scrollElapsed, scrollMs, startToken }),
-    [msPerPx, scrollElapsed, scrollMs, startToken],
+    () => ({ msPerPx, partnerLoopDistance, scrollElapsed, scrollMs, startToken }),
+    [msPerPx, partnerLoopDistance, scrollElapsed, scrollMs, startToken],
   )
 }

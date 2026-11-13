@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   type SharedValue,
   useAnimatedReaction,
@@ -7,6 +8,7 @@ import {
 import { type MarqueeCycle } from './marquee-cycle'
 import { getSyncedOffset, REPEAT_SPACER } from './marquee-utils'
 import { useMarqueeFrameClock } from './useMarqueeFrameClock'
+import { useMarqueePartnerLoop } from './useMarqueePartnerLoop'
 
 // Absorbs Yoga pixel-grid rounding when sizing a static centered row.
 const STATIC_WIDTH_SAFETY_PX = 2
@@ -44,6 +46,18 @@ export const useMarqueeAnimation = (
     translateX,
   })
 
+  // Mirrors JS needsRepeat onto the UI thread: the follower may only travel while
+  // the duplicate copy actually exists. The UI-thread needsMarquee alone reads a
+  // missing container measurement (containerWidth stays 0 on OEM builds with a
+  // dead worklet onLayout) as full overflow, which sent short lines scrolling
+  // with no copy to land on — they scrolled out and stayed blank until the
+  // leader's cycle reset.
+  const overflowConfirmed = useSharedValue(needsRepeat)
+
+  useEffect(() => {
+    overflowConfirmed.value = needsRepeat
+  }, [needsRepeat, overflowConfirmed])
+
   // A geometry change (pill resize, new text measurement) restarts the idle
   // loop so the row re-derives its offset from fresh widths.
   useAnimatedReaction(
@@ -53,6 +67,10 @@ export const useMarqueeAnimation = (
         startIdleMarquee()
     },
   )
+
+  // The follower publishes its own loop distance so the leader can stretch its
+  // scroll phase to the LONGER of the two lines.
+  useMarqueePartnerLoop(followCycle, textWidth, needsRepeat)
 
   const animatedStyle = useAnimatedStyle(() => {
     // The visible Text keeps numberOfLines={1} on native, so ANY width smaller
@@ -73,13 +91,13 @@ export const useMarqueeAnimation = (
         : undefined
 
     // Followers ride the leader's published phase at the same px/ms speed: a
-    // shorter line finishes its pass early and holds while the title continues,
-    // then both restart together when the title's cycle boundary resets it.
+    // finished line lands on its duplicate at the line start and holds there,
+    // and the pair cycle covers the longer of the two loops.
     const syncedOffset = followCycle
       ? getSyncedOffset(
           followCycle.scrollElapsed.value,
           followCycle.msPerPx.value,
-          needsMarquee.value,
+          overflowConfirmed.value,
           textWidth.value + REPEAT_SPACER,
         )
       : null
