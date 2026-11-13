@@ -105,6 +105,17 @@ describe('<ContainerView> background artwork layers', () => {
 
     expect(overlayNodes ?? []).toHaveLength(0)
   })
+
+  test('keeps the surface background of the morph sheet', async () => {
+    // Keep-side guard for the miniOverlay removal: the container's own
+    // theme.surface sheet (docs/features/theme.md «Стекло требует прозрачного
+    // фона») must stay — only the overlay layer was deleted.
+    await renderWithProviders(<ContainerView {...baseProps} expanded={false} />)
+
+    expect(StyleSheet.flatten(findContainerNode()?.props.style)?.backgroundColor).toBe(
+      LightTheme.surface,
+    )
+  })
 })
 
 describe('<ContainerView> fullscreen gating', () => {
