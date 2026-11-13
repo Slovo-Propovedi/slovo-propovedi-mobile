@@ -44,7 +44,7 @@ export const createCommonStyles = (theme: ThemeColors) =>
   })
 
 // Full-screen pass-through layer that carries the keyboard lift of the mini pill.
-// The pill's absolute geometry keeps resolving against the same full-window box;
+// The pill's absolute geometry keeps resolving against the same full tab-layout box;
 // the transform only shifts the rendered layer.
 // `box-none` must be a PROP on the Animated.View, never a style key: Reanimated
 // applies animated styles inline on web, and the browser drops the invalid CSS
