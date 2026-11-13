@@ -729,4 +729,48 @@ describe('useMarqueeAnimation', () => {
     expect(cycle.scrollElapsed.value).toBe(0)
     expect(result.current.translateX.value).toBe(0)
   })
+
+  test('releases the leader cycle when the subtitle text empties', async () => {
+    // An emptied subtitle renders null (hooks stay mounted) and never
+    // re-measures, so its last loop distance would keep stretching the leader.
+    const cycle = createCycle()
+    cycle.partnerLoopDistance.value = 550
+    await renderHook(() =>
+      useMarqueeAnimation(
+        { value: 200 } as SharedValue<number>,
+        { value: 400 } as SharedValue<number>,
+        { value: true } as SharedValue<boolean>,
+        '',
+        false,
+        false,
+        false,
+        true,
+        undefined,
+        cycle,
+      ),
+    )
+
+    expect(cycle.partnerLoopDistance.value).toBe(0)
+  })
+
+  test('keeps the partner distance while the subtitle text has content', async () => {
+    const cycle = createCycle()
+    cycle.partnerLoopDistance.value = 550
+    await renderHook(() =>
+      useMarqueeAnimation(
+        { value: 200 } as SharedValue<number>,
+        { value: 400 } as SharedValue<number>,
+        { value: true } as SharedValue<boolean>,
+        'x',
+        false,
+        false,
+        false,
+        true,
+        undefined,
+        cycle,
+      ),
+    )
+
+    expect(cycle.partnerLoopDistance.value).toBe(550)
+  })
 })

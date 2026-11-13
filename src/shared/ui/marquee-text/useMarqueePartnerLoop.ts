@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { type SharedValue, useAnimatedReaction } from 'react-native-reanimated'
 import { type MarqueeCycle } from './marquee-cycle'
 import { getPartnerLoopDistance } from './marquee-utils'
@@ -10,6 +11,7 @@ export const useMarqueePartnerLoop = (
   followCycle: MarqueeCycle | undefined,
   textWidth: SharedValue<number>,
   needsRepeat: boolean,
+  text: string,
 ) => {
   useAnimatedReaction(
     () => ({ overflows: needsRepeat, width: textWidth.value }),
@@ -24,4 +26,13 @@ export const useMarqueePartnerLoop = (
     },
     [followCycle, needsRepeat],
   )
+
+  // An emptied line renders null (hooks stay mounted) and never re-measures, so
+  // its last loop distance would keep stretching the leader's cycle for a
+  // partner that no longer exists — release it explicitly.
+  useEffect(() => {
+    if (!followCycle || text) return
+    // eslint-disable-next-line react-hooks/immutability -- the follower intentionally writes the leader's shared value from JS
+    followCycle.partnerLoopDistance.value = 0
+  }, [followCycle, text])
 }

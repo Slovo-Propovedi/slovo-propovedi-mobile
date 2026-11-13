@@ -70,7 +70,7 @@ export const useMarqueeAnimation = (
 
   // The follower publishes its own loop distance so the leader can stretch its
   // scroll phase to the LONGER of the two lines.
-  useMarqueePartnerLoop(followCycle, textWidth, needsRepeat)
+  useMarqueePartnerLoop(followCycle, textWidth, needsRepeat, text)
 
   const animatedStyle = useAnimatedStyle(() => {
     // The visible Text keeps numberOfLines={1} on native, so ANY width smaller
