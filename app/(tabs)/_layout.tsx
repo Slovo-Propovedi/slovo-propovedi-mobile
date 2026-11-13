@@ -29,16 +29,23 @@ const Layout = () => {
       <View style={{ backgroundColor: currentTheme.background, flex: 1 }}>
         <Tabs
           screenOptions={{ headerShown: false }}
-          tabBar={props => <CustomTabBar {...props} hasMiniPlayer />}
+          tabBar={props => (
+            <>
+              <SearchGate />
+              <CustomTabBar {...props} hasMiniPlayer />
+            </>
+          )}
         >
           <Tabs.Screen name='listen' options={{ title: 'Слушать' }} />
           <Tabs.Screen name='read' options={{ title: 'Читать' }} />
           <Tabs.Screen name='more' options={{ title: 'Ещё' }} />
         </Tabs>
-        {/* Global search overlay: mounted once for every tab screen (the listen
-            stack's playlist pages included) so the island opens search
-            everywhere; the bar chrome and player stay above it. */}
-        <SearchGate />
+        {/* Search overlay lives INSIDE the tabBar element, before the bar: on web
+            every RN View is a stacking context, so a layout-level zIndex 5 could
+            never beat the bar nested in the navigator wrapper. Sharing the
+            tabBar element gives screens (-1/0) < gate (5) < bar (10) in one
+            context; native flattening preserves that order. The player stays a
+            layout-level sibling so its zIndex 20 covers everything. */}
         <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
       </View>
     </BlurTargetProvider>

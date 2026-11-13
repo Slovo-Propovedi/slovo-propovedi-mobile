@@ -25,10 +25,10 @@ import { wrapSearchPicker } from './searchTargets'
 const CLOSE_SERMON_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
 
 /**
- * Always-mounted search overlay for the tab layout. It stays below the bottom
- * chrome (zIndex 5 vs the bar's 10 and the player's 9/20) so the islands keep
- * floating above the search page on every screen. Hooks live outside the open
- * guard: the tour registers `open-listen-search` long before the overlay shows.
+ * Always-mounted search overlay composed into the Tabs tabBar element (before
+ * `CustomTabBar`) so gate and bar share one stacking context: screens below it,
+ * bar above it (zIndex 5 vs bar 10, player 9/20). Hooks live outside the open
+ * guard — the tour registers `open-listen-search` long before it shows.
  *
  * Navigating to a detail route keeps the session ALIVE: the layer stays visible
  * while that screen slides in, then is hidden with `display: none` instead of
