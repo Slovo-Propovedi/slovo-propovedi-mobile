@@ -30,6 +30,11 @@ export interface AtomMorphDriver {
   reset: () => void
   /** Seeds the shared value from the atom without animating (first render). */
   seed: (ctx: Ctx) => void
+  /**
+   * Seeds the value and commits the settle without animating: interrupted
+   * restores (launch expansion) must not slide or stick on the flip's start frame.
+   */
+  snap: (ctx: Ctx) => void
 }
 
 interface AtomMorphDriverConfig {
@@ -116,6 +121,10 @@ export const createAtomMorphDriver = ({
     },
     seed: ctx => {
       progress.value = ctx.get(atom) ? 1 : 0
+    },
+    snap: ctx => {
+      progress.value = ctx.get(atom) ? 1 : 0
+      notify(settleListeners, progress.value === 1)
     },
   }
 }

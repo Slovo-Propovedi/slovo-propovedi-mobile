@@ -3,7 +3,7 @@ import { Stack } from 'expo-router'
 import { useEffect, useMemo } from 'react'
 import { type ColorValue, View } from 'react-native'
 import { SettingsHeaderMenu } from 'pages/settings'
-import { useHardwareBackCascade } from 'widgets/expandable-player'
+import { useHardwareBackCascade, useLaunchBarState } from 'widgets/expandable-player'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { UpdateDialogRoot } from 'widgets/update-status'
@@ -26,7 +26,6 @@ import { SUB_SCREENS, useColdStartLinkRecovery } from 'shared/routing'
 import { Toast } from 'shared/ui'
 import { GlobalConfirmDialog } from 'shared/ui/confirm-dialog'
 import { GlobalErrorDialog } from 'shared/ui/error-dialog'
-import { useExpandBarOnLaunch } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 // Module-level: subscribes once for the app lifetime
 subscribeToNetwork()
@@ -56,7 +55,7 @@ const renderSettingsHelpRow = (props: { tintColor?: ColorValue }) => (
 const RootLayout = () => {
   const { currentTheme } = useTheme()
   const checkForUpdate = useAction(checkForUpdateAction)
-  useExpandBarOnLaunch()
+  useLaunchBarState()
   useUpdateNotificationResponse()
   usePlaybackProgressSaver()
   useForegroundPlaybackReconcile()

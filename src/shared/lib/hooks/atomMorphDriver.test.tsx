@@ -1,4 +1,4 @@
-import { atom } from '@reatom/framework'
+import { atom, createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { withTiming } from 'react-native-reanimated'
 import { renderHookWithProviders } from '../../mocks/renderWithProviders'
@@ -84,6 +84,61 @@ describe('atomMorphDriver', () => {
 
     expect(result.current.settled).toBe(true)
     expect(driver.progress.value).toBe(1)
+
+    driver.reset()
+  })
+
+  test('snaps the shared value to the atom without animating', () => {
+    mockedWithTiming.mockClear()
+    const target = atom(true, 'testSnappedMorphAtom')
+    const driver = createAtomMorphDriver({ atom: target, durationMs: DURATION_MS })
+    const ctx = createCtx()
+
+    driver.snap(ctx)
+    expect(driver.progress.value).toBe(1)
+
+    target(ctx, false)
+    driver.snap(ctx)
+    expect(driver.progress.value).toBe(0)
+
+    expect(mockedWithTiming).not.toHaveBeenCalled()
+
+    driver.reset()
+  })
+
+  test('snap commits the settle once and never starts a morph', () => {
+    const target = atom(true, 'testSettleSnapMorphAtom')
+    const driver = createAtomMorphDriver({ atom: target, durationMs: DURATION_MS })
+    const ctx = createCtx()
+    const events: string[] = []
+    driver.registerStartListener(isTarget => events.push(`start:${isTarget}`))
+    driver.registerSettleListener(isTarget => events.push(`settle:${isTarget}`))
+
+    driver.snap(ctx)
+    target(ctx, false)
+    driver.snap(ctx)
+
+    expect(events).toEqual(['settle:true', 'settle:false'])
+
+    driver.reset()
+  })
+
+  test('a real flip after a snap still starts and settles normally', async () => {
+    const target = atom(false, 'testFlipAfterSnapMorphAtom')
+    const driver = createAtomMorphDriver({ atom: target, durationMs: DURATION_MS })
+    const ctx = createCtx()
+    driver.snap(ctx)
+    driver.ensure(ctx)
+    const events: string[] = []
+    driver.registerStartListener(isTarget => events.push(`start:${isTarget}`))
+    driver.registerSettleListener(isTarget => events.push(`settle:${isTarget}`))
+
+    await act(async () => {
+      target(ctx, true)
+    })
+
+    expect(events).toEqual(['start:true', 'settle:true'])
+    expect(mockedWithTiming).toHaveBeenCalledTimes(1)
 
     driver.reset()
   })
