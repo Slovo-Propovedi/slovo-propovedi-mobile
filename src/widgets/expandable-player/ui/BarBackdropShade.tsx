@@ -1,5 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
-import { StyleSheet, useWindowDimensions } from 'react-native'
+import { useRef } from 'react'
+import { StyleSheet, useWindowDimensions, type ViewInstance } from 'react-native'
 import Animated, { useSharedValue } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
@@ -8,6 +9,7 @@ import { useTheme } from 'shared/ui/theme'
 import { getShadeColors } from '../lib/getShadeColors'
 import { useProgressAnimation } from '../model/useProgressAnimation'
 import { useShadeGeometry } from '../model/useShadeGeometry'
+import { ShadeDebugHud } from './ShadeDebugHud'
 import { ShadeGradient } from './ShadeGradient'
 
 /**
@@ -55,12 +57,13 @@ export const BarBackdropShade = ({
   // expand morph instead of popping out on its first frame.
   const expandProgress = useSharedValue(expanded ? 1 : 0)
   const { settledExpanded } = useProgressAnimation(expanded, expandProgress)
+  const shadeRef = useRef<ViewInstance>(null)
 
   if ((hasPill && expanded && settledExpanded) || !isTabBarMeasured) return null
 
   return (
     <Animated.View pointerEvents='none' style={styles.layer}>
-      <Animated.View style={[styles.shade, shadeStyle]}>
+      <Animated.View ref={shadeRef} style={[styles.shade, shadeStyle]}>
         <ShadeGradient
           layout={layout}
           sources={sources}
@@ -68,6 +71,7 @@ export const BarBackdropShade = ({
           colors={getShadeColors(isLight)}
         />
       </Animated.View>
+      {__DEV__ && <ShadeDebugHud hasPill={hasPill} shadeRef={shadeRef} />}
     </Animated.View>
   )
 }
