@@ -4,7 +4,6 @@ import { type ReactNode } from 'react'
 import { ActivityIndicator, Platform, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context'
-import { expandBarOnLaunch } from 'widgets/expandable-player'
 import { watchSessionExpiry } from 'entities/auth'
 import { fetchMyFeatureFlags, hydrateCachedFeatureFlags } from 'entities/feature-flags'
 import { loadHistoryAction } from 'entities/listening-history'
@@ -107,7 +106,6 @@ void cleanupOrphanedDownloads()
     reportError(error, 'Ошибка при инициализации приложения')
   })
 scheduleStartupGuardReset()
-expandBarOnLaunch(ctx) // swipe from recents keeps the bar collapsed — fix before render
 // The watcher lives for the whole process: a revoked session (refresh rejected)
 // must drop the stale authenticated shell even before /admin is opened.
 watchSessionExpiry(ctx)

@@ -3,7 +3,7 @@ import { Stack } from 'expo-router'
 import { useEffect, useMemo } from 'react'
 import { type ColorValue, View } from 'react-native'
 import { SettingsHeaderMenu } from 'pages/settings'
-import { useHardwareBackCascade } from 'widgets/expandable-player'
+import { useHardwareBackCascade, useLaunchBarState } from 'widgets/expandable-player'
 import { NetworkBanner, ServerErrorToast } from 'widgets/network-status'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { UpdateDialogRoot } from 'widgets/update-status'
@@ -63,6 +63,7 @@ const RootLayout = () => {
   useOfflineRegistrySync()
   useColdStartLinkRecovery()
   useHardwareBackCascade()
+  useLaunchBarState()
   useAutoTours()
 
   useEffect(() => {
