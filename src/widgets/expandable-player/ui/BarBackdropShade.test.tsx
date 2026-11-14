@@ -24,6 +24,7 @@ import {
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES, themeModeAtom } from 'shared/ui/theme'
+import { getShadeLocations } from '../lib/getBarShadeHeight'
 import { type ShadeHoleKey } from '../lib/getShadeHoles'
 import { barMorphProgressSv, resetBarMorphDriver } from '../model/barMorphDriver'
 import { miniPillOpacitySv } from '../model/miniPillFade'
@@ -92,13 +93,15 @@ const DARK_SHADE_STOPS = [
   { color: DARK_SHADE_OPAQUE, opacity: 0.12 },
 ]
 // One continuous gradient: transparent at the shade top, opaque from the pill's
-// midline down. The middle stop is the fixed ramp height over the settled shade
-// height — no cap/fill junction to seam on some panels.
-const CAP_HEIGHT = SHADE_TOP_OVERSCAN_PX + PLAYER_SIZES.miniPlayerHeight / 2
-const EXPANDED_LOCATIONS = [0, CAP_HEIGHT / EXPANDED_HEIGHT, 1]
-const COLLAPSED_LOCATIONS = [0, CAP_HEIGHT / COLLAPSED_HEIGHT, 1]
-const NO_PILL_EXPANDED_LOCATIONS = [0, CAP_HEIGHT / NO_PILL_EXPANDED_HEIGHT, 1]
-const NO_PILL_COLLAPSED_LOCATIONS = [0, CAP_HEIGHT / NO_PILL_COLLAPSED_HEIGHT, 1]
+// midline down. The stops live on the Svg's FIXED expanded-max height (a plain
+// prop, unlike the box's animated style), so the opaque point keeps its absolute
+// distance from the shade top in every settled state — the pill midline never
+// moves relative to that top.
+const EXPANDED_LOCATIONS = getShadeLocations(EXPANDED_HEIGHT)
+// No-pill zones have no pill-anchored state: their tallest shade is the expanded
+// islands row, and that is the fixed svg viewport there.
+const NO_PILL_LOCATIONS = getShadeLocations(NO_PILL_EXPANDED_HEIGHT)
+const SCREEN_WIDTH = 400
 const KEYBOARD_INSET = 320
 
 // Mirrors the shared reanimated mock: timings complete synchronously. Tests
@@ -255,12 +258,15 @@ describe('<BarBackdropShade>', () => {
       bottom: 0,
       height: EXPANDED_HEIGHT,
       left: 0,
+      overflow: 'hidden',
       right: 0,
     })
-    // Percent sizing keeps the svg stretched over the morphing shade box.
+    // Explicit viewport dims: react-native-svg on Android freezes percentage
+    // sizing at the first measure, so the svg is sized to the tallest shade
+    // state and clipped by the box instead.
     expect(screen.getByTestId(SVG_TEST_ID).props).toMatchObject({
-      height: '100%',
-      width: '100%',
+      height: EXPANDED_HEIGHT,
+      width: SCREEN_WIDTH,
     })
     expect(shadeStops()).toEqual(LIGHT_SHADE_STOPS)
     // A single layer spans the whole shade: transparent at the top, opaque from
@@ -356,9 +362,12 @@ describe('<BarBackdropShade>', () => {
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: COLLAPSED_HEIGHT,
     })
-    // The middle stop is recomputed for the settled collapsed height, so the
-    // ramp still ends exactly on the pill's midline.
-    expect(stopOffsets()).toEqual(COLLAPSED_LOCATIONS)
+    // The svg keeps its expanded-max height and stops: the taller viewport is
+    // clipped by the box, so the opaque point still lands on the pill midline.
+    expect(screen.getByTestId(SVG_TEST_ID).props).toMatchObject({
+      height: EXPANDED_HEIGHT,
+    })
+    expect(stopOffsets()).toEqual(EXPANDED_LOCATIONS)
   })
 
   test('retracts to the islands row while the search field is focused and grows back on blur', async () => {
@@ -374,7 +383,7 @@ describe('<BarBackdropShade>', () => {
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: NO_PILL_EXPANDED_HEIGHT,
     })
-    expect(stopOffsets()).toEqual(NO_PILL_EXPANDED_LOCATIONS)
+    expect(stopOffsets()).toEqual(EXPANDED_LOCATIONS)
 
     await act(async () => {
       isSearchFieldFocusedAtom(ctx, false)
@@ -399,7 +408,7 @@ describe('<BarBackdropShade>', () => {
       right: 0,
     })
     expect(shadeStops()).toEqual(LIGHT_SHADE_STOPS)
-    expect(stopOffsets()).toEqual(NO_PILL_EXPANDED_LOCATIONS)
+    expect(stopOffsets()).toEqual(NO_PILL_LOCATIONS)
   })
 
   test('anchors to the islands row top when audio exists but no mini player mounts', async () => {
@@ -410,7 +419,7 @@ describe('<BarBackdropShade>', () => {
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: NO_PILL_EXPANDED_HEIGHT,
     })
-    expect(stopOffsets()).toEqual(NO_PILL_EXPANDED_LOCATIONS)
+    expect(stopOffsets()).toEqual(NO_PILL_LOCATIONS)
   })
 
   test('ignores fullscreen expansion outside the player zone', async () => {
@@ -433,7 +442,7 @@ describe('<BarBackdropShade>', () => {
     expect(StyleSheet.flatten(findShade()?.props.style)).toMatchObject({
       height: NO_PILL_COLLAPSED_HEIGHT,
     })
-    expect(stopOffsets()).toEqual(NO_PILL_COLLAPSED_LOCATIONS)
+    expect(stopOffsets()).toEqual(NO_PILL_LOCATIONS)
   })
 
   test('renders nothing while the player is expanded to fullscreen', async () => {

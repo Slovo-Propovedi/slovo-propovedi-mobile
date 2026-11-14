@@ -42,7 +42,7 @@ export const BarBackdropShade = ({
   // Pill geometry is only real in zones that mount the mini player.
   const hasPill = hasAudio && hasMiniPlayer
   const bottomPadding = Math.max(bottom, BAR_BOTTOM_INSET_MIN)
-  const { layout, locations, shadeStyle, sources } = useShadeGeometry({
+  const { layout, locations, shadeStyle, sources, svgHeight } = useShadeGeometry({
     bottomPadding,
     fullScreenHeight: screenHeight,
     hasPill,
@@ -65,6 +65,8 @@ export const BarBackdropShade = ({
           layout={layout}
           sources={sources}
           locations={locations}
+          svgHeight={svgHeight}
+          screenWidth={screenWidth}
           colors={getShadeColors(isLight)}
         />
       </Animated.View>
@@ -86,6 +88,9 @@ const styles = StyleSheet.create({
   shade: {
     bottom: 0,
     left: 0,
+    // The svg is sized to the tallest (expanded) shade, so the collapsed box must
+    // clip the overhang instead of painting it over the page.
+    overflow: 'hidden',
     position: 'absolute',
     right: 0,
   },

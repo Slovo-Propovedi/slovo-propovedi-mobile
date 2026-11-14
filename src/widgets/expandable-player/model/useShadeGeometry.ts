@@ -57,11 +57,10 @@ export const useShadeGeometry = ({
   screenWidth,
   tabBarHeight,
 }: ShadeGeometryInput) => {
-  const { progress: pillProgress, settled: settledCollapsed } = useAtomMorphDriver(barMorphDriver)
+  const { progress: pillProgress } = useAtomMorphDriver(barMorphDriver)
   const { progress: islandProgress } = useAtomMorphDriver(tabIslandMorphDriver)
   const { progress: openProgress } = useAtomMorphDriver(searchOpenMorphDriver)
-  const { progress: focusProgress, settled: settledFocused } =
-    useAtomMorphDriver(searchFocusMorphDriver)
+  const { progress: focusProgress } = useAtomMorphDriver(searchFocusMorphDriver)
   const { progress: closeProgress } = useAtomMorphDriver(searchCloseMorphDriver)
 
   const shadeStyle = useAnimatedStyle(() => ({
@@ -76,10 +75,14 @@ export const useShadeGeometry = ({
     }),
   }))
 
-  const settledShadeHeight = getShadeFrameHeight({
-    barProgress: settledCollapsed ? 1 : 0,
+  // The expanded pill-anchored state is the tallest shade, so a fixed Svg sized
+  // to it always covers the (shorter-or-equal) animated box. A plain React prop
+  // re-measures reliably when tabBarHeight commits — react-native-svg on Android
+  // freezes percentage sizing at the first measure.
+  const svgHeight = getShadeFrameHeight({
+    barProgress: 0,
     bottomPadding,
-    focusProgress: settledFocused ? 1 : 0,
+    focusProgress: 0,
     fullScreenHeight,
     hasPill,
     screenWidth,
@@ -96,7 +99,7 @@ export const useShadeGeometry = ({
 
   return {
     layout,
-    locations: getShadeLocations(settledShadeHeight),
+    locations: getShadeLocations(svgHeight),
     shadeStyle,
     sources: {
       closeProgress,
@@ -106,5 +109,6 @@ export const useShadeGeometry = ({
       pillOpacity: miniPillOpacitySv,
       pillProgress,
     },
+    svgHeight,
   }
 }
