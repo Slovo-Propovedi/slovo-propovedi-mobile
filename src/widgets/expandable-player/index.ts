@@ -1,3 +1,3 @@
 export { useHardwareBackCascade } from './lib/useHardwareBackCascade'
-export { useLaunchBarState } from './model/useLaunchBarState'
+export { expandBarOnLaunch } from './model/expandBarOnLaunch'
 export { ExpandablePlayer } from './ui/ExpandablePlayer/ExpandablePlayer'
