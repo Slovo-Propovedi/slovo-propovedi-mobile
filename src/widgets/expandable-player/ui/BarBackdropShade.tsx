@@ -11,6 +11,7 @@ import { useProgressAnimation } from '../model/useProgressAnimation'
 import { useShadeGeometry } from '../model/useShadeGeometry'
 import { ShadeDebugHud } from './ShadeDebugHud'
 import { ShadeGradient } from './ShadeGradient'
+import { useShadeDebugLog } from './useShadeDebugLog'
 
 /**
  * Vertical gradient behind the bottom chrome, rendered as the first child of the
@@ -58,6 +59,7 @@ export const BarBackdropShade = ({
   const expandProgress = useSharedValue(expanded ? 1 : 0)
   const { settledExpanded } = useProgressAnimation(expanded, expandProgress)
   const shadeRef = useRef<ViewInstance>(null)
+  useShadeDebugLog({ expanded, hasPill, shadeRef }) // DIAGNOSTIC: revert me
 
   if ((hasPill && expanded && settledExpanded) || !isTabBarMeasured) return null
 
