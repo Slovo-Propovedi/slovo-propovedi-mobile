@@ -15,32 +15,32 @@
 
 ## Список экранов
 
-| Экран                    | Файл                                   | Статус       |
-| ------------------------ | -------------------------------------- | ------------ |
-| «Слушать» (главный)      | [listen.md](./listen.md)               | готов        |
-| Плейлист                 | [playlist.md](./playlist.md)           | готов        |
-| Редактирование плейлиста | [playlist-edit.md](./playlist-edit.md) | готов        |
-| Список плейлистов секции | [playlist-list.md](./playlist-list.md) | готов        |
-| «Мои плейлисты»          | [my-playlists.md](./my-playlists.md)   | готов        |
-| Результаты поиска        | [search-results.md](./search-results.md) | готов      |
-| «Читать» (таб)           | [read.md](./read.md)                   | заблокирован |
-| «Учиться» (таб)          | [study.md](./study.md)                 | заглушка     |
-| «Ещё» (экран)            | [more.md](./more.md)                   | готов        |
-| История прослушивания    | [history.md](./history.md)             | готов        |
-| Офлайн                   | [offline.md](./offline.md)             | готов        |
-| Настройки                | [settings.md](./settings.md)           | готов        |
-| О приложении             | [about.md](./about.md)                 | готов        |
-| Поделиться приложением   | [share.md](./share.md)                 | готов        |
-| Админ: вход              | [admin-login.md](./admin-login.md)     | готов        |
-| Админ: главная           | [admin-home.md](./admin-home.md)       | готов        |
-| Админ: разделы           | [admin-sections.md](./admin-sections.md) | готов      |
-| Админ: плейлисты         | [admin-playlists.md](./admin-playlists.md) | готов    |
-| Админ: проповеди         | [admin-sermons.md](./admin-sermons.md) | готов        |
-| Админ: медиа             | [admin-media.md](./admin-media.md)     | готов        |
-| Админ: пользователи      | [admin-users.md](./admin-users.md)     | готов        |
-| Админ: флаги             | [admin-flags.md](./admin-flags.md)     | готов        |
-| Админ: источники импорта | [admin-invidious.md](./admin-invidious.md) | готов    |
-| «Страница не найдена»    | [not-found.md](./not-found.md)         | готов        |
+| Экран                    | Файл                                       | Статус       |
+| ------------------------ | ------------------------------------------ | ------------ |
+| «Слушать» (главный)      | [listen.md](./listen.md)                   | готов        |
+| Плейлист                 | [playlist.md](./playlist.md)               | готов        |
+| Редактирование плейлиста | [playlist-edit.md](./playlist-edit.md)     | готов        |
+| Список плейлистов секции | [playlist-list.md](./playlist-list.md)     | готов        |
+| «Мои плейлисты»          | [my-playlists.md](./my-playlists.md)       | готов        |
+| Поиск (страница)         | [search.md](./search.md)                   | готов        |
+| Проповеди проповедника   | [preacher.md](./preacher.md)               | готов        |
+| «Читать» (таб)           | [read.md](./read.md)                       | заблокирован |
+| «Ещё» (экран)            | [more.md](./more.md)                       | готов        |
+| История прослушивания    | [history.md](./history.md)                 | готов        |
+| Офлайн                   | [offline.md](./offline.md)                 | готов        |
+| Настройки                | [settings.md](./settings.md)               | готов        |
+| О приложении             | [about.md](./about.md)                     | готов        |
+| Поделиться приложением   | [share.md](./share.md)                     | готов        |
+| Админ: вход              | [admin-login.md](./admin-login.md)         | готов        |
+| Админ: главная           | [admin-home.md](./admin-home.md)           | готов        |
+| Админ: разделы           | [admin-sections.md](./admin-sections.md)   | готов        |
+| Админ: плейлисты         | [admin-playlists.md](./admin-playlists.md) | готов        |
+| Админ: проповеди         | [admin-sermons.md](./admin-sermons.md)     | готов        |
+| Админ: медиа             | [admin-media.md](./admin-media.md)         | готов        |
+| Админ: пользователи      | [admin-users.md](./admin-users.md)         | готов        |
+| Админ: флаги             | [admin-flags.md](./admin-flags.md)         | готов        |
+| Админ: источники импорта | [admin-invidious.md](./admin-invidious.md) | готов        |
+| «Страница не найдена»    | [not-found.md](./not-found.md)             | готов        |
 
 ## Шаблон файла экрана
 

@@ -1,9 +1,11 @@
+import { mockConsole } from 'shared/mocks'
 import { playSafely } from './playSafely'
 
 const APP_STATE_ERROR = new Error('activity is no longer available')
 
 describe('playSafely', () => {
   test('swallows the AppState "activity is no longer available" error', async () => {
+    mockConsole('warn')
     const play = jest.fn().mockRejectedValue(APP_STATE_ERROR)
 
     await expect(playSafely(play)).resolves.toBeUndefined()

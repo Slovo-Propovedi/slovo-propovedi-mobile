@@ -3,7 +3,6 @@ import { Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-nativ
 import { useEscapeKey } from '../../lib/escape-key/useEscapeKey'
 import { Button } from '../button'
 import { APP_MAX_CONTENT_WIDTH } from '../layout/appMaxWidth'
-import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../theme/themed'
 import { useErrorCopy } from './useErrorCopy'
@@ -47,14 +46,14 @@ export const ErrorDialog = ({
           <View style={styles.buttonContainer}>
             <Button
               onPress={handleCopy}
-              titleStyle={styles.buttonText}
+              titleStyle={{ color: currentTheme.onPrimary }}
               title={copied ? '✓ Скопировано' : '📋 Копировать'}
               style={[styles.button, { backgroundColor: currentTheme.textMuted }]}
             />
             <Button
               title='Закрыть'
               onPress={onDismiss}
-              titleStyle={styles.buttonText}
+              titleStyle={{ color: currentTheme.onPrimary }}
               style={[styles.button, { backgroundColor: currentTheme.primary }]}
             />
           </View>
@@ -72,9 +71,6 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     gap: INDENTS.low,
     width: '100%',
-  },
-  buttonText: {
-    color: COLORS.onPrimary,
   },
   detailContainer: {
     borderRadius: RADIUSES.low,

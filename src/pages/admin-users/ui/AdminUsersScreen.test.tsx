@@ -25,15 +25,29 @@ jest.mock('shared/api', () => ({
   },
 }))
 
-jest.mock('expo-router', () => ({
-  useFocusEffect: (callback: () => () => void | void) => {
-    const { useEffect } = jest.requireActual('react') as {
-      useEffect: (effect: () => (() => void) | void, deps: unknown[]) => void
-    }
-    useEffect(callback, [callback])
-  },
-  useRouter: () => ({ push: mockPush, replace: jest.fn() }),
-}))
+// Stack.Screen renders headerRight so the native-header actions stay queryable.
+jest.mock('expo-router', () => {
+  const React = jest.requireActual('react') as {
+    createElement: (type: unknown, props: unknown, ...children: unknown[]) => unknown
+    Fragment: unknown
+  }
+
+  return {
+    Stack: {
+      Screen: ({ options }: { options?: { headerRight?: () => unknown } }) =>
+        options?.headerRight
+          ? React.createElement(React.Fragment, null, options.headerRight())
+          : null,
+    },
+    useFocusEffect: (callback: () => () => void | void) => {
+      const { useEffect } = jest.requireActual('react') as {
+        useEffect: (effect: () => (() => void) | void, deps: unknown[]) => void
+      }
+      useEffect(callback, [callback])
+    },
+    useRouter: () => ({ push: mockPush, replace: jest.fn() }),
+  }
+})
 
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
 
@@ -79,15 +93,22 @@ describe('<AdminUsersScreen>', () => {
   test('filters the loaded page by the debounced search term', async () => {
     mockFindAll.mockResolvedValue(createUsers(2))
 
-    const { findByText, getByPlaceholderText, queryByText } = await renderWithProviders(
+    const { findByText, getByPlaceholderText, queryByText, unmount } = await renderWithProviders(
       <AdminUsersScreen />,
     )
     await findByText('Пользователь 0')
 
-    fireEvent.changeText(getByPlaceholderText('Имя, email или логин…'), 'login1')
+    // The search term is applied by a 300ms debounce: let it fire inside act so
+    // the filtered list update is not reported as an unwrapped state change.
+    await act(async () => {
+      await fireEvent.changeText(getByPlaceholderText('Имя, email или логин…'), 'login1')
+      await new Promise<void>(resolve => setTimeout(resolve, 350))
+    })
 
     await waitFor(() => expect(queryByText('Пользователь 1')).toBeTruthy())
     await waitFor(() => expect(queryByText('Пользователь 0')).toBeNull())
+
+    unmount()
   })
 
   test('navigates to the create screen from the header button', async () => {

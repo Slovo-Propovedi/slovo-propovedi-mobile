@@ -9,6 +9,7 @@ import { COLORS } from './theme/colors'
 import { TouchableButton } from './touchable-button/TouchableButton'
 
 export interface TouchableItemProps {
+  accessibilityHint?: string
   accessibilityState?: AccessibilityState
   children: React.ReactNode
   disabled?: boolean
@@ -19,6 +20,7 @@ export interface TouchableItemProps {
 }
 
 export const TouchableItem = ({
+  accessibilityHint,
   accessibilityState,
   children,
   disabled = false,
@@ -39,6 +41,7 @@ export const TouchableItem = ({
       onPress={onPress}
       disabled={disabled}
       style={buttonStyles}
+      accessibilityHint={accessibilityHint}
       accessibilityState={accessibilityState}
     >
       {children}

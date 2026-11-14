@@ -1,10 +1,17 @@
+<div align="center">
+
+<!-- [![CI](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/badges/workflows/ci.yml/badge.svg?branch=main)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/actions?workflow=ci.yml) -->
+<!-- [![Release](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/badges/workflows/release.yml/badge.svg)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/actions?workflow=release.yml) -->
+
+</div>
+
 <p align="center"><img src="assets/icon.png" width="120" alt="Slovo.Propovedi" /></p>
 
 <h1 align="center">Slovo.Propovedi</h1>
 
 <div align="center">
 
-[![Release](https://img.shields.io/badge/release-latest-orange?style=flat-square)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) [![Web/PWA](https://img.shields.io/badge/platform-Web%2FPWA-5A0FC8?style=flat-square&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/) [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/Slovo-Propovedi/slovo-propovedi-mobile?label=release&style=flat-square)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) [![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) [![Web/PWA](https://img.shields.io/badge/platform-Web%2FPWA-5A0FC8?style=flat-square&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/) [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square)](LICENSE)
 
 </div>
 
@@ -87,10 +94,10 @@
 
 ## 📥 Download
 
-| Source | Link |
-| --- | --- |
-| **F-Droid** | _Link will be added once published_ |
-| **Web (PWA)** | [![Open](https://img.shields.io/badge/PWA-app.slovo--propovedi.ru-5A0FC8?style=for-the-badge&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/) |
+| Source         | Link                                                                                                                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **F-Droid**    | _Link will be added once published_                                                                                                                                                                           |
+| **Web (PWA)**  | [![Open](https://img.shields.io/badge/PWA-app.slovo--propovedi.ru-5A0FC8?style=for-the-badge&logo=googlechrome&logoColor=white)](https://app.slovo-propovedi.ru/)                                             |
 | **Direct APK** | [![Download APK](https://img.shields.io/badge/APK-latest%20release-orange?style=for-the-badge&logo=android&logoColor=white)](https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest) |
 
 ## 📋 System Requirements
@@ -102,16 +109,16 @@ The app requests only the permissions it needs: audio settings, a foreground ser
 
 ## 🛠️ Tech Stack
 
-| Technology | Version |
-| --- | --- |
-| <img src="https://img.shields.io/badge/React_Native-0.88-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React Native" /> | 0.88 |
-| <img src="https://img.shields.io/badge/Expo-SDK_58-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo" /> | SDK 58 |
-| <img src="https://img.shields.io/badge/TypeScript-6-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /> | 6 |
-| <img src="https://img.shields.io/badge/Reatom-state_management-8A2BE2?style=flat-square" alt="Reatom" /> | @reatom/* |
+| Technology                                                                                                                             | Version     |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| <img src="https://img.shields.io/badge/React_Native-0.88-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React Native" />    | 0.88        |
+| <img src="https://img.shields.io/badge/Expo-SDK_58-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo" />                   | SDK 58      |
+| <img src="https://img.shields.io/badge/TypeScript-6-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />      | 6           |
+| <img src="https://img.shields.io/badge/Reatom-state_management-8A2BE2?style=flat-square" alt="Reatom" />                               | @reatom/*   |
 | <img src="https://img.shields.io/badge/Expo_Router-navigation-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo Router" /> | expo-router |
-| <img src="https://img.shields.io/badge/expo--audio-playback-4630EB?style=flat-square&logo=expo&logoColor=white" alt="expo-audio" /> | expo-audio |
-| <img src="https://img.shields.io/badge/axios-1-5A29E4?style=flat-square" alt="axios" /> | 1 |
-| <img src="https://img.shields.io/badge/xml--js-FB2_parsing-FF6600?style=flat-square" alt="xml-js" /> | 1 |
+| <img src="https://img.shields.io/badge/expo--audio-playback-4630EB?style=flat-square&logo=expo&logoColor=white" alt="expo-audio" />    | expo-audio  |
+| <img src="https://img.shields.io/badge/axios-1-5A29E4?style=flat-square" alt="axios" />                                                | 1           |
+| <img src="https://img.shields.io/badge/xml--js-FB2_parsing-FF6600?style=flat-square" alt="xml-js" />                                   | 1           |
 
 ## 🚀 Roadmap
 

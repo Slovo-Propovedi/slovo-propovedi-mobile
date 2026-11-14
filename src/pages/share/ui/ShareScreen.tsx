@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { CollapsibleSection } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { LANDING_URL, WEB_APP_URL } from '../lib/constants'
 import { useLatestReleaseUrl } from '../lib/useLatestReleaseUrl'
-import { CollapsibleSection } from './CollapsibleSection'
 import { ShareLinkCard } from './ShareLinkCard'
 import { styles } from './styles'
 
@@ -78,7 +78,12 @@ export const ShareScreen = () => {
           onToggle={() => toggleSection('landing')}
           isExpanded={expandedSection === 'landing'}
         >
-          <ShareLinkCard url={LANDING_URL} qrTargetId='share.qr' copyTargetId='share.copy' />
+          <ShareLinkCard
+            url={LANDING_URL}
+            qrTargetId='share.qr'
+            copyTargetId='share.copy'
+            sendTargetId='share.send'
+          />
         </CollapsibleSection>
 
         <CollapsibleSection

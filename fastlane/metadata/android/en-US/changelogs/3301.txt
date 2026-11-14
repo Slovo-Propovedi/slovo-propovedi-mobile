@@ -1,0 +1,13 @@
+Lock the shade to the pill morph driver
+Gray backdrop shade in dark theme
+White backdrop shade in dark theme
+Milkier glass fill
+Soften the backdrop shade
+Shape the shade after the reference
+Deepen the backdrop shade
+Make the backdrop shade perceptible
+Order islands row above the shade on web
+Classic backdrop-filter glassmorphism
+Render shade inside tab bar layer above screens
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

@@ -1,20 +1,15 @@
 export { collectMatchingPreachers } from './lib/composeSearchResults'
-export { SEARCH_HEADER_HEIGHT } from './lib/constants'
-export { mergePlaylistMatches, selectLocalPlaylistMatches } from './lib/localPlaylistSearch'
-export {
-  fetchPlaylistTitleMatches,
-  fetchSermonResults,
-  persistPlaylistSearchResults,
-  persistSermonSearchResults,
-} from './lib/searchSources'
-export { useIsSearchActive } from './lib/useIsSearchActive'
-export { useIsSearchOpen } from './lib/useIsSearchOpen'
+export { isDetailRouteOverSearch } from './lib/detailRouteOverSearch'
+export { fetchPlaylistSearchPage, fetchSermonSearchPage } from './lib/searchSources'
+export { useIsSearchFieldVisible } from './lib/useIsSearchFieldVisible'
 export { useOpenSearch } from './lib/useOpenSearch'
 export { useSearchUrlSync } from './lib/useSearchUrlSync'
 export { useSermonPlayback } from './lib/useSermonPlayback'
-export { searchQueryAtom, searchResultsAtom, typeSearchInput } from './model'
+export { isSearchOpenAtom, MIN_QUERY_LENGTH, searchQueryAtom, typeSearchInput } from './model'
+export { isSearchFieldFocusedAtom, setSearchOverlayHidden } from './model-searchField'
+export { closeSearch, closeSearchAndExpand } from './model-session'
 export { SearchBar } from './ui/SearchBar'
-export { SearchGroupedResults } from './ui/SearchGroupedResults'
 export { SearchPlaylistRow } from './ui/SearchPlaylistRow'
 export { SearchPreacherRow } from './ui/SearchPreacherRow'
-export { SearchToggleButton } from './ui/SearchToggleButton'
+export { SearchResultsRow } from './ui/SearchResultsRow'
+export { SearchRowSeparator } from './ui/SearchRowSeparator'

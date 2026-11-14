@@ -5,6 +5,289 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.0] - 2026-11-12
+
+### Added
+
+- Build web dist on the Forgejo runner
+- Verify unsigned APK digest before signing
+- Bind dispatched GitHub build to the released commit
+- Keep native runtime versions in sync with app version
+- Add large screen titles to the user tabs
+- Self-contained youtube url in the sermon import accordion
+- Rework sermon import as a top accordion with an instance selector
+- Restructure admin home header and action groups
+- Live pending status and mask-safe run links
+- Render GitHub run link in remote job summary
+- Sync push mirrors before dispatch
+- Build only after the CI gate passes
+- Report superseded runs as warning, not failure
+- Run Renovate on GitHub-hosted runners
+- Add GitHub push-mirror setup script
+- Orchestrate heavy checks on GitHub-hosted runners
+- Add GitHub-hosted release build workflow
+- Add GitHub-hosted CI workflow
+- Support workflow_dispatch inputs in orchestrator
+- Add Android signing composite action
+- Add Forgejo commit-status helper
+- Add GitHub dispatch orchestrator with self-test
+- Strong theme wash so the pill reads like the islands
+- Theme-color wash for the mini pill frost
+
+### Changed
+
+- Mount NavThemeProvider from shared slice instead of app routes
+- Icon library/upload buttons beside the media URL fields
+- Icon actions on admin tab pages and media orphans
+- Move invidious save into the header as an icon button
+- Move list-screen actions into the native header
+- Delete the study tab and its exclusive code
+- Move media, flags and users list screens out of the tab navigator
+- Drop media, flags and users tabs from the admin tab bar
+- Route builds through GitHub with Forgejo fallback
+- Extract web export composite action
+- Extract android build composite action
+- Extract checks composite action
+- Extract Android SDK setup scripts
+- Guard useSearchFocusMorph against redundant focus events
+- Lag search island resting/focus geometry behind the morph
+- Lag tab/search island resting geometry behind the morph
+- Memoize resting styles, drop unused alias
+- Glass island owns the pill radius from element height
+- One GlassIsland frame for every bottom-chrome island
+
+### Fixed
+
+- Ship web on native tags only after android success
+- Harden bump atomicity, guard Expo.plist in CI, pin iOS version substitutions
+- Gate web publish and deploy on android signing success
+- Make commit binding opt-in so CI dispatch keeps its fallback
+- Retarget expo-audio and expo-font patches to 58.0.12
+- Bump expo packages and register expo-secure-store plugin
+- Set up Java before SDK setup in sign-android
+- Set up JDK in sign-android (apksigner needs java)
+- Read current metadata when rebuilding lock-screen session (#149)
+- Rebuild media session after native auto-advance (#149)
+- Re-assert playback position after native auto-advance (#149)
+- Disarm cold-start resume reassert on stop and unload (#150)
+- Refresh media notification metadata on background auto-advance (#149)
+- Restore cold-start resume position and clear stuck buffering on web (#150)
+- Fall back locally on GitHub startup_failure
+- Provide nav theme to expo-router to kill glass islands light flash on back
+- Use a plus icon for the sermons header action
+- Reserve bottom safe area on admin stack screens
+- Drop web-only deps array in useAnimatedReaction
+- Patch draggable-flatlist for RN 0.88 InteractionManager removal
+- Open the profile menu below its anchor
+- Theme the onPrimary token so primary-button labels stay readable in dark
+- Drop double top inset on migrated stack screens and harden sign-out
+- Anchor tab bar shade to the bar without a mini player
+- Use black label on primary create buttons in dark theme
+- Handle clipboard copy rejection in error surfaces
+- Make console guard immune to restoreAllMocks
+- Ignore late download progress ticks after settle
+- Migrate setup-java to v6
+- Migrate setup-java to v5
+- Wire knip jest entries via static import, drop toast file-ignore
+- Add missing key prop in DynamicSectionsSlider children
+- Remove leftover OTA reload debug log
+- Clean up reset timers in useErrorCopy and ServerUrlForm
+- Clear pending toast timer between tests (test-support export)
+- Mask-safe clickable run links in summaries
+- Drop push_mirrors-sync step from build-remote
+- Drop push_mirrors-sync step (needs admin token)
+- Derive Codeberg API origin from mirror URL
+- Align web zip release poll to 60 attempts
+- Skip already-attached assets on re-publish
+- Accept debug-signed APK from GitHub build, re-signed on Forgejo
+- Use upload-artifact v4 on GitHub-hosted workflows
+- Fall back on auth errors and mirror-wait timeout
+- Check versionCode against package.json
+- Bound dispatcher polling when GitHub is unreachable
+- Retry dispatch POST on transport errors
+- Disable Aliyun maven mirror on GitHub-hosted runners
+- Derive EXPO_PUBLIC build vars from plain org vars
+- Precise gate status description and fallback URL
+- Classify artifact transfer failures as infra (exit 42)
+- Degrade to local fallback when dispatch token is unset
+- Pass build vars into local web export fallback
+- Pass GitHub vars into hosted release build env
+- Extract downloaded workflow artifacts
+- Compute SDK cache snapshot after builds
+- Measure marquee container via plain onLayout fallback (OEM worklet dispatch dead)
+- Harden marquee measurer against iOS touch interception
+- Self-heal marquee measurement when onTextLayout never lands (OEM Android)
+- Log the chosen OTA reload screen icon and theme flag
+- Pin bottom-bar islands to settled geometry across glass theme remount
+- Draw the player subtree above the tab-bar chrome
+- Flat backdrop shade under the pill on Android
+- Lift the player subtree above the tab-bar shade
+- Pill layer above the elevated tab-bar shade
+- Single-gradient shade to kill the mid-pill seam
+- Live blur during morphs and always-on backdrop shade
+
+## [0.33.1] - 2026-11-09
+
+### Added
+
+- Gray backdrop shade in dark theme
+- White backdrop shade in dark theme
+- Milkier glass fill
+- Soften the backdrop shade
+- Shape the shade after the reference
+- Deepen the backdrop shade
+- Make the backdrop shade perceptible
+- Classic backdrop-filter glassmorphism
+- Subtle full-width gradient shade behind the bar
+- Haptic feedback when expanding the collapsed bar island
+
+### Changed
+
+- Degrade blur and shadow to static fallback during bar morph
+- Voice-input review follow-ups
+
+### Fixed
+
+- Lock the shade to the pill morph driver
+- Order islands row above the shade on web
+- Render shade inside tab bar layer above screens
+- Shade stacking on native + review cleanups
+- Hide stale duplicate copy via UI-thread opacity
+- Always start expanded on app launch
+- Size OTA reload splash icon like the native splash (152dp)
+- Allow microphone in Permissions-Policy for voice search
+- Align mini player pill height with bar circles
+- Stop muting web mic before first recognition attempt
+- Fix stale glass comments and drop unused getGlassTint re-export
+- Scheme-aware contour marks on the OTA reload screen
+- Treat unsupported speech recognition as unavailable
+- Strip /manifest suffix when deriving xprem base in cleanup workflow
+- Reset bar shape when playback resets
+- Keep bar shape while no sermon is active
+- Paint browser chrome with theme background via theme-color
+- Tint inactive tabs with theme text color
+
+## [0.33.0] - 2026-11-08
+
+### Added
+
+- Single morphing search component (circle⇄pill)
+- Lift bottom islands above keyboard
+- Blur backdrop on nested tab and admin screens
+- Real dimezis blur on android 12+ glass surfaces
+- Larger mini player typography
+- Equal-speed marquee with title-gated subtitle
+- Edge-weighted glass refraction on web
+- Mini player title/subtitle typography
+- Glass refraction depth
+- Search collapses on scroll when query empty and stays visible on all tab screens
+- Wider side insets and lower bottom inset for bottom islands
+- Fading text edges and subtitle marquee synced to title
+- No autofocus for search field
+- Frosted glass styling for bottom islands
+- External close circle for search pill
+- Search pill mic and clear states
+- Animate island and search circle growth between bar states
+- Retune bottom bar dimensions to reference frames
+- Tapping collapsed active tab expands the bar
+- Listen screens drive bottom-bar collapse on scroll
+- Align listen top row to the right
+- Remove study tab from tab bar
+- Whatsnew scenario for floating bottom bar
+- Search field island in the bottom bar
+- Bottom-bar collapse scroll wiring across list screens
+- Mini player morphs into collapsed bottom line
+- Floating islands tab bar + search circle button
+- Shared bottom-bar collapse state and scroll driver
+- Scheme-aware contour splash icons
+- Show creation date in admin sermon and playlist rows
+- Mirror splash styling in OTA reload screen per theme
+- Themed accent reload screen for OTA auto-apply
+- Play single candidate directly without dialog
+
+### Changed
+
+- Start bottom bar morph from atom change to remove android delay
+- Align pan drag distance with real resting bottom
+- Cache narrow list projections to cut first-mount parse freeze
+- Rename accent splash asset to dark-splash-icon
+- Build seed media URLs from the env-configured API host
+
+### Fixed
+
+- Regenerate API client with orval 8.47
+- No stale resting geometry frames during player morph on native
+- Web pointer events swallowed above mini player
+- Web voice input end-to-end (fake-recognizer verified)
+- Voice input result handling (crash on recognized text)
+- Render magnifier at target size (android clipping)
+- Larger magnifier icon in circle state
+- Web UI unresponsive under collapsed mini-player (box-none in animated style)
+- Single shadow carrier between search pill and circle
+- Geometry heal expectation derives from live morph progress
+- Geometry heal only at settled bar state, warn once
+- Search pill morphs like the tab island
+- Glyph-level text edge fade on android (no overlay rectangle)
+- Worklet directives for bottom bar morph helpers (device red screen)
+- More air in collapsed mini player
+- Mini player right padding and monochrome text
+- Moderate web glass blur with readability
+- Keep listen top row visible while search is open
+- No intermediate flash when mini pill morphs on search expand
+- First tap lands after search interaction
+- OpenSearch lands in field-visible state in one tap from collapsed bar
+- Single-tap search open/close transitions without intermediate states
+- Expand bar on active-circle tap while search field is visible
+- Drop duplicate mini player size export
+- Repair collapsed bottom-bar interaction matrix
+- Unify island gaps and mini player paddings
+- Remove jest expect leak from app bundle
+- Keep search input focus while typing
+- Tighter outer gap between islands
+- Search pill fits content on mobile web
+- Mini pill uses glass fill as final background layer
+- Mini player text always visible
+- Search mic button always visible
+- Mini-to-island vertical gap equals outer gap
+- Mini player width matches bottom islands row
+- Collapse active tab slot width so icon centers
+- Resync scroll driver after external bar expand
+- Center collapsed active tab icon
+- Balance expanded bar paddings
+- Tab island internal paddings match reference
+- Ignore zero-height layout reports in tab bar measurement
+- Mini player first-frame resting position after tab navigation
+- Tab island renders full expanded height
+- Drop unused exported speech type
+- Hide tab capsule in the collapsed circle and gap expanded labels
+- Search closes on back press and tab switch
+- Center icon in collapsed tab circle and enlarge bar icons
+- Drop unused layout exports
+- Remove dead exa/kagi MCP references
+- Rename projection caches to drop legacy multi-MB records
+- Toast when the favorites heart hits the playlist limit
+- Only pass local file URIs to the OTA reload screen
+- Align dark-splash-icon naming and formatting
+- Resolve OTA reload icon to a local file for release
+- Update actions/upload-artifact digest to ff15f03
+- Update actions/download-artifact digest to 9bc31d5
+- Drop stale check:unused env debt entry
+- Merge manifest state on migration persist to stop lost commits
+- Keep migration budget constant module-private
+- Verify legacy cache entries and lock manifest writes across tabs
+- Optimistic seek position and honest re-assert comment
+- Degrade to snapshot playlist when resolve fails
+- Origin-root manifest key and offline fail-fast in SW
+- Resolve full playlist on tap and settle queue skip before seek
+- Mount safe-area provider on web for real insets
+- Clear buffering on media error and re-assert resume seek
+- Apply review fixes to reconcile hook and docs
+- Reconcile native playback state on foreground
+- Update vscode workspace settings
+- Gitattributes eol for opencode tools
+- Forgejo taskstoissues, skills sync guard, maintenance docs
+- Add spec-kit scaffolding (templates, scripts, speckit commands)
+
 ## [0.32.0] - 2026-10-28
 
 ### Added
@@ -1521,6 +1804,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add AGENTS.md
 - Remove old packages and notifications for correct app running
 
+[0.34.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.34.0
+[0.33.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.33.1
+[0.33.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.33.0
 [0.32.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.32.0
 [0.31.1]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.31.1
 [0.31.0]: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/tag/v0.31.0

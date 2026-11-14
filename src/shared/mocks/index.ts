@@ -1,1 +1,6 @@
-export { renderHookWithProviders, renderWithProviders } from './renderWithProviders'
+export { mockConsole } from './console'
+export {
+  getSharedTestCtx,
+  renderHookWithProviders,
+  renderWithProviders,
+} from './renderWithProviders'

@@ -7,6 +7,9 @@ import { TouchableItem } from '../touchable-item'
 import { styles } from './styles'
 
 export interface AdminSelectOption<T extends string> {
+  /** Вариант виден, но не выбирается; `hint` объясняет почему. */
+  disabled?: boolean
+  hint?: string
   label: string
   value: T
 }
@@ -48,18 +51,26 @@ export const AdminSelect = <T extends string>({
         <View style={styles.modal}>
           {options.map(option => {
             const isSelected = option.value === value
+            const isDisabled = option.disabled ?? false
 
             return (
               <TouchableItem
                 key={option.value}
+                disabled={isDisabled}
                 onPress={() => handleSelect(option.value)}
-                accessibilityState={{ selected: isSelected }}
+                accessibilityHint={isDisabled ? option.hint : undefined}
+                accessibilityState={{ disabled: isDisabled, selected: isSelected }}
                 style={[
                   styles.option,
                   { borderColor: isSelected ? currentTheme.primary : 'transparent' },
                 ]}
               >
-                <Text style={[styles.optionLabel, { color: currentTheme.text }]}>
+                <Text
+                  style={[
+                    styles.optionLabel,
+                    { color: isDisabled ? currentTheme.textMuted : currentTheme.text },
+                  ]}
+                >
                   {option.label}
                 </Text>
                 {isSelected ? (

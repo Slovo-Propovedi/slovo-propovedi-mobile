@@ -3,7 +3,9 @@
 // файла (расширение → MIME) живёт в `shared/lib/file-drop/fileKinds.ts`, чтобы
 // предугадывание до drop и формы делили один источник правды.
 
+import { type ComponentProps } from 'react'
 import { type AdminFileKind } from 'shared/lib/file-drop'
+import type Ionicons from '@expo/vector-icons/Ionicons'
 
 interface FileKindConfig {
   /** Расширения, допустимые к загрузке; пусто — загрузка без ограничения. */
@@ -48,6 +50,19 @@ const KIND_CONFIG: Record<AdminFileKind, FileKindConfig> = {
 }
 
 export const getFileKindConfig = (kind: AdminFileKind): FileKindConfig => KIND_CONFIG[kind]
+
+// Иконка кнопки «Выбрать из библиотеки» для вида файла. Серверная библиотека
+// отдаёт только изображения, но карта описывает все виды — если `supportsLibrary`
+// когда-нибудь расширится, иконка уже будет подходящей.
+const LIBRARY_ICONS: Record<AdminFileKind, ComponentProps<typeof Ionicons>['name']> = {
+  audio: 'musical-notes-outline',
+  image: 'image-outline',
+  text: 'document-text-outline',
+}
+
+export const getFileKindLibraryIcon = (
+  kind: AdminFileKind,
+): ComponentProps<typeof Ionicons>['name'] => LIBRARY_ICONS[kind]
 
 const KIND_SUCCESS_MESSAGE: Record<AdminFileKind, string> = {
   audio: 'Аудиофайл загружен',

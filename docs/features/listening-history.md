@@ -292,7 +292,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 | `advance-manual` | счётчик известен, `delta === 0`, но трек сменился — ручной хоп (гарнитура/нативная кнопка)                                                                   | ничего не завершать и не флашить; только `handleManualTrackChanged` (переключение текущего трека)                                                       |
 | `fallback`       | очередь не загружена/треки не сопоставились (другой плейлист, обратный скачок на легаси-бинаре, смешанный manual+auto)                                       | ничего не делать (flush пропускается — иначе cross-track misattribution)                                                                                |
 
-Патченный движок (`patches/expo-audio+58.0.10.patch`) считает только трек-эндные переходы: ExoPlayer `MEDIA_ITEM_TRANSITION_REASON_AUTO`, на iOS — auto-advance и явный wrap `skipTo(0)`; ручные `next()`/`previous()`/`seekTo` счётчик не двигают. На бинаре без патча `autoAdvanceCount` отсутствует: JS деградирует к прежней линейной эвристике `jsIndex..engineIndex-1`, а repeat-wrap/ручной скачок остаются `fallback` до установки новой нативной сборки.
+Патченный движок (`patches/expo-audio+58.0.12.patch`) считает только трек-эндные переходы: ExoPlayer `MEDIA_ITEM_TRANSITION_REASON_AUTO`, на iOS — auto-advance и явный wrap `skipTo(0)`; ручные `next()`/`previous()`/`seekTo` счётчик не двигают. На бинаре без патча `autoAdvanceCount` отсутствует: JS деградирует к прежней линейной эвристике `jsIndex..engineIndex-1`, а repeat-wrap/ручной скачок остаются `fallback` до установки новой нативной сборки.
 
 После обработки сервис заново выставляет lock-screen метаданные (полный путь активации), если движок играет — это заменяет прежний reassert из `useForegroundPlaybackReconcile`.
 
@@ -314,7 +314,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 | Список плейлиста               | `src/pages/playlist/ui/PlaylistTrackItem.tsx`                               | `useHistoryProgressMap()` + `getEntrySermon`                                                            |
 | Шторка очереди (мини-плейлист) | `src/widgets/expandable-player/ui/PlaylistBottomSheet/PlaylistSheetRow.tsx` | `useHistoryProgress(id)` (узкая per-row подписка)                                                       |
 | Экран «Офлайн»                 | `src/pages/offline/ui/OfflineRow.tsx`                                       | `useHistoryProgress(sermon.id)` (узкая per-row подписка)                                                |
-| Результаты поиска              | `src/features/sermon-search/ui/SearchGroupedResults.tsx`                    | `useHistoryProgressMap()` + `useHistorySermonIds()` (подписка на уровне списка, прокидывается в строки) |
+| Страница поиска                | `src/pages/search/ui/SearchResultsList.tsx`                                 | `useHistoryProgressMap()` + `useHistorySermonIds()` (подписка на уровне списка, прокидывается в строки) |
 | Экран истории                  | `src/pages/history/ui/HistoryRow.tsx`                                       | inline-вывод из записи: `completed ? 1 : min(positionMs/durationMs, 1)`                                 |
 
 Все строки показывают только **сохранённый** прогресс (stored, событийно обновляемый). Полоса текущей (сейчас воспроизводимой) проповеди не «тикает» в реальном времени — она обновится на ближайшем событии (пауза, переключение и т.д.).

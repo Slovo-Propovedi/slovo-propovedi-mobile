@@ -5,7 +5,7 @@
 
 ## Что делает
 
-Клиентская проверка фича-флагов. Табы «Читать» и «Учиться» открываются только если соответствующий флаг (`read` / `study`) включён. Для аутентифицированного пользователя сервер отдаёт его эффективные флаги (глобальное состояние + пер-пользовательские исключения), для анонима — глобальное состояние (аутентификация опциональна, `GET /feature-flags/me` никогда не возвращает 401).
+Клиентская проверка фича-флагов. Таб «Читать» открывается только если флаг `read` включён. Флаг `study` остаётся обычным серверным флагом, но кодового гейта у него больше нет — экран «Учиться» удалён вместе с табом. Для аутентифицированного пользователя сервер отдаёт его эффективные флаги (глобальное состояние + пер-пользовательские исключения), для анонима — глобальное состояние (аутентификация опциональна, `GET /feature-flags/me` никогда не возвращает 401).
 
 ## Срез `entities/feature-flags`
 
@@ -86,18 +86,17 @@ return flags?.[key] ?? false
 Гейтинг реализован в двух местах:
 
 1. **`src/widgets/tab-bar/ui/useTabPress.ts`** — видимая блокировка таба:
-   - `useTabPress` вызывает `useFeatureFlag('read')` и `useFeatureFlag('study')` и строит `isTabAvailable(routeName)`.
+   - `useTabPress` вызывает `useFeatureFlag('read')` и строит `isTabAvailable(routeName)`.
    - `handleTabPress` для недоступного таба показывает прежний диалог «Скоро будет доступно» (`showInfo`) и **не** навигирует; для доступного — обычная навигация.
    - `CustomTabBar` использует `isTabAvailable` для `isDisabled` кнопки таба.
 2. **Экраны** — защитный guard на случай прямого перехода:
    - `ReadScreen` (`src/pages/read/ui/ReadScreen.tsx`) — `useFeatureFlag('read')`, при `false` рендерит `null`.
-   - `StudyScreen` (`src/pages/study/ui.tsx`) — `useFeatureFlag('study')`, при `false` рендерит `null`.
 
-Пока флаги не загружены, поведение табов идентично прежнему (оба заблокированы). Когда `read`/`study` включён — таб открывается и рендерит существующий экран (`ReadScreen`/`StudyScreen`), который пока остаётся заглушкой/каркасом (см. [screens/read.md](../screens/read.md), [screens/study.md](../screens/study.md)).
+Пока флаги не загружены, поведение табов идентично прежнему (заблокированы). Когда `read` включён — таб открывается и рендерит существующий экран (`ReadScreen`), который пока остаётся заглушкой/каркасом (см. [screens/read.md](../screens/read.md)).
 
 ## Админ-UI управления флагами
 
-Таб «Флаги» в `/admin` (только роль admin — эндпоинты `/feature-flags` под админ-токеном; таб скрыт для не-admin, экраны под `useRequireAdminRole`). Экраны: [screens/admin-flags.md](../screens/admin-flags.md). Срезы `pages/admin-flags` (список), `pages/admin-flag-detail` (деталь + исключения), `pages/admin-flag-form` (create/edit).
+Экран «Флаги» — стековый, открывается строкой с «Главной» админки; доступен **только роли admin** (эндпоинты `/feature-flags` под админ-токеном, строка на главной скрыта для не-admin, экраны под `useRequireAdminRole`). Экраны: [screens/admin-flags.md](../screens/admin-flags.md). Срезы `pages/admin-flags` (список), `pages/admin-flag-detail` (деталь + исключения), `pages/admin-flag-form` (create/edit).
 
 - **Список** (`GET /feature-flags`): простой `FlatList` без пагинации/поиска (флагов мало); название, ключ, бейдж глобального состояния; тихое обновление при возврате на экран; скелетон-строки `AdminFlagRow.Skeleton`.
 - **Форма** (`POST /feature-flags`, `PATCH /feature-flags/{id}`): ключ (только create; паттерн `^[a-z][a-z0-9-]*$`), название, тумблер «Включён». Ключ неизменяем в edit (read-only, в тело не шлётся). Сервер создаёт флаг **выключенным** (`CreateFeatureFlagRequest` без `enabled`) — если тумблер включён, после создания форма досылает `PATCH { enabled: true }`. Кнопка «Сохранить» в шапке (`useAdminFormHeader`), disabled пока форма не изменена (`omitEqualFields`).
@@ -117,8 +116,8 @@ return flags?.[key] ?? false
 - `src/entities/auth/lib/signIn.test.ts` — рефетч флагов после успешного входа и его отсутствие при отказе в доступе/ошибке запроса.
 - `src/entities/auth/lib/signOut.test.ts` — рефетч флагов после выхода, в том числе когда серверная ревокация падает.
 - `src/entities/auth/lib/restoreSession.test.ts` — рефетч флагов после проверки профиля с токеном (успех и транзиентный сбой) и его отсутствие без токенов.
-- `src/widgets/tab-bar/ui/useTabPress.test.ts` — таб открывается по флагу, заблокирован без флага.
-- `src/pages/read/ui/ReadScreen.test.tsx`, `src/pages/study/ui.test.tsx` — экран рендерит контент при включённом флаге и ничего при выключенном.
+- `src/widgets/tab-bar/ui/useTabPress.test.ts` — таб «Читать» открывается по флагу, заблокирован без флага.
+- `src/pages/read/ui/ReadScreen.test.tsx` — экран рендерит контент при включённом флаге и ничего при выключенном.
 - `src/pages/admin-flags/lib/useAdminFlags.test.tsx`, `ui/AdminFlagsScreen.test.tsx` — список: загрузка, фокус-обновление, навигация, пустое состояние.
 - `src/pages/admin-flag-form/lib/useFlagFormController.test.tsx`, `ui/AdminFlagCreateScreen.test.tsx` — create/update, двухшаговое включение, валидация ключа.
 - `src/pages/admin-flag-detail/lib/overrideAction.test.ts` — эффективное состояние (grant/deny/без исключения) и минимальное действие для всех четырёх комбинаций «желаемое × глобальное» (grant/deny/clear).

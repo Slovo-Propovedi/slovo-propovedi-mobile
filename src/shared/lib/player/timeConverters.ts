@@ -1,4 +1,7 @@
 const MILLIS_IN_MINUTE = 60000
+const MILLIS_IN_SECOND = 1000
+
+export const millisToSeconds = (millis: number): number => millis / MILLIS_IN_SECOND
 
 export const millisToMinutesAndSeconds = (millis: number) => {
   const sign = millis < 0 ? '-' : ''

@@ -48,6 +48,7 @@ jest.mock('react-native-draggable-flatlist', () => {
 })
 
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+const CREATE_BUTTON_LABEL = 'Создать раздел'
 
 const findRefreshControl = (element: TestInstance) => {
   let current: null | TestInstance = element
@@ -100,9 +101,9 @@ describe('<AdminSectionsScreen>', () => {
   })
 
   test('navigates to the create screen from the header button', async () => {
-    const { findByText } = await renderWithProviders(<AdminSectionsScreen />)
+    const { findByLabelText } = await renderWithProviders(<AdminSectionsScreen />)
 
-    fireEvent.press(await findByText('Создать раздел'))
+    fireEvent.press(await findByLabelText(CREATE_BUTTON_LABEL))
 
     expect(mockPush).toHaveBeenCalledWith('/admin/sections/create')
   })
@@ -116,5 +117,11 @@ describe('<AdminSectionsScreen>', () => {
     })
 
     await waitFor(() => expect(mockFindAll).toHaveBeenCalledTimes(2))
+  })
+
+  test('shows the create icon button in the header', async () => {
+    const { findByRole } = await renderWithProviders(<AdminSectionsScreen />)
+
+    expect(await findByRole('button', { name: CREATE_BUTTON_LABEL })).toBeTruthy()
   })
 })

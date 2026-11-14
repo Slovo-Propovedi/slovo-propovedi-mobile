@@ -6,6 +6,7 @@ const THEME_KEYS = [
   'background',
   'card',
   'icon',
+  'onPrimary',
   'placeholder',
   'primary',
   'skeleton',

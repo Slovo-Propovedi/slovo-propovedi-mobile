@@ -1,6 +1,7 @@
 import z from 'zod'
 import { listeningHistorySchema } from 'entities/listening-history'
 import { myPlaylistsArraySchema, sectionSettingsDraftSchema } from 'entities/playlist'
+import { searchHistorySchema } from 'entities/search-history'
 import {
   BACKUP_KIND,
   BACKUP_VERSION,
@@ -21,6 +22,7 @@ const backupDataSchema = z.object({
   myPlaylists: myPlaylistsArraySchema.optional(),
   myPlaylistsSectionSettings: sectionSettingsDraftSchema.optional(),
   player: playerBackupSchema.optional(),
+  searchHistory: searchHistorySchema.optional(),
   settings: settingsBackupSchema.optional(),
   youtubeImport: youtubeImportBackupSchema.optional(),
 })

@@ -1,19 +1,25 @@
-import { fireEvent, screen } from '@testing-library/react-native'
+import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Platform, StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
+import { CONTAINER_FALLBACK_TEST_ID, EDGE_FADE_GRADIENT_TEST_ID } from './marquee-styles'
 import { MarqueeText } from './marquee-text'
 import * as marqueeAnimation from './useMarqueeAnimation'
 
 const TEST_ID = 'marquee-text'
+const FLEX_START = 'flex-start'
 
 const propsStub = {
   testID: TEST_ID,
   text: 'Hello World',
 }
 
+// The native container receives a Reanimated worklet event (nativeEvent fields
+// flattened); the web fallback receives the plain RN event. Both shapes are
+// provided so the same helper drives either branch.
 const fireContainerLayout = async (width: number) => {
   await fireEvent(screen.getByTestId(TEST_ID), 'layout', {
+    layout: { width },
     nativeEvent: { layout: { width } },
   })
 }
@@ -33,8 +39,26 @@ const fireMeasurerLayout = async (text: string, width: number) => {
   })
 }
 
+// The hidden measurer is the last Text node with the same content.
+const getMeasurerOpacity = (text: string) => {
+  const texts = screen.getAllByText(text)
+
+  return StyleSheet.flatten(texts[texts.length - 1].props.style)?.opacity
+}
+
+// Matches the hook's 400 * (attempt + 1) backoff: 400/800/1200/1600/2000.
+const RETRY_STEPS_MS = [400, 800, 1200, 1600, 2000]
+
+const advanceRetryCycle = async () => {
+  for (const delay of RETRY_STEPS_MS)
+    await act(async () => {
+      jest.advanceTimersByTime(delay)
+    })
+}
+
 describe('<MarqueeText />', () => {
   afterEach(() => {
+    jest.useRealTimers()
     jest.restoreAllMocks()
   })
   test('returns null when text is empty', async () => {
@@ -119,7 +143,7 @@ describe('<MarqueeText />', () => {
     await fireContainerLayout(100)
     await fireTextLayout(longText, 300)
     expect(StyleSheet.flatten(screen.getAllByText(longText)[0].parent?.props.style).alignSelf).toBe(
-      'flex-start',
+      FLEX_START,
     )
   })
 
@@ -131,7 +155,7 @@ describe('<MarqueeText />', () => {
 
     const animatedView = screen.getAllByText(propsStub.text)[0].parent
     const style = StyleSheet.flatten(animatedView?.props.style)
-    expect(style.alignSelf).toBe('flex-start')
+    expect(style.alignSelf).toBe(FLEX_START)
   })
 
   test('renders a duplicate copy when the text overflows the container', async () => {
@@ -141,6 +165,46 @@ describe('<MarqueeText />', () => {
     await fireTextLayout(propsStub.text, 300)
 
     expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
+  })
+
+  test('measures the container via the plain fallback when the worklet path is silent', async () => {
+    // Some OEM builds never dispatch the Reanimated worklet onLayout (Xiaomi /
+    // Android 15 confirmed). The plain View probe still reports, so the
+    // duplicate copy and the frame clock must arm from it alone.
+    await renderWithProviders(
+      <MarqueeText fadeEdge autoStart testID={TEST_ID} text={propsStub.text} />,
+    )
+
+    await fireEvent(screen.getByTestId(CONTAINER_FALLBACK_TEST_ID), 'layout', {
+      nativeEvent: { layout: { width: 100 } },
+    })
+    await fireTextLayout(propsStub.text, 300)
+
+    expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
+    expect(screen.getByTestId(EDGE_FADE_GRADIENT_TEST_ID)).toBeTruthy()
+  })
+
+  test('keeps working when both container paths report', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(100)
+    await fireEvent(screen.getByTestId(CONTAINER_FALLBACK_TEST_ID), 'layout', {
+      nativeEvent: { layout: { width: 100 } },
+    })
+    await fireTextLayout(propsStub.text, 300)
+
+    expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
+  })
+
+  test('resets to static when the fallback reports a fitting width', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireEvent(screen.getByTestId(CONTAINER_FALLBACK_TEST_ID), 'layout', {
+      nativeEvent: { layout: { width: 400 } },
+    })
+    await fireTextLayout(propsStub.text, 300)
+
+    expect(screen.getAllByText(propsStub.text)).toHaveLength(2)
   })
 
   test('renders a duplicate copy for a short overflowing title (geometric eligibility)', async () => {
@@ -217,6 +281,28 @@ describe('<MarqueeText />', () => {
     await fireContainerLayout(400)
     await fireTextLayout(propsStub.text, 300)
     expect(screen.getAllByText(propsStub.text)).toHaveLength(2)
+  })
+
+  test('hides the stale duplicate copy while the JS state still says it repeats', async () => {
+    // Reported bug: the pill width animates on the UI thread, but the duplicate
+    // was mounted by delayed JS state and could be dragged into the wider clip
+    // box. Visibility is gated by the UI-thread `needsMarquee` flag, so a
+    // still-mounted copy is invisible the moment the text fits. Re-rendering
+    // keeps `needsRepeat` (JS state) while the measurements are re-evaluated.
+    const { rerender } = await renderWithProviders(
+      <MarqueeText testID={TEST_ID} text={propsStub.text} />,
+    )
+
+    await fireContainerLayout(100)
+    await fireTextLayout(propsStub.text, 300)
+    const overflowingCopies = screen.getAllByText(propsStub.text)
+    expect(overflowingCopies).toHaveLength(3)
+
+    await rerender(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    const staleCopies = screen.getAllByText(propsStub.text)
+    expect(staleCopies).toHaveLength(3)
+    expect(StyleSheet.flatten(staleCopies[1].parent?.props.style)?.opacity).toBe(0)
   })
 
   test('measures text width via onLayout on web', async () => {
@@ -309,6 +395,27 @@ describe('<MarqueeText />', () => {
     expect(visible.props.ellipsizeMode).toBe('clip')
   })
 
+  test('renders the trailing-edge fade only while the text overflows', async () => {
+    await renderWithProviders(<MarqueeText fadeEdge testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(300)
+    await fireTextLayout(propsStub.text, 100)
+    expect(screen.queryByTestId(EDGE_FADE_GRADIENT_TEST_ID)).toBeNull()
+
+    await fireContainerLayout(100)
+    await fireTextLayout(propsStub.text, 400)
+    expect(screen.getByTestId(EDGE_FADE_GRADIENT_TEST_ID)).toBeTruthy()
+  })
+
+  test('skips the edge-fade container when the consumer does not opt in', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(100)
+    await fireTextLayout(propsStub.text, 300)
+
+    expect(screen.queryByTestId(EDGE_FADE_GRADIENT_TEST_ID)).toBeNull()
+  })
+
   test('stops the loop and returns to static when the container grows to fit', async () => {
     // The reported bug: a fitting title scrolled because needsMarquee stayed
     // true while maxOffset dropped to ~0 (transient layout / sub-pixel). When
@@ -323,12 +430,126 @@ describe('<MarqueeText />', () => {
     expect(screen.getAllByText(propsStub.text)).toHaveLength(3)
     expect(
       StyleSheet.flatten(screen.getAllByText(propsStub.text)[0].parent?.props.style).alignSelf,
-    ).toBe('flex-start')
+    ).toBe(FLEX_START)
 
     await fireContainerLayout(260)
     expect(screen.getAllByText(propsStub.text)).toHaveLength(2)
     expect(
       StyleSheet.flatten(screen.getAllByText(propsStub.text)[0].parent?.props.style).alignSelf,
     ).toBe('center')
+  })
+
+  test('keeps the measurer fully transparent before any retry', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0)
+  })
+
+  test('remounts and de-hides the measurer when the width never lands', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await act(async () => {
+      jest.advanceTimersByTime(400)
+    })
+    await act(async () => {
+      jest.advanceTimersByTime(1600)
+    })
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0.02)
+  })
+
+  test('stops retrying once a measurement lands', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(100)
+    await fireTextLayout(propsStub.text, 300)
+    await act(async () => {
+      jest.advanceTimersByTime(6000)
+    })
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0)
+  })
+
+  test('warns once when the width never lands', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await advanceRetryCycle()
+
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+  })
+
+  test('re-arms the retry episode when the text changes', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const { rerender } = await renderWithProviders(
+      <MarqueeText testID={TEST_ID} text='First title' />,
+    )
+
+    await advanceRetryCycle()
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+
+    await rerender(<MarqueeText testID={TEST_ID} text='Second title' />)
+    expect(getMeasurerOpacity('Second title')).toBe(0)
+
+    await advanceRetryCycle()
+    expect(warnSpy).toHaveBeenCalledTimes(2)
+  })
+
+  test('stops pending retries when the width lands mid-cycle', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await act(async () => {
+      jest.advanceTimersByTime(400)
+    })
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0.02)
+
+    await fireContainerLayout(100)
+    await fireTextLayout(propsStub.text, 300)
+    await act(async () => {
+      jest.advanceTimersByTime(10000)
+    })
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0.02)
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+
+  test('latches a fitting width and never retries', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    await fireContainerLayout(300)
+    await fireTextLayout(propsStub.text, 100)
+    await act(async () => {
+      jest.advanceTimersByTime(6000)
+    })
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0)
+  })
+
+  test('never retries on web', async () => {
+    jest.replaceProperty(Platform, 'OS', 'web')
+    jest.useFakeTimers({ doNotFake: ['setImmediate'] })
+    await renderWithProviders(<MarqueeText fadeEdge testID={TEST_ID} text={propsStub.text} />)
+
+    await act(async () => {
+      jest.advanceTimersByTime(6000)
+    })
+
+    expect(getMeasurerOpacity(propsStub.text)).toBe(0)
+  })
+
+  test('keeps the native measurer out of touch hit-testing', async () => {
+    await renderWithProviders(<MarqueeText testID={TEST_ID} text={propsStub.text} />)
+
+    const texts = screen.getAllByText(propsStub.text)
+    const style = StyleSheet.flatten(texts[texts.length - 1].props.style)
+
+    expect(style?.pointerEvents).toBe('none')
   })
 })

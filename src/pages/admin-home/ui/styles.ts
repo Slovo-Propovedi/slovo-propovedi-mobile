@@ -45,16 +45,11 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  headerTexts: {
-    flex: 1,
-    gap: INDENTS.lowest,
-  },
   headerTitle: {
+    flex: 1,
     fontSize: FONT_SIZES.xxl,
     fontWeight: '700',
-  },
-  headerUser: {
-    fontSize: FONT_SIZES.base,
+    textAlign: 'center',
   },
   sectionTitle: {
     fontSize: FONT_SIZES.sm,
@@ -66,5 +61,13 @@ export const styles = StyleSheet.create({
   statCountBar: {
     height: FONT_SIZES.xxl,
     width: '50%',
+  },
+  userCaption: {
+    fontSize: FONT_SIZES.sm,
+    textAlign: 'center',
+  },
+  userMenu: {
+    alignItems: 'center',
+    gap: INDENTS.lowest,
   },
 })

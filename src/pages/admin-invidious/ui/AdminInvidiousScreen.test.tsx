@@ -1,9 +1,15 @@
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { invidiousMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { toastAtom } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { AdminInvidiousScreen } from './AdminInvidiousScreen'
+
+// Every flow renders the full screen and awaits the instance probe; under a
+// loaded CI worker the default 15s test budget can starve even though the
+// bodies finish in milliseconds. Keep the config default, widen it for this
+// render-heavy suite only.
+jest.setTimeout(25000)
 
 // MarqueeText renders the title twice (visible + measurer), so a single-Text
 // stub keeps text queries unambiguous in list-row tests.
@@ -18,6 +24,23 @@ jest.mock('shared/ui/marquee-text/marquee-text', () => {
 })
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
+
+// Save lives in the native header (headerRight); render it so the test can press it.
+jest.mock('expo-router', () => {
+  const React = jest.requireActual('react') as {
+    createElement: (type: unknown, props: unknown, ...children: unknown[]) => unknown
+    Fragment: unknown
+  }
+
+  return {
+    Stack: {
+      Screen: ({ options }: { options?: { headerRight?: () => unknown } }) =>
+        options?.headerRight
+          ? React.createElement(React.Fragment, null, options.headerRight())
+          : null,
+    },
+  }
+})
 
 const INSTANCE_A = 'https://a.example'
 const INSTANCE_B = 'https://b.example'
@@ -116,9 +139,11 @@ describe('<AdminInvidiousScreen>', () => {
     )
     await findByText(INSTANCE_A)
 
-    fireEvent.changeText(getByLabelText(INPUT_LABEL), INSTANCE_C)
+    await fireEvent.changeText(getByLabelText(INPUT_LABEL), INSTANCE_C)
     await waitFor(() => expect(getByLabelText(INPUT_LABEL).props.value).toBe(INSTANCE_C))
-    fireEvent.press(getByText(ADD_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(ADD_LABEL))
+    })
 
     await waitFor(() =>
       expect(mockReplace).toHaveBeenCalledWith({ urls: [INSTANCE_A, INSTANCE_B, INSTANCE_C] }),
@@ -131,13 +156,19 @@ describe('<AdminInvidiousScreen>', () => {
       await renderWithProviders(<AdminInvidiousScreen />)
     await findByText(INSTANCE_A)
 
-    fireEvent.press((await findAllByLabelText(REMOVE_LABEL))[0])
+    await act(async () => {
+      await fireEvent.press((await findAllByLabelText(REMOVE_LABEL))[0])
+    })
     expect(await findByText('Удалить инстанс?')).toBeTruthy()
 
     const confirmButtons = getAllByText(REMOVE_LABEL, { includeHiddenElements: true })
-    fireEvent.press(confirmButtons[confirmButtons.length - 1])
+    await act(async () => {
+      await fireEvent.press(confirmButtons[confirmButtons.length - 1])
+    })
     await waitFor(() => expect(queryByText(INSTANCE_A)).toBeNull())
-    fireEvent.press(getByRole('button', { name: SAVE_LABEL }))
+    await act(async () => {
+      await fireEvent.press(getByRole('button', { name: SAVE_LABEL }))
+    })
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ urls: [INSTANCE_B] }))
   })
@@ -148,9 +179,11 @@ describe('<AdminInvidiousScreen>', () => {
     )
     await findByText(INSTANCE_A)
 
-    fireEvent.changeText(getByLabelText(INPUT_LABEL), 'http://a.example')
+    await fireEvent.changeText(getByLabelText(INPUT_LABEL), 'http://a.example')
     await waitFor(() => expect(getByLabelText(INPUT_LABEL).props.value).toBe('http://a.example'))
-    fireEvent.press(getByText(ADD_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(ADD_LABEL))
+    })
 
     await waitFor(() => expect(ctx.get(toastAtom)).toBe(INVALID_MESSAGE))
     expect(fetchMock).not.toHaveBeenCalled()
@@ -164,9 +197,11 @@ describe('<AdminInvidiousScreen>', () => {
     )
     await findByText(INSTANCE_A)
 
-    fireEvent.changeText(getByLabelText(INPUT_LABEL), INSTANCE_C)
+    await fireEvent.changeText(getByLabelText(INPUT_LABEL), INSTANCE_C)
     await waitFor(() => expect(getByLabelText(INPUT_LABEL).props.value).toBe(INSTANCE_C))
-    fireEvent.press(getByText(ADD_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(ADD_LABEL))
+    })
 
     await waitFor(() => expect(ctx.get(toastAtom)).toBe(ANTIBOT_MESSAGE))
     await waitFor(() => expect(getByText(ADD_LABEL)).toBeTruthy())
@@ -180,9 +215,11 @@ describe('<AdminInvidiousScreen>', () => {
     )
     await findByText(INSTANCE_A)
 
-    fireEvent.changeText(getByLabelText(INPUT_LABEL), INSTANCE_C)
+    await fireEvent.changeText(getByLabelText(INPUT_LABEL), INSTANCE_C)
     await waitFor(() => expect(getByLabelText(INPUT_LABEL).props.value).toBe(INSTANCE_C))
-    fireEvent.press(getByText(ADD_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(ADD_LABEL))
+    })
 
     await waitFor(() =>
       expect(mockReportError).toHaveBeenCalledWith(expect.any(Error), PROBE_ERROR_MESSAGE),

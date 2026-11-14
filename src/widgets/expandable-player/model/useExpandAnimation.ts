@@ -1,31 +1,31 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import { Dimensions, useWindowDimensions } from 'react-native'
-import {
-  interpolate,
-  type SharedValue,
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated'
-import { CONTENT_COLUMN_WIDTH, getColumnSideInset } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES, RADIUSES } from 'shared/ui/theme'
-import { getMiniPlayerBottom } from '../lib/getMiniPlayerBottom'
-import { getRestingContainerStyle } from '../lib/getRestingContainerStyle'
+import { type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
+import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
+import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
+import { getContainerOpacity } from '../lib/getContainerOpacity'
+import { getMiniBarStyle } from '../lib/getMiniBarStyle'
+import { type getRestingContainerStyle } from '../lib/getRestingContainerStyle'
+import { barMorphDriver } from './barMorphDriver'
 import { useAppStateSnap } from './useAppStateSnap'
 import { useGeometrySharedValues } from './useGeometrySharedValues'
 import { useOpacityStyles } from './useOpacityStyles'
 import { useProgressAnimation } from './useProgressAnimation'
-
-const MINI_H = PLAYER_SIZES.miniPlayerHeight
+import { useRestingStyles } from './useRestingStyles'
 
 interface UseExpandAnimationResult {
   backdropStyle: ReturnType<typeof useAnimatedStyle>
   backgroundImageStyle: ReturnType<typeof useAnimatedStyle>
-  collapsedRestingContainerStyle: ReturnType<typeof getRestingContainerStyle>
+  /** Resting mini top while the bar is collapsed to one row (morph progress 1). */
+  barCollapsedTop: number
+  /** Resting mini top while the bar is expanded / detached (morph progress 0). */
+  barExpandedTop: number
   containerStyle: ReturnType<typeof useAnimatedStyle>
   /** Stable reference — forces containerStyle worklet to re-run on the UI thread. */
   forceGeometryReapply: () => void
   fullStyle: ReturnType<typeof useAnimatedStyle>
-  miniOverlayStyle: ReturnType<typeof useAnimatedStyle>
+  miniBarRestingStyle: ReturnType<typeof getMiniBarStyle>
+  miniBarStyle: ReturnType<typeof useAnimatedStyle>
   miniStyle: ReturnType<typeof useAnimatedStyle>
   progress: SharedValue<number>
   restingContainerStyle: ReturnType<typeof getRestingContainerStyle>
@@ -38,30 +38,28 @@ export const useExpandAnimation = (
   tabBarHeight: number,
 ): UseExpandAnimationResult => {
   const progress = useSharedValue(0)
+  // UI-thread mirror of the bar collapse (axis D).
+  const { progress: barProgress, settled: settledCollapsed } = useAtomMorphDriver(barMorphDriver)
   const geometryReapplyTick = useSharedValue(0)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
   // On web `Dimensions.get('screen')` is the physical `window.screen.height`,
   // larger than the viewport; absolute player geometry would overshoot and spawn
-  // a document-level vertical scrollbar. Clamp to the viewport height. On native
-  // window == screen (edge-to-edge); native keyboard-resize transiently shrinks it, clamp self-heals.
+  // a document-level scrollbar. Clamp to the viewport (native window == screen).
   const fullScreenHeight = Math.min(Dimensions.get('screen').height, screenHeight)
-  const miniBottom = getMiniPlayerBottom(tabBarHeight)
-  const { fullScreenHeightShared, miniBottomShared, screenWidthShared } = useGeometrySharedValues(
-    miniBottom,
-    screenWidth,
-    fullScreenHeight,
+  const { fullScreenHeightShared, screenWidthShared, tabBarHeightShared } = useGeometrySharedValues(
+    { fullScreenHeight, screenWidth, tabBarHeight },
   )
-  const restingContainerStyle = useMemo(
-    () => getRestingContainerStyle({ expanded, fullScreenHeight, miniBottom, screenWidth }),
-    [expanded, fullScreenHeight, miniBottom, screenWidth],
-  )
-  const collapsedRestingContainerStyle = useMemo(
-    () => getRestingContainerStyle({ expanded: false, fullScreenHeight, miniBottom, screenWidth }),
-    [fullScreenHeight, miniBottom, screenWidth],
-  )
-  useProgressAnimation(expanded, progress)
-
-  useAppStateSnap(expanded, progress)
+  const { settledExpanded, settleOnSnap } = useProgressAnimation(expanded, progress)
+  useAppStateSnap(expanded, progress, settleOnSnap)
+  // Resting geometry follows the SETTLED expand state (like `settledCollapsed`).
+  const { barCollapsedTop, barExpandedTop, miniBarRestingStyle, restingContainerStyle } =
+    useRestingStyles({
+      barCollapsed: settledCollapsed,
+      expanded: settledExpanded,
+      fullScreenHeight,
+      screenWidth,
+      tabBarHeight,
+    })
 
   const containerStyle = useAnimatedStyle(() => {
     // Register dependency: any write to geometryReapplyTick re-runs this worklet,
@@ -69,32 +67,31 @@ export const useExpandAnimation = (
     // Alternating sign (±0.01dp) defeats no-diff skip while keeping the offset
     // permanently bounded — no monotonic accumulation.
     const reapply = geometryReapplyTick.value % 2 === 1 ? 0.01 : -0.01
-    const b = interpolate(progress.value, [0, 1], [miniBottomShared.value, 0])
-    const t = interpolate(
-      progress.value,
-      [0, 1],
-      [fullScreenHeightShared.value - miniBottomShared.value - MINI_H, 0],
-    )
-    // Collapsed bar is centered in the content column; expanded is full width.
-    const inset = getColumnSideInset(screenWidthShared.value, INDENTS.low, CONTENT_COLUMN_WIDTH)
-    const w = interpolate(
-      progress.value,
-      [0, 1],
-      [screenWidthShared.value - inset * 2, screenWidthShared.value],
-    )
-    return {
-      borderBottomLeftRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
-      borderBottomRightRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
-      borderTopLeftRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
-      borderTopRightRadius: interpolate(progress.value, [0, 1], [RADIUSES.middle, 0]),
-      bottom: b,
-      left: interpolate(progress.value, [0, 1], [inset, 0]),
-      top: t + reapply,
-      width: w,
-    }
+    // Interpolates from the CURRENT mini geometry (expanded or collapsed pill),
+    // so expanding out of the collapsed bottom line stays continuous.
+    const style = getContainerGeometryStyle({
+      barProgress: barProgress.value,
+      fullScreenHeight: fullScreenHeightShared.value,
+      progress: progress.value,
+      screenWidth: screenWidthShared.value,
+      tabBarHeight: tabBarHeightShared.value,
+    })
+
+    // At rest the container is invisible: its solid `surface` would sit exactly
+    // under the translucent mini pill and make the glass read as opaque (the
+    // pill's BlurView would only see a solid rectangle). Any animation frame
+    // keeps it visible for the morph.
+    return { ...style, opacity: getContainerOpacity(progress.value), top: style.top + reapply }
   })
-  const { backdropStyle, backgroundImageStyle, fullStyle, miniOverlayStyle, miniStyle } =
-    useOpacityStyles(progress)
+  const miniBarStyle = useAnimatedStyle(() =>
+    getMiniBarStyle({
+      barProgress: barProgress.value,
+      fullScreenHeight: fullScreenHeightShared.value,
+      screenWidth: screenWidthShared.value,
+      tabBarHeight: tabBarHeightShared.value,
+    }),
+  )
+  const { backdropStyle, backgroundImageStyle, fullStyle, miniStyle } = useOpacityStyles(progress)
 
   /**
    * Forces the containerStyle worklet to re-run and re-apply current (correct)
@@ -111,11 +108,13 @@ export const useExpandAnimation = (
   return {
     backdropStyle,
     backgroundImageStyle,
-    collapsedRestingContainerStyle,
+    barCollapsedTop,
+    barExpandedTop,
     containerStyle,
     forceGeometryReapply,
     fullStyle,
-    miniOverlayStyle,
+    miniBarRestingStyle,
+    miniBarStyle,
     miniStyle,
     progress,
     restingContainerStyle,

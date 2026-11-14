@@ -1,40 +1,87 @@
-import { Text, View } from 'react-native'
-import { useTheme } from 'shared/ui/theme'
+import { Text } from 'react-native'
+import Animated, {
+  type SharedValue,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated'
+import { useTheme, withAlpha } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
+import { getTabItemStyle } from '../lib/getBarMorphStyles'
+import { getCapsuleOpacity, getTabIconOffset } from '../lib/getIslandStyle'
 import { styles } from './styles'
 import { TabIcon } from './TabIcon'
 import { getTabLabel } from './tabLabels'
 
+const ACTIVE_CAPSULE_ALPHA = 0.18
+const AnimatedText = Animated.createAnimatedComponent(Text)
+
 export const TabButton = ({
+  collapseProgress,
   isActive,
+  isBarVisuallyCollapsed = false,
   isDisabled,
   onPress,
   routeKey,
   routeName,
 }: {
+  // Shared 0..1 bar-morph progress: labels fade out as the island becomes a circle.
+  collapseProgress?: SharedValue<number>
   isActive: boolean
+  // Collapsed island: the active-tab circle expands the bar on tap, so that tap
+  // keeps its press haptic like the search circle instead of being silent.
+  isBarVisuallyCollapsed?: boolean
   isDisabled?: boolean
   onPress: () => void
   routeKey: string
   routeName: string
 }) => {
   const { currentTheme } = useTheme()
-  const color = isActive ? currentTheme.primary : currentTheme.textMuted
+  const fallbackProgress = useSharedValue(0)
+  const labelProgress = collapseProgress ?? fallbackProgress
+  const labelStyle = useAnimatedStyle(() => ({ opacity: 1 - labelProgress.value }))
+  const itemStyle = useAnimatedStyle(() => getTabItemStyle(labelProgress.value))
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: getTabIconOffset(labelProgress.value) }],
+  }))
+  const capsuleStyle = useAnimatedStyle(() => ({
+    opacity: getCapsuleOpacity(labelProgress.value, isActive),
+  }))
+  const color = isDisabled
+    ? currentTheme.textMuted
+    : isActive
+      ? currentTheme.primary
+      : currentTheme.text
 
   return (
     <TouchableButton
       key={routeKey}
       onPress={onPress}
-      hapticDisabled={isActive}
       activeOpacity={isActive ? 1 : undefined}
+      hapticDisabled={isActive && !isBarVisuallyCollapsed}
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
     >
-      <View style={styles.tabItem}>
-        <TabIcon color={color} isActive={isActive} routeName={routeName} />
-        <Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={[styles.tabText, { color }]}>
+      <Animated.View style={[styles.tabItem, itemStyle]}>
+        {isActive && (
+          <Animated.View
+            pointerEvents='none'
+            style={[
+              styles.capsule,
+              { backgroundColor: withAlpha(currentTheme.primary, ACTIVE_CAPSULE_ALPHA) },
+              capsuleStyle,
+            ]}
+          />
+        )}
+        <Animated.View style={iconStyle}>
+          <TabIcon color={color} isActive={isActive} routeName={routeName} />
+        </Animated.View>
+        <AnimatedText
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.2}
+          style={[styles.tabText, { color }, labelStyle]}
+        >
           {getTabLabel(routeName)}
-        </Text>
-      </View>
+        </AnimatedText>
+      </Animated.View>
     </TouchableButton>
   )
 }

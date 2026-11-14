@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { setStringAsync } from 'expo-clipboard'
 import { type ReactNode } from 'react'
-import { Clipboard } from 'react-native'
 import { ConfirmDialog } from '../confirm-dialog/ConfirmDialog'
 import { COLORS } from '../theme/colors'
 
@@ -22,7 +22,8 @@ export const ErrorModal = ({
 
     const errorText = `Error: ${error.message}\n\nStack trace:\n${error.stack || 'No stack trace available'}`
 
-    Clipboard.setString(errorText)
+    // Clipboard copy is cosmetic: a rejected write is not actionable for the user.
+    void setStringAsync(errorText).catch(() => {})
   }
 
   const icon: ReactNode = (

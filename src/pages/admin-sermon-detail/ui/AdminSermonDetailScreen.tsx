@@ -1,4 +1,5 @@
 import { useAction } from '@reatom/npm-react'
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio'
 import { type Href, Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
@@ -9,6 +10,7 @@ import { AdminContentSkeleton, EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { useTheme } from 'shared/ui/theme'
 import { useAdminSermonDetail } from '../lib/useAdminSermonDetail'
+import { SermonDescriptionCard } from './SermonDescriptionCard'
 import { SermonDetailHeader } from './SermonDetailHeader'
 import { SermonMediaCard } from './SermonMediaCard'
 import { SermonPlaylistRow } from './SermonPlaylistRow'
@@ -23,6 +25,9 @@ export const AdminSermonDetailScreen = () => {
   const params = useLocalSearchParams<{ id: string }>()
   const id = params.id ?? ''
   const { isDeleting, isNotFound, remove, sermon } = useAdminSermonDetail(id)
+  // Both run before the early return so the hook order stays unconditional.
+  const player = useAudioPlayer(sermon?.audioUrl ?? null)
+  const status = useAudioPlayerStatus(player)
   const showToastAction = useAction(showToast)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
@@ -73,15 +78,16 @@ export const AdminSermonDetailScreen = () => {
         <SermonDetailHeader sermon={sermon} />
 
         {sermon.description ? (
-          <View style={[styles.card, { backgroundColor: currentTheme.surface }]}>
-            <Text style={[styles.cardTitle, { color: currentTheme.text }]}>Описание</Text>
-            <Text style={[styles.description, { color: currentTheme.textMuted }]}>
-              {sermon.description}
-            </Text>
-          </View>
+          <SermonDescriptionCard
+            player={player}
+            audioUrl={sermon.audioUrl}
+            description={sermon.description}
+          />
         ) : null}
 
         <SermonMediaCard
+          player={player}
+          status={status}
           audioUrl={sermon.audioUrl}
           youtubeUrl={sermon.youtubeUrl}
           textFileUrl={sermon.textFileUrl}

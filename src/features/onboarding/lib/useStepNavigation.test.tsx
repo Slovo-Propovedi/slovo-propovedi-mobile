@@ -303,31 +303,59 @@ describe('useStepNavigation skipIfMissing cards', () => {
   })
 })
 
-describe('useStepNavigation desktop-web-only cards', () => {
-  // whatsNew deck index 2 is the «Кнопка «Обновить»» card: its target renders only on
-  // desktop web, so every other platform drops the card from the deck.
-  const WHATS_NEW = scenariosById.whatsNew
-  const REFRESH_DECK_INDEX = 2
+describe('useStepNavigation skipIfMissing cards', () => {
+  // A synthetic scenario: the middle card spotlights a desktop-web-only control,
+  // which never registers on other platforms, so the deck drops that card there.
+  const DESKTOP_ONLY_TARGET_ID = 'listen.refresh-button'
+  const DESKTOP_ONLY_DECK_INDEX = 1
+  const DESKTOP_ONLY_SCENARIO: OnboardingScenario = {
+    description: 'Синтетический сценарий',
+    icon: 'information-circle-outline',
+    id: 'whatsNew',
+    steps: [
+      { text: 'Вступление', title: 'Интро' },
+      {
+        route: '/listen',
+        skipIfMissing: true,
+        targetId: DESKTOP_ONLY_TARGET_ID,
+        text: 'Только на компьютере',
+        title: 'Кнопка обновления',
+      },
+      { route: '/listen', targetId: 'listen.sections', text: 'Продолжение', title: 'Дальше' },
+    ],
+    title: 'Синтетический сценарий',
+  }
+  const REGISTERED_WHATS_NEW = scenariosById.whatsNew
 
-  test('drops the refresh card when its target is absent', async () => {
-    const { ctx } = await renderNavigation(WHATS_NEW, REFRESH_DECK_INDEX, {
+  // The tour actions resolve the deck by `scenarioId` from the registry, so the
+  // synthetic scenario must replace the real one for the duration of these tests.
+  beforeEach(() => {
+    scenariosById.whatsNew = DESKTOP_ONLY_SCENARIO
+  })
+
+  afterEach(() => {
+    scenariosById.whatsNew = REGISTERED_WHATS_NEW
+  })
+
+  test('drops the desktop-only card when its target is absent', async () => {
+    const { ctx } = await renderNavigation(DESKTOP_ONLY_SCENARIO, DESKTOP_ONLY_DECK_INDEX, {
       'listen.sections': { 'instance-1': TARGET_RECT },
     })
 
     await waitFor(
       () =>
         expect(ctx.get(onboardingTourAtom)).toEqual({
-          deckIndex: REFRESH_DECK_INDEX + 1,
+          deckIndex: DESKTOP_ONLY_DECK_INDEX + 1,
           scenarioId: 'whatsNew',
-          skippedDeckIndexes: [REFRESH_DECK_INDEX],
+          skippedDeckIndexes: [DESKTOP_ONLY_DECK_INDEX],
         }),
       { timeout: 300 },
     )
   })
 
-  test('keeps the refresh card while its target is registered', async () => {
-    const { ctx } = await renderNavigation(WHATS_NEW, REFRESH_DECK_INDEX, {
-      'listen.refresh-button': { 'instance-1': TARGET_RECT },
+  test('keeps the desktop-only card while its target is registered', async () => {
+    const { ctx } = await renderNavigation(DESKTOP_ONLY_SCENARIO, DESKTOP_ONLY_DECK_INDEX, {
+      [DESKTOP_ONLY_TARGET_ID]: { 'instance-1': TARGET_RECT },
     })
 
     await act(async () => {
@@ -335,7 +363,7 @@ describe('useStepNavigation desktop-web-only cards', () => {
     })
 
     expect(ctx.get(onboardingTourAtom)).toEqual({
-      deckIndex: REFRESH_DECK_INDEX,
+      deckIndex: DESKTOP_ONLY_DECK_INDEX,
       scenarioId: 'whatsNew',
       skippedDeckIndexes: [],
     })

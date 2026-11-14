@@ -10,6 +10,8 @@ const EXPO_AUDIO_MODULE_PATH =
   'node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt'
 const EXPO_AUDIO_SEEK_INTERVAL_PATH =
   'node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt'
+const EXPO_INTENT_LAUNCHER_MODULE_PATH =
+  'node_modules/expo-intent-launcher/android/src/main/java/expo/modules/intentlauncher/IntentLauncherModule.kt'
 const PACKAGE_JSON_PATH = 'package.json'
 const PATCH_MARKER = 'PATCH(patch-package)'
 const LOOP_PROPERTY = 'Property("loop")'
@@ -25,6 +27,18 @@ const PATCH_PROBES = {
   'expo-font': {
     files: ['node_modules/expo-font/build/FontLoader.web.js'],
     fixSignature: 'ExpoFontLoader.loadAsync(name, input).catch',
+  },
+  'expo-intent-launcher': {
+    files: [EXPO_INTENT_LAUNCHER_MODULE_PATH],
+    requiresSourceBuild: true,
+  },
+  'react-native-draggable-flatlist': {
+    files: [
+      'node_modules/react-native-draggable-flatlist/src/components/DraggableFlatList.tsx',
+      'node_modules/react-native-draggable-flatlist/lib/module/components/DraggableFlatList.js',
+      'node_modules/react-native-draggable-flatlist/lib/commonjs/components/DraggableFlatList.js',
+    ],
+    fixSignature: 'requestAnimationFrame(',
   },
   'react-native-gesture-handler': {
     files: [
@@ -153,6 +167,26 @@ const collectSeekIntervalProblems = seekIntervalSource => {
   return problems
 }
 
+/**
+ * A node_modules patch only reaches the APK when the package is built from
+ * source; otherwise autolinking pulls the prebuilt AAR and the patch is inert.
+ */
+const collectSourceBuildProblems = ({ packageJson, packageName }) => {
+  if (!packageJson) {
+    return ['cannot read package.json — cannot verify the source-build invariant']
+  }
+
+  const buildFromSource = packageJson.expo?.autolinking?.buildFromSource
+
+  if (!Array.isArray(buildFromSource) || !buildFromSource.includes(packageName)) {
+    return [
+      `${packageName} is not in expo.autolinking.buildFromSource — the patch is inert (prebuilt AAR)`,
+    ]
+  }
+
+  return []
+}
+
 export const collectExpoAudioProblems = ({ audioModuleSource, seekIntervalSource, packageJson }) => {
   if (!audioModuleSource) {
     return ['expo-audio AudioModule.kt not found — cannot verify the loop-getter patch']
@@ -173,19 +207,7 @@ export const collectExpoAudioProblems = ({ audioModuleSource, seekIntervalSource
   }
 
   problems.push(...collectSeekIntervalProblems(seekIntervalSource))
-
-  if (!packageJson) {
-    problems.push('cannot read package.json — cannot verify the source-build invariant')
-    return problems
-  }
-
-  const buildFromSource = packageJson.expo?.autolinking?.buildFromSource
-
-  if (!Array.isArray(buildFromSource) || !buildFromSource.includes(EXPO_AUDIO)) {
-    problems.push(
-      'expo-audio is not in expo.autolinking.buildFromSource — the patch is inert (prebuilt AAR)',
-    )
-  }
+  problems.push(...collectSourceBuildProblems({ packageJson, packageName: EXPO_AUDIO }))
 
   return problems
 }
@@ -227,6 +249,15 @@ export const verifyPatch = file => {
         }),
       )
     : []
+
+  if (probe?.requiresSourceBuild) {
+    probeProblems.push(
+      ...collectSourceBuildProblems({
+        packageJson: readJsonOrNull(PACKAGE_JSON_PATH),
+        packageName,
+      }),
+    )
+  }
 
   if (packageName !== EXPO_AUDIO) {
     return probeProblems

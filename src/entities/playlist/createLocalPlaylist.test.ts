@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
+import { mockConsole } from 'shared/mocks'
 import { createLocalPlaylist } from './createLocalPlaylist'
 import { FAVORITES_PLAYLIST } from './localPlaylists'
 import { myPlaylistsAtom } from './model'
@@ -72,6 +73,7 @@ describe('createLocalPlaylist', () => {
   })
 
   test('commits the atom even when persisting fails', async () => {
+    mockConsole('error')
     jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('storage down'))
     const ctx = createCtx()
     myPlaylistsAtom(ctx, [FAVORITES_PLAYLIST])

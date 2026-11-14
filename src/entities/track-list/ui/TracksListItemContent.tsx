@@ -58,7 +58,7 @@ export const TracksListItemContent = forwardRef<
         onPress={dotsOnPress}
         accessibilityLabel='Меню трека'
         style={tracksListStyles.dotsButton}
-        Icon={<MaterialCommunityIcons size={20} name='dots-vertical' color={theme.textMuted} />}
+        Icon={<MaterialCommunityIcons size={20} name='dots-horizontal' color={theme.textMuted} />}
       />
     )
 

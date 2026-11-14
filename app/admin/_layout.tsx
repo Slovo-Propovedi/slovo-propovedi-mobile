@@ -3,11 +3,14 @@ import { type Href, Redirect, Stack, usePathname } from 'expo-router'
 import { useEffect, useMemo } from 'react'
 import { type ColorValue } from 'react-native'
 import { useFlagScreens } from 'pages/admin-flag-form'
+import { useFlagListScreens } from 'pages/admin-flags'
 import { useInvidiousScreens } from 'pages/admin-invidious'
+import { useMediaScreens } from 'pages/admin-media'
 import { usePlaylistScreens } from 'pages/admin-playlist-form'
 import { useSectionScreens } from 'pages/admin-section-form'
 import { useSermonScreens } from 'pages/admin-sermon-form'
 import { useUserScreens } from 'pages/admin-user-form'
+import { useUserListScreens } from 'pages/admin-users'
 import { HeaderBackButton } from 'widgets/sub-screen-header-back'
 import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
 import { AdminShellSkeleton } from 'shared/ui'
@@ -35,6 +38,9 @@ const AdminLayout = () => {
   const userScreens = useUserScreens()
   const invidiousScreens = useInvidiousScreens()
   const flagScreens = useFlagScreens()
+  const mediaScreens = useMediaScreens()
+  const flagListScreens = useFlagListScreens()
+  const userListScreens = useUserListScreens()
 
   // Стабильный объект options для экрана входа: держим идентичность между
   // рендерами, чтобы expo-router не переустанавливал опции на каждый кадр.
@@ -86,6 +92,9 @@ const AdminLayout = () => {
       {userScreens}
       {invidiousScreens}
       {flagScreens}
+      {mediaScreens}
+      {flagListScreens}
+      {userListScreens}
     </Stack>
   )
 }

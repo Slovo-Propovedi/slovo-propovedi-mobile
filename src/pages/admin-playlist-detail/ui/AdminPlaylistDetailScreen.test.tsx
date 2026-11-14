@@ -1,4 +1,4 @@
-import { fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { playlistsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
@@ -205,13 +205,17 @@ describe('<AdminPlaylistDetailScreen>', () => {
     const { findByLabelText, findByText, getAllByText } = await renderWithProviders(
       <AdminPlaylistDetailScreen />,
     )
-    fireEvent.press(await findByLabelText('Удалить'))
+    await act(async () => {
+      await fireEvent.press(await findByLabelText('Удалить'))
+    })
 
     // The dialog mounts inside RN Modal; its confirm button shares the «Удалить»
     // label with the header action.
     expect(await findByText('Удалить плейлист?')).toBeTruthy()
     const confirmButtons = getAllByText('Удалить', { includeHiddenElements: true })
-    fireEvent.press(confirmButtons[confirmButtons.length - 1])
+    await act(async () => {
+      await fireEvent.press(confirmButtons[confirmButtons.length - 1])
+    })
 
     await waitFor(() => expect(mockRemove).toHaveBeenCalledWith('p1'))
     await waitFor(() => expect(mockBack).toHaveBeenCalled())

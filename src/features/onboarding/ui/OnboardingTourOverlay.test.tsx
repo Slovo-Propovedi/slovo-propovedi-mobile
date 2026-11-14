@@ -259,7 +259,9 @@ describe('<OnboardingTourOverlay>', () => {
       [PLAYLIST_FIRST_ROW]: instances(PLAYLIST_ROW_RECT),
     })
 
-    fireEvent.press(getByText(NEXT_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(NEXT_LABEL))
+    })
 
     await waitFor(() => expect(getByTestId(TAP_MODAL)).toBeTruthy())
     expect(getByText(TAP_INDICATOR)).toBeTruthy()
@@ -417,7 +419,7 @@ describe('<OnboardingTourOverlay>', () => {
     expect(queryByText('hole:336,100')).toBeNull()
   })
 
-  test('spotlights the sermon-row ⋯ menu on the final search card', async () => {
+  test('spotlights the sermon-row ⋯ menu on the search card', async () => {
     const MENU_RECT: OnboardingTargetRect = { height: 40, width: 40, x: 300, y: 400 }
     const { getByTestId, getByText, queryByTestId, queryByText } = await renderAtDeck('search', 6, {
       'search-results.first-sermon-menu': instances(MENU_RECT),
@@ -425,7 +427,7 @@ describe('<OnboardingTourOverlay>', () => {
 
     expect(getByTestId(TOUR_MODAL)).toBeTruthy()
     expect(getByText('Меню проповеди')).toBeTruthy()
-    expect(getByText(DONE_LABEL)).toBeTruthy()
+    expect(getByText(NEXT_LABEL)).toBeTruthy()
     expect(getByText(DIM)).toBeTruthy()
     expect(getByText('hole:300,400')).toBeTruthy()
     expect(queryByTestId(TAP_MODAL)).toBeNull()
@@ -502,7 +504,9 @@ describe('<OnboardingTourOverlay>', () => {
 
     expect(getByTestId(TOUR_MODAL)).toBeTruthy()
 
-    fireEvent.press(getByText(NEXT_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(NEXT_LABEL))
+    })
 
     await waitFor(() => expect(getByTestId(TAP_MODAL)).toBeTruthy())
     expect(getByText(TAP_INDICATOR)).toBeTruthy()
@@ -515,7 +519,9 @@ describe('<OnboardingTourOverlay>', () => {
       'tab.listen': instances(SECTIONS_RECT),
     })
 
-    fireEvent.press(getByText(NEXT_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(NEXT_LABEL))
+    })
 
     await waitFor(() => expect(getByTestId(TAP_MODAL)).toBeTruthy())
     expect(getByText(TAP_INDICATOR)).toBeTruthy()
@@ -531,7 +537,9 @@ describe('<OnboardingTourOverlay>', () => {
       'tab.listen': instances(SECTIONS_RECT),
     })
 
-    fireEvent.press(getByText(NEXT_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(NEXT_LABEL))
+    })
 
     // The search-toggle exit blinks and opens the search, then the deck lands on the
     // pass-through «Вводим запрос» card, which fires the typing on enter: the word types
@@ -548,7 +556,9 @@ describe('<OnboardingTourOverlay>', () => {
     expect(getByText('Вводим запрос')).toBeTruthy()
     expect(ctx.get(onboardingTourAtom)?.deckIndex).toBe(2)
 
-    fireEvent.press(getByText(NEXT_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(NEXT_LABEL))
+    })
 
     await waitFor(() => expect(ctx.get(onboardingTourAtom)?.deckIndex).toBe(3))
     expect(calls).toEqual(['open', 'type'])
@@ -580,7 +590,9 @@ describe('<OnboardingTourOverlay>', () => {
       'search-results.group-sermons': instances(SECTIONS_RECT),
     })
 
-    fireEvent.press(getByText(NEXT_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(NEXT_LABEL))
+    })
 
     await waitFor(() => expect(getByTestId(TAP_MODAL)).toBeTruthy())
     expect(getByText(TAP_INDICATOR)).toBeTruthy()
@@ -684,7 +696,9 @@ describe('<OnboardingTourOverlay>', () => {
       [PLAYLIST_FIRST_ROW]: instances(PLAYLIST_ROW_RECT),
     })
 
-    fireEvent.press(getByText(NEXT_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(NEXT_LABEL))
+    })
 
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1), {
       timeout: EXIT_FLOW_TIMEOUT_MS,
@@ -715,7 +729,9 @@ describe('<OnboardingTourOverlay>', () => {
       setupCtx => currentAudioAtom(setupCtx, AUDIO),
     )
 
-    fireEvent.press(getByText(DONE_LABEL))
+    await act(async () => {
+      await fireEvent.press(getByText(DONE_LABEL))
+    })
 
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1), {
       timeout: EXIT_FLOW_TIMEOUT_MS,

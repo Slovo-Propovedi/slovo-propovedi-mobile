@@ -19,6 +19,5 @@ export type OnboardingScenarioId =
   | 'search'
   | 'settings'
   | 'share'
-  | 'study'
   | 'welcome'
   | 'whatsNew'

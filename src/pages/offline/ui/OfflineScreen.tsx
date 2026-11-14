@@ -1,23 +1,24 @@
 import { useAtom } from '@reatom/npm-react'
 import { useNavigation } from 'expo-router'
 import { useCallback, useLayoutEffect } from 'react'
-import { FlatList, StyleSheet, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { type OfflineSermonItem, useOfflineSermons } from 'features/offline-sermons'
-import { OnboardingHelpRow, OnboardingTarget, useTourScrollable } from 'features/onboarding'
+import { OnboardingTarget, useTourScrollable } from 'features/onboarding'
 import { usePlaybackChoice } from 'features/playback-choice'
+import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { sermonCachingEnabledAtom } from 'entities/offline-cache'
 import { isPlayingAtom } from 'entities/player'
 import { createTracksListStyles, TracksListSkeleton } from 'entities/track-list'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { buildOfflinePlaylist } from '../lib/offlinePlaylist'
 import { OFFLINE_PLAYBACK_ERROR_MESSAGE, usePlayAllOffline } from '../lib/usePlayAllOffline'
 import { OfflineEmptyState } from './OfflineEmptyState'
-import { OfflineHeaderMenu } from './OfflineHeaderMenu'
+import { OfflineHeaderActions } from './OfflineHeaderActions'
 import { OfflineRow } from './OfflineRow'
 import { OfflineSeparator } from './OfflineSeparator'
-import { SermonCachingHeaderSwitch } from './SermonCachingHeaderSwitch'
 
 // Cap rows mounted on first paint and per batch: each row runs its own
 // subscriptions and a native file check, so a large window lands in one wave.
@@ -28,11 +29,6 @@ const OFFLINE_LIST_LABEL = 'Плейлист всех скачанных про�
 const OFFLINE_ORIGIN_LABEL = 'Плейлист, из которого добавлено в офлайн'
 
 const styles = StyleSheet.create({
-  headerActions: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: INDENTS.lowest,
-  },
   skeletonList: {
     paddingTop: INDENTS.low,
   },
@@ -48,6 +44,10 @@ export const OfflineScreen = () => {
   const [isPlaying] = useAtom(isPlayingAtom)
   const [isCachingEnabled] = useAtom(sermonCachingEnabledAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const isBarCollapseSuspended = useIsBarCollapseSuspended()
+  const { onScroll } = useBarCollapseOnScroll({
+    isSuspended: isBarCollapseSuspended,
+  })
   const tracksListStyles = createTracksListStyles(currentTheme)
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
   const getOfflinePlaylist = useCallback(() => buildOfflinePlaylist(items), [items])
@@ -70,16 +70,7 @@ export const OfflineScreen = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <OnboardingHelpRow>
-          <View style={styles.headerActions}>
-            <SermonCachingHeaderSwitch onboardingTargetId='offline.caching-switch' />
-            <OfflineHeaderMenu
-              onPlayAll={playAll}
-              isPlayAllDisabled={isPlayAllDisabled}
-              onboardingTargetId='offline.header-menu'
-            />
-          </View>
-        </OnboardingHelpRow>
+        <OfflineHeaderActions onPlayAll={playAll} isPlayAllDisabled={isPlayAllDisabled} />
       ),
     })
     return () => {
@@ -99,9 +90,11 @@ export const OfflineScreen = () => {
   return (
     <View style={tracksListStyles.container}>
       <OnboardingTarget id='offline.rows' style={{ flex: 1 }}>
-        <FlatList
+        <Animated.FlatList
           data={items}
+          onScroll={onScroll}
           ref={tourScrollableRef}
+          scrollEventThrottle={16}
           windowSize={LIST_WINDOW_SIZE}
           maxToRenderPerBatch={ROWS_PER_BATCH}
           keyExtractor={item => item.sermon.id}

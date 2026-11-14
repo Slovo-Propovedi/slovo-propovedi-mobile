@@ -1,13 +1,13 @@
+import { useAction } from '@reatom/npm-react'
 import { useCallback } from 'react'
 import { type SharedValue } from 'react-native-reanimated'
+import { closePlayerSheetAction, openPlayerSheetAction } from 'entities/player'
 import { useFullscreenPanGesture } from '../../model/useFullscreenPanGesture'
 import { useMiniPanGesture } from '../../model/useMiniPanGesture'
 
 interface UseExpandablePlayerGestureInput {
-  close: () => void
   disabled: boolean
   expanded: boolean
-  open: () => void
   progress: SharedValue<number>
   screenHeight: number
   tabBarHeight: number
@@ -21,14 +21,17 @@ interface UseExpandablePlayerGestureResult {
 }
 
 export const useExpandablePlayerGesture = ({
-  close,
   disabled,
   expanded,
-  open,
   progress,
   screenHeight,
   tabBarHeight,
 }: UseExpandablePlayerGestureInput): UseExpandablePlayerGestureResult => {
+  // The sheet actions are only ever invoked by these gestures, so the hook owns
+  // them instead of threading two callbacks through every caller.
+  const open = useAction(openPlayerSheetAction)
+  const close = useAction(closePlayerSheetAction)
+
   const handleMiniTap = useCallback(() => {
     if (!expanded) void open()
   }, [expanded, open])

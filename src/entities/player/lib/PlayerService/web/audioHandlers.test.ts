@@ -2,6 +2,11 @@ import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
 import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { attachWebAudioHandlers, reportPlayError } from './audioHandlers'
+import {
+  createResumeSeekReassert,
+  PLAYABLE_READY_STATE,
+  type ResumeSeekReassert,
+} from './resumeSeekReassert'
 
 jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
 
@@ -29,6 +34,7 @@ const createElementStub = (): AudioElementStub => {
     },
     currentTime: 0,
     duration: 0,
+    readyState: PLAYABLE_READY_STATE,
     removeEventListener: (type: string, handler: () => void) => {
       listeners.get(type)?.delete(handler)
     },
@@ -50,6 +56,7 @@ const createDeps = (
   audio: HTMLAudioElement,
   state: ReturnType<typeof createState>,
   initialPositionMs = 0,
+  resumeSeekReassert: ResumeSeekReassert = jest.fn(),
 ) => ({
   audio,
   flushProgressAtCurrentTime: jest.fn(),
@@ -65,6 +72,7 @@ const createDeps = (
   },
   noteLivePosition: jest.fn(),
   restoreInterruptedPosition: () => false,
+  resumeSeekReassert,
   startStatusTracker: jest.fn(),
   state,
   stopStatusTracker: jest.fn(),
@@ -116,6 +124,17 @@ describe('attachWebAudioHandlers', () => {
     )
   })
 
+  test('delegates the first playing edge to the injected resume-seek reassert', () => {
+    const state = createState()
+    const { element, fireEvent } = createElementStub()
+    const resumeSeekReassert = jest.fn()
+    attachWebAudioHandlers(createDeps(element, state, RESUME_POSITION_MS, resumeSeekReassert))
+
+    fireEvent('playing')
+
+    expect(resumeSeekReassert).toHaveBeenCalledWith(element)
+  })
+
   test('re-asserts a dropped resume seek once on the first playing edge', () => {
     const state = createState()
     const { element, fireEvent } = createElementStub()
@@ -129,7 +148,10 @@ describe('attachWebAudioHandlers', () => {
         if (assignments.length > 1) storedTime = value
       },
     })
-    attachWebAudioHandlers(createDeps(element, state, RESUME_POSITION_MS))
+    const { reassert } = createResumeSeekReassert(RESUME_POSITION_MS, state, {
+      updatePositionState: jest.fn(),
+    })
+    attachWebAudioHandlers(createDeps(element, state, RESUME_POSITION_MS, reassert))
 
     fireEvent('loadedmetadata')
     jest.mocked(state.setPosition).mockClear()
@@ -152,7 +174,10 @@ describe('attachWebAudioHandlers', () => {
         storedTime = value
       },
     })
-    attachWebAudioHandlers(createDeps(element, state, RESUME_POSITION_MS))
+    const { reassert } = createResumeSeekReassert(RESUME_POSITION_MS, state, {
+      updatePositionState: jest.fn(),
+    })
+    attachWebAudioHandlers(createDeps(element, state, RESUME_POSITION_MS, reassert))
 
     fireEvent('loadedmetadata')
     jest.mocked(state.setPosition).mockClear()

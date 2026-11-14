@@ -14,7 +14,7 @@ import {
 import { useEscapeKey } from '../../lib/escape-key/useEscapeKey'
 import { hapticLight } from '../../lib/haptics'
 import { type AnchorRect } from './anchorRect'
-import { computeMenuPosition } from './computeMenuPosition'
+import { computeMenuPosition, type MenuPlacement } from './computeMenuPosition'
 import { useViewportSync } from './useViewportSync'
 
 export interface AnchoredDropdownProps {
@@ -24,6 +24,7 @@ export interface AnchoredDropdownProps {
   gap?: number
   menuStyle?: StyleProp<ViewStyle>
   onClose: () => void
+  placement?: MenuPlacement
   testID?: string
   visible: boolean
 }
@@ -38,6 +39,7 @@ export const AnchoredDropdown = ({
   gap = DEFAULT_GAP,
   menuStyle,
   onClose,
+  placement = 'above',
   testID,
   visible,
 }: AnchoredDropdownProps) => {
@@ -83,6 +85,7 @@ export const AnchoredDropdown = ({
     menuSize,
     viewport,
     gap,
+    placement,
   )
 
   const handleLayout = (event: LayoutChangeEvent) => {

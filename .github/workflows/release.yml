@@ -1,0 +1,97 @@
+name: Release build
+
+# Dispatch-only executor for the Forgejo orchestrator; native triggers are
+# intentionally absent (the mirror must not build on tag pushes). Build
+# artifacts hand off to Forgejo for signing/publishing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        # `js-only` is manual-only and currently dead: Forgejo dispatches native.
+        description: 'native | js-only'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# GitHub vars required (org or repo level): BACKEND_API_HOSTNAME, LANDING_HOSTNAME,
+# WEB_HOSTNAME, MIRROR_CODEBERG_URL, MIRROR_GITHUB_URL, MOBILE_REPOSITORY_NAME,
+# EXPO_PUBLIC_OTA_URL, EXPO_PUBLIC_XPREM_APP_ID, EXPO_PUBLIC_XPREM_CHANNEL_NAME,
+# EXPO_PUBLIC_XPREM_BRANCH_NAME (10 total). Keep them in sync with the Forgejo org
+# vars (see docs/debt.md). The EXPO_PUBLIC_* host/mirror entries below are derived
+# from the plain names — the same mapping as the old Forgejo release.yml prebuild.
+env:
+  BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+  LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+  WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+  MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+  MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
+  MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
+  EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+  EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+  EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+  EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+  EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
+  EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
+  EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+  EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+  EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+  EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+  # Aliyun maven mirror 502s from GitHub-hosted US IPs; google()/mavenCentral()
+  # are reachable directly there (see plugins/mavenMirrorSnippets.ts).
+  MAVEN_ALIYUN_MIRROR: 'false'
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  android:
+    if: inputs.mode == 'native'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Compute version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build unsigned APK
+        uses: ./actions/release-android
+        with:
+          profile: hosted
+          signing: none
+          version: ${{ steps.version.outputs.version }}
+
+      - name: Verify collected APK
+        run: |
+          set -euo pipefail
+          mapfile -t APKS < <(find unsigned-apk -name '*.apk' -print)
+          if [ "${#APKS[@]}" -eq 0 ]; then
+            echo "::error::No APK found in unsigned-apk/"
+            exit 1
+          fi
+          if [ "${#APKS[@]}" -gt 1 ]; then
+            echo "::error::Expected exactly one APK in unsigned-apk/, found ${#APKS[@]}: ${APKS[*]}"
+            exit 1
+          fi
+          APK="${APKS[0]}"
+          echo "collected APK: $APK ($(stat -c %s "$APK") bytes)"
+          if [[ "$(basename "$APK")" != *-unsigned.apk ]]; then
+            echo "::warning::APK is debug-signed (AGP fallback without RELEASE_STORE_FILE) — expected on GitHub-hosted builds; it is re-signed with the release key on the Forgejo side (zipalign + apksigner, cert gate APK_SIGNER_SHA256)"
+          fi
+          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -mindepth 2 -maxdepth 2 -name apksigner -type f 2>/dev/null | sort -V | tail -1)
+          if [ -n "$APKSIGNER" ]; then
+            "$APKSIGNER" verify --print-certs "$APK" | head -8 || true
+          fi
+
+      - name: Upload unsigned APK
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: unsigned-apk
+          path: unsigned-apk/
+          if-no-files-found: error
+          retention-days: 30

@@ -1,9 +1,5 @@
-import { Platform, StyleSheet } from 'react-native'
+import { StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
-
-// Web-десктоп: кнопка «Найти осиротевшие файлы» не растягивается на всю ширину
-// вьюпорта. На нативе cap не задаётся — кнопка остаётся на всю ширину, как раньше.
-const SCAN_BUTTON_MAX_WIDTH = 320
 
 export const styles = StyleSheet.create({
   banner: { borderRadius: RADIUSES.low, marginTop: INDENTS.medium, padding: INDENTS.medium },
@@ -22,13 +18,6 @@ export const styles = StyleSheet.create({
   gridImage: { borderRadius: RADIUSES.low },
   gridRow: { gap: INDENTS.low },
   header: { paddingBottom: INDENTS.medium },
-  headerRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: INDENTS.medium,
-    marginBottom: INDENTS.medium,
-  },
-  headerText: { flex: 1 },
   listContent: { padding: INDENTS.medium },
   mediaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: INDENTS.low },
   orphanBadge: {
@@ -64,7 +53,7 @@ export const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET,
     paddingHorizontal: INDENTS.medium,
   },
-  primaryButtonText: { color: COLORS.white, fontSize: FONT_SIZES.base, fontWeight: '600' },
+  primaryButtonText: { fontSize: FONT_SIZES.base, fontWeight: '600' },
   progressFill: { backgroundColor: COLORS.primary, height: '100%' },
   progressTrack: {
     borderRadius: RADIUSES.low,
@@ -72,16 +61,13 @@ export const styles = StyleSheet.create({
     marginTop: INDENTS.low,
     overflow: 'hidden',
   },
-  secondaryButton: {
+  sectionHeaderRow: {
     alignItems: 'center',
-    borderColor: COLORS.disabled,
-    borderRadius: RADIUSES.low,
-    borderWidth: 1,
-    justifyContent: 'center',
-    maxWidth: Platform.OS === 'web' ? SCAN_BUTTON_MAX_WIDTH : undefined,
-    minHeight: MIN_TOUCH_TARGET,
-    paddingHorizontal: INDENTS.medium,
+    flexDirection: 'row',
+    gap: INDENTS.low,
+    marginTop: INDENTS.high,
   },
+  sectionHeaderTitle: { flex: 1, fontSize: FONT_SIZES.lg, fontWeight: '700' },
   sectionTitle: { fontSize: FONT_SIZES.lg, fontWeight: '700', marginTop: INDENTS.high },
   subtitle: { fontSize: FONT_SIZES.sm, marginTop: INDENTS.lowest },
   tile: { borderRadius: RADIUSES.middle, borderWidth: 1, overflow: 'hidden' },
@@ -94,7 +80,7 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     top: INDENTS.low,
   },
-  tileBadgeText: { color: COLORS.white, fontSize: FONT_SIZES.xs, fontWeight: '700' },
+  tileBadgeText: { fontSize: FONT_SIZES.xs, fontWeight: '700' },
   tileBody: { padding: INDENTS.low },
   tileDelete: {
     alignItems: 'center',

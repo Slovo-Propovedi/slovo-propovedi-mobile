@@ -1,4 +1,5 @@
 import z from 'zod'
+import { mockConsole } from '../../mocks/console'
 import { createSessionCache } from './createSessionCache'
 import { loadCacheFirst } from './loadCacheFirst'
 
@@ -37,6 +38,7 @@ describe('loadCacheFirst', () => {
   })
 
   test('falls back to the cached value when the network fails', async () => {
+    mockConsole('error')
     await seed('cached')
 
     await expect(

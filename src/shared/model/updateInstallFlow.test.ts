@@ -23,6 +23,7 @@ import {
   extractApkFromZip,
   installApk,
 } from '../lib/update-service/updateService'
+import { mockConsole } from '../mocks/console'
 import { reportError } from './error-dialog'
 import { updateErrorAtom, updateErrorKindAtom, updateStateAtom } from './updateInstall'
 import { downloadUpdateZipWithFallback } from './updateInstallFallback'
@@ -47,6 +48,7 @@ const mockedReportError = jest.mocked(reportError)
 describe('handleUpdateFailure (via startUpdateAction)', () => {
   beforeEach(() => {
     jest.resetAllMocks()
+    mockConsole('error')
     mockedCleanup.mockResolvedValue(undefined)
     mockedDownload.mockResolvedValue(ZIP_PATH)
     mockedExtract.mockResolvedValue(APK_PATH)

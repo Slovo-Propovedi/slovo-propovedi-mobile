@@ -1,0 +1,37 @@
+name: CI
+
+# Dispatch-only executor for the Forgejo orchestrator.
+#
+# Native triggers are intentionally absent: the GitHub mirror must not start
+# anything on push/PR — the Forgejo workflow dispatches this file explicitly and
+# waits for the run. The heavy check logic lives in ./actions/checks, shared
+# with the Forgejo fallback runner.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# Aliyun maven mirror 502s from GitHub-hosted US IPs; google()/mavenCentral() are
+# reachable directly there (see plugins/mavenMirrorSnippets.ts).
+env:
+  MAVEN_ALIYUN_MIRROR: 'false'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    # Composite action steps cannot set timeout-minutes; the caller owns them.
+    timeout-minutes: 90
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Run repository checks
+        uses: ./actions/checks
+        with:
+          profile: hosted

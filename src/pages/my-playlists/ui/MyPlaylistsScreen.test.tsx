@@ -372,7 +372,7 @@ describe('<MyPlaylistsScreen>', () => {
     const ctx = createCtx()
     seedPlaylists(ctx)
 
-    const { getAllByLabelText, getByLabelText, getByText } = await renderWithProviders(
+    const { getAllByLabelText, getByLabelText, getByText, unmount } = await renderWithProviders(
       <MyPlaylistsScreen />,
       { ctx },
     )
@@ -388,13 +388,14 @@ describe('<MyPlaylistsScreen>', () => {
     })
 
     await waitFor(() => expect(orderedIds(ctx)).toEqual(['favorites', 'b']))
+    unmount()
   })
 
   test('cancels a deletion without removing the playlist', async () => {
     const ctx = createCtx()
     seedPlaylists(ctx)
 
-    const { getAllByLabelText, getByLabelText, getByText } = await renderWithProviders(
+    const { getAllByLabelText, getByLabelText, getByText, unmount } = await renderWithProviders(
       <MyPlaylistsScreen />,
       { ctx },
     )
@@ -410,5 +411,6 @@ describe('<MyPlaylistsScreen>', () => {
     })
 
     expect(orderedIds(ctx)).toEqual(['favorites', 'a', 'b'])
+    unmount()
   })
 })

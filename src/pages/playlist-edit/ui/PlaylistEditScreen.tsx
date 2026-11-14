@@ -9,7 +9,7 @@ import {
   myPlaylistsAtom,
   myPlaylistsLoadedAtom,
 } from 'entities/playlist'
-import { EmptyState } from 'shared/ui'
+import { BLUR_TARGET_ROUTES, BlurBackdrop, EmptyState } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { PlaylistEditForm } from './PlaylistEditForm'
 
@@ -40,18 +40,20 @@ export const PlaylistEditScreen = () => {
   )
 
   return (
-    <SafeAreaView
-      edges={['bottom']}
-      style={[styles.container, { backgroundColor: currentTheme.background }]}
-    >
-      {playlist ? (
-        <PlaylistEditForm playlist={playlist} />
-      ) : isLoaded ? (
-        <View style={styles.centered}>
-          <EmptyState message={NOT_FOUND_MESSAGE} />
-        </View>
-      ) : null}
-    </SafeAreaView>
+    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.playlistEdit}>
+      <SafeAreaView
+        edges={['bottom']}
+        style={[styles.container, { backgroundColor: currentTheme.background }]}
+      >
+        {playlist ? (
+          <PlaylistEditForm playlist={playlist} />
+        ) : isLoaded ? (
+          <View style={styles.centered}>
+            <EmptyState message={NOT_FOUND_MESSAGE} />
+          </View>
+        ) : null}
+      </SafeAreaView>
+    </BlurBackdrop>
   )
 }
 

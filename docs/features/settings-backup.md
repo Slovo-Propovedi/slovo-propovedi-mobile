@@ -1,6 +1,6 @@
 # Резервная копия настроек и локальных данных
 
-Экспорт/импорт пользовательских данных в JSON-файл: история прослушивания, локальные плейлисты, настройки оформления секции, скалярные настройки приложения и плеера, настройки импорта аудио. Секция «Резервная копия данных» живёт на экране [«Настройки»](../screens/settings.md) (`BackupSection`).
+Экспорт/импорт пользовательских данных в JSON-файл: история прослушивания, история поиска, локальные плейлисты, настройки оформления секции, скалярные настройки приложения и плеера, настройки импорта аудио. Секция «Резервная копия данных» живёт на экране [«Настройки»](../screens/settings.md) (`BackupSection`).
 
 **Файлы:**
 
@@ -22,7 +22,7 @@
 - `src/features/settings-backup/lib/parseBackupFile.ts` — разбор недоверенного файла
 - `src/features/settings-backup/lib/applyImport.ts` — применение копии к состоянию приложения
 - `src/features/settings-backup/lib/applyBackupScalars.ts` — запись скаляров через владельческие экшены
-- `src/features/settings-backup/lib/mergeHistory.ts`, `lib/mergePlaylists.ts` — семантика слияния
+- `src/features/settings-backup/lib/mergeHistory.ts`, `lib/mergeSearchHistory.ts`, `lib/mergePlaylists.ts` — семантика слияния
 - `src/features/settings-backup/lib/backupFiles.ts` — имена файлов и выбор самого свежего ручного бэкапа
 - `src/features/settings-backup/lib/autoSync.ts` — фоновая запись `slovo-backup-auto.json`
 - `src/features/settings-backup/lib/fileIo/` — платформенный ввод-вывод (`index.native.ts`, `index.web.ts`, `webDirectory.ts`, `webIdb.ts`, `webFallback.ts`)
@@ -44,6 +44,7 @@
     "listeningHistory": [],
     "myPlaylists": [],
     "myPlaylistsSectionSettings": {},
+    "searchHistory": [],
     "settings": {
       "themeMode": "dark",
       "dynamicColors": true,
@@ -71,7 +72,7 @@
 
 - `kind` = `'slovo-propovedi-backup'`, `version` = `1` (`BACKUP_KIND` / `BACKUP_VERSION`).
 - `exportedAt` — ISO-строка момента экспорта.
-- `listeningHistory`, `myPlaylists`, `myPlaylistsSectionSettings` — валидируются **владельческими** схемами (`listeningHistorySchema`, `myPlaylistsArraySchema`, `sectionSettingsDraftSchema`), а не копиями.
+- `listeningHistory`, `myPlaylists`, `myPlaylistsSectionSettings`, `searchHistory` — валидируются **владельческими** схемами (`listeningHistorySchema`, `myPlaylistsArraySchema`, `sectionSettingsDraftSchema`, `searchHistorySchema`), а не копиями.
 - `settings` — подмножество скаляров: `themeMode` (`'system' | 'light' | 'dark'`), `dynamicColors`, `hapticsEnabled`, `serverUrl` (только `https://`), `sermonCachingEnabled`, `toursDisabled`, `toursSeenVersion` (строка). Все поля опциональны. `serverUrl` валидируется `HTTP_URL_PATTERN` (`/^https:\/\/.+/`): значение с `http://` делает файл невалидным (ветка `invalid`, тост «Файл резервной копии не удалось прочитать»).
 - `player` — `playbackRate`, `repeatMode`, `balance`, `pitch`, `equalizerEnabled`, `equalizerGains` (те же схемы плеера, что и при восстановлении).
 - `youtubeImport` — `source`, `invidiousBaseUrl`: ослабленная до partial `legacyImportSettingsSchema` из `shared/model` (терпит userinfo ради старых файлов, см. [Общий контракт с импортом аудио](#общий-контракт-с-импортом-аудио)).
@@ -121,14 +122,15 @@
 - **Объединить (merge)** — слить с текущими данными;
 - **Заменить (replace)** — записать данные файла как есть.
 
-Различие режимов касается **только истории и плейлистов**; скаляры всегда накладываются по присутствующим полям.
+Различие режимов касается **только истории прослушивания, истории поиска и плейлистов**; скаляры всегда накладываются по присутствующим полям.
 
 - **История.** `replace` — данные файла; `merge` — `mergeHistory`: дедупликация по `sermon.id`, при совпадении побеждает запись с более свежим `lastPlayedAt`, сортировка по убыванию и обрезка до лимита истории (100, инвариант `sortAndCapEntries`).
+- **История поиска.** `replace` — данные файла как есть; `merge` — `mergeSearchHistory`: дедупликация по `sermon.id`, при совпадении побеждает запись с более свежим `savedAt`, сортировка по убыванию и обрезка до лимита (20, инвариант `sortAndCapSearchEntries` из `entities/search-history`). После записи `loadSearchHistoryAction` перечитывает историю в атом. **Отсутствие секции в файле — no-op**: локальная история не трогается ни в одном режиме (так же, как отсутствие остальных секций).
 - **Плейлисты.** `replace` — нормализованные импортированные + `withFavoritesFirst`; `merge` — `mergePlaylists`: объединение по `id` (импортированный выигрывает по названию), id-участники (`sermonIds`) объединяются с дедупликацией, проповеди внутри — по `id` (импортированная выигрывает), затем инвариант «Избранные первыми» и «Избранные существуют».
 - **Настройки секции.** Применяются через `updateSectionSettings` (коммит атома) + `persistSectionSettings` (запись в хранилище) — повторный `loadSectionSettings` не нужен, атом уже актуален.
 - **Скаляры.** Каждое поле пишется владельческим экшеном только если оно присутствует в файле. `youtubeImport` сливается с сохранёнными значениями (недостающие поля не затирают сохранённые); невалидный итог не сохраняется.
 - **Legacy-плейлисты.** Записи, содержащие только `sermonIds` без снапшотов `sermons`, импортируются с **сохранёнными** `sermonIds` и пустым `sermons`: `normalizeLocalPlaylist` считает `sermonIds` авторитетными (id-only участники не теряются), снапшотов у них нет — при рендере id резолвятся по локально доступному каталогу общими примитивами `buildSermonIndex` + `buildLocalPlaylist` (`entities/playlist`), в том числе на экране редактирования.
-- **Импорт не транзакционен:** при ошибке применяются только секции, обработанные до неё. Порядок применения — сначала дешёвые скаляры (`settings`, `player`, `youtubeImport`), затем настройки секции и, последними, история и плейлисты.
+- **Импорт не транзакционен:** при ошибке применяются только секции, обработанные до неё. Порядок применения — сначала дешёвые скаляры (`settings`, `player`, `youtubeImport`), затем настройки секции и, последними, истории (прослушивания и поиска) и плейлисты.
 - После записи владельческие `load`-экшены обновляют атомы, показывается тост «Данные восстановлены», планируется автосохранение.
 
 Ошибки разбора: `newer-version` → «Файл создан более новой версией приложения — обновите приложение»; `invalid` → «Файл резервной копии не удалось прочитать».
@@ -170,3 +172,4 @@
 - [features/my-playlists.md](./my-playlists.md) — локальные плейлисты и настройки оформления
 - [features/listening-history.md](./listening-history.md) — история прослушивания и её лимит
 - [features/player.md](./player.md) — настройки звука плеера
+- [screens/search.md](../screens/search.md) — страница поиска и «Недавние поиски» (источник секции `searchHistory`)

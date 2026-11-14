@@ -34,6 +34,39 @@ export const shouldMarquee = (maxOffset: number): boolean => {
   return maxOffset > MARQUEE_EPSILON_PX
 }
 
+// The follower's contribution to the pair cycle: its measured loop distance
+// (text + spacer) while it actually travels — JS-confirmed overflow with the
+// duplicate copy mounted; 0 when it is static or unmeasured, so the leader
+// keeps its own loop length. Pure (like getSyncedOffset) so the partner-sync
+// math stays unit-testable: the jest reanimated mock cannot execute
+// useAnimatedReaction, which only plumbs this into the cycle shared value.
+export const getPartnerLoopDistance = (overflows: boolean, textWidth: number): number => {
+  'worklet'
+  return overflows && textWidth > 0 ? textWidth + REPEAT_SPACER : 0
+}
+
+// Followers (the mini-player subtitle) do not own a clock: their offset is a
+// pure function of the leader's (title's) scroll phase. Both lines advance at
+// the leader's constant px/ms speed, so a shorter follower reaches its own loop
+// end early and holds there (its duplicate copy at the line start) until the
+// pair cycle ends; the pair cycle covers the longer of the two loops, so a
+// longer follower finishes its own pass before the reset. `overflowing` is the
+// JS-confirmed overflow that gates the duplicate copy, so a travelling follower
+// always has a copy to land on.
+export const getSyncedOffset = (
+  scrollElapsed: number,
+  msPerPx: number,
+  overflowing: boolean,
+  loopDistance: number,
+): number => {
+  'worklet'
+  if (!overflowing || msPerPx <= 0) return 0
+
+  const travelled = Math.max(0, scrollElapsed) / msPerPx
+
+  return -Math.min(travelled, loopDistance) || 0
+}
+
 // A click that follows a marquee pan drag must be swallowed on web: the
 // browser still dispatches `click` on the gesture view after the drag, and it
 // would bubble to the parent pressable and navigate. Native RNGH cancels the

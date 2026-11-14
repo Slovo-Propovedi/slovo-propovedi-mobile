@@ -3,6 +3,7 @@ import {
   requestPermissions,
   scheduleNotification,
 } from 'shared/lib/notifications'
+import { mockConsole } from 'shared/mocks'
 import {
   ALERT_CHANNEL_ID,
   CACHING_TITLE,
@@ -79,6 +80,7 @@ describe('PlaylistOfflineNotifications channel routing', () => {
   })
 
   test('showErrorNotification uses alert channel with sound', async () => {
+    mockConsole('warn')
     await playlistOfflineNotifications.showErrorNotification(
       new Error('Не удалось добавить в офлайн 3 из 5'),
       'Плейлист',

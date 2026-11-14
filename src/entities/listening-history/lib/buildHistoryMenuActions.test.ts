@@ -22,6 +22,7 @@ const mockSermon: AudioPlayerData = {
 
 const ADD_TO_PLAYLIST_TEXT = 'Добавить в плейлист'
 const MARK_ACTION_TEXT = 'Пометить прослушанной'
+const REMOVE_FROM_SEARCH_HISTORY_TEXT = 'Удалить из истории поиска'
 
 const mockPlaylist: PlaylistData = {
   artwork: 'playlist.jpg',
@@ -144,5 +145,36 @@ describe('buildHistoryMenuActions', () => {
 
     expect(removeHistoryEntryAction).toHaveBeenCalledTimes(1)
     expect(jest.mocked(removeHistoryEntryAction).mock.calls[0][1]).toBe('sermon-1')
+  })
+
+  test('appends a remove-from-search-history action when a handler is provided', () => {
+    const onRemoveFromSearchHistory = jest.fn()
+
+    const actions = buildHistoryMenuActions({
+      inHistory: false,
+      isCompleted: false,
+      onRemoveFromSearchHistory,
+      playlist: mockPlaylist,
+      sermon: mockSermon,
+    })
+
+    const lastAction = actions.at(-1)
+
+    expect(lastAction?.icon).toBe('search-outline')
+    expect(lastAction?.text).toBe(REMOVE_FROM_SEARCH_HISTORY_TEXT)
+
+    lastAction?.onPress()
+    expect(onRemoveFromSearchHistory).toHaveBeenCalledTimes(1)
+  })
+
+  test('omits the remove-from-search-history action when no handler is provided', () => {
+    const actions = buildHistoryMenuActions({
+      inHistory: false,
+      isCompleted: false,
+      playlist: mockPlaylist,
+      sermon: mockSermon,
+    })
+
+    expect(actions.some(action => action.text === REMOVE_FROM_SEARCH_HISTORY_TEXT)).toBe(false)
   })
 })

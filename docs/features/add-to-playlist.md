@@ -214,9 +214,9 @@
 - **Экран плейлиста** (`pages/playlist`): `PlaylistScreen` владеет хуком; колбэк
   уходит в `usePlaylistActions` → `buildHistoryMenuActions`. Модалка — на уровне
   экрана.
-- **Результаты поиска** (`features/sermon-search` + `pages/listen`):
+- **Страница поиска** (`pages/search` + `features/sermon-search`):
   `ListenScreen` владеет хуком и передаёт `onAddToPlaylist` пропом через
-  `SearchGroupedResults` → `SearchSermonGroup` → `SearchResultsRow` → `SermonSearchRow` →
+  `SearchScreen` → `SearchResultsList` → `SearchResultsRow` → `SermonSearchRow` →
   `buildHistoryMenuActions`. Кросс-фичевого импорта нет.
 - **Полноэкранный плеер и шторка очереди** (`widgets/expandable-player`):
   `ExpandablePlayer` владеет хуком (одна модалка). В полноэкранном плеере модалку

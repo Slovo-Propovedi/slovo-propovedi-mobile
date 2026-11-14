@@ -3,7 +3,7 @@ import { featureFlagsAtom } from '../model'
 
 // Пока флаги не загружены (нет токена, запрос в полёте, ошибка) запись равна
 // null, поэтому доступ закрыт: отсутствующий ключ тоже даёт false. Это
-// безопасный дефолт для гейтед-табов «Читать»/«Учиться».
+// безопасный дефолт для гейтед-таба «Читать».
 export const useFeatureFlag = (key: string): boolean => {
   const [flags] = useAtom(featureFlagsAtom)
 

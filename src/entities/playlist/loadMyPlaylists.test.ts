@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { type SermonData } from 'entities/sermon'
+import { mockConsole } from 'shared/mocks'
 import { togglePlaylistSermon } from './localPlaylistMembership'
 import { FAVORITES_PLAYLIST, MY_PLAYLISTS } from './localPlaylists'
 import { loadMyPlaylists, myPlaylistsAtom } from './model'
@@ -114,6 +115,7 @@ describe('loadMyPlaylists parse failure', () => {
   })
 
   test('keeps the seed without overwriting corrupt storage', async () => {
+    mockConsole('warn')
     const corrupt = '{not valid json}'
     await AsyncStorage.setItem(MY_PLAYLISTS, corrupt)
 

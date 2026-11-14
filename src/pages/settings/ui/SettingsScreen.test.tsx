@@ -1,6 +1,5 @@
-import { createCtx } from '@reatom/framework'
 import { fireEvent } from '@testing-library/react-native'
-import { renderWithProviders } from 'shared/mocks'
+import { getSharedTestCtx, renderWithProviders } from 'shared/mocks'
 import { SettingsScreen } from './SettingsScreen'
 
 jest.mock('expo-router', () => ({
@@ -18,7 +17,7 @@ const ADMIN_ENTRY_TITLE = 'Войти в аккаунт администрато
 
 describe('<SettingsScreen>', () => {
   test('renders the theme settings item', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
 
     const { getByText } = await renderWithProviders(<SettingsScreen />, { ctx })
 
@@ -26,7 +25,7 @@ describe('<SettingsScreen>', () => {
   })
 
   test('renders the server URL settings section', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
 
     const { getByText } = await renderWithProviders(<SettingsScreen />, { ctx })
 
@@ -34,7 +33,7 @@ describe('<SettingsScreen>', () => {
   })
 
   test('theme settings item opens the theme dialog', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
 
     const { getByText } = await renderWithProviders(<SettingsScreen />, { ctx })
 
@@ -45,7 +44,7 @@ describe('<SettingsScreen>', () => {
   })
 
   test('does not render the admin entry on the screen body', async () => {
-    const ctx = createCtx()
+    const ctx = getSharedTestCtx()
 
     const { queryByText } = await renderWithProviders(<SettingsScreen />, { ctx })
 

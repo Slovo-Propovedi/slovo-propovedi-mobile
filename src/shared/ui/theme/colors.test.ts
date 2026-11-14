@@ -16,6 +16,7 @@ const UNINITIALIZED_SLOTS = [
   'icon',
   'maximumTrackTintColor',
   'minimumTrackTintColor',
+  'onPrimary',
   'skeleton',
   'surface',
   'text',
@@ -29,7 +30,6 @@ const STATIC_ENTRIES: Record<string, string> = {
   disabled: '#d3d3d3',
   error: '#ff3b30',
   gray: '#808080',
-  onPrimary: '#fff',
   primary: '#f16031',
   progressBuffered: 'rgba(255,255,255,0.35)',
   white: '#fff',
@@ -85,6 +85,14 @@ describe('colors', () => {
       expect(COLORS.skeleton).toBe(LightTheme.skeleton)
       expect(COLORS.primary).toBe(LightTheme.primary)
       expect(COLORS.backdrop).toBe(LightTheme.backdrop)
+      expect(COLORS.onPrimary).toBe('#fff')
+    })
+
+    test('sets onPrimary to black for the dark theme', () => {
+      currentThemeAtom(ctx, DarkTheme)
+      initializeCOLORS(ctx)
+
+      expect(COLORS.onPrimary).toBe('#000')
     })
 
     test('sets icon to theme.text value (not theme.icon)', () => {
@@ -132,6 +140,7 @@ describe('colors', () => {
       expect(COLORS.skeleton).toBe(DarkTheme.skeleton)
       expect(COLORS.primary).toBe(DarkTheme.primary)
       expect(COLORS.backdrop).toBe(DarkTheme.backdrop)
+      expect(COLORS.onPrimary).toBe('#000')
     })
 
     test('sets icon to theme.text', () => {

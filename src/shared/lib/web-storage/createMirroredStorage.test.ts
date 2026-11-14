@@ -1,3 +1,4 @@
+import { mockConsole } from '../../mocks/console'
 import { createMirroredStorage, type StorageBackend } from './createMirroredStorage'
 
 const createMemoryBackend = (initial: Record<string, string> = {}) => {
@@ -48,6 +49,7 @@ describe('createMirroredStorage', () => {
   })
 
   test('switches to the fallback when the primary backend fails', async () => {
+    mockConsole('error')
     const { backend: fallback } = createMemoryBackend({ a: 'from fallback' })
     const storage = createMirroredStorage(
       () => Promise.reject(new Error('IndexedDB blocked')),

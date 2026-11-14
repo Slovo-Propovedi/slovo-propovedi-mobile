@@ -1,28 +1,39 @@
 import { useAction } from '@reatom/npm-react'
-import { BlurView } from 'expo-blur'
 import { type Tabs } from 'expo-router'
-import { View } from 'react-native'
+import { useState } from 'react'
+import { useWindowDimensions, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { BarBackdropShade } from 'widgets/expandable-player/@x/barShade'
+import { SearchIslandMorph } from 'widgets/search-island/@x/morph'
 import { OnboardingTarget } from 'features/onboarding'
-import { setTabBarHeight } from 'shared/ui/layout'
+import { GlassIsland } from 'shared/ui'
+import {
+  BAR_BOTTOM_INSET_MIN,
+  BAR_ROW_MIN_HEIGHT,
+  setTabBarHeight,
+  useKeyboardLiftStyle,
+} from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
+import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
+import { TabSlot } from './TabSlot'
 import { useTabPress } from './useTabPress'
 
-// Минимальный отступ снизу — зона жестов; на 3-кнопочной навигации берётся высота навбара
-// из safe-area insets (Issue #56)
-const MIN_TAB_BAR_BOTTOM_PADDING = 30
-
 interface CustomTabBarProps extends TabBarProps {
-  hideFloatingPlayer?: boolean
+  /** Whether this zone mounts the mini-player pill (user tabs layout passes it; admin does not). */
+  hasMiniPlayer?: boolean
+  /** Admin tab layouts have no global search. */
+  hideSearch?: boolean
 }
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0]
 
 export const CustomTabBar = ({
   emitter,
-  hideFloatingPlayer: _,
+  hasMiniPlayer = false,
+  hideSearch = false,
   navigateToTab,
   state,
 }: CustomTabBarProps) => {
@@ -30,41 +41,88 @@ export const CustomTabBar = ({
   const { bottom } = useSafeAreaInsets()
   const { isLight } = useTheme()
   const { handleTabPress, isTabAvailable } = useTabPress({ emitter, navigateToTab })
+  const { width: windowWidth } = useWindowDimensions()
+  const [rowWidth, setRowWidth] = useState(0)
+  const activeRouteKey = state.routes[state.index]?.key
+  const {
+    contentStyle,
+    expandedTabWidth,
+    isCollapsed,
+    isFocused,
+    islandStyle,
+    progress,
+    restingContentStyle,
+    restingIslandStyle,
+  } = useTabIslandMorph({
+    hideSearch,
+    routeCount: state.routes.length,
+    rowWidth,
+    windowWidth,
+  })
+  const bottomPadding = Math.max(bottom, BAR_BOTTOM_INSET_MIN)
+  const keyboardLiftStyle = useKeyboardLiftStyle()
 
   return (
-    <View style={styles.floatingContainer}>
-      <BlurView
-        intensity={70}
-        key={isLight ? 'light' : 'dark'}
-        tint={isLight ? 'light' : 'dark'}
-        onLayout={event => {
-          setMeasuredTabBarHeight(event.nativeEvent.layout.height)
-        }}
+    <Animated.View pointerEvents='box-none' style={[styles.floatingContainer, keyboardLiftStyle]}>
+      {/* First child: the tab-bar layer paints above the screens. It carries no
+          zIndex, so the positioned zIndex-1 islands row paints above it on web. */}
+      <BarBackdropShade hasSearch={!hideSearch} hasMiniPlayer={hasMiniPlayer} />
+      <View
+        pointerEvents='box-none'
         style={[
-          styles.floatingIsland,
-          { backgroundColor: isLight ? 'rgba(230, 230, 230, 0.9)' : 'rgba(0, 0, 0, 0.85)' },
+          styles.islandsRow,
+          { height: BAR_ROW_MIN_HEIGHT + bottomPadding, paddingBottom: bottomPadding },
         ]}
-      >
-        <View
-          style={[styles.tabBar, { paddingBottom: Math.max(bottom, MIN_TAB_BAR_BOTTOM_PADDING) }]}
-        >
-          {state.routes.map((route, index: number) => {
-            const isActive = index === state.index
+        onLayout={event => {
+          const { height, width } = event.nativeEvent.layout
 
-            return (
-              <OnboardingTarget key={route.key} id={`tab.${route.name}`} style={styles.tabButton}>
-                <TabButton
+          // A hidden tab screen (display: none) reports 0×0; publishing that
+          // zero would collapse every consumer of tabBarHeightAtom for a frame.
+          if (height <= 0) return
+
+          setRowWidth(width)
+          setMeasuredTabBarHeight(height)
+        }}
+      >
+        {/* Pass-through between the tab buttons: the glass host only positions
+            them, so a drag started on its padding/gaps lands on the list behind
+            the bar instead of being swallowed. */}
+        <GlassIsland
+          isLight={isLight}
+          hostStyle={styles.floatingIsland}
+          pointerEvents={isFocused ? 'none' : 'box-none'}
+          animatedStyle={[islandStyle, restingIslandStyle]}
+        >
+          <Animated.View style={[styles.islandContent, contentStyle, restingContentStyle]}>
+            {state.routes.map(route => {
+              const isActive = route.key === activeRouteKey
+
+              return (
+                <TabSlot
+                  key={route.key}
                   isActive={isActive}
-                  routeKey={route.key}
-                  routeName={route.name}
-                  isDisabled={!isTabAvailable(route.name)}
-                  onPress={() => handleTabPress(route, isActive)}
-                />
-              </OnboardingTarget>
-            )
-          })}
-        </View>
-      </BlurView>
-    </View>
+                  progress={progress}
+                  isCollapsed={isCollapsed}
+                  expandedWidth={expandedTabWidth}
+                >
+                  <OnboardingTarget id={`tab.${route.name}`} style={styles.tabButton}>
+                    <TabButton
+                      isActive={isActive}
+                      routeKey={route.key}
+                      routeName={route.name}
+                      collapseProgress={progress}
+                      isBarVisuallyCollapsed={isCollapsed}
+                      isDisabled={!isTabAvailable(route.name)}
+                      onPress={() => handleTabPress(route, isActive)}
+                    />
+                  </OnboardingTarget>
+                </TabSlot>
+              )
+            })}
+          </Animated.View>
+        </GlassIsland>
+      </View>
+      {!hideSearch && <SearchIslandMorph />}
+    </Animated.View>
   )
 }

@@ -1,6 +1,14 @@
-import { type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
-import { REPEAT_SPACER } from './marquee-utils'
+import { useEffect } from 'react'
+import {
+  type SharedValue,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated'
+import { type MarqueeCycle } from './marquee-cycle'
+import { getSyncedOffset, REPEAT_SPACER } from './marquee-utils'
 import { useMarqueeFrameClock } from './useMarqueeFrameClock'
+import { useMarqueePartnerLoop } from './useMarqueePartnerLoop'
 
 // Absorbs Yoga pixel-grid rounding when sizing a static centered row.
 const STATIC_WIDTH_SAFETY_PX = 2
@@ -14,6 +22,8 @@ export const useMarqueeAnimation = (
   centerWhenStatic: boolean,
   autoStart: boolean,
   needsRepeat: boolean,
+  publishCycle?: MarqueeCycle,
+  followCycle?: MarqueeCycle,
 ) => {
   const translateX = useSharedValue(0)
   const startX = useSharedValue(0)
@@ -26,12 +36,41 @@ export const useMarqueeAnimation = (
     containerWidth,
     marqueeArmed,
     needsMarquee,
-    needsRepeat,
+    // A follower derives its offset from the leader's phase — it never runs a
+    // clock of its own.
+    needsRepeat: followCycle ? false : needsRepeat,
+    publishCycle,
     startX,
     text,
     textWidth,
     translateX,
   })
+
+  // Mirrors JS needsRepeat onto the UI thread: the follower may only travel while
+  // the duplicate copy actually exists. The UI-thread needsMarquee alone reads a
+  // missing container measurement (containerWidth stays 0 on OEM builds with a
+  // dead worklet onLayout) as full overflow, which sent short lines scrolling
+  // with no copy to land on — they scrolled out and stayed blank until the
+  // leader's cycle reset.
+  const overflowConfirmed = useSharedValue(needsRepeat)
+
+  useEffect(() => {
+    overflowConfirmed.value = needsRepeat
+  }, [needsRepeat, overflowConfirmed])
+
+  // A geometry change (pill resize, new text measurement) restarts the idle
+  // loop so the row re-derives its offset from fresh widths.
+  useAnimatedReaction(
+    () => ({ container: containerWidth.value, text: textWidth.value }),
+    (current, previous) => {
+      if (current.container !== previous?.container || current.text !== previous?.text)
+        startIdleMarquee()
+    },
+  )
+
+  // The follower publishes its own loop distance so the leader can stretch its
+  // scroll phase to the LONGER of the two lines.
+  useMarqueePartnerLoop(followCycle, textWidth, needsRepeat, text)
 
   const animatedStyle = useAnimatedStyle(() => {
     // The visible Text keeps numberOfLines={1} on native, so ANY width smaller
@@ -51,9 +90,21 @@ export const useMarqueeAnimation = (
         ? textWidth.value + STATIC_WIDTH_SAFETY_PX
         : undefined
 
+    // Followers ride the leader's published phase at the same px/ms speed: a
+    // finished line lands on its duplicate at the line start and holds there,
+    // and the pair cycle covers the longer of the two loops.
+    const syncedOffset = followCycle
+      ? getSyncedOffset(
+          followCycle.scrollElapsed.value,
+          followCycle.msPerPx.value,
+          overflowConfirmed.value,
+          textWidth.value + REPEAT_SPACER,
+        )
+      : null
+
     return {
       justifyContent: !needsMarquee.value && centerWhenStatic ? 'center' : 'flex-start',
-      transform: [{ translateX: translateX.value }],
+      transform: [{ translateX: syncedOffset ?? translateX.value }],
       width: needsMarquee.value || !centerWhenStatic ? marqueeWidth : staticWidth,
     }
   })

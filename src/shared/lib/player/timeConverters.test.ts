@@ -1,4 +1,18 @@
-import { millisToMinutesAndSeconds } from './timeConverters'
+import { millisToMinutesAndSeconds, millisToSeconds } from './timeConverters'
+
+describe('millisToSeconds', () => {
+  test('converts zero milliseconds to zero seconds', () => {
+    expect(millisToSeconds(0)).toBe(0)
+  })
+
+  test('converts whole minutes to whole seconds', () => {
+    expect(millisToSeconds(300000)).toBe(300)
+  })
+
+  test('keeps fractional seconds without rounding', () => {
+    expect(millisToSeconds(61425)).toBe(61.425)
+  })
+})
 
 describe('millisToMinutesAndSeconds', () => {
   test('returns "0:00" for zero milliseconds', () => {

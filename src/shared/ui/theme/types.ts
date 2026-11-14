@@ -9,6 +9,7 @@ export interface ThemeColors {
   background: string
   card: string
   icon: string
+  onPrimary: string
   placeholder: string
   primary: string
   skeleton: string

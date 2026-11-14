@@ -1,15 +1,15 @@
 import { type OnboardingScenario } from '../scenarios'
 
 export const searchScenario: OnboardingScenario = {
-  description: 'Группы и плейлисты',
+  description: 'Недавние поиски и группы результатов',
   globalFallback: true,
   icon: 'search-outline',
   id: 'search',
   screens: ['/listen'],
   steps: [
     {
-      text: 'Сейчас перейдём на экран «Слушать» — тапнем по нему — и откроем поиск. Нажмите «Далее».',
-      title: 'Результаты поиска',
+      text: 'Поиск стал отдельной страницей: недавние запросы хранятся на устройстве, а результаты разложены по вкладкам. Сейчас перейдём на экран «Слушать» — тапнем по нему — и откроем поиск. Нажмите «Далее».',
+      title: 'Новый поиск',
     },
     {
       // The «Слушать» tab is an entry transition (blink + navigation), not a card.
@@ -22,11 +22,11 @@ export const searchScenario: OnboardingScenario = {
       title: 'Экран «Слушать»',
     },
     {
-      text: 'Чтобы открыть поиск, тапните по кнопке с лупой.',
+      text: 'Чтобы открыть поиск, тапните по кружку с лупой справа от панели вкладок.',
       title: 'Кнопка поиска',
     },
     {
-      // Opens the search overlay, so the query step below can type into it.
+      // Opens the search page, so the query step below can type into it.
       tapActionId: 'open-listen-search',
       tapTargetId: 'listen.search-toggle',
       text: 'Открываем поиск…',
@@ -35,16 +35,18 @@ export const searchScenario: OnboardingScenario = {
     {
       // A pass-through card floating over the live search UI while the demo query types
       // into the visible field: the typing runs on enter, in parallel with the card, and
-      // the user presses «Далее» to reach the grouped-results card (no auto-advance).
+      // the user presses «Далее» to reach the results card (no auto-advance).
       actionOnEnterId: 'type-search-query',
       interactive: true,
       text: 'Вводим запрос, например «лицемерие»…',
       title: 'Вводим запрос',
     },
     {
+      // Same target id as the old compact results: it now wraps the «Проповеди» group
+      // pill, which switches the full paginated list below.
       targetId: 'search-results.group-sermons',
-      text: 'Найденное сгруппировано: проповеди, плейлисты и проповедники. Нажмите на заголовок группы с количеством — откроется полный список по ней.',
-      title: 'Группы результатов',
+      text: 'Результаты разложены по вкладкам «Проповеди», «Плейлисты» и «Проповедники»: переключите вкладку — под ней полный список с бесконечной прокруткой.',
+      title: 'Вкладки результатов',
     },
     {
       text: 'Чтобы включить проповедь — тапните по ней.',
@@ -72,6 +74,12 @@ export const searchScenario: OnboardingScenario = {
       targetId: 'search-results.first-sermon-menu',
       text: 'Через меню строки (⋯ или долгое нажатие) добавьте проповедь в плейлист или управляйте историей.',
       title: 'Меню проповеди',
+    },
+    {
+      // No target: the recents section has no onboarding target, so the closing card
+      // is a centred text card over the search page.
+      text: 'Проповедь, которую вы включили, теперь в «Недавних поисках» на странице поиска: тап — включить снова, «⋯» — убрать из истории, «Очистить» — очистить всё.',
+      title: 'Недавние поиски',
     },
   ],
   title: 'Результаты поиска',

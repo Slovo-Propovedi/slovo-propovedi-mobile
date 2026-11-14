@@ -5,6 +5,7 @@ import { type APITypes } from 'shared/api'
 import { RefreshButton } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
+import { AdminHomeUserMenu } from './AdminHomeUserMenu'
 import { styles } from './styles'
 
 export const AdminHomeHeader = ({ user }: { user: APITypes.UserResponse | null }) => {
@@ -13,22 +14,18 @@ export const AdminHomeHeader = ({ user }: { user: APITypes.UserResponse | null }
 
   return (
     <View style={styles.header}>
-      <View style={styles.headerTexts}>
-        <Text style={[styles.headerTitle, { color: currentTheme.text }]}>
-          Интерфейс администратора
-        </Text>
-        {user ? (
-          <Text style={[styles.headerUser, { color: currentTheme.textMuted }]}>{user.name}</Text>
-        ) : null}
-      </View>
-      <RefreshButton />
       <IconButton
         accessibilityLabel='Вернуться в приложение'
         onPress={() => {
           router.replace('/listen')
         }}
-        Icon={<Ionicons size={24} name='log-out-outline' color={currentTheme.text} />}
+        Icon={<Ionicons size={24} name='arrow-back' color={currentTheme.text} />}
       />
+      <Text style={[styles.headerTitle, { color: currentTheme.text }]}>
+        Интерфейс администратора
+      </Text>
+      <AdminHomeUserMenu user={user} />
+      <RefreshButton />
     </View>
   )
 }

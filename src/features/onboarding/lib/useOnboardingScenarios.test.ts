@@ -15,30 +15,18 @@ describe('useOnboardingScenarios', () => {
     mockUseFeatureFlag.mockImplementation(() => false)
   })
 
-  test('keeps both flagged scenarios when their flags are on', async () => {
+  test('keeps the read scenario when its flag is on', async () => {
     mockUseFeatureFlag.mockImplementation(() => true)
 
     const { result } = await renderHookWithProviders(() => useOnboardingScenarios())
 
-    expect(scenarioIds(result.current)).toEqual(expect.arrayContaining(['read', 'study']))
+    expect(scenarioIds(result.current)).toContain('read')
   })
 
   test('drops the read scenario when the read flag is off', async () => {
-    mockUseFeatureFlag.mockImplementation((key: string) => key === 'study')
-
     const { result } = await renderHookWithProviders(() => useOnboardingScenarios())
 
     expect(scenarioIds(result.current)).not.toContain('read')
-    expect(scenarioIds(result.current)).toContain('study')
-  })
-
-  test('drops the study scenario when the study flag is off', async () => {
-    mockUseFeatureFlag.mockImplementation((key: string) => key === 'read')
-
-    const { result } = await renderHookWithProviders(() => useOnboardingScenarios())
-
-    expect(scenarioIds(result.current)).not.toContain('study')
-    expect(scenarioIds(result.current)).toContain('read')
   })
 
   test('always keeps non-flagged scenarios', async () => {
@@ -48,7 +36,6 @@ describe('useOnboardingScenarios', () => {
       expect.arrayContaining(['listen', 'playlists', 'history', 'offline', 'settings']),
     )
     expect(scenarioIds(result.current)).not.toContain('read')
-    expect(scenarioIds(result.current)).not.toContain('study')
   })
 
   test('keeps auto-only scenarios in the picker, ordered last', async () => {

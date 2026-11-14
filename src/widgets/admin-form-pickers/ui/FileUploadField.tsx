@@ -4,9 +4,10 @@ import { ActivityIndicator, Text, View } from 'react-native'
 import { type APITypes } from 'shared/api'
 import { type AdminFileKind } from 'shared/lib/file-drop'
 import { EditableUrlField } from 'shared/ui/form'
-import { COLORS, useTheme } from 'shared/ui/theme'
+import { IconButton } from 'shared/ui/icon-button'
+import { useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
-import { getFileKindConfig } from '../lib/fileKinds'
+import { getFileKindConfig, getFileKindLibraryIcon } from '../lib/fileKinds'
 import { useAdminFiles } from '../lib/useAdminFiles'
 import { useFileUpload } from '../lib/useFileUpload'
 import { FileLibraryModal } from './FileLibraryModal'
@@ -65,34 +66,37 @@ export const FileUploadField = ({
         label={label}
         placeholder='https://…'
         onChangeText={onChange}
+        actions={
+          <View style={styles.fieldActions}>
+            {supportsLibrary ? (
+              <IconButton
+                accessibilityLabel={PICK_LABEL}
+                onPress={() => setIsOpen(true)}
+                Icon={
+                  <Ionicons
+                    size={20}
+                    color={currentTheme.primary}
+                    name={getFileKindLibraryIcon(kind)}
+                  />
+                }
+              />
+            ) : null}
+            <IconButton
+              disabled={isUploading}
+              onPress={() => void pickAndUpload()}
+              accessibilityState={{ disabled: isUploading }}
+              accessibilityLabel={uploadLabel(kind, Boolean(value))}
+              Icon={
+                isUploading ? (
+                  <ActivityIndicator color={currentTheme.primary} />
+                ) : (
+                  <Ionicons size={20} name='cloud-upload-outline' color={currentTheme.primary} />
+                )
+              }
+            />
+          </View>
+        }
       />
-      <View style={styles.actionsRow}>
-        {supportsLibrary ? (
-          <TouchableItem
-            onPress={() => setIsOpen(true)}
-            style={[styles.libraryButton, { borderColor: currentTheme.textMuted }]}
-          >
-            <Ionicons size={20} name='albums-outline' color={currentTheme.primary} />
-            <Text style={[styles.libraryButtonLabel, { color: currentTheme.primary }]}>
-              {PICK_LABEL}
-            </Text>
-          </TouchableItem>
-        ) : null}
-        <TouchableItem
-          disabled={isUploading}
-          onPress={() => void pickAndUpload()}
-          style={[styles.uploadButton, { backgroundColor: currentTheme.primary }]}
-        >
-          {isUploading ? (
-            <ActivityIndicator color={COLORS.white} />
-          ) : (
-            <View style={styles.uploadButtonContent}>
-              <Ionicons size={20} color={COLORS.white} name='cloud-upload-outline' />
-              <Text style={styles.uploadButtonText}>{uploadLabel(kind, Boolean(value))}</Text>
-            </View>
-          )}
-        </TouchableItem>
-      </View>
       {isUploading ? (
         <View style={[styles.progressTrack, { backgroundColor: currentTheme.surface }]}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
@@ -110,7 +114,7 @@ export const FileUploadField = ({
           renderFile={file => (
             <TouchableItem
               onPress={() => selectFile(file.fileUrl)}
-              style={[styles.libraryButton, { borderColor: currentTheme.textMuted }]}
+              style={[styles.libraryItem, { borderColor: currentTheme.textMuted }]}
             >
               <Text numberOfLines={1} style={[styles.hint, { color: currentTheme.text }]}>
                 {fileLabel(file)}

@@ -1,9 +1,11 @@
-import { useAtom } from '@reatom/npm-react'
-import { type ReactElement } from 'react'
+import { useAction, useAtom } from '@reatom/npm-react'
+import { type ReactElement, useCallback, useRef } from 'react'
 import { StyleSheet } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
+import { isSearchOpenAtom } from 'features/sermon-search/@x/suspension'
+import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { type LocalPlaylistData } from 'entities/playlist'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { nextBarCollapsedState, setBarCollapsed, tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
 import { MyPlaylistsRow } from './MyPlaylistsRow'
 
@@ -38,6 +40,30 @@ export const MyPlaylistsDragList = ({
   onPressItem: (playlist: LocalPlaylistData) => void
 }) => {
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
+  const [currentAudio] = useAtom(currentAudioAtom)
+  const [isSearchOpen] = useAtom(isSearchOpenAtom)
+  const applyBarCollapsed = useAction(setBarCollapsed)
+  const wasBarCollapsedRef = useRef(false)
+
+  // DraggableFlatList owns its internal animated `onScroll`; `onScrollOffsetChange`
+  // is its JS-thread offset hook. The ref applies the same crossing quantization
+  // as the animated lists, so the atom is written once per threshold crossing.
+  const handleScrollOffsetChange = useCallback(
+    (offsetY: number) => {
+      // Deliberately not useIsBarCollapseSuspended: this guard reads the raw
+      // isSearchOpenAtom (query-unqualified), and search cannot be open on this
+      // tab, so the shared hook is unnecessary here.
+      if (isSearchOpen || isPlayerExpanded || currentAudio === null) return
+
+      const nextCollapsed = nextBarCollapsedState(offsetY, wasBarCollapsedRef.current)
+      if (nextCollapsed === null) return
+
+      wasBarCollapsedRef.current = nextCollapsed
+      applyBarCollapsed(nextCollapsed)
+    },
+    [applyBarCollapsed, currentAudio, isPlayerExpanded, isSearchOpen],
+  )
 
   return (
     <DraggableFlatList
@@ -47,6 +73,7 @@ export const MyPlaylistsDragList = ({
       ListHeaderComponent={listHeader}
       containerStyle={styles.listContainer}
       keyExtractor={playlist => playlist.id}
+      onScrollOffsetChange={handleScrollOffsetChange}
       onDragEnd={({ data }) => onDragEnd(data.map(playlist => playlist.id))}
       contentContainerStyle={{
         paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,

@@ -33,7 +33,7 @@ interface ReloadScreenAssetMock {
 
 // jest-expo maps every image to the same module id (1), so give the two splash
 // images explicit ids to keep the Asset.fromModule mapping readable and distinct.
-jest.mock('../../../../../assets/splash.png', () => 101)
+jest.mock('../../../../../assets/light-splash-icon.png', () => 303)
 jest.mock('../../../../../assets/dark-splash-icon.png', () => 202)
 
 jest.mock('expo-asset', () => {
@@ -49,21 +49,21 @@ jest.mock('expo-asset', () => {
   }
 
   const fallbackAsset = createAssetMock('file:///mock-asset')
-  const splashAsset = createAssetMock('file:///data/user/0/splash.png')
+  const lightSplashAsset = createAssetMock('file:///data/user/0/light-splash-icon.png')
   const darkSplashAsset = createAssetMock('file:///data/user/0/dark-splash-icon.png')
   const assetsByModule = new Map([
-    [101, splashAsset],
     [202, darkSplashAsset],
+    [303, lightSplashAsset],
   ])
   const fromModule = jest.fn((module: number) => assetsByModule.get(module) ?? fallbackAsset)
 
-  return { Asset: { fromModule }, mockReloadScreenAssets: { darkSplashAsset, splashAsset } }
+  return { Asset: { fromModule }, mockReloadScreenAssets: { darkSplashAsset, lightSplashAsset } }
 })
 
-const { darkSplashAsset, splashAsset } = jest.requireMock<{
+const { darkSplashAsset, lightSplashAsset } = jest.requireMock<{
   mockReloadScreenAssets: {
     darkSplashAsset: ReloadScreenAssetMock
-    splashAsset: ReloadScreenAssetMock
+    lightSplashAsset: ReloadScreenAssetMock
   }
 }>('expo-asset').mockReloadScreenAssets
 
@@ -145,7 +145,7 @@ describe('useOtaAutoApply', () => {
         reloadScreenOptions: expect.objectContaining({
           backgroundColor: LightTheme.primary,
           fade: true,
-          image: splashAsset.localUri,
+          image: { height: 152, url: lightSplashAsset.localUri, width: 152 },
           imageResizeMode: 'contain',
           spinner: { enabled: false },
         }),
@@ -163,7 +163,7 @@ describe('useOtaAutoApply', () => {
       expect.objectContaining({
         reloadScreenOptions: expect.objectContaining({
           backgroundColor: DarkTheme.background,
-          image: darkSplashAsset.localUri,
+          image: { height: 152, url: darkSplashAsset.localUri, width: 152 },
         }),
       }),
     )
@@ -171,7 +171,7 @@ describe('useOtaAutoApply', () => {
 
   test('still reloads without an icon when the asset cannot be downloaded', async () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {})
-    splashAsset.downloadAsync.mockRejectedValueOnce(new Error('asset download failed'))
+    lightSplashAsset.downloadAsync.mockRejectedValueOnce(new Error('asset download failed'))
     await mount()
     await advance(5000)
 

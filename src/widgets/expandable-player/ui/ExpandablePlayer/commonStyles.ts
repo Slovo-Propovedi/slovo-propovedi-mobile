@@ -23,8 +23,44 @@ export const createCommonStyles = (theme: ThemeColors) =>
     // classes; inline style.pointerEvents:'box-none' would emit the invalid CSS value
     // `pointer-events: box-none`, the browser drops it, the wrapper becomes
     // pointer-events:auto and swallows every touch on the page below the player.
+    // Draw order: the widget is composed into the Tabs tabBar element right after
+    // the bar, so on web both share ONE stacking context (every RN View is one; a
+    // layout-level zIndex could never beat the bar nested in the navigator
+    // wrapper). zIndex 20 keeps the normal/root states above the bar (10); the
+    // tucked state (9) drops below it, so the pill slides under the search field.
+    // Native flattening draws the same order. Elevation cannot carry this order:
+    // Android reorders elevation only within sibling groups (opaque-red probe,
+    // 2026-11-10).
     recoveryOverlay: {
       ...StyleSheet.absoluteFill,
       pointerEvents: 'box-none',
+      zIndex: 20,
+    },
+    // Below the tab bar's floating container (zIndex 10): while the mini pill
+    // tucks under the islands it must never paint over the search pill or ✕.
+    recoveryOverlayTucked: {
+      zIndex: 9,
     },
   })
+
+// Full-screen pass-through layer that carries the keyboard lift of the mini pill.
+// The pill's absolute geometry keeps resolving against the same full tab-layout box;
+// the transform only shifts the rendered layer.
+// `box-none` must be a PROP on the Animated.View, never a style key: Reanimated
+// applies animated styles inline on web, and the browser drops the invalid CSS
+// value `pointer-events: box-none`, leaving the overlay pointer-events:auto and
+// swallowing every touch on the page (Issue: web UI unresponsive).
+//
+// `elevation` is intentionally absent: the tab-bar backdrop is flat (the
+// elevation moved to the islands row), so the draw order is the document one —
+// screens -> tab bar (shade + islands) -> player (pill). An elevation here only
+// raced the tab-bar container's old projection and is no longer needed.
+export const miniLayerStyle = StyleSheet.create({
+  layer: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+}).layer

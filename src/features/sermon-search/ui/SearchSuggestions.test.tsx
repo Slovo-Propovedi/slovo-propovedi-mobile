@@ -1,8 +1,11 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
+import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
+import { INDENTS } from 'shared/ui/theme'
 import { searchQueryAtom } from '../model'
 import { distinctValuesAtom } from '../model-distinctValues'
 import { SearchBar } from './SearchBar'
@@ -24,7 +27,7 @@ jest.mock('shared/api', () => ({
   },
 }))
 
-const SEARCH_PLACEHOLDER = 'Поиск проповедей'
+const SEARCH_PLACEHOLDER = 'Проповеди, проповедники, название книги'
 const IVAN_ZLATOUST = 'Иван Златоуст'
 const DISTINCT_VALUES = sermonsMocks.getSermonControllerGetDistinctValuesResponseMock({
   artists: [IVAN_ZLATOUST, 'Иоанн Кронштадтский'],
@@ -36,6 +39,19 @@ const focusAndType = async (input: TestInstance, text: string) => {
     fireEvent(input, 'focus')
   })
   await fireEvent.changeText(input, text)
+}
+
+const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+
+const findScrollAncestor = (element: TestInstance): TestInstance => {
+  let current: null | TestInstance = element.parent
+
+  while (current !== null) {
+    if (SCROLL_HOST_TYPES.has(current.type)) return current
+    current = current.parent
+  }
+
+  throw new Error('Expected a scroll host ancestor, none found')
 }
 
 describe('<SearchBar> suggestions', () => {
@@ -52,6 +68,20 @@ describe('<SearchBar> suggestions', () => {
     expect(getByText(IVAN_ZLATOUST)).toBeTruthy()
     expect(getByText('проповедник')).toBeTruthy()
     expect(queryByText('Иоанн Кронштадтский')).toBeNull()
+  })
+
+  test('opens the dropdown upward, above the bottom search pill', async () => {
+    const ctx = createCtx()
+    distinctValuesAtom(ctx, DISTINCT_VALUES)
+    const { getByPlaceholderText, getByText } = await renderWithProviders(<SearchBar />, { ctx })
+
+    await focusAndType(getByPlaceholderText(SEARCH_PLACEHOLDER), 'иван')
+
+    const dropdown = findScrollAncestor(getByText(IVAN_ZLATOUST))
+    const dropdownStyle = StyleSheet.flatten(dropdown.props.style)
+
+    expect(dropdownStyle.bottom).toBe(TAB_BAR_ISLAND_HEIGHT + INDENTS.low)
+    expect(dropdownStyle.top).toBeUndefined()
   })
 
   test('hides suggestions when the query is cleared', async () => {

@@ -26,8 +26,12 @@ const config: Config = {
   // different tests. 15s keeps real hangs failing fast while removing the
   // flake; full CI run (~190s) has headroom for it.
   testTimeout: 15000,
-  // Runs inside the test framework (needs `afterEach`).
-  setupFilesAfterEnv: ['./__mocks__/session-cache.js'],
+  // Runs inside the test framework (needs `afterEach`). Same-level afterEach
+  // hooks run in declaration order, so session-cache is first: its wipe runs
+  // BEFORE the console guard's afterEach report, which means noise from a
+  // genuinely failing wipe is recorded and fails the test loudly. The guard's
+  // beforeEach still arms before any file-level hook either way.
+  setupFilesAfterEnv: ['./__mocks__/session-cache.js', './__mocks__/console-guard.js'],
   setupFiles: [
     // Must stay first: src/shared/config/env.ts validates EXPO_PUBLIC_* at module
     // load, and jest does not load .env.
@@ -40,6 +44,7 @@ const config: Config = {
     './__mocks__/expo-constants.js',
     './__mocks__/expo-haptics.js',
     './__mocks__/expo-image.js',
+    './__mocks__/expo-navigation-bar.js',
     './__mocks__/expo-secure-store.js',
     './__mocks__/react-native-gesture-handler.js',
     './__mocks__/react-native-reanimated.js',

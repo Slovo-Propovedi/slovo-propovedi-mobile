@@ -1,5 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
 import { DEFAULT_API_URL } from 'shared/config'
 import { serverUrlAtom, setServerUrlAction } from 'shared/model'
@@ -14,13 +14,23 @@ const SESSION_RESET_HINT = 'При смене адреса вход админи
 // их в открытом виде.
 const isValidUrl = (url: string) => /^https:\/\/.+/.test(url)
 
+const SAVED_RESET_DELAY = 2000
+
 export const ServerUrlForm = () => {
   const [currentUrl] = useAtom(serverUrlAtom)
   const [inputValue, setInputValue] = useState(currentUrl)
   const [saved, setSaved] = useState(false)
   const [validationError, setValidationError] = useState<null | string>(null)
+  const savedResetTimerRef = useRef<null | ReturnType<typeof setTimeout>>(null)
   const setServerUrl = useAction(setServerUrlAction)
   const { currentTheme } = useTheme()
+
+  useEffect(
+    () => () => {
+      if (savedResetTimerRef.current !== null) clearTimeout(savedResetTimerRef.current)
+    },
+    [],
+  )
 
   const handleChangeText = (value: string) => {
     setInputValue(value)
@@ -37,7 +47,9 @@ export const ServerUrlForm = () => {
     setValidationError(null)
     void setServerUrl(trimmed).then(() => {
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      if (savedResetTimerRef.current !== null) clearTimeout(savedResetTimerRef.current)
+
+      savedResetTimerRef.current = setTimeout(() => setSaved(false), SAVED_RESET_DELAY)
     })
   }
 

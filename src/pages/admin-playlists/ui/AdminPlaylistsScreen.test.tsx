@@ -36,6 +36,7 @@ jest.mock('expo-router', () => ({
 }))
 
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+const CREATE_BUTTON_LABEL = 'Создать плейлист'
 
 const findRefreshControl = (element: TestInstance) => {
   let current: null | TestInstance = element
@@ -107,9 +108,9 @@ describe('<AdminPlaylistsScreen>', () => {
   test('navigates to the create screen from the header button', async () => {
     mockFindAll.mockResolvedValue(playlistsMocks.getPlaylistControllerFindAllResponseMock())
 
-    const { findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
+    const { findByLabelText } = await renderWithProviders(<AdminPlaylistsScreen />)
 
-    fireEvent.press(await findByText('Создать плейлист'))
+    fireEvent.press(await findByLabelText(CREATE_BUTTON_LABEL))
 
     expect(mockPush).toHaveBeenCalledWith('/admin/playlists/create')
   })
@@ -134,14 +135,22 @@ describe('<AdminPlaylistsScreen>', () => {
   test('reloads the list sorted by title when picked from the sort select', async () => {
     mockFindAll.mockResolvedValue({ count: 0, playlists: [] })
 
-    const { findAllByText, findByText } = await renderWithProviders(<AdminPlaylistsScreen />)
+    const { findAllByText, findByText, unmount } = await renderWithProviders(
+      <AdminPlaylistsScreen />,
+    )
 
-    fireEvent.press(await findByText('По дате'))
-    fireEvent.press((await findAllByText('По названию'))[0])
+    await act(async () => {
+      await fireEvent.press(await findByText('По дате'))
+    })
+    await act(async () => {
+      await fireEvent.press((await findAllByText('По названию'))[0])
+    })
 
     await waitFor(() =>
       expect(mockFindAll).toHaveBeenLastCalledWith(expect.objectContaining({ sort: 'title' })),
     )
+
+    unmount()
   })
 
   test('reloads the first page when pulled to refresh', async () => {
@@ -155,5 +164,13 @@ describe('<AdminPlaylistsScreen>', () => {
     })
 
     await waitFor(() => expect(mockFindAll).toHaveBeenCalledTimes(2))
+  })
+
+  test('shows the create icon button in the header', async () => {
+    mockFindAll.mockResolvedValue({ count: 0, playlists: [] })
+
+    const { findByRole } = await renderWithProviders(<AdminPlaylistsScreen />)
+
+    expect(await findByRole('button', { name: CREATE_BUTTON_LABEL })).toBeTruthy()
   })
 })

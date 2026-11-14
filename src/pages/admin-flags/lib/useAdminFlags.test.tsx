@@ -1,6 +1,6 @@
 import { act } from '@testing-library/react-native'
 import { featureFlagsMocks } from 'shared/api/generated'
-import { renderHookWithProviders } from 'shared/mocks'
+import { mockConsole, renderHookWithProviders } from 'shared/mocks'
 import { flagsCache } from './flagsCache'
 import { useAdminFlags } from './useAdminFlags'
 
@@ -71,6 +71,7 @@ describe('useAdminFlags', () => {
   })
 
   test('keeps cached flags when the server is unreachable', async () => {
+    mockConsole('error')
     await flagsCache.fetchThrough('', async () => buildList(['cached']).flags)
     mockFindAll.mockRejectedValue(new Error('Network Error'))
 

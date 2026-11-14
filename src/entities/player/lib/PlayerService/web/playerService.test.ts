@@ -600,3 +600,35 @@ describe('WebPlayerService element error/waiting/playing events', () => {
     expect(mockedSetIsStalledOffline).not.toHaveBeenCalled()
   })
 })
+
+describe('WebPlayerService resume-seek reassert wiring', () => {
+  test('the first playing edge re-applies the position installed by loadAudio', async () => {
+    await playerService.loadAudio(AUDIO_URL, 120000)
+    audioStubs[0].element.currentTime = 0
+
+    audioStubs[0].fireEvent('playing')
+
+    expect(audioStubs[0].element.currentTime).toBe(120)
+  })
+
+  test('loadAudio installs a fresh one-shot closure per element', async () => {
+    await playerService.loadAudio(AUDIO_URL, 120000)
+    audioStubs[0].fireEvent('playing')
+
+    await playerService.loadAudio(AUDIO_URL, 60000)
+    audioStubs[1].element.currentTime = 0
+    audioStubs[1].fireEvent('playing')
+
+    expect(audioStubs[0].element.currentTime).toBe(120)
+    expect(audioStubs[1].element.currentTime).toBe(60)
+  })
+
+  test('stop() disarms the pending one-shot so replay does not seek back', async () => {
+    await playerService.loadAudio(AUDIO_URL, 120000)
+
+    await playerService.stop()
+    audioStubs[0].fireEvent('playing')
+
+    expect(audioStubs[0].element.currentTime).toBe(0)
+  })
+})

@@ -50,7 +50,7 @@ export const OrphanRow = ({
           style={styles.orphanDelete}
           accessibilityLabel={`Удалить ${file.fileName}`}
         >
-          <Ionicons size={16} name='trash' color={COLORS.white} />
+          <Ionicons size={16} name='trash' color={currentTheme.onPrimary} />
         </PressableButton>
       )}
     </View>

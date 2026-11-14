@@ -17,6 +17,7 @@ import {
   sectionSettingsAtom,
   updateSectionSettings,
 } from 'entities/playlist'
+import { BLUR_TARGET_ROUTES, BlurBackdrop } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { sortByLocalOrder } from '../lib/sortByLocalOrder'
 import { useMyPlaylistsHeader } from '../lib/useMyPlaylistsHeader'
@@ -85,37 +86,42 @@ export const MyPlaylistsScreen = () => {
   const orderedRest = isEditing ? sortByLocalOrder(restPlaylists, localOrderIds) : restPlaylists
 
   return (
-    <SafeAreaView
-      edges={['bottom']}
-      style={[styles.container, { backgroundColor: currentTheme.background }]}
-    >
-      <Stack.Screen options={headerOptions} />
-      {isEditing ? (
-        <MyPlaylistsEditView
-          settings={settings}
-          favorites={favorites}
-          orderedRest={orderedRest}
-          onDragEnd={setLocalOrderIds}
-          onDeletePlaylist={requestDelete}
-          onPressPlaylist={onPressPlaylist}
-          onPressFavorites={onPressFavorites}
-          onAppearanceChange={handleAppearanceChange}
+    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.myPlaylists}>
+      <SafeAreaView
+        edges={['bottom']}
+        style={[styles.container, { backgroundColor: currentTheme.background }]}
+      >
+        <Stack.Screen options={headerOptions} />
+        {isEditing ? (
+          <MyPlaylistsEditView
+            settings={settings}
+            favorites={favorites}
+            orderedRest={orderedRest}
+            onDragEnd={setLocalOrderIds}
+            onDeletePlaylist={requestDelete}
+            onPressPlaylist={onPressPlaylist}
+            onPressFavorites={onPressFavorites}
+            onAppearanceChange={handleAppearanceChange}
+          />
+        ) : (
+          <MyPlaylistsNormalView
+            favorites={favorites}
+            orderedRest={orderedRest}
+            onPressPlaylist={onPressPlaylist}
+            onPressCreate={() => setCreateVisible(true)}
+          />
+        )}
+        <CreateLocalPlaylistModal
+          visible={isCreateVisible}
+          onClose={() => setCreateVisible(false)}
         />
-      ) : (
-        <MyPlaylistsNormalView
-          favorites={favorites}
-          orderedRest={orderedRest}
-          onPressPlaylist={onPressPlaylist}
-          onPressCreate={() => setCreateVisible(true)}
+        <LocalPlaylistDeleteDialog
+          visible={isDeleteOpen}
+          onCancel={cancelDelete}
+          onConfirm={() => void confirmDelete()}
         />
-      )}
-      <CreateLocalPlaylistModal visible={isCreateVisible} onClose={() => setCreateVisible(false)} />
-      <LocalPlaylistDeleteDialog
-        visible={isDeleteOpen}
-        onCancel={cancelDelete}
-        onConfirm={() => void confirmDelete()}
-      />
-    </SafeAreaView>
+      </SafeAreaView>
+    </BlurBackdrop>
   )
 }
 

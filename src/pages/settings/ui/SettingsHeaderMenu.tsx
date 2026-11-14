@@ -64,7 +64,7 @@ export const SettingsHeaderMenu = ({ tintColor }: { tintColor?: ColorValue }) =>
           Icon={
             <MaterialCommunityIcons
               size={ICON_SIZE}
-              name='dots-vertical'
+              name='dots-horizontal'
               color={resolveColor(tintColor, currentTheme.text)}
             />
           }

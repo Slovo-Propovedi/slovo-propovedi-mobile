@@ -1,0 +1,218 @@
+# Composite action: zipalign, sign and package an unsigned release APK.
+#
+# Used by the GitHub-hosted release pipeline after actions/release-android with
+# signing="none" (or after downloading an unsigned APK artifact). The caller
+# owns `actions/checkout`, `timeout-minutes` (composite steps do not support
+# them), artifact upload and workspace cleanup.
+#
+# inputs:
+#   version          release version without the leading "v" (e.g. 0.33.1)
+#   unsignedApkPath  path to the unsigned APK to sign
+#   expectedSha256   64-hex SHA-256 of that APK as produced by the dispatched
+#                    GitHub run (anti-substitution gate; required)
+#
+# Env supplied by the caller (step-level `env:` on the `uses:` step):
+#   ANDROID_KEYSTORE_BASE64     base64-encoded release keystore (required)
+#   ANDROID_KEYSTORE_PASSWORD   keystore password (required)
+#   ANDROID_KEY_ALIAS           key alias (required)
+#   ANDROID_KEY_PASSWORD        key password (required)
+#   APK_SIGNER_SHA256           one or more comma-separated 64-hex SHA-256
+#                               certificate digests; verification is a hard gate
+#
+# Output: release-assets/slovo-propovedi-v$VERSION.zip + release-assets/SHA256SUMS.txt
+
+name: Sign Android APK
+description: Align, sign, verify and package an unsigned release APK.
+
+inputs:
+  version:
+    description: Release version without the leading "v" (e.g. 0.33.1).
+    required: true
+  unsignedApkPath:
+    description: Path to the unsigned APK to sign.
+    required: true
+  expectedSha256:
+    description: >-
+      64-hex SHA-256 of the unsigned APK as produced by the dispatched GitHub
+      run (anti-substitution gate).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Validate inputs
+      id: validate
+      shell: bash
+      run: |
+        if [ ! -f "${{ inputs.unsignedApkPath }}" ]; then
+          echo "::error::Unsigned APK not found at '${{ inputs.unsignedApkPath }}'"
+          exit 1
+        fi
+        missing=0
+        missing_list=""
+        for v in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD APK_SIGNER_SHA256; do
+          if [ -z "${!v:-}" ]; then
+            echo "::error::Required signing variable $v is not set — refusing to sign the release"
+            missing=1
+            missing_list="$missing_list \`$v\`"
+          fi
+        done
+        if [ "$missing" -eq 1 ]; then
+          printf '%s\n' "- APK signing: ❌ missing$missing_list — release aborted" | scripts/ci/step-summary.sh
+          exit 1
+        fi
+
+    - name: Verify unsigned APK digest
+      id: verify-digest
+      shell: bash
+      run: |
+        set -euo pipefail
+        EXPECTED=$(printf '%s' "${{ inputs.expectedSha256 }}" | tr -d '[:space:]' | tr 'A-F' 'a-f')
+        ACTUAL=$(sha256sum "${{ inputs.unsignedApkPath }}" | awk '{print $1}')
+
+        if ! printf '%s' "$EXPECTED" | grep -Eqx '[0-9a-f]{64}'; then
+          echo "::error::expectedSha256 is empty or not a 64-hex digest — refusing to sign an APK not bound to the dispatched GitHub build"
+          printf '%s\n' "- Unsigned APK digest: ❌ missing/bad expectedSha256 — release aborted" | scripts/ci/step-summary.sh
+          exit 1
+        fi
+
+        if [ "$ACTUAL" != "$EXPECTED" ]; then
+          echo "::error::unsigned APK digest mismatch (expected $EXPECTED, got $ACTUAL) — the artifact does not match the dispatched GitHub build"
+          printf '%s\n' "- Unsigned APK digest: ❌ mismatch — release aborted" | scripts/ci/step-summary.sh
+          exit 1
+        fi
+
+        printf '%s\n' "- Unsigned APK digest: ✅ matches the dispatched GitHub build (\`${ACTUAL:0:16}…\`)" | scripts/ci/step-summary.sh
+
+    - name: Restore release keystore
+      id: restore-keystore
+      shell: bash
+      run: |
+        mkdir -p android/app
+        echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+        {
+          echo "RELEASE_STORE_FILE=$GITHUB_WORKSPACE/android/app/release.keystore"
+          echo "RELEASE_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD"
+          echo "RELEASE_KEY_ALIAS=$ANDROID_KEY_ALIAS"
+          echo "RELEASE_KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
+        } >> "$GITHUB_ENV"
+        printf '%s\n' "- APK signing: release keystore 🔐" | scripts/ci/step-summary.sh
+
+    # Must precede "Setup Android SDK": scripts/ci/setup-android-sdk.sh runs
+    # `sdkmanager --licenses` unconditionally (even on a warm cache), and
+    # sdkmanager needs a JVM the Forgejo runner does not preinstall.
+    # apksigner/zipalign below need it too. Same pin as actions/release-android.
+    - name: Setup Java JDK
+      uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Restore Android SDK cache
+      id: sdk-cache
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: /opt/android-sdk
+        key: ${{ runner.os }}-android-sdk-v2-
+        restore-keys: |
+          ${{ runner.os }}-android-sdk-v2-
+
+    - name: Setup Android SDK
+      shell: bash
+      env:
+        ANDROID_SDK_ROOT: /opt/android-sdk
+        # build-tools include zipalign and apksigner.
+        ANDROID_SDK_PACKAGES: platform-tools build-tools;36.0.0 build-tools;37.0.0 platforms;android-37.0
+      run: bash scripts/ci/setup-android-sdk.sh
+
+    - name: Align APK
+      id: zipalign
+      shell: bash
+      run: |
+        set -euo pipefail
+        ZIPALIGN=$(find "$ANDROID_SDK_ROOT/build-tools" -mindepth 2 -maxdepth 2 -name zipalign -type f 2>/dev/null | sort -V | tail -1)
+        if [ -z "$ZIPALIGN" ]; then
+          echo "::error::zipalign not found under $ANDROID_SDK_ROOT/build-tools"
+          exit 1
+        fi
+        "$ZIPALIGN" -f 4 "${{ inputs.unsignedApkPath }}" aligned.apk
+
+    - name: Sign APK
+      id: sign
+      shell: bash
+      # The input APK may already be debug-signed (AGP fallback on the GitHub
+      # build); apksigner sign replaces existing signatures.
+      run: |
+        set -euo pipefail
+        APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -mindepth 2 -maxdepth 2 -name apksigner -type f 2>/dev/null | sort -V | tail -1)
+        if [ -z "$APKSIGNER" ]; then
+          echo "::error::apksigner not found under $ANDROID_SDK_ROOT/build-tools"
+          exit 1
+        fi
+        "$APKSIGNER" sign \
+          --ks android/app/release.keystore \
+          --ks-key-alias "$ANDROID_KEY_ALIAS" \
+          --ks-pass "pass:$ANDROID_KEYSTORE_PASSWORD" \
+          --key-pass "pass:$ANDROID_KEY_PASSWORD" \
+          --out signed.apk aligned.apk
+
+    - name: Verify APK signing certificate
+      id: verify-signing
+      shell: bash
+      run: |
+        set -euo pipefail
+        APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -mindepth 2 -maxdepth 2 -name apksigner -type f 2>/dev/null | sort -V | tail -1)
+        if [ -z "$APKSIGNER" ]; then
+          echo "::error::apksigner not found under $ANDROID_SDK_ROOT/build-tools"
+          exit 1
+        fi
+        PINNED=$(printf '%s' "$APK_SIGNER_SHA256" | tr -d '[:space:]' | tr 'A-F' 'a-f')
+        if ! OUTPUT=$("$APKSIGNER" verify --print-certs signed.apk 2>/dev/null); then
+          echo "::error::apksigner could not verify the signed APK"
+          printf '%s\n' "- APK signer: ❌ signature does not verify — release aborted" | scripts/ci/step-summary.sh
+          exit 1
+        fi
+        DIGESTS=$(printf '%s\n' "$OUTPUT" \
+          | sed -n 's/.*[Ss]igner.*certificate SHA-256 digest: *\([0-9A-Fa-f]\{64\}\).*/\1/p' \
+          | tr 'A-F' 'a-f' | sort -u)
+        if printf '%s' "$DIGESTS" | grep -Eqx '[0-9a-f]{64}' && case ",$PINNED," in *",$DIGESTS,"*) true ;; *) false ;; esac; then
+          echo "APK signed with the pinned release certificate: $DIGESTS"
+          printf '%s\n' "- APK signer: ✅ pinned release certificate (\`${DIGESTS:0:16}…\`)" | scripts/ci/step-summary.sh
+        else
+          echo "::error::APK is not signed with the pinned release certificate (got: ${DIGESTS:-none}) — check the ANDROID_KEYSTORE_* secrets"
+          printf '%s\n' "- APK signer: ❌ unexpected certificate (\`${DIGESTS:-none}\`) — release aborted" | scripts/ci/step-summary.sh
+          exit 1
+        fi
+
+    - name: Rename and zip APK
+      id: zip-apk
+      shell: bash
+      run: |
+        VERSION="${{ inputs.version }}"
+        RENAMED="Slovo.Propovedi v${VERSION}.apk"
+        mkdir -p release-assets
+        cp signed.apk "release-assets/$RENAMED"
+        (cd release-assets && zip -j "slovo-propovedi-v${VERSION}.zip" "$RENAMED")
+        # Integrity contract: the client verifies this digest before unpacking.
+        (cd release-assets && sha256sum "slovo-propovedi-v${VERSION}.zip" > SHA256SUMS.txt)
+        {
+          echo "- APK: \`$RENAMED\`"
+          echo "- Artifact: \`slovo-propovedi-v${VERSION}.zip\` ($(du -h "release-assets/slovo-propovedi-v${VERSION}.zip" | cut -f1))"
+          echo "- Checksums: \`SHA256SUMS.txt\` ($(cat "release-assets/SHA256SUMS.txt"))"
+        } | scripts/ci/step-summary.sh
+
+    # Snapshot key is computed last so packages installed while signing (the SDK
+    # setup above) are part of the cache.
+    - name: Compute Android SDK cache key
+      id: sdk-cache-key
+      if: ${{ !cancelled() }}
+      shell: bash
+      run: bash scripts/ci/android-sdk-cache-key.sh
+
+    - name: Save Android SDK cache
+      if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != '' && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
+      continue-on-error: true
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: /opt/android-sdk
+        key: ${{ steps.sdk-cache-key.outputs.key }}

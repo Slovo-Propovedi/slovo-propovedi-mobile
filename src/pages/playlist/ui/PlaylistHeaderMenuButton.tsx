@@ -43,7 +43,7 @@ export const PlaylistHeaderMenuButton = ({
           Icon={
             <MaterialCommunityIcons
               size={ICON_SIZE}
-              name='dots-vertical'
+              name='dots-horizontal'
               color={resolveColor(iconColor, currentTheme.text)}
             />
           }

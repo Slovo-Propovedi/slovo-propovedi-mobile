@@ -2,8 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { type Href, Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAdminDetailHeader } from 'widgets/admin-form-header'
 import { useRequireAdminRole } from 'entities/auth'
+import { withBottomInset } from 'shared/lib/utils/withBottomInset'
 import { AdminContentSkeleton, EmptyState } from 'shared/ui'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
 import { useTheme } from 'shared/ui/theme'
@@ -23,6 +25,7 @@ const NOT_FOUND_MESSAGE = 'Пользователь не найден'
 // собственного аккаунта скрыто — иконки удаления в шапке нет.
 export const AdminUserDetailScreen = () => {
   useRequireAdminRole()
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const params = useLocalSearchParams<{ id: string }>()
@@ -66,7 +69,7 @@ export const AdminUserDetailScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <Stack.Screen options={headerOptions} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={withBottomInset(styles.content, insets.bottom)}>
         <View style={styles.header}>
           <View style={[styles.avatar, { backgroundColor: currentTheme.primary }]}>
             <Text style={styles.avatarText}>{user.name.slice(0, 1).toUpperCase()}</Text>

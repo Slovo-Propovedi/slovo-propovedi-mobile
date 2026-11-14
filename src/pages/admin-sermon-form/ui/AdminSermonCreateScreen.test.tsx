@@ -9,9 +9,13 @@ const mockFindAll = jest.fn()
 const mockDistinct = jest.fn()
 const mockGetFiles = jest.fn()
 const mockPlaylistFindAll = jest.fn()
+const mockInvidiousFindAll = jest.fn()
 
 jest.mock('shared/api', () => ({
   filesApi: { getFiles: () => ({ getFiles: mockGetFiles }) },
+  invidiousApi: {
+    getInvidious: () => ({ invidiousInstancesControllerFindAll: mockInvidiousFindAll }),
+  },
   playlistsApi: {
     getPlaylists: () => ({ playlistControllerFindAll: mockPlaylistFindAll }),
   },
@@ -39,6 +43,7 @@ describe('<AdminSermonCreateScreen>', () => {
     mockDistinct.mockResolvedValue({ artists: [], books: [] })
     mockGetFiles.mockResolvedValue({ count: 0, files: [] })
     mockPlaylistFindAll.mockResolvedValue({ count: 0, nextCursor: null, playlists: [] })
+    mockInvidiousFindAll.mockResolvedValue([])
     mockCreate.mockResolvedValue(sermonsMocks.getSermonControllerFindOneResponseMock())
   })
 

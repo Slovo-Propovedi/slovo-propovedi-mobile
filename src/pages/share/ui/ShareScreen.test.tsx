@@ -2,14 +2,18 @@ import { act, fireEvent } from '@testing-library/react-native'
 import * as Clipboard from 'expo-clipboard'
 import { View as MockView } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
+import { toastAtom } from 'shared/model'
 import { SHARE_MESSAGE } from '../lib/constants'
 import { type LatestReleaseState } from '../lib/useLatestReleaseUrl'
 import { ShareScreen } from './ShareScreen'
 
 const mockUseLatestReleaseUrl = jest.fn()
 const mockRetry = jest.fn()
+const mockShareLink = jest.fn()
+let mockIsShareSupported = true
 const LANDING_URL = 'https://slovo-propovedi.ru/'
 const WEB_APP_URL = 'https://app.slovo-propovedi.ru/'
+const SHARE_ERROR_MESSAGE = 'Не удалось поделиться. Попробуйте ещё раз'
 const RELEASE_URL =
   'https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/releases/latest'
 
@@ -28,6 +32,16 @@ const READY_STATE: LatestReleaseState = {
 
 jest.mock('../lib/useLatestReleaseUrl', () => ({
   useLatestReleaseUrl: () => mockUseLatestReleaseUrl(),
+}))
+
+jest.mock('shared/lib/shareLink', () => ({
+  shareLink: (...args: unknown[]) => mockShareLink(...args),
+}))
+
+jest.mock('shared/lib/isShareSupported', () => ({
+  get isShareSupported() {
+    return mockIsShareSupported
+  },
 }))
 
 jest.mock('react-native-qrcode-svg', () => ({
@@ -62,6 +76,8 @@ jest.mock('shared/ui/theme', () => ({
 describe('<ShareScreen>', () => {
   beforeEach(() => {
     mockRetry.mockClear()
+    mockShareLink.mockReset()
+    mockIsShareSupported = true
     ;(Clipboard.setStringAsync as jest.Mock).mockReset()
   })
 
@@ -116,6 +132,41 @@ describe('<ShareScreen>', () => {
 
     expect(Clipboard.setStringAsync).toHaveBeenCalledWith(`${SHARE_MESSAGE}\n${LANDING_URL}`)
     expect(getByText('Скопировано')).toBeTruthy()
+  })
+
+  test('landing share button opens the system share sheet with the landing url', async () => {
+    mockShareLink.mockResolvedValue('shared')
+    mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'loading' } })
+
+    const { getByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByText('Поделиться ссылкой'))
+    await act(async () => {})
+
+    expect(mockShareLink).toHaveBeenCalledWith({
+      text: `${SHARE_MESSAGE}\n${LANDING_URL}`,
+      url: LANDING_URL,
+    })
+  })
+
+  test('landing share button shows an error toast when sharing fails', async () => {
+    mockShareLink.mockResolvedValue('error')
+    mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'loading' } })
+
+    const { ctx, getByText } = await renderWithProviders(<ShareScreen />)
+    await fireEvent.press(getByText('Поделиться ссылкой'))
+    await act(async () => {})
+
+    expect(ctx.get(toastAtom)).toBe(SHARE_ERROR_MESSAGE)
+  })
+
+  test('share button is hidden when the platform does not support sharing', async () => {
+    mockIsShareSupported = false
+    mockUseLatestReleaseUrl.mockReturnValue({ retry: mockRetry, state: { status: 'loading' } })
+
+    const { getByText, queryByText } = await renderWithProviders(<ShareScreen />)
+
+    expect(queryByText('Поделиться ссылкой')).toBeNull()
+    expect(getByText('Скопировать ссылку')).toBeTruthy()
   })
 
   test('expanding the release section while loading shows no error message', async () => {

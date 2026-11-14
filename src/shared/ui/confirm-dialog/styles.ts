@@ -45,7 +45,6 @@ export const styles = StyleSheet.create({
     paddingVertical: INDENTS.middle,
   },
   confirmButtonText: {
-    color: COLORS.onPrimary,
     fontSize: FONT_SIZES.base,
     fontWeight: 'bold',
     textAlign: 'center',

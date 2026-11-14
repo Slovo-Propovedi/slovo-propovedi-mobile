@@ -1,8 +1,6 @@
-import { useAction, useAtom } from '@reatom/npm-react'
+import { useAtom } from '@reatom/npm-react'
 import { type StyleProp, View } from 'react-native'
-import Animated from 'react-native-reanimated'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
-import { closePlayerSheetAction, openPlayerSheetAction } from 'entities/player'
 import { useExpandPlayerTourAction } from '../../lib/useExpandPlayerTourAction'
 import { showMenuAtom } from '../../model/showMenuAtom'
 import { useBackgroundRecovery } from '../../model/useBackgroundRecovery'
@@ -11,7 +9,7 @@ import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
 import { CollapsedMiniPlayer } from './CollapsedMiniPlayer'
 import { ContainerView, type NonGeometricStyle } from './ContainerView'
-import { createMiniStyles } from './miniStyles'
+import { PlayerBackdrop } from './PlayerBackdrop'
 import { createStyles } from './styles'
 import { useExpandablePlayerGesture } from './useExpandablePlayerGesture'
 import { useExpandablePlayerState } from './useExpandablePlayerState'
@@ -27,7 +25,10 @@ export const ExpandablePlayer = ({
     audio,
     currentTheme,
     expanded,
+    isBarCollapsed,
     isBuffering,
+    isLight,
+    isPillTucked,
     isTabBarMeasured,
     playing,
     playlist,
@@ -37,30 +38,27 @@ export const ExpandablePlayer = ({
 
   const [showMenu] = useAtom(showMenuAtom)
   const styles = createStyles(currentTheme)
-  const open = useAction(openPlayerSheetAction)
-  const close = useAction(closePlayerSheetAction)
 
   const {
     backdropStyle,
     backgroundImageStyle,
-    collapsedRestingContainerStyle,
+    barCollapsedTop,
+    barExpandedTop,
     containerStyle,
     forceGeometryReapply,
     fullStyle,
-    miniOverlayStyle,
+    miniBarRestingStyle,
+    miniBarStyle,
     miniStyle,
     progress,
     restingContainerStyle,
     screenHeight,
     screenWidth,
   } = useExpandAnimation(expanded, tabBarHeight)
-  const miniStyles = createMiniStyles(currentTheme, tabBarHeight, screenWidth)
 
   const gesture = useExpandablePlayerGesture({
-    close,
     disabled: showMenu,
     expanded,
-    open,
     progress,
     screenHeight,
     tabBarHeight,
@@ -73,37 +71,39 @@ export const ExpandablePlayer = ({
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
 
   const { onLayout: guardedContainerLayout } = useContainerGeometryGuard({
-    expectedTop: collapsedRestingContainerStyle.top,
+    barCollapsedTop,
+    barExpandedTop,
+    barProgress: progress,
     onMismatch: forceGeometryReapply,
   })
 
   if (!audio || !isTabBarMeasured) return null
 
+  const overlayStyle = isPillTucked ? styles.recoveryOverlayTucked : undefined
+
   return (
-    <View key={recoveryKey} style={styles.recoveryOverlay}>
-      <Animated.View
-        style={[
-          styles.backdrop,
-          backdropStyle,
-          {
-            height: Math.floor(screenHeight),
-            pointerEvents: 'none',
-            width: Math.floor(screenWidth),
-          },
-        ]}
+    <View key={recoveryKey} style={[styles.recoveryOverlay, overlayStyle]}>
+      <PlayerBackdrop
+        style={styles.backdrop}
+        screenWidth={screenWidth}
+        screenHeight={screenHeight}
+        backdropStyle={backdropStyle}
       />
       {!expanded && (
         <CollapsedMiniPlayer
           audio={audio}
           playing={playing}
+          isLight={isLight}
           playlist={playlist}
           miniStyle={miniStyle}
-          miniStyles={miniStyles}
           onPlayPause={togglePlay}
           miniPan={gesture.miniPan}
           isBuffering={isBuffering}
+          miniBarStyle={miniBarStyle}
           currentTheme={currentTheme}
+          barCollapsed={isBarCollapsed}
           onPress={gesture.handleMiniTap}
+          miniBarRestingStyle={miniBarRestingStyle}
         />
       )}
       <ContainerView
@@ -116,9 +116,7 @@ export const ExpandablePlayer = ({
         containerStyle={containerStyle}
         panGesture={gesture.panGesture}
         onLayout={guardedContainerLayout}
-        miniOverlayStyle={miniOverlayStyle}
         onAddToPlaylist={openAddToPlaylist}
-        miniOverlay={miniStyles.miniOverlay}
         backgroundImageStyle={backgroundImageStyle}
         restingContainerStyle={restingContainerStyle}
         playlistMenuComponent={playlistMenuComponent}

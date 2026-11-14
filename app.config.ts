@@ -13,8 +13,7 @@ import { withReleaseSigning } from './plugins/withReleaseSigning.ts'
 import { ENV } from './src/shared/config/env.ts'
 
 type AppConfig = { plugins?: AppPlugin[] } & Omit<ExpoConfig, 'plugins'>
-// Expo's config types only allow string/array plugin entries, but app.config
-// may register local config plugins as function references — widen the list.
+// Expo types allow only string/array plugin entries; local config plugins are function refs.
 type AppPlugin = ConfigPlugin | NonNullable<ExpoConfig['plugins']>[number]
 
 const appName = 'Слово.Проповеди'
@@ -24,11 +23,10 @@ const [major, minor, patch] = pkg.version.split('.').map(Number)
 const versionCode = major * 10000 + minor * 100 + patch
 
 const appId = 'ru.slovopropovedi'
-// Android App Links host, validated together with the rest of the EXPO_PUBLIC_*
-// config in src/shared/config/env.ts (zod, no defaults — a missing var must fail
-// prebuild rather than emit an unverifiable App Links host). Relative import (the
-// Expo config evaluator resolves neither tsconfig path aliases nor extensionless
-// specifiers, hence the explicit .ts — same as the ./plugins/*.ts imports below).
+// Android App Links host, validated with the rest of the EXPO_PUBLIC_* config in
+// src/shared/config/env.ts (zod, no defaults — a missing var must fail prebuild rather than
+// emit an unverifiable App Links host). The explicit .ts is required: the Expo config
+// evaluator resolves neither tsconfig aliases nor extensionless specifiers (see ./plugins/*.ts).
 const webHostname = ENV.webHostname
 const splashImageProps = {
   image: './assets/splash.png',
@@ -41,15 +39,13 @@ export default ({ config }: ConfigContext): AppConfig => ({
   ...config,
   android: {
     adaptiveIcon: { backgroundColor: '#f16031', foregroundImage: './assets/adaptive-icon.png' },
-    // Auto-backup stays ENABLED for Seedvault / device-to-device migration (playlists,
-    // history, settings). Sensitive material is kept out by withBackupRules: it excludes
+    // Auto-backup stays ENABLED for Seedvault / device-to-device migration; withBackupRules excludes
     // the expo-secure-store prefs file via dataExtractionRules / fullBackupContent.
     allowBackup: true,
-    // RECORD_AUDIO (microphone) is unused — playback-only via expo-audio. Stripped from the final
-    // manifest even if a library/plugin re-adds it (expo-audio plugin injects it by default).
-    // SYSTEM_ALERT_WINDOW (draw over other apps) is added by debug tooling; the app never requests
-    // it at runtime: stripped from release manifests (verified via merged prodRelease manifest);
-    // debug/debugOptimized re-add it for React Native dev overlays — expected in devDebug builds.
+    // RECORD_AUDIO (microphone) is unused — playback-only via expo-audio — and stripped from the
+    // final manifest even if a library/plugin re-adds it (the expo-audio plugin injects it).
+    // SYSTEM_ALERT_WINDOW (draw over other apps) comes from debug tooling; stripped from release
+    // manifests (verified on the merged prodRelease one), dev overlays re-add it — expected there.
     blockedPermissions: [
       'android.permission.RECORD_AUDIO',
       'android.permission.SYSTEM_ALERT_WINDOW',
@@ -80,7 +76,11 @@ export default ({ config }: ConfigContext): AppConfig => ({
   ios: {
     buildNumber: String(versionCode),
     bundleIdentifier: appId,
-    infoPlist: { UIBackgroundModes: ['audio'] },
+    infoPlist: {
+      CFBundleShortVersionString: '$(MARKETING_VERSION)',
+      CFBundleVersion: '$(CURRENT_PROJECT_VERSION)',
+      UIBackgroundModes: ['audio'],
+    },
     supportsTablet: true,
   },
   name: appName,
@@ -96,6 +96,7 @@ export default ({ config }: ConfigContext): AppConfig => ({
     'expo-asset',
     ['expo-notifications', { color: '#f16031', icon: './assets/notification-icon.png' }],
     'expo-router',
+    'expo-secure-store',
     'expo-sharing',
     'expo-status-bar',
     ['expo-navigation-bar', { enforceContrast: false }],
@@ -117,8 +118,7 @@ export default ({ config }: ConfigContext): AppConfig => ({
   ...OTA_CONFIG,
   slug: 'slovo-propovedi-mobile',
   userInterfaceStyle: 'automatic',
-  // Version comes from package.json (single source of truth); app.json is gone.
-  version: pkg.version,
+  version: pkg.version, // single source of truth (package.json); app.json is gone
   web: {
     bundler: 'metro',
     description: 'Аудио проповеди: слушайте онлайн и офлайн',

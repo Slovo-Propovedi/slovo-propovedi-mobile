@@ -84,7 +84,6 @@ export const queueControlsStyles = StyleSheet.create({
     paddingVertical: INDENTS.middle,
   },
   buttonText: {
-    color: COLORS.onPrimary,
     fontSize: FONT_SIZES.base,
     fontWeight: '600',
     marginLeft: INDENTS.low,
@@ -96,9 +95,6 @@ export const queueControlsStyles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
-  },
-  icon: {
-    tintColor: COLORS.onPrimary,
   },
 })
 

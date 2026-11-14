@@ -54,7 +54,7 @@ src/entities/listening-history/
 
 **Не путать с barrel-файлами:** `@x/` — это НЕ сегментные barrel-файлы (которые запрещены). Barrel в корне слайса (`index.ts`) един и служит внешним потребителям. `@x/` — это дополнительные, узкие точки входа, создаваемые по мере необходимости при кросс-слойных связях.
 
-**Ограничение области применения (обязательное правило):** кросс-слойный `@x` разрешён **только между сущностями одного уровня** (`entities/*` ↔ `entities/*`). Для связей **feature ↔ feature** (и вообще между слайсами верхних слоёв одного уровня) `@x`-мосты **запрещены** и должны быть удалены. Вместо них применяется **dependency inversion на уровне страниц**: страница (или вышестоящий слой) передаёт в фичу onboarding-агностичные обёртки/действия как generic props, а фича остаётся полностью независимой от фичи-потребителя. Образец — результаты поиска: `SearchGroupedResults`/`SearchSermonGroup`/`SearchGroup` принимают `groupHeaderWrapper`/`firstRowWrapper`/`firstRowMenuButtonWrapper`, а `ListenScreen` передаёт в них `OnboardingTarget`-обёртки и регистрирует tour-действия (`open-listen-search`/`type-search-query`/`press-first-sermon`/`close-sermon-playlist-picker`) через `useSearchTourActions`; сама фича `sermon-search` не импортирует `features/onboarding`. Именно так был удалён прежний мост `features/onboarding` ↔ `features/sermon-search`, а затем и последний feature-to-feature мост `features/settings-backup` ↔ `features/sermon-audio-import` (общий контракт хранения настроек импорта вынесен в `shared/model/importSettings.ts`). Легальное нисходящее направление (`widgets`/`pages` → `features`) при этом идёт **прямым импортом barrel** без `@x` (пример — `usePlayerTourActions` в `widgets/expandable-player/lib/`).
+**Ограничение области применения (обязательное правило):** кросс-слойный `@x` разрешён **только между сущностями одного уровня** (`entities/*` ↔ `entities/*`). Для связей **feature ↔ feature** (и вообще между слайсами верхних слоёв одного уровня) `@x`-мосты **запрещены** и должны быть удалены. Вместо них применяется **dependency inversion на уровне страниц**: страница (или вышестоящий слой) передаёт в фичу onboarding-агностичные обёртки/действия как generic props, а фича остаётся полностью независимой от фичи-потребителя. Образец — страница поиска: `PillTabs` принимает `wrapItem`, `SearchResultsList` — `wrapFirstRow`/`wrapMenuButton`, а `SearchScreen` передаёт в них `OnboardingTarget`-обёртки из `pages/search/ui/searchTargets.tsx`, тогда как `ListenScreen` регистрирует tour-действия (`open-listen-search`/`type-search-query`/`press-first-sermon`/`close-sermon-playlist-picker`) через `useSearchTourActions`; сама фича `sermon-search` не импортирует `features/onboarding`. Именно так был удалён прежний мост `features/onboarding` ↔ `features/sermon-search`, а затем и последний feature-to-feature мост `features/settings-backup` ↔ `features/sermon-audio-import` (общий контракт хранения настроек импорта вынесен в `shared/model/importSettings.ts`). Легальное нисходящее направление (`widgets`/`pages` → `features`) при этом идёт **прямым импортом barrel** без `@x` (пример — `usePlayerTourActions` в `widgets/expandable-player/lib/`).
 
 ### Доменные сущности и структурные формы на границе `shared`
 
@@ -134,7 +134,6 @@ app/
     ├── _layout.tsx      # таб-бар + плавающий плеер (ExpandablePlayer)
     ├── listen/          # стек таба «Слушать»: index, playlist, playlist-list, my-playlists
     ├── read.tsx         # реэкспорт pages/read (таб заблокирован)
-    ├── study.tsx        # реэкспорт pages/study (заглушка)
     └── more.tsx         # реэкспорт pages/more
 ```
 
@@ -145,7 +144,7 @@ app/
 Отдельная зона вне публичных табов: `app/admin/` — собственный `Stack` (`app/admin/_layout.tsx`), который при входе однократно вызывает `restoreSession` (`entities/auth`), показывает индикатор загрузки и редиректит неаутентифицированных на `/admin/login` (аутентифицированного на `/admin/login` не уводит — после входа возврат на «Ещё», см. [`features/navigation.md`](./features/navigation.md)).
 
 - `app/admin/login.tsx` → `pages/admin-login` (вход, `signIn`).
-- `app/admin/(tabs)/` → `Tabs` с тем же `CustomTabBar` (`widgets/tab-bar`), что и основные табы: вкладки `index` (Главная), `sections`, `playlists`, `sermons`, `media`, `users`. Таб `users` скрыт (`href: null`) для роли не-`admin`.
+- `app/admin/(tabs)/` → `Tabs` с тем же `CustomTabBar` (`widgets/tab-bar`), что и основные табы: вкладки `index` (Главная), `sections`, `playlists`, `sermons`. Списочные экраны «Медиа», «Флаги» и «Пользователи» — стековые (`app/admin/{media,flags,users}.tsx`), как «Источники импорта»: нативная шапка с кнопкой «Назад» (фолбэк `/admin`), вход — строками «Дополнительно» на главной.
 - `pages/admin-home` — главная админки (счётчики сущностей через generated API, быстрые действия); `pages/admin-invidious` — источники импорта аудио (список Invidious-инстансов, маршрут `app/admin/invidious.tsx`).
 - Слайсы разделов CRUD — у каждого раздела отдельный список, форма (create/edit) и деталь:
   - `pages/admin-sections` / `admin-section-form` / `admin-section-detail`;
@@ -227,7 +226,7 @@ Web-специфика целиком (PWA, Service Worker, офлайн-кеш 
 ┌────────────────────────────────────────────────────────────┐
 │ app/  (только expo-router: layout'ы + реэкспорт экранов)     │
 ├────────────────────────────────────────────────────────────┤
-│ pages/    listen  playlist  playlist-list  read  study      │
+│ pages/    listen  playlist  playlist-list  read             │
 │           more  settings  about  book-reader  books-list    │
 │           admin-login  admin-home  admin-sections          │
 │           admin-section-form  admin-section-detail         │

@@ -31,7 +31,9 @@
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#f16031" />
+    <!-- Pre-hydration defaults; ThemeProvider repaints both at runtime. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -132,6 +134,28 @@
       }
       ::-webkit-scrollbar-thumb:hover {
         background-color: var(--sp-scrollbar-thumb-hover);
+      }
+    </style>
+
+    <style id="sp-native-controls">
+      /*
+       * react-native-web renders TextInput/Pressable as real DOM controls.
+       * Mobile Chrome (Android) paints its own accent focus ring on the focused
+       * search input and a tap highlight on controls; RNW inline styles lose to
+       * the UA `:focus-visible` rule, so this shell-level rule is the layer that
+       * actually suppresses them. Scoped to the search field's accessible name
+       * so admin form inputs keep their visible focus ring. Native platforms
+       * never load this shell.
+       */
+      input[aria-label="Проповеди, проповедники, название книги"]:focus,
+      input[aria-label="Проповеди, проповедники, название книги"]:focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+      }
+      input,
+      button,
+      [role='button'] {
+        -webkit-tap-highlight-color: transparent;
       }
     </style>
   </head>

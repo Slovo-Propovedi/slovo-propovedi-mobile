@@ -1,6 +1,6 @@
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
 import { sermonsMocks } from 'shared/api/generated'
-import { renderHookWithProviders, renderWithProviders } from 'shared/mocks'
+import { mockConsole, renderHookWithProviders, renderWithProviders } from 'shared/mocks'
 import { useAdminSermonDetail } from '../lib/useAdminSermonDetail'
 import { AdminSermonDetailScreen } from './AdminSermonDetailScreen'
 
@@ -20,6 +20,7 @@ const mockFindOne = jest.fn()
 const mockRemove = jest.fn()
 const mockBack = jest.fn()
 const mockPush = jest.fn()
+const mockSeekTo = jest.fn().mockResolvedValue(undefined)
 
 jest.mock('shared/api', () => ({
   sermonsApi: {
@@ -33,7 +34,7 @@ jest.mock('shared/api', () => ({
 // expo-audio pulls in a native module that throws at import in Jest; stub the
 // hooks the audio preview relies on.
 jest.mock('expo-audio', () => ({
-  useAudioPlayer: () => ({ pause: jest.fn(), play: jest.fn() }),
+  useAudioPlayer: () => ({ pause: jest.fn(), play: jest.fn(), seekTo: mockSeekTo }),
   useAudioPlayerStatus: () => ({
     currentTime: 0,
     duration: 0,
@@ -88,6 +89,10 @@ const buildSermonWithPlaylists = () => {
   return sermon
 }
 
+const TIMECODED_DESCRIPTION = 'Разбор текста. Тайм-коды: 5:00 вступление'
+const TIMECODE_LINK_LABEL = 'Перейти к 5:00'
+const TIMECODE_SEEK_SECONDS = 300
+
 describe('<AdminSermonDetailScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -101,6 +106,42 @@ describe('<AdminSermonDetailScreen>', () => {
     expect(await findByText('Сила веры')).toBeTruthy()
     expect(await findByText('Иоанн · Иоанна 3:16')).toBeTruthy()
     expect(await findByText('Разбор текста')).toBeTruthy()
+  })
+
+  test('seeks the audio player when a description timecode is pressed', async () => {
+    mockFindOne.mockResolvedValue(buildSermon({ description: TIMECODED_DESCRIPTION }))
+
+    const { findByRole } = await renderWithProviders(<AdminSermonDetailScreen />)
+    fireEvent.press(await findByRole('link', { name: TIMECODE_LINK_LABEL }))
+
+    expect(mockSeekTo).toHaveBeenCalledWith(TIMECODE_SEEK_SECONDS)
+  })
+
+  test('reports a failed timecode seek without crashing', async () => {
+    const { error: consoleError } = mockConsole('error')
+    mockFindOne.mockResolvedValue(buildSermon({ description: TIMECODED_DESCRIPTION }))
+    mockSeekTo.mockRejectedValueOnce(new Error('seek boom'))
+
+    const { findByRole } = await renderWithProviders(<AdminSermonDetailScreen />)
+    await fireEvent.press(await findByRole('link', { name: TIMECODE_LINK_LABEL }))
+
+    await waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith(
+        '[SermonDescriptionCard] timecode seek failed:',
+        expect.any(Error),
+      ),
+    )
+  })
+
+  test('renders a plain description when the sermon has no audio', async () => {
+    mockFindOne.mockResolvedValue(
+      buildSermon({ audioUrl: null, description: TIMECODED_DESCRIPTION }),
+    )
+
+    const { findByText, queryByRole } = await renderWithProviders(<AdminSermonDetailScreen />)
+
+    expect(await findByText(TIMECODED_DESCRIPTION)).toBeTruthy()
+    expect(queryByRole('link', { name: /Перейти к/ })).toBeNull()
   })
 
   test('navigates to the playlist detail when a playlist row is pressed', async () => {

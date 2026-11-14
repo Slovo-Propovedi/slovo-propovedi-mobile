@@ -30,6 +30,7 @@ const mockTogglePlaylistSermon = jest.fn()
 const mockUseIsLocalPlaylist = jest.fn()
 const mockOpenAddAllToPlaylist = jest.fn()
 const mockOpenAddToPlaylist = jest.fn()
+const mockUseScreenTransitionTracking = jest.fn()
 
 // The tour drives the row menu through the screen's registrations; the modal
 // itself is irrelevant here, so keep it unmounted and spy on the open handler.
@@ -57,6 +58,11 @@ jest.mock('expo-router', () => ({
 
 jest.mock('expo-router/react-navigation', () => ({
   useHeaderHeight: () => 100,
+}))
+
+jest.mock('shared/routing', () => ({
+  ...jest.requireActual('shared/routing'),
+  useScreenTransitionTracking: () => mockUseScreenTransitionTracking(),
 }))
 
 jest.mock('entities/section', () => {
@@ -134,8 +140,9 @@ jest.mock('../lib/PlaylistOfflineService', () => ({
 }))
 
 jest.mock('shared/ui', () => {
+  const actual = jest.requireActual('shared/ui')
   const { View } = jest.requireActual('react-native')
-  return { CoverImage: () => <View /> }
+  return { ...actual, CoverImage: () => <View /> }
 })
 
 jest.mock('shared/ui/menu', () => {
@@ -249,6 +256,7 @@ jest.mock('react-native-reanimated', () => {
       sin: () => 'sin',
     },
     interpolate: (p: number) => p,
+    makeMutable: <T,>(init: T) => ({ value: init }),
     ReduceMotion: { Always: 'always', Never: 'never', System: 'system' },
     useAnimatedProps: (fn: unknown) => (typeof fn === 'function' ? fn() : {}),
     useAnimatedReaction: () => {},
@@ -355,6 +363,7 @@ describe('<PlaylistScreen>', () => {
     expect(getByText(PLAYLIST_TITLE)).toBeTruthy()
     expect(getByText(SERMON_1.title)).toBeTruthy()
     expect(getByText(SERMON_2.title)).toBeTruthy()
+    expect(mockUseScreenTransitionTracking).toHaveBeenCalledTimes(1)
   })
 
   test('shows the not-found state when the playlist param is missing', async () => {
@@ -722,8 +731,12 @@ describe('<PlaylistScreen> remove-from-playlist flow', () => {
   test('closes the player when the playing sermon has nowhere else to continue', async () => {
     const { ctx, getAllByText, getByText, queryByText } = await renderLocalPlaylist()
     const { currentAudioAtom, currentPlaylistAtom, resetPlaybackAction } = getPlayerMock()
-    currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
-    currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+    await act(async () => {
+      currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
+      currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+      // The flat list batches its cell updates on a timer; settle it inside act.
+      await new Promise(resolve => setTimeout(resolve, 100))
+    })
 
     fireEvent.press(getAllByText(REMOVE_MENU_TEXT)[0])
     await waitFor(() => expect(getByText(REMOVE_DIALOG_TITLE)).toBeTruthy())
@@ -751,8 +764,12 @@ describe('<PlaylistScreen> remove-from-playlist flow', () => {
       getPlayerMock()
     const playNewSermon = jest.fn()
     usePlayNewSermon.mockReturnValue(playNewSermon)
-    currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
-    currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+    await act(async () => {
+      currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
+      currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+      // The flat list batches its cell updates on a timer; settle it inside act.
+      await new Promise(resolve => setTimeout(resolve, 100))
+    })
 
     fireEvent.press(getAllByText(REMOVE_MENU_TEXT)[0])
     await confirmRemoval(getByText)
@@ -774,8 +791,12 @@ describe('<PlaylistScreen> remove-from-playlist flow', () => {
   test('closing the chooser falls back to closing the player', async () => {
     const { ctx, getAllByText, getByText } = await renderLocalPlaylist({ withCandidate: true })
     const { currentAudioAtom, currentPlaylistAtom, resetPlaybackAction } = getPlayerMock()
-    currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
-    currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+    await act(async () => {
+      currentPlaylistAtom(ctx, { ...PLAYLIST, id: CUSTOM_PLAYLIST_ID })
+      currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+      // The flat list batches its cell updates on a timer; settle it inside act.
+      await new Promise(resolve => setTimeout(resolve, 100))
+    })
 
     fireEvent.press(getAllByText(REMOVE_MENU_TEXT)[0])
     await confirmRemoval(getByText)
@@ -792,8 +813,12 @@ describe('<PlaylistScreen> remove-from-playlist flow', () => {
       withCandidate: true,
     })
     const { currentAudioAtom, currentPlaylistAtom, resetPlaybackAction } = getPlayerMock()
-    currentPlaylistAtom(ctx, { ...PLAYLIST, id: 'another-playlist' })
-    currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+    await act(async () => {
+      currentPlaylistAtom(ctx, { ...PLAYLIST, id: 'another-playlist' })
+      currentAudioAtom(ctx, toAudioPlayerData(SERMON_1))
+      // The flat list batches its cell updates on a timer; settle it inside act.
+      await new Promise(resolve => setTimeout(resolve, 100))
+    })
 
     fireEvent.press(getAllByText(REMOVE_MENU_TEXT)[0])
     await waitFor(() => expect(getByText(REMOVE_DIALOG_TITLE)).toBeTruthy())
@@ -801,6 +826,8 @@ describe('<PlaylistScreen> remove-from-playlist flow', () => {
 
     await act(async () => {
       fireEvent.press(getByText(CONFIRM_TEXT))
+      // The flat list batches its cell updates on a timer; settle it inside act.
+      await new Promise(resolve => setTimeout(resolve, 100))
     })
 
     expect(mockTogglePlaylistSermon).toHaveBeenCalledTimes(1)

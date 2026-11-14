@@ -51,35 +51,26 @@ describe('onboarding scenario data', () => {
     expect(Object.keys(whatsNewScenarioData)).toEqual(['whatsNewScenario'])
   })
 
-  test('whats-new opens with a plain card and then spotlights the refresh button, offline and history rows', () => {
+  test('whats-new announces the release novelties in plain cards', () => {
     const whatsNew = scenariosById.whatsNew
 
-    expect(whatsNew.steps).toHaveLength(14)
-    const intro = whatsNew.steps[0]
-    const freshData = whatsNew.steps[2]
-    const refreshButton = whatsNew.steps[3]
-    const offlineRows = whatsNew.steps[6]
-    const historyRows = whatsNew.steps[9]
-    const playerRows = whatsNew.steps[10]
-    const squareArtwork = whatsNew.steps[11]
-    const playerHelp = whatsNew.steps[12]
-    const playerState = whatsNew.steps[13]
+    expect(whatsNew.steps).toHaveLength(5)
+    const [newSearch, groupedResults, playerRows, squareArtwork, playerHelp] = whatsNew.steps
 
-    expect(intro.targetId).toBeUndefined()
-    expect(intro.route).toBeUndefined()
-    expect(intro.tapTargetId).toBeUndefined()
-    // Data refresh is part of the unreleased cycle: the plain «Всегда свежие данные»
-    // card followed by the desktop refresh-button spotlight on the listen screen.
-    expect(freshData.title).toBe('Всегда свежие данные')
-    expect(freshData.targetId).toBeUndefined()
-    expect(refreshButton.route).toBe('/listen')
-    expect(refreshButton.targetId).toBe('listen.refresh-button')
-    expect(refreshButton.skipIfMissing).toBe(true)
-    expect(offlineRows.route).toBe('/offline')
-    expect(offlineRows.targetId).toBe('offline.rows')
-    expect(historyRows.route).toBe('/history')
-    expect(historyRows.targetId).toBe('history.rows')
-    // Player novelties: the two plain cards and the help-button spotlight.
+    // Announcement cards: no route/transition, so the tour starts on the first card
+    // on any screen and never navigates — the help card only spotlights its target.
+    expect(newSearch.targetId).toBeUndefined()
+    expect(newSearch.route).toBeUndefined()
+    expect(newSearch.tapTargetId).toBeUndefined()
+    expect(newSearch.title).toBe('Новый поиск')
+    expect(newSearch.text).toContain('отдельной страницей')
+    expect(newSearch.text).toContain('«Очистить»')
+    expect(groupedResults.targetId).toBeUndefined()
+    expect(groupedResults.route).toBeUndefined()
+    expect(groupedResults.title).toBe('Результаты по вкладкам')
+    expect(groupedResults.text).toContain('«Проповедники»')
+    expect(groupedResults.text).toContain('бесконечной прокруткой')
+    // Player novelties: two plain cards and the help-button spotlight.
     expect(playerRows.title).toBe('Новые ряды плеера')
     expect(playerRows.targetId).toBeUndefined()
     expect(playerRows.route).toBeUndefined()
@@ -89,11 +80,6 @@ describe('onboarding scenario data', () => {
     expect(playerHelp.title).toBe('Сценарии плеера')
     expect(playerHelp.targetId).toBe('app.help-button')
     expect(playerHelp.route).toBeUndefined()
-    // The closing card is a plain text card: it spotlights nothing and opens nothing.
-    expect(playerState.title).toBe('Актуальное состояние плеера')
-    expect(playerState.route).toBeUndefined()
-    expect(playerState.targetId).toBeUndefined()
-    expect(playerState.tapTargetId).toBeUndefined()
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {
@@ -101,7 +87,7 @@ describe('onboarding scenario data', () => {
 
     expect(share.screens).toEqual(['/more', '/share'])
     expect(share.globalFallback).toBe(true)
-    expect(share.steps).toHaveLength(7)
+    expect(share.steps).toHaveLength(8)
     expect(share.steps[0].targetId).toBeUndefined()
     expect(share.steps[0].tapTargetId).toBeUndefined()
     // The «Ещё» tab is an entry transition (blink + navigation), not a spotlight card.
@@ -118,60 +104,32 @@ describe('onboarding scenario data', () => {
     expect(share.steps[4].route).toBe('/share')
     expect(share.steps[4].targetId).toBe('share.qr')
     expect(share.steps[5].targetId).toBe('share.copy')
+    // The share button is feature-gated (no Web Share API on desktop web): the tour
+    // drops its card instead of spotlighting a missing target.
+    expect(share.steps[6].targetId).toBe('share.send')
+    expect(share.steps[6].skipIfMissing).toBe(true)
+    expect(share.steps[7].targetId).toBeUndefined()
   })
 
   test('share folds its tab and share-item lead-up into entry transitions', () => {
     const share = scenariosById.share
     const deck = buildTourDeck(share.steps)
 
-    expect(deck).toHaveLength(5)
-    expect(deck.map(entry => entry.cardIndex)).toEqual([0, 2, 4, 5, 6])
+    expect(deck).toHaveLength(6)
+    expect(deck.map(entry => entry.cardIndex)).toEqual([0, 2, 4, 5, 6, 7])
     expect(deck[1].entryStepIndexes).toEqual([1])
     expect(deck[2].entryStepIndexes).toEqual([3])
     expect(deck.filter(entry => entry.entryStepIndexes.length > 0)).toHaveLength(2)
   })
 
-  test('whatsNew keeps nine cards and visualizes the screen transitions between them', () => {
+  test('whatsNew rides one plain deck with no transitions between the cards', () => {
     const whatsNew = scenariosById.whatsNew
     const whatsNewDeck = buildTourDeck(whatsNew.steps)
 
-    expect(whatsNewDeck).toHaveLength(9)
-    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 2, 3, 6, 9, 10, 11, 12, 13])
-    // Intro → listen: the «Слушать» tab blink navigates into the data-refresh cards;
-    // a start already on the listen screen skips it (the card route matches).
-    expect(whatsNewDeck[1].entryStepIndexes).toEqual([1])
-    expect(whatsNew.steps[1]).toEqual({ route: '/listen', tapTargetId: 'tab.listen' })
-    expect(whatsNewDeck[2].entryStepIndexes).toEqual([])
-    // Refresh → offline: the «Ещё» tab blink (history/backup pattern) and the «Офлайн»
-    // item blink (the offline scenario's own lead-up) navigate into the offline card.
-    expect(whatsNewDeck[3].entryStepIndexes).toEqual([4, 5])
-    expect(whatsNew.steps[4]).toEqual({ route: '/more', tapTargetId: 'tab.more' })
-    expect(whatsNew.steps[5]).toEqual({ route: '/offline', tapTargetId: 'more.offline-item' })
-    // Offline → history: the back arrow leaves the nested screen (no tab bar there),
-    // then the history item blink (the history scenario's lead-up) navigates into the
-    // history card.
-    expect(whatsNewDeck[4].entryStepIndexes).toEqual([7, 8])
-    expect(whatsNew.steps[7]).toEqual({ route: '/more', tapTargetId: 'header.back' })
-    expect(whatsNew.steps[8]).toEqual({ route: '/history', tapTargetId: 'more.history-item' })
-    // Player novelty cards and the closing card stay on the last screen: no transitions.
-    expect(whatsNewDeck.slice(5).map(entry => entry.entryStepIndexes)).toEqual([[], [], [], []])
-    expect(whatsNewDeck.slice(5).map(entry => entry.exitStepIndexes)).toEqual([[], [], [], []])
-  })
-
-  test('whatsNew drops the desktop-only refresh card without losing its listen lead-up', () => {
-    const whatsNew = scenariosById.whatsNew
-    const deck = buildTourDeck(whatsNew.steps)
-    const refreshDeckIndex = 2
-
-    // The refresh card owns no entry transitions: the tab.listen lead-up belongs to
-    // the preceding «Всегда свежие данные» card, so dropping the refresh card never
-    // navigates to /listen for nothing.
-    expect(deck[refreshDeckIndex].entryStepIndexes).toEqual([])
-    expect(deck[refreshDeckIndex - 1].entryStepIndexes).toEqual([1])
-
-    // Off desktop web the card is dropped, so the counter loses exactly one card.
-    expect(resolveDeckProgress(deck, [], refreshDeckIndex).displayTotal).toBe(9)
-    expect(resolveDeckProgress(deck, [refreshDeckIndex], refreshDeckIndex + 1).displayTotal).toBe(8)
+    expect(whatsNewDeck).toHaveLength(5)
+    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1, 2, 3, 4])
+    expect(whatsNewDeck.every(entry => entry.entryStepIndexes.length === 0)).toBe(true)
+    expect(whatsNewDeck.every(entry => entry.exitStepIndexes.length === 0)).toBe(true)
   })
 
   test('each scenario wires the tab or row it taps when navigating', () => {
@@ -184,7 +142,6 @@ describe('onboarding scenario data', () => {
     expect(scenariosById.settings.steps[0].tapTargetId).toBe('more.settings-item')
     expect(scenariosById.settings.steps[1].tapTargetId).toBe('more.settings-item')
     expect(scenariosById.read.steps[0].tapTargetId).toBe('tab.read')
-    expect(scenariosById.study.steps[0].tapTargetId).toBe('tab.study')
   })
 
   test('settings tour follows the visual order of the settings rows', () => {
@@ -295,7 +252,7 @@ describe('onboarding scenario data', () => {
 
   test('the tab-navigation intro cards name the tab tap and the destination', () => {
     expect(scenariosById.search.steps[0].text).toBe(
-      'Сейчас перейдём на экран «Слушать» — тапнем по нему — и откроем поиск. Нажмите «Далее».',
+      'Поиск стал отдельной страницей: недавние запросы хранятся на устройстве, а результаты разложены по вкладкам. Сейчас перейдём на экран «Слушать» — тапнем по нему — и откроем поиск. Нажмите «Далее».',
     )
     expect(scenariosById.share.steps[0].text).toBe(
       'Сейчас перейдём на экран «Ещё» — тапнем по нему — и откроем страницу «Поделиться приложением». Нажмите «Далее».',
@@ -414,15 +371,16 @@ describe('onboarding scenario data', () => {
 
     expect(search.screens).toEqual(['/listen'])
     expect(search.globalFallback).toBe(true)
-    expect(search.steps).toHaveLength(10)
+    expect(search.steps).toHaveLength(11)
     expect(search.steps[0].targetId).toBeUndefined()
+    expect(search.steps[0].title).toBe('Новый поиск')
     // The «Слушать» tab is an entry transition (blink + navigation), not a spotlight
     // card, and it navigates on its own — no separate pure-navigation return, which
     // would reach «Слушать» first and make the tab entry skip without ever blinking.
     expect(search.steps[1].route).toBe('/listen')
     expect(search.steps[1].tapTargetId).toBe('tab.listen')
     expect(search.steps[1].targetId).toBeUndefined()
-    // The search button opens the overlay; the next exit types the demo query into it.
+    // The search button opens the search page; the next exit types the demo query into it.
     expect(search.steps[2].title).toBe('Кнопка поиска')
     expect(search.steps[3].tapTargetId).toBe('listen.search-toggle')
     expect(search.steps[3].tapActionId).toBe('open-listen-search')
@@ -435,7 +393,12 @@ describe('onboarding scenario data', () => {
     expect(search.steps[4].tapTargetId).toBeUndefined()
     expect(search.steps[4].targetId).toBeUndefined()
     expect(search.steps[4].tapActionId).toBeUndefined()
+    // The «Проповеди» group pill is the top-level target (the ids did not change, the
+    // compact grouped list became switchable tabs with a full paginated list).
     expect(search.steps[5].targetId).toBe('search-results.group-sermons')
+    expect(search.steps[5].title).toBe('Вкладки результатов')
+    expect(search.steps[5].text).toContain('«Проповедники»')
+    expect(search.steps[5].text).toContain('бесконечной прокруткой')
     expect(search.steps[6].title).toBe('Включить проповедь')
     expect(search.steps[7].tapTargetId).toBe('search-results.first-sermon')
     expect(search.steps[7].targetId).toBeUndefined()
@@ -449,14 +412,19 @@ describe('onboarding scenario data', () => {
     expect(search.steps[8].interactive).toBeUndefined()
     expect(search.steps[9].actionOnEnterId).toBe('close-sermon-playlist-picker')
     expect(search.steps[9].targetId).toBe('search-results.first-sermon-menu')
+    // The closing card explains the recents section the played sermon now feeds.
+    expect(search.steps[10].targetId).toBeUndefined()
+    expect(search.steps[10].title).toBe('Недавние поиски')
+    expect(search.steps[10].text).toContain('«Недавних поисках»')
+    expect(search.steps[10].text).toContain('«Очистить»')
   })
 
   test('search folds its tab into the entry transitions of the results card', () => {
     const search = scenariosById.search
     const deck = buildTourDeck(search.steps)
 
-    expect(deck).toHaveLength(7)
-    expect(deck.map(entry => entry.cardIndex)).toEqual([0, 2, 4, 5, 6, 8, 9])
+    expect(deck).toHaveLength(8)
+    expect(deck.map(entry => entry.cardIndex)).toEqual([0, 2, 4, 5, 6, 8, 9, 10])
     // The tab entry leads into the «Кнопка поиска» card, which now owns only the
     // search-open exit: the typing step is its own interactive card (deck index 2),
     // not an exit. The «Включить проповедь» card owns the first-sermon exit.
@@ -749,7 +717,7 @@ describe('share scenario resume', () => {
     const fromShare = resolveDeckProgress(deck, [0, 1], 2)
 
     expect(fromShare.displayIndex).toBe(0)
-    expect(fromShare.displayTotal).toBe(3)
+    expect(fromShare.displayTotal).toBe(4)
   })
 })
 
@@ -774,14 +742,14 @@ describe('search scenario resume', () => {
     const fromListen = resolveDeckProgress(deck, [0], 1)
 
     expect(fromListen.displayIndex).toBe(0)
-    expect(fromListen.displayTotal).toBe(6)
+    expect(fromListen.displayTotal).toBe(7)
   })
 
   test('counts every card when the lead-up is not skipped', () => {
     const progress = resolveDeckProgress(deck, [], 0)
 
     expect(progress.displayIndex).toBe(0)
-    expect(progress.displayTotal).toBe(7)
+    expect(progress.displayTotal).toBe(8)
   })
 })
 

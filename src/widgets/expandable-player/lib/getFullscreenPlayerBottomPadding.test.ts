@@ -1,20 +1,21 @@
+import { BAR_BOTTOM_INSET_MIN } from 'shared/ui/layout'
 import { getFullscreenPlayerBottomPadding } from './getFullscreenPlayerBottomPadding'
 
 describe('getFullscreenPlayerBottomPadding', () => {
-  test('0 (web / no inset) → 30 (tab bar minimum)', () => {
-    expect(getFullscreenPlayerBottomPadding(0)).toBe(30)
+  test('0 (web / no inset) → the tab bar bottom floor', () => {
+    expect(getFullscreenPlayerBottomPadding(0)).toBe(BAR_BOTTOM_INSET_MIN)
   })
 
-  test('16 (gesture nav) → 30 (tab bar minimum)', () => {
-    expect(getFullscreenPlayerBottomPadding(16)).toBe(30)
+  test('8 (below the floor) → the tab bar bottom floor', () => {
+    expect(getFullscreenPlayerBottomPadding(8)).toBe(BAR_BOTTOM_INSET_MIN)
   })
 
-  test('24 → 30 (below the crossover)', () => {
-    expect(getFullscreenPlayerBottomPadding(24)).toBe(30)
+  test('12 (exact tie at the crossover) → 12', () => {
+    expect(getFullscreenPlayerBottomPadding(12)).toBe(12)
   })
 
-  test('30 → 30 (exact tie at the crossover)', () => {
-    expect(getFullscreenPlayerBottomPadding(30)).toBe(30)
+  test('16 (gesture nav inset) → 16 (inset wins)', () => {
+    expect(getFullscreenPlayerBottomPadding(16)).toBe(16)
   })
 
   test('48 (3-button nav) → 48 (inset wins)', () => {

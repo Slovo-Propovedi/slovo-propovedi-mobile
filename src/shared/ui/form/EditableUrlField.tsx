@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useRef, useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { StyleSheet, Text, TextInput, type TextInputInstance, View } from 'react-native'
 import { IconButton } from '../icon-button'
 import { useTheme } from '../theme/ThemeContext/useTheme'
@@ -15,6 +15,7 @@ const EMPTY_PLACEHOLDER = 'Не задано'
 // сохраняет значение. Пока идёт режим ввода, справа показывается галочка,
 // которая тоже завершает редактирование.
 export const EditableUrlField = ({
+  actions,
   hint,
   label,
   maxLength = 2048,
@@ -22,6 +23,7 @@ export const EditableUrlField = ({
   placeholder,
   value,
 }: {
+  actions?: ReactNode
   hint?: string
   label: string
   maxLength?: number
@@ -86,6 +88,7 @@ export const EditableUrlField = ({
             Icon={<Ionicons size={20} name='pencil' color={currentTheme.primary} />}
           />
         )}
+        {actions}
       </View>
       {hint ? (
         <Text style={[formStyles.hint, { color: currentTheme.textMuted }]}>{hint}</Text>

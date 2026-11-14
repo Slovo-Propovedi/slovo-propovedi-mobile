@@ -1,9 +1,14 @@
 import { act, fireEvent, screen } from '@testing-library/react-native'
-import { Clipboard, Text as MockText, Platform } from 'react-native'
+import { setStringAsync } from 'expo-clipboard'
+import { Text as MockText, Platform } from 'react-native'
 import { createKeyDownEvent } from '../../lib/testing/createKeyEvent'
 import { installFakeDom } from '../../lib/testing/installFakeDom'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { ErrorModal } from './ErrorModal'
+
+jest.mock('expo-clipboard', () => ({
+  setStringAsync: jest.fn(),
+}))
 
 jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: (props: { name: string }) => <MockText>{props.name}</MockText>,
@@ -30,12 +35,15 @@ const defaultProps = {
   visible: true,
 }
 
-const setStringSpy = jest.spyOn(Clipboard, 'setString')
+const mockedSetStringAsync = setStringAsync as jest.MockedFunction<typeof setStringAsync>
+
+// The real setStringAsync resolves; the copy handler chains .catch on its result.
+mockedSetStringAsync.mockResolvedValue(true)
 
 describe('<ErrorModal>', () => {
   beforeEach(() => {
     onCloseMock.mockClear()
-    setStringSpy.mockClear()
+    mockedSetStringAsync.mockClear()
   })
 
   test('renders nothing when visible is false', async () => {
@@ -80,22 +88,22 @@ describe('<ErrorModal>', () => {
     expect(screen.queryByText(COPY_BUTTON_TEXT)).toBeNull()
   })
 
-  test('pressing copy calls Clipboard.setString with formatted error text', async () => {
+  test('pressing copy calls setStringAsync with formatted error text', async () => {
     await renderWithProviders(<ErrorModal {...defaultProps} />)
 
     fireEvent.press(screen.getByText(COPY_BUTTON_TEXT))
 
     const expected = `Error: ${ERROR_MESSAGE}\n\nStack trace:\n${ERROR_STACK}`
-    expect(Clipboard.setString).toHaveBeenCalledTimes(1)
-    expect(Clipboard.setString).toHaveBeenCalledWith(expected)
+    expect(mockedSetStringAsync).toHaveBeenCalledTimes(1)
+    expect(mockedSetStringAsync).toHaveBeenCalledWith(expected)
   })
 
-  test('does not call Clipboard.setString when error is null', async () => {
+  test('does not call setStringAsync when error is null', async () => {
     await renderWithProviders(<ErrorModal {...defaultProps} error={null} />)
 
     fireEvent.press(screen.getByText(COPY_BUTTON_TEXT))
 
-    expect(Clipboard.setString).not.toHaveBeenCalled()
+    expect(mockedSetStringAsync).not.toHaveBeenCalled()
   })
 
   test('pressing close calls onClose', async () => {
@@ -110,7 +118,7 @@ describe('<ErrorModal>', () => {
 describe('<ErrorModal> web Escape handling', () => {
   beforeEach(() => {
     onCloseMock.mockClear()
-    setStringSpy.mockClear()
+    mockedSetStringAsync.mockClear()
   })
 
   test('Escape on web closes the modal via onClose and does not copy', async () => {
@@ -124,7 +132,7 @@ describe('<ErrorModal> web Escape handling', () => {
       })
 
       expect(onCloseMock).toHaveBeenCalledTimes(1)
-      expect(Clipboard.setString).not.toHaveBeenCalled()
+      expect(mockedSetStringAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
       restore()

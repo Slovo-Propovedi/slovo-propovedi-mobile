@@ -1,0 +1,186 @@
+# Composite action: repository verification (patches, types, FSD, lint, jest and
+# native gradle unit tests). One implementation shared by the GitHub-hosted CI
+# workflow and the Forgejo fallback path.
+#
+# The caller owns `actions/checkout`, all `timeout-minutes` values (composite
+# action steps do not support them) and workspace cleanup.
+#
+# inputs.profile:
+#   constrained — memory-limited runner: jest runs with --maxWorkers=2.
+#   hosted      — GitHub-hosted runner: jest keeps its default worker count.
+
+name: Repository checks
+description: Run patches/types/FSD/lint/jest/native checks against a checked-out workspace.
+
+inputs:
+  profile:
+    description: '"constrained" (capped jest workers) or "hosted" (default jest workers).'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      with:
+        node-version: 24
+
+    - name: Enable Corepack
+      shell: bash
+      run: corepack enable
+
+    - name: Get yarn cache directory
+      id: yarn-cache-dir
+      shell: bash
+      run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache yarn dependencies
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: ${{ steps.yarn-cache-dir.outputs.dir }}
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Install dependencies
+      shell: bash
+      run: yarn install --frozen-lockfile
+
+    - name: Check patch-package patches
+      id: patches
+      shell: bash
+      run: |
+        start=$EPOCHSECONDS
+        yarn check:patches
+        echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
+
+    - name: "Check types (tsc: app + service worker)"
+      id: types
+      shell: bash
+      run: |
+        start=$EPOCHSECONDS
+        yarn check:types
+        echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
+
+    - name: Check FSD architecture (steiger)
+      id: fsd
+      shell: bash
+      run: |
+        start=$EPOCHSECONDS
+        yarn check:fsd
+        echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
+
+    - name: Lint (ESLint)
+      id: lint
+      shell: bash
+      run: |
+        start=$EPOCHSECONDS
+        yarn lint
+        echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Gradle dependencies
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # Self-updating SDK cache: restore the newest snapshot by prefix, then save
+    # a new one whenever the installed packages changed. A plain actions/cache
+    # with a static key is saved once and never updated.
+    - name: Restore Android SDK cache
+      id: sdk-cache
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: /opt/android-sdk
+        key: ${{ runner.os }}-android-sdk-v2-
+        restore-keys: |
+          ${{ runner.os }}-android-sdk-v2-
+
+    - name: Setup Android SDK
+      shell: bash
+      env:
+        ANDROID_SDK_ROOT: /opt/android-sdk
+        # Packages the native unit tests need, installed up front instead of by
+        # Gradle during configuration (where the download has no timeout).
+        # build-tools 37 + platform 37: Expo defaults; build-tools 36: AGP 9
+        # default. Update on an Expo/RN/AGP upgrade.
+        ANDROID_SDK_PACKAGES: platform-tools build-tools;36.0.0 build-tools;37.0.0 platforms;android-37.0
+      run: bash scripts/ci/setup-android-sdk.sh
+
+    - name: Run all tests (jest)
+      id: jest
+      shell: bash
+      run: |
+        start=$EPOCHSECONDS
+        args=""
+        if [ "${{ inputs.profile }}" = "constrained" ]; then
+          # Caps peak memory: heavy jest-expo + RN UI suites OOM many workers.
+          args="--maxWorkers=2"
+        fi
+        # shellcheck disable=SC2086 # intentional word splitting of the args
+        yarn testFinal $args
+        echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
+
+    - name: Run native unit tests
+      id: native-tests
+      shell: bash
+      env:
+        GRADLE_OPTS: >-
+          -Dorg.gradle.internal.http.connectionTimeout=120000
+          -Dorg.gradle.internal.http.socketTimeout=300000
+      run: |
+        start=$EPOCHSECONDS
+        cd android
+        ./gradlew :apk-installer:testDebugUnitTest :audio-effects:testDebugUnitTest --continue
+        echo "duration=$((EPOCHSECONDS-start))s" >> "$GITHUB_OUTPUT"
+
+    # Snapshot key is computed after the build so NDK/CMake installed by
+    # Gradle during the native tests are part of the cache (ci.yml semantics).
+    - name: Compute Android SDK cache key
+      id: sdk-cache-key
+      if: ${{ !cancelled() }}
+      shell: bash
+      run: bash scripts/ci/android-sdk-cache-key.sh
+
+    - name: Save Android SDK cache
+      if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != '' && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
+      continue-on-error: true
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: /opt/android-sdk
+        key: ${{ steps.sdk-cache-key.outputs.key }}
+
+    - name: Job summary
+      if: always()
+      shell: bash
+      run: |
+        [ -f scripts/ci/step-summary.sh ] || exit 0
+        status_emoji() {
+          case "$1" in
+            success) echo '✅' ;;
+            failure) echo '❌' ;;
+            *) echo '⏭️' ;;
+          esac
+        }
+        {
+          echo '## Checks'
+          echo ''
+          echo '| Check | Status | Duration |'
+          echo '|---|---|---|'
+          echo "| check:patches | $(status_emoji '${{ steps.patches.outcome }}') | ${{ steps.patches.outputs.duration || '—' }} |"
+          echo "| check:types | $(status_emoji '${{ steps.types.outcome }}') | ${{ steps.types.outputs.duration || '—' }} |"
+          echo "| check:fsd | $(status_emoji '${{ steps.fsd.outcome }}') | ${{ steps.fsd.outputs.duration || '—' }} |"
+          echo "| lint | $(status_emoji '${{ steps.lint.outcome }}') | ${{ steps.lint.outputs.duration || '—' }} |"
+          echo "| jest tests | $(status_emoji '${{ steps.jest.outcome }}') | ${{ steps.jest.outputs.duration || '—' }} |"
+          echo "| native tests (gradle) | $(status_emoji '${{ steps.native-tests.outcome }}') | ${{ steps.native-tests.outputs.duration || '—' }} |"
+        } | scripts/ci/step-summary.sh

@@ -1,0 +1,61 @@
+diff --git a/node_modules/expo-intent-launcher/android/src/main/java/expo/modules/intentlauncher/IntentLauncherModule.kt b/node_modules/expo-intent-launcher/android/src/main/java/expo/modules/intentlauncher/IntentLauncherModule.kt
+index 2a85454..8f714dd 100644
+--- a/node_modules/expo-intent-launcher/android/src/main/java/expo/modules/intentlauncher/IntentLauncherModule.kt
++++ b/node_modules/expo-intent-launcher/android/src/main/java/expo/modules/intentlauncher/IntentLauncherModule.kt
+@@ -138,7 +138,7 @@ class IntentLauncherModule : Module() {
+         putInt("resultCode", payload.resultCode)
+         if (payload.data != null) {
+           payload.data?.let { putString(ATTR_DATA, it.toString()) }
+-          payload.data?.extras?.let { putBundle(ATTR_EXTRA, it) }
++          payload.data?.extras?.let { putBundle(ATTR_EXTRA, it.toJSSafeBundle()) }
+         }
+       }
+ 
+@@ -149,3 +149,47 @@ class IntentLauncherModule : Module() {
+ }
+ 
+ private fun Map<String, Any>.toBundle(): Bundle = bundleOf(*this.toList().toTypedArray())
++
++// PATCH(patch-package): third-party activities can return extras holding values
++// that expo-modules-core's WritableMap converter cannot serialize - MIUI's speech
++// recognizer returns an ActivityOptions object, and the converter throws on the
++// main thread, killing the app before the resolved promise ever reaches JS.
++// Copy only the values the converter understands; the app needs just the
++// recognized phrases.
++private fun Bundle.toJSSafeBundle(): Bundle {
++  val safe = Bundle()
++  for (key in keySet()) {
++    val value = try {
++      @Suppress("DEPRECATION")
++      get(key)?.toJSSafeValue()
++    } catch (_: Throwable) {
++      // A foreign Parcelable whose class is missing from the app: drop the value.
++      null
++    }
++    safe.putAll(bundleOf(key to value))
++  }
++  return safe
++}
++
++private fun Any?.toJSSafeValue(): Any? = when (this) {
++  null -> null
++  is String -> this
++  is Boolean -> this
++  is Int -> this
++  is Long -> this
++  is Short -> this
++  is Byte -> this
++  is Double -> this
++  is Float -> this
++  is CharSequence -> toString()
++  is Bundle -> toJSSafeBundle()
++  is Collection<*> -> map { it.toJSSafeValue() }
++  is Array<*> -> map { it.toJSSafeValue() }
++  is IntArray -> this
++  is LongArray -> this
++  is FloatArray -> this
++  is DoubleArray -> this
++  is BooleanArray -> this
++  is ByteArray -> this
++  else -> null
++}

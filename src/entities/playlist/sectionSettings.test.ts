@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
+import { mockConsole } from 'shared/mocks'
 import { DEFAULT_SECTION_SETTINGS, MY_PLAYLISTS_SECTION_SETTINGS } from './localSectionSettings'
 import {
   loadSectionSettings,
@@ -55,6 +56,7 @@ describe('loadSectionSettings', () => {
   })
 
   test('keeps defaults without overwriting corrupt storage', async () => {
+    mockConsole('warn')
     const corrupt = '{not valid json}'
     await AsyncStorage.setItem(MY_PLAYLISTS_SECTION_SETTINGS, corrupt)
 
@@ -69,6 +71,7 @@ describe('loadSectionSettings', () => {
   })
 
   test('degrades to defaults without overwriting storage when reading rejects', async () => {
+    mockConsole('error')
     jest.spyOn(AsyncStorage, 'getItem').mockRejectedValueOnce(new Error('storage down'))
 
     const setItemSpy = jest.spyOn(AsyncStorage, 'setItem').mockClear()
@@ -136,13 +139,13 @@ describe('persistSectionSettings', () => {
   })
 
   test('a rejected write is logged', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {})
+    const { error } = mockConsole('error')
     jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('storage down'))
     const ctx = createCtx()
 
     await persistSectionSettings(ctx)
 
-    expect(console.error).toHaveBeenCalledWith(
+    expect(error).toHaveBeenCalledWith(
       '[persistSectionSettings] failed to persist settings:',
       expect.any(Error),
     )

@@ -13,15 +13,27 @@ export const SearchResultsRow: NamedExoticComponent<{
   menuButtonWrapper?: (button: ReactElement) => ReactElement
   onAddToPlaylist?: (sermon: AudioPlayerData) => void
   onPress: (sermon: SermonData) => void
+  onRemoveFromSearchHistory?: () => void
   progress?: number
   sermon: SermonData
-}> = memo(({ inHistory, menuButtonWrapper, onAddToPlaylist, onPress, progress, sermon }) => (
-  <SermonSearchRow
-    sermon={sermon}
-    progress={progress}
-    inHistory={inHistory}
-    onPress={() => onPress(sermon)}
-    onAddToPlaylist={onAddToPlaylist}
-    menuButtonWrapper={menuButtonWrapper}
-  />
-))
+}> = memo(
+  ({
+    inHistory,
+    menuButtonWrapper,
+    onAddToPlaylist,
+    onPress,
+    onRemoveFromSearchHistory,
+    progress,
+    sermon,
+  }) => (
+    <SermonSearchRow
+      sermon={sermon}
+      progress={progress}
+      inHistory={inHistory}
+      onPress={() => onPress(sermon)}
+      onAddToPlaylist={onAddToPlaylist}
+      menuButtonWrapper={menuButtonWrapper}
+      onRemoveFromSearchHistory={onRemoveFromSearchHistory}
+    />
+  ),
+)

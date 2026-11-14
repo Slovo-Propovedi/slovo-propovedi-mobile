@@ -1,6 +1,7 @@
 import { type AudioPlayer } from 'expo-audio'
 import { audioCacheService, getPartialFileUri } from 'entities/offline-cache/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { mockConsole } from 'shared/mocks'
 import { reportError } from 'shared/model/error-dialog'
 import { isOnlineAtom } from 'shared/model/network'
 import {
@@ -187,6 +188,7 @@ describe('PlaybackController offline seek via partial source', () => {
   })
 
   test('swap failure → no unhandled rejection, seek state cleared', async () => {
+    mockConsole('error')
     isOnlineAtom(ctx, false)
     currentAudioAtom(ctx, mockAudio)
     isPlayingAtom(ctx, true)
@@ -249,6 +251,7 @@ describe('PlaybackController offline seek via partial source', () => {
   })
 
   test('case-B swap failure → no unhandled rejection, seek state cleared', async () => {
+    mockConsole('error')
     currentAudioAtom(ctx, mockAudio)
     isPlayingAtom(ctx, true)
     mockedGetCurrentSourceUri.mockReturnValue(PARTIAL_URI)
@@ -307,6 +310,7 @@ describe('PlaybackController offline seek via partial source', () => {
   })
 
   test('case-C swap failure → no unhandled rejection, seek state cleared', async () => {
+    mockConsole('error')
     currentAudioAtom(ctx, mockAudio)
     isPlayingAtom(ctx, true)
     mockedGetCurrentSourceUri.mockReturnValue(PARTIAL_URI)

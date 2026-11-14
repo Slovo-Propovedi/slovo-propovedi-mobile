@@ -6,6 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { HelpHeaderButton, OnboardingTarget, useTourScrollable } from 'features/onboarding'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { APP_NAME, APP_VERSION } from 'shared/config'
+import { BLUR_TARGET_ROUTES, BlurBackdrop, ScreenTitleRow } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { AdminPanelButton } from './AdminPanelButton'
 import { MoreMenuSettingsItem } from './MoreMenuSettingsItem'
@@ -29,60 +30,60 @@ export const MoreScreen = () => {
   const canOpenAdminPanel = status === 'authenticated' && canAccessAdmin(user)
 
   return (
-    <SafeAreaView
-      edges={['left', 'right']}
-      style={[
-        styles.container,
-        { backgroundColor: currentTheme.background, paddingTop: insets.top },
-      ]}
-    >
-      <ScrollView ref={tourScrollableRef}>
-        <View style={styles.header}>
+    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.more}>
+      <SafeAreaView
+        edges={['left', 'right']}
+        style={[
+          styles.container,
+          { backgroundColor: currentTheme.background, paddingTop: insets.top },
+        ]}
+      >
+        <ScrollView ref={tourScrollableRef}>
+          <ScreenTitleRow title='Ещё'>
+            {canOpenAdminPanel && <AdminPanelButton />}
+            <HelpHeaderButton />
+          </ScreenTitleRow>
           <View style={styles.headerTexts}>
             <Text style={[styles.appName, { color: currentTheme.text }]}>{APP_NAME}</Text>
             <Text style={styles.appVersion}>v{APP_VERSION}</Text>
           </View>
-          <View style={styles.headerActions}>
-            {canOpenAdminPanel && <AdminPanelButton />}
-            <HelpHeaderButton />
-          </View>
-        </View>
-        <Text style={[styles.appDescription, { color: currentTheme.textMuted }]}>
-          Приложение для прослушивания и чтения проповедей
-        </Text>
+          <Text style={[styles.appDescription, { color: currentTheme.textMuted }]}>
+            Приложение для прослушивания и чтения проповедей
+          </Text>
 
-        <OnboardingTarget id='more.menu' style={styles.menu}>
-          <MoreMenuSettingsItem
-            title='Офлайн'
-            icon='cloud-offline-outline'
-            onboardingTargetId='more.offline-item'
-            onPress={() => router.push('/offline')}
-          />
-          <MoreMenuSettingsItem
-            icon='time-outline'
-            title='История прослушивания'
-            onboardingTargetId='more.history-item'
-            onPress={() => router.push('/history')}
-          />
-          <MoreMenuSettingsItem
-            title='Настройки'
-            icon='settings-outline'
-            onboardingTargetId='more.settings-item'
-            onPress={() => router.push('/settings')}
-          />
-          <MoreMenuSettingsItem
-            title='О приложении'
-            icon='information-circle-outline'
-            onPress={() => router.push('/about')}
-          />
-          <MoreMenuSettingsItem
-            icon='share-social-outline'
-            title='Поделиться приложением'
-            onboardingTargetId='more.share-item'
-            onPress={() => router.push('/share')}
-          />
-        </OnboardingTarget>
-      </ScrollView>
-    </SafeAreaView>
+          <OnboardingTarget id='more.menu' style={styles.menu}>
+            <MoreMenuSettingsItem
+              title='Офлайн'
+              icon='cloud-offline-outline'
+              onboardingTargetId='more.offline-item'
+              onPress={() => router.push('/offline')}
+            />
+            <MoreMenuSettingsItem
+              icon='time-outline'
+              title='История прослушивания'
+              onboardingTargetId='more.history-item'
+              onPress={() => router.push('/history')}
+            />
+            <MoreMenuSettingsItem
+              title='Настройки'
+              icon='settings-outline'
+              onboardingTargetId='more.settings-item'
+              onPress={() => router.push('/settings')}
+            />
+            <MoreMenuSettingsItem
+              title='О приложении'
+              icon='information-circle-outline'
+              onPress={() => router.push('/about')}
+            />
+            <MoreMenuSettingsItem
+              icon='share-social-outline'
+              title='Поделиться приложением'
+              onboardingTargetId='more.share-item'
+              onPress={() => router.push('/share')}
+            />
+          </OnboardingTarget>
+        </ScrollView>
+      </SafeAreaView>
+    </BlurBackdrop>
   )
 }

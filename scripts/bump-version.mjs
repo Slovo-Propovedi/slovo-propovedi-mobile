@@ -3,6 +3,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { execFileSync, execSync } from 'node:child_process'
 import { updateChangelogFiles } from './generate-changelog.mjs'
+import { rewriteAndroidRuntimeVersion, rewriteIosRuntimeVersion } from './runtime-version-core.mjs'
 
 const GREEN = '\x1b[32m'
 const RED = '\x1b[31m'
@@ -37,6 +38,8 @@ const GRADLE_PATH = 'android/app/build.gradle'
 const PBXPROJ_PATH = 'ios/SlovoPropovedi.xcodeproj/project.pbxproj'
 const FDROID_PATH = 'fdroid/metadata/ru.slovopropovedi.yml'
 const OTA_CONFIG_PATH = 'ota.config.ts'
+const STRINGS_XML_PATH = 'android/app/src/main/res/values/strings.xml'
+const EXPO_PLIST_PATH = 'ios/SlovoPropovedi/Supporting/Expo.plist'
 const CHANGELOG_PATH = 'CHANGELOG.md'
 const fastlaneChangelogPaths = versionCode => [
   `fastlane/metadata/android/en-US/changelogs/${versionCode}.txt`,
@@ -56,6 +59,8 @@ const dirtyOwnFiles = git([
   PBXPROJ_PATH,
   FDROID_PATH,
   OTA_CONFIG_PATH,
+  STRINGS_XML_PATH, // guarded even in js-only mode: prebuild churn here must never ride into a bump commit
+  EXPO_PLIST_PATH, // guarded even in js-only mode: prebuild churn here must never ride into a bump commit
   CHANGELOG_PATH,
   'fastlane/metadata/android/en-US/changelogs',
   'fastlane/metadata/android/ru/changelogs',
@@ -75,10 +80,11 @@ if (otherChanges) {
 }
 
 // --- Determine release mode (native vs js-only) ---
-// The newest tag is the last release: this bump's tag does not exist yet.
-// No tags at all means a bootstrap release — treat it as native, matching the
-// CI default in scripts/ci/detect-native-changes.sh.
-const lastTag = execSync("git tag --sort=-creatordate | sed -n '1p'", {
+// The latest release tag comes from scripts/ci/latest-release-tag.sh (highest
+// version — tagger dates tie after bulk re-tags). This bump's tag does not
+// exist yet. No tags at all means a bootstrap release — treat it as native,
+// matching the CI default in scripts/ci/detect-native-changes.sh.
+const lastTag = execFileSync('bash', ['scripts/ci/latest-release-tag.sh'], {
   encoding: 'utf-8',
 }).trim()
 
@@ -142,7 +148,7 @@ try {
   exitError(`File not found: ${GRADLE_PATH}`)
 }
 
-// --- Update all 4 files ---
+// --- Update all version files (5 version files + 2 native runtime mirrors) ---
 
 // 1. package.json
 pkg.version = newVersion
@@ -190,9 +196,32 @@ if (!runtimeVersionMatch) {
 const currentRuntimeVersion = runtimeVersionMatch[1]
 
 if (isNativeRelease) {
+  // 6. android/app/src/main/res/values/strings.xml — expo prebuild mirror of RUNTIME_VERSION
+  const stringsXml = readFileSync(STRINGS_XML_PATH, 'utf-8')
+  const nextStringsXml = rewriteAndroidRuntimeVersion(stringsXml, newVersion)
+
+  if (!nextStringsXml) {
+    exitError(`Could not find "expo_runtime_version" in ${STRINGS_XML_PATH}`)
+  }
+
+  // 7. ios/SlovoPropovedi/Supporting/Expo.plist — expo prebuild mirror of RUNTIME_VERSION
+  const expoPlist = readFileSync(EXPO_PLIST_PATH, 'utf-8')
+  const nextExpoPlist = rewriteIosRuntimeVersion(expoPlist, newVersion)
+
+  if (!nextExpoPlist) {
+    exitError(`Could not find "EXUpdatesRuntimeVersion" in ${EXPO_PLIST_PATH}`)
+  }
+
+  // Every rewrite above is computed and validated before the first write: a
+  // missing literal exits with the tree untouched instead of half-rewritten.
   otaConfig = otaConfig.replace(runtimeVersionPattern, `const RUNTIME_VERSION = '${newVersion}'`)
   writeFileSync(OTA_CONFIG_PATH, otaConfig)
+  writeFileSync(STRINGS_XML_PATH, nextStringsXml)
+  writeFileSync(EXPO_PLIST_PATH, nextExpoPlist)
+
   log(`→ RUNTIME_VERSION: ${currentRuntimeVersion} → ${newVersion}`, YELLOW)
+  log('✓ Updated android/app/src/main/res/values/strings.xml', GREEN)
+  log('✓ Updated ios/SlovoPropovedi/Supporting/Expo.plist', GREEN)
 } else {
   log(`→ RUNTIME_VERSION untouched (${currentRuntimeVersion})`, YELLOW)
 }
@@ -221,7 +250,7 @@ const bumpPaths = [
   GRADLE_PATH,
   PBXPROJ_PATH,
   FDROID_PATH,
-  ...(isNativeRelease ? [OTA_CONFIG_PATH] : []),
+  ...(isNativeRelease ? [OTA_CONFIG_PATH, STRINGS_XML_PATH, EXPO_PLIST_PATH] : []),
   CHANGELOG_PATH,
   ...fastlaneChangelogPaths(newVersionCode),
 ]

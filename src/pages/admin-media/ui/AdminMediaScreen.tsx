@@ -1,28 +1,24 @@
-import { useAction, useAtom } from '@reatom/npm-react'
+import { useAction } from '@reatom/npm-react'
+import { Stack } from 'expo-router'
 import { useState } from 'react'
 import { FlatList, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useAdminListHeaderActions } from 'widgets/admin-list-header'
 import { type APITypes } from 'shared/api'
 import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
 import { predictDropKinds, useFileDrop } from 'shared/lib/file-drop'
 import { showToast } from 'shared/model'
 import { createRefreshControl, DropOverlay, PullToRefresh } from 'shared/ui'
-import { ConfirmDialog } from 'shared/ui/confirm-dialog'
-import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { measureMediaGrid } from '../lib/mediaGrid'
 import { useAdminMedia } from '../lib/useAdminMedia'
 import { useDroppedImageUpload } from '../lib/useDroppedImageUpload'
 import { usePickImage } from '../lib/usePickImage'
 import { AdminMediaListHeader } from './AdminMediaListHeader'
+import { AdminMediaOverlays } from './AdminMediaOverlays'
 import { MediaGridEmpty } from './MediaGridEmpty'
 import { MediaTile } from './MediaTile'
-import { MediaViewerModal } from './MediaViewerModal'
 import { styles } from './styles'
-
-const DELETE_TITLE = 'Удалить обложку?'
-const DELETE_CONFIRM_TEXT = 'Удалить'
-const DELETE_BUSY_TEXT = 'Удаление…'
 
 // Каталог медиа-библиотеки: шапка с загрузкой, сетка квадратных изображений
 // (тап — полноэкранный просмотр) и блок осиротевших файлов сверху. Удаление
@@ -31,7 +27,6 @@ export const AdminMediaScreen = () => {
   const insets = useSafeAreaInsets()
   const { currentTheme } = useTheme()
   const showToastAction = useAction(showToast)
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const {
     files,
     isDeleting,
@@ -55,6 +50,14 @@ export const AdminMediaScreen = () => {
   const { draggedItems, isDragActive } = useFileDrop(handleFiles)
 
   const { numColumns, tileSize } = measureMediaGrid(SCREEN_WIDTH)
+  const headerOptions = useAdminListHeaderActions({
+    icon: 'cloud-upload-outline',
+    isActionDisabled: isUploading,
+    isRefreshing,
+    label: 'Загрузить файл',
+    onAction: () => void pickImage(),
+    onRefresh: refresh,
+  })
   const dropEntries = [
     {
       active: predictDropKinds(draggedItems).has('image'),
@@ -67,10 +70,11 @@ export const AdminMediaScreen = () => {
     if (deleteTarget) await remove(deleteTarget)
   }
 
-  const containerStyle = { backgroundColor: currentTheme.background, paddingTop: insets.top }
+  const containerStyle = { backgroundColor: currentTheme.background }
 
   return (
     <View style={[styles.container, containerStyle]}>
+      <Stack.Screen options={headerOptions} />
       <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
         <FlatList
           data={files}
@@ -79,17 +83,13 @@ export const AdminMediaScreen = () => {
           columnWrapperStyle={styles.gridRow}
           keyExtractor={item => item.fileName}
           refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
+          ListHeaderComponent={
+            <AdminMediaListHeader progress={progress} isUploading={isUploading} />
+          }
           contentContainerStyle={[
             styles.listContent,
-            { paddingBottom: tabBarHeight + INDENTS.low },
+            { paddingBottom: insets.bottom + INDENTS.low },
           ]}
-          ListHeaderComponent={
-            <AdminMediaListHeader
-              progress={progress}
-              isUploading={isUploading}
-              onUpload={() => void pickImage()}
-            />
-          }
           ListEmptyComponent={
             <MediaGridEmpty
               isError={isError}
@@ -108,19 +108,13 @@ export const AdminMediaScreen = () => {
           )}
         />
       </PullToRefresh>
-      <ConfirmDialog
-        title={DELETE_TITLE}
-        visible={deleteTarget !== null}
-        onConfirm={() => void handleDelete()}
-        onCancel={() => setDeleteTarget(null)}
-        confirmText={isDeleting ? DELETE_BUSY_TEXT : DELETE_CONFIRM_TEXT}
-        message={`Файл «${deleteTarget?.fileName ?? ''}» будет удалён из хранилища без возможности восстановления.`}
-      />
-      <MediaViewerModal
-        visible={viewerTarget !== null}
-        title={viewerTarget?.fileName ?? ''}
-        fileUrl={viewerTarget?.fileUrl ?? ''}
-        onClose={() => setViewerTarget(null)}
+      <AdminMediaOverlays
+        isDeleting={isDeleting}
+        deleteTarget={deleteTarget}
+        viewerTarget={viewerTarget}
+        onCloseViewer={() => setViewerTarget(null)}
+        onConfirmDelete={() => void handleDelete()}
+        onCancelDelete={() => setDeleteTarget(null)}
       />
       <DropOverlay entries={dropEntries} visible={isDragActive} />
     </View>

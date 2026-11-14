@@ -1,4 +1,5 @@
 import { createCtx, type Ctx } from '@reatom/framework'
+import { mockConsole } from 'shared/mocks'
 import { audioCacheService } from './AudioCacheService'
 import { cacheAudioWithProgress } from './cacheAudioWithProgress'
 import { CacheCancelledError } from './CacheCancelledError'
@@ -141,6 +142,7 @@ describe('enqueueCache', () => {
   })
 
   test('rejects when the download fails', async () => {
+    mockConsole('warn')
     const error = new Error('network down')
     mockedCacheAudioWithProgress.mockRejectedValue(error)
 

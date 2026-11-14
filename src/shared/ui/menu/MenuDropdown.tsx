@@ -36,6 +36,7 @@ export const MenuDropdown = ({
   anchorRef,
   items,
   onClose,
+  placement = 'above',
   renderItem,
   visible,
 }: {
@@ -43,6 +44,8 @@ export const MenuDropdown = ({
   anchorRef?: RefObject<null | ViewInstance>
   items: ReadonlyArray<MenuItem>
   onClose: () => void
+  /** Side of the anchor the menu prefers to open on; defaults to `above`. */
+  placement?: 'above' | 'below'
   /** Wraps each rendered row; falls back to the bare row when omitted. */
   renderItem?: (row: ReactElement, item: MenuItem) => ReactElement
   visible: boolean
@@ -56,6 +59,7 @@ export const MenuDropdown = ({
       onClose={onClose}
       visible={visible}
       anchorRef={anchorRef}
+      placement={placement}
       menuStyle={[styles.menu, { backgroundColor: currentTheme.surface }]}
     >
       {items.map((item, index) => {

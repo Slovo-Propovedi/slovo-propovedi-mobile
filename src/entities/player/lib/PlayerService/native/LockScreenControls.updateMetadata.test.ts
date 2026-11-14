@@ -109,20 +109,14 @@ describe('setMetadata replace-in-place paths', () => {
     expect(updateLockScreenMetadata).not.toHaveBeenCalled()
   })
 
-  test('same player retries the metadata update until loaded', () => {
-    jest.useFakeTimers()
+  test('same player applies the update immediately even while not loaded', () => {
     const { player, setActiveForLockScreen, updateLockScreenMetadata } = createPlayer(false)
 
     lockScreenControls.setMetadata(player, metadataStub)
     lockScreenControls.setMetadata(player, NEXT_TRACK_METADATA)
 
-    Object.defineProperty(player, 'isLoaded', { value: true })
-    jest.advanceTimersByTime(200)
-
     expect(updateLockScreenMetadata).toHaveBeenCalledWith(NEXT_TRACK_METADATA)
     expect(setActiveForLockScreen).not.toHaveBeenCalled()
-
-    jest.useRealTimers()
   })
 
   test('does not propagate a native rejection from the update path', () => {

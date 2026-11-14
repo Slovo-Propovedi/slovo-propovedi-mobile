@@ -4,6 +4,7 @@ import { type ListeningHistory } from 'entities/listening-history/@x/player'
 import { type PlaylistData } from 'entities/playlist/@x/player'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { mockConsole } from 'shared/mocks'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { isOnlineAtom } from 'shared/model/network'
 import { currentAudioAtom, positionAtom, RepeatMode, repeatModeAtom } from '../../model'
@@ -462,6 +463,7 @@ describe('usePlayerToggleTrack', () => {
   })
 
   test('Track restart → seekTo rejection is caught and reported, no unhandled rejection', async () => {
+    mockConsole('error')
     const seekError = new Error('seek failed')
     mockSeekTo.mockRejectedValue(seekError)
 

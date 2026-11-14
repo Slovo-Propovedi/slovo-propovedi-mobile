@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type SermonData } from 'entities/sermon'
 import { CACHED_SERMON_SEARCH_INDEX } from 'shared/config'
+import { mockConsole } from 'shared/mocks'
 import {
   getCachedSearchResults,
   getSearchCacheKey,
@@ -170,6 +171,7 @@ describe('searchCache', () => {
     })
 
     test('leaves index corrupted on cleanup failure so next call retries', async () => {
+      mockConsole('warn')
       await AsyncStorage.setItem('cachedSermonSearch:orphan', JSON.stringify([sermon]))
       await AsyncStorage.setItem(CACHED_SERMON_SEARCH_INDEX, 'corrupt-data')
 

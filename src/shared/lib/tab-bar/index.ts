@@ -1,1 +1,0 @@
-export { getRenderTabBar } from './renderTabBar'

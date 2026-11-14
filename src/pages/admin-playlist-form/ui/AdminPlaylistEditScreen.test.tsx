@@ -1,4 +1,4 @@
-import { fireEvent } from '@testing-library/react-native'
+import { act, fireEvent } from '@testing-library/react-native'
 import { type APITypes } from 'shared/api'
 import { playlistsMocks, sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
@@ -103,7 +103,9 @@ describe('<AdminPlaylistEditScreen>', () => {
 
     // The picker list does not scroll itself: pagination is triggered by the
     // outer form scroll approaching its end.
-    fireEvent.scroll(getByTestId(FORM_SCROLL_TEST_ID), { nativeEvent: SCROLL_NEAR_END })
+    await act(async () => {
+      await fireEvent.scroll(getByTestId(FORM_SCROLL_TEST_ID), { nativeEvent: SCROLL_NEAR_END })
+    })
 
     expect(await findByText(second.title)).toBeTruthy()
     expect(mockSermonFindAll).toHaveBeenCalledWith(

@@ -75,7 +75,6 @@ export const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET,
   },
   modalConfirmText: {
-    color: COLORS.white,
     fontSize: FONT_SIZES.base,
     fontWeight: '600',
   },

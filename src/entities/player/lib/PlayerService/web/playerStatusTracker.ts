@@ -1,4 +1,5 @@
 import { type WebPlayerState } from './playerState'
+import { PLAYABLE_READY_STATE, type ResumeSeekReassert } from './resumeSeekReassert'
 
 interface StatusTracker {
   start: () => void
@@ -8,6 +9,7 @@ interface StatusTracker {
 export const createStatusTracker = (
   getAudio: () => HTMLAudioElement | null,
   state: WebPlayerState,
+  getReconcile: () => ResumeSeekReassert,
 ): StatusTracker => {
   let interval: null | ReturnType<typeof setInterval> = null
 
@@ -16,6 +18,12 @@ export const createStatusTracker = (
     if (!audio) return
     state.setIsPlaying(!audio.paused)
     state.setPosition(Math.floor(audio.currentTime * 1000))
+    getReconcile()(audio)
+    // One-directional: repairs a spinner stuck because the playing/loadedmetadata
+    // edges never fired (iOS PWA cold start, issue #150); never overrides a
+    // legitimate waiting/stall.
+    if (!audio.paused && audio.readyState >= PLAYABLE_READY_STATE && state.getState().isBuffering)
+      state.setIsBuffering(false)
   }
 
   const start = () => {

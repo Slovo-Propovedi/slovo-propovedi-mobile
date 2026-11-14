@@ -11,9 +11,11 @@ on:
 #              android/, ios/, plugins/, modules/, or a change to yarn.lock,
 #              app.config.ts, ota.config.ts. Version metadata ALONE does not
 #              count — scripts/bump-version.mjs rewrites package.json, gradle
-#              versionName/versionCode and the pbxproj MARKETING_VERSION/
-#              CURRENT_PROJECT_VERSION on every release, so those files are
-#              judged by content (see the `changes` job). Native builds the APK
+#              versionName/versionCode, the pbxproj MARKETING_VERSION/
+#              CURRENT_PROJECT_VERSION and the android strings.xml
+#              expo_runtime_version on every release, so those files are
+#              judged by content (see the `changes` job); create-release then
+#              re-checks each of them against the tag. Native builds the APK
 #              (ZIP + SHA256SUMS), mirrors it to GitHub and Codeberg, and
 #              attaches it to the Forgejo release.
 #   JS-only  — only JS/TS/assets changed: deploy the web PWA and publish the
@@ -38,23 +40,34 @@ on:
 #   changes         — detect native-vs-JS mode + RUNTIME_VERSION guard (light)
 #   create-release  — needs: changes, native only — gate on CI, verify versions,
 #                     cut the Forgejo Release (`publish-release` attaches assets)
-#   web             — needs: changes — export + deploy the web PWA; attach the
-#                     web zip to the release in native mode only
-#   android         — needs: [changes, create-release], native only — build the
-#                     APK, zip it with SHA256SUMS.txt and upload both as the
-#                     `release-assets` artifact (30-day retention)
-#   publish-release — needs: [create-release, android], native only — download
-#                     `release-assets`, attach them to the Forgejo release and
-#                     mirror that release to GitHub and Codeberg. Re-running
-#                     this job alone re-publishes WITHOUT rebuilding the APK.
+#   build-remote    — needs: [changes, create-release], native only — the
+#                     GitHub build starts only after the CI gate; dispatches
+#                     `.github/workflows/release.yml` and downloads its
+#                     `unsigned-apk/` artifact; sets fallback=true when GitHub
+#                     cannot run it (queue/infra)
+#   android-package — needs: [changes, build-remote], native only — sign the
+#                     remote unsigned APK (or build locally on fallback), zip it
+#                     with SHA256SUMS.txt into the `release-assets` artifact
+#                     (30-day retention)
+#   web-package     — needs: [changes, android-package] — builds the web PWA on
+#                     the local runner; native tags run only after a successful
+#                     APK sign and upload the web zip as the `web-assets`
+#                     artifact
+#   publish-release — needs: [create-release, android-package, web-package],
+#                     native only — download `release-assets` + `web-assets`,
+#                     attach them to the Forgejo release and mirror the full
+#                     asset set to GitHub and Codeberg. Re-running this job alone
+#                     re-publishes WITHOUT rebuilding.
 #   ota             — needs: changes, JS-only — publish the OTA bundle to xprem
-# `web`, `android` and `ota` never depend on each other, so they run in
-# whichever order the runner picks them up; `publish-release` follows `android`.
-# The memory-heavy ones share the `memory-heavy-jobs` concurrency group (also on
-# ci.yml's `checks`) and queue on the 4 GB host instead of overlapping.
-# create-release stays OUT of that group: it waits for `CI / checks`, which is
-# in the group — sharing it would deadlock. publish-release stays out too: it is
-# a light network job (no build), so it needs no memory slot.
+# `web-package` depends on `android-package` (needs: [changes, android-package]):
+# in native mode it starts only after a successful APK sign, while JS-only tags
+# run it with `android-package` skipped. The memory-heavy jobs
+# (`android-package`, `web-package`, `ota`, and ci.yml's `local` fallback) share
+# the `memory-heavy-jobs` concurrency group and queue on the 4 GB host instead
+# of overlapping. `build-remote`, `create-release` and `publish-release` stay
+# OUT of that group: they are light network jobs, and create-release waits for
+# `CI / checks`, which is produced by jobs in the group — sharing it would
+# deadlock.
 
 jobs:
   changes:
@@ -85,9 +98,10 @@ jobs:
             echo ''
           } | scripts/ci/step-summary.sh
 
-          # Previous tag by creator date, excluding the tag being released.
-          # `|| true`: grep exits 1 when nothing is left (first ever tag).
-          PREV=$(git tag --sort=-creatordate | grep -v -x "${{ github.ref_name }}" | sed -n '1p' || true)
+          # Previous release tag (scripts/ci/latest-release-tag.sh, version
+          # sort — bulk re-tags tie tagger dates), excluding the tag being
+          # released.
+          PREV=$(scripts/ci/latest-release-tag.sh "${{ github.ref_name }}")
 
           # Native-vs-JS detection lives in scripts/ci/detect-native-changes.sh
           # — one implementation shared with ota-publish.yml. An empty PREV
@@ -199,7 +213,13 @@ jobs:
 
           # Runner capacity is 2, so this job holding a runner slot while
           # polling no longer starves the CI workflow of a runner to run on.
-          for i in $(seq 1 40); do
+          # 60 x 15s = 15 min: CI / checks is posted by ci.yml's gate job only
+          # after the GitHub-hosted run finished, and the GitHub queue can add
+          # several minutes on top of the run itself. Only the manual
+          # "CI / checks" entry matches (the automatic contexts are
+          # CI / dco, CI / remote, CI / local, CI / gate; Forgejo may append the
+          # event, e.g. "CI / checks (push)", hence the prefix match).
+          for i in $(seq 1 60); do
             # Forgejo appends the triggering event to the context, e.g.
             # "CI / checks (push)", so match by prefix rather than equality.
             STATE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$URL" | jq -r '.statuses[] | select(.context | startswith("CI / checks")) | .status' | head -1)
@@ -209,7 +229,7 @@ jobs:
               failure|error) echo "::error::CI did not pass for ${{ github.sha }} (status: $STATE). Refusing to release."; summary_row "- CI status on \`${{ github.sha }}\`: ❌ $STATE — refusing to release"; exit 1 ;;
             esac
 
-            echo "Waiting for CI status on ${{ github.sha }} (attempt $i/40)..."
+            echo "Waiting for CI status on ${{ github.sha }} (attempt $i/60)..."
             sleep 15
           done
 
@@ -250,11 +270,25 @@ jobs:
             exit 1
           fi
 
+          STRINGS_RT=$(grep 'expo_runtime_version' android/app/src/main/res/values/strings.xml | sed 's/.*<string name="expo_runtime_version">\([^<]*\)<\/string>.*/\1/')
+          if [ "$STRINGS_RT" != "$TAG_VERSION" ]; then
+            echo "::error::strings.xml expo_runtime_version ($STRINGS_RT) does not match tag ($TAG_VERSION)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+
+          PLIST_RT=$(grep 'EXUpdatesRuntimeVersion' -A1 ios/SlovoPropovedi/Supporting/Expo.plist | sed -n 's/.*<string>\([^<]*\)<\/string>.*/\1/p')
+          if [ "$PLIST_RT" != "$TAG_VERSION" ]; then
+            echo "::error::Expo.plist EXUpdatesRuntimeVersion ($PLIST_RT) does not match tag ($TAG_VERSION)"
+            echo "::error::Run 'node scripts/bump-version.mjs $TAG_VERSION' before committing"
+            exit 1
+          fi
+
           echo "All versions match tag $TAG_VERSION (code: $EXPECTED_CODE)"
           echo "version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
 
           {
-            echo "- Versions: package.json ✅ · gradle versionName ✅ · versionCode \`$EXPECTED_CODE\` ✅"
+            echo "- Versions: package.json ✅ · gradle versionName ✅ · versionCode \`$EXPECTED_CODE\` ✅ · strings.xml runtime ✅ · Expo.plist runtime ✅"
           } | scripts/ci/step-summary.sh
 
       - name: Extract changelog section
@@ -354,10 +388,264 @@ jobs:
         if: always()
         run: rm -f release-body.md release.json release-response.json
 
-  web:
+  build-remote:
+    # Light dispatcher: hands the native APK build to GitHub-hosted runners. It
+    # is deliberately NOT in the memory-heavy-jobs group — the heavy local
+    # fallbacks (android-package / web-package) hold the group instead.
+    #
+    # Strict sequence: native tags wait for the CI gate (create-release polls
+    # `CI / checks`); js-only tags skip this job entirely (web is built locally).
+    needs: [changes, create-release]
+    # APK-only: web is built locally by web-package; js-only tags never contact
+    # GitHub (create-release is native-only, so it is always 'success' here).
+    if: "!cancelled() && needs.changes.result == 'success' && needs.changes.outputs.native == 'true' && needs.create-release.result == 'success'"
+    runs-on: ubuntu-24.04
+
+    outputs:
+      fallback: ${{ steps.dispatch.outputs.fallback }}
+      run_url: ${{ steps.dispatch.outputs.run_url }}
+      apk_sha256: ${{ steps.dispatch.outputs.apk_sha256 }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Dispatch build to GitHub-hosted runners
+        id: dispatch
+        env:
+          # Classic PAT (repo + workflow scopes); may be switched to
+          # MIRROR_GITHUB_TOKEN if its scopes suffice — see
+          # docs/features/ci-orchestration.md.
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          # GitHub org has hyphens, Forgejo org has underscores.
+          GH_REPO: Slovo-Propovedi/slovo-propovedi-mobile
+          WORKFLOW: release.yml
+          REF: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          # Opt-in commit binding (tag/ref + run head_sha). Exit 44 hard-fails
+          # the release intentionally: no local fallback for a moved mirror tag.
+          VERIFY_REF: '1'
+        run: |
+          # An unconfigured secret must not fail the release dispatch: signal the
+          # local fallback instead (uploads below are skipped when fallback=true).
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::CI_GITHUB_TOKEN is not configured — skipping GitHub dispatch, running locally"
+            echo "fallback=true" >> "$GITHUB_OUTPUT"
+            echo "run_url=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          set +e
+          export DISPATCH_INPUTS='{"mode":"native"}'
+          export ARTIFACTS="unsigned-apk=unsigned-apk"
+          OUTPUT=$(bash scripts/ci/github-dispatch.sh)
+          STATUS=$?
+          set -e
+
+          # Printed by the dispatcher on the 0/1/42 paths (see its header).
+          RUN_URL=$(printf '%s\n' "$OUTPUT" | sed -n 's/^GH_RUN_URL=//p' | tail -1)
+          # Emitted only on the dispatcher's success path. On fallback (42) this
+          # stays empty and branch A hard-fails downstream by design.
+          APK_SHA=$(printf '%s\n' "$OUTPUT" | sed -n 's/^GH_UNSIGNED_APK_SHA256=//p' | tail -1)
+
+          # Exit 44 (mirror tag/ref does not resolve to SHA) intentionally falls
+          # into the `*` branch: hard failure, never a local fallback.
+          case "$STATUS" in
+            0)
+              echo "fallback=false" >> "$GITHUB_OUTPUT"
+              ;;
+            42)
+              echo "fallback=true" >> "$GITHUB_OUTPUT"
+              echo "::warning::GitHub-hosted build unavailable (queue/infra) — using the local fallback"
+              ;;
+            *)
+              echo "::error::GitHub-hosted build failed (dispatch exit $STATUS)"
+              exit "$STATUS"
+              ;;
+          esac
+
+          echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
+          echo "apk_sha256=$APK_SHA" >> "$GITHUB_OUTPUT"
+
+      # Fallback builds produce their artifacts directly in the local jobs, so
+      # nothing is uploaded here when fallback=true.
+      - name: Upload unsigned APK from GitHub
+        if: steps.dispatch.outputs.fallback != 'true'
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+        with:
+          name: unsigned-apk
+          path: unsigned-apk/
+          # The dispatcher guarantees unsigned-apk on its success path, so a
+          # missing artifact is a hard error (the digest gate expects it).
+          if-no-files-found: error
+          retention-days: 30
+
+  android-package:
+    # Native mode only: JS-only releases keep the previous APK (same runtime)
+    # and go out through the `ota` job instead.
+    needs: [changes, build-remote]
+    if: needs.changes.outputs.native == 'true'
+    runs-on: ubuntu-24.04
+
+    concurrency:
+      group: memory-heavy-jobs
+      cancel-in-progress: false
+
+    env:
+      # Composite actions cannot read `vars`/`secrets`: the caller passes the
+      # build/signing configuration as job env (consumed by ./actions/*).
+      REMOTE_OK: ${{ needs.build-remote.outputs.fallback == 'false' }}
+      BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+      LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+      WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+      MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+      MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
+      MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
+      APK_SIGNER_SHA256: ${{ vars.APK_SIGNER_SHA256 }}
+      EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
+      EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
+      EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
+      EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
+      EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
+      EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
+      EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
+      EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
+      EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
+      EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Fallback builds are cut from a complete clone (release tooling
+          # expects the full tag set); the remote branch only signs an APK.
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Compute version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # Branch A: the GitHub-hosted build produced the unsigned APK.
+      - name: Download unsigned APK from GitHub
+        id: download-unsigned
+        if: env.REMOTE_OK == 'true'
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
+        with:
+          name: unsigned-apk
+          path: unsigned-apk/
+
+      - name: Resolve unsigned APK path
+        id: unsigned-apk
+        if: env.REMOTE_OK == 'true'
+        run: |
+          APK_PATH=$(find unsigned-apk -name "*.apk" -print -quit)
+          if [ -z "$APK_PATH" ]; then
+            echo "::error::No unsigned APK found in the downloaded artifact"
+            exit 1
+          fi
+          echo "path=$APK_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Sign APK
+        id: sign-apk
+        if: env.REMOTE_OK == 'true'
+        uses: ./actions/sign-android
+        with:
+          version: ${{ steps.version.outputs.version }}
+          unsignedApkPath: ${{ steps.unsigned-apk.outputs.path }}
+          # Branch A only: branch B builds locally from the trusted Forgejo
+          # commit, so no GitHub digest exists or is needed.
+          expectedSha256: ${{ needs.build-remote.outputs.apk_sha256 }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      # Branch B: GitHub was unavailable — build and sign locally.
+      - name: Build and sign APK (local fallback)
+        id: build-apk
+        if: env.REMOTE_OK != 'true'
+        uses: ./actions/release-android
+        with:
+          profile: constrained
+          signing: env
+          version: ${{ steps.version.outputs.version }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Upload release artifacts
+        id: upload-artifacts
+        # Both branches write release-assets/ (sign-android / release-android).
+        # Publishing lives in `publish-release`, so a failed upload can be
+        # re-run without rebuilding; 30 days is the practical re-run window.
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+        with:
+          name: release-assets
+          path: release-assets/
+          if-no-files-found: error
+          retention-days: 30
+
+      # Footer: always runs, so the summary gets a verdict table even when a
+      # step above failed. An empty outcome means the step never ran, not a pass.
+      - name: Job summary
+        if: always()
+        env:
+          VERSION_OUTCOME: ${{ steps.version.outcome }}
+          DOWNLOAD_OUTCOME: ${{ steps.download-unsigned.outcome }}
+          RESOLVE_OUTCOME: ${{ steps.unsigned-apk.outcome }}
+          SIGN_OUTCOME: ${{ steps.sign-apk.outcome }}
+          BUILD_OUTCOME: ${{ steps.build-apk.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload-artifacts.outcome }}
+          FALLBACK: ${{ needs.build-remote.outputs.fallback }}
+        run: |
+          [ -f scripts/ci/step-summary.sh ] || exit 0
+          status_emoji() {
+            case "$1" in
+              success) printf '✅' ;;
+              failure) printf '❌' ;;
+              cancelled) printf '🟨' ;;
+              *) printf '⏭️' ;;
+            esac
+          }
+          summary_row() { printf '| %s | %s |\n' "$1" "$(status_emoji "$2")"; }
+          {
+            echo ''
+            echo '---'
+            echo ''
+            echo '| Step | Status |'
+            echo '| --- | --- |'
+            summary_row version "$VERSION_OUTCOME"
+            summary_row download-unsigned "$DOWNLOAD_OUTCOME"
+            summary_row resolve-unsigned "$RESOLVE_OUTCOME"
+            summary_row sign-apk "$SIGN_OUTCOME"
+            summary_row local-build "$BUILD_OUTCOME"
+            summary_row upload-artifacts "$UPLOAD_OUTCOME"
+            echo ''
+            echo "GitHub-hosted build fallback: \`$FALLBACK\`"
+          } | scripts/ci/step-summary.sh || true
+
+      - name: Cleanup workspace
+        if: always()
+        run: |
+          rm -rf node_modules .yarn/cache .expo jest-cache dist android/app/build unsigned-apk 2>/dev/null || true
+          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
+          find . -name '.cache' -type d -delete 2>/dev/null || true
+
+  web-package:
     # Deploy runs on every tag, including JS-only (no release exists there).
     # The release-asset steps below are gated on native mode separately.
-    needs: changes
+    needs: [changes, android-package]
+    # Native tags: web image push / VPS deploy / release zip require a REAL
+    # android success. A skipped android-package means the dispatcher hard-failed
+    # (exit 44 moved mirror tag / 1 real failure / 43 superseded) and no APK was
+    # produced, so web must not ship either. js-only tags have no android job at
+    # all (skipped by the native gate), so they ship as before.
+    if: "!cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.native != 'true' || needs.android-package.result == 'success')"
     runs-on: ubuntu-24.04
 
     concurrency:
@@ -406,51 +694,19 @@ jobs:
           fi
           exit $missing
 
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Get yarn cache directory
-        id: yarn-cache-dir
-        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache yarn dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ${{ steps.yarn-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Export web
+      - name: Export web build
         id: web-export
+        uses: ./actions/release-web
+        with:
+          profile: constrained
         env:
-          # Same Metro memory caps as the APK build — the 4 GB host is shared.
-          NODE_OPTIONS: --max-old-space-size=1536
-          CI_METRO_MAX_WORKERS: '2'
-          # Inlined into the web bundle by Metro at export time (see
-          # src/shared/config/config.ts, src/pages/share/lib/constants.ts).
+          # Inlined into the web bundle by Metro; the composite reads env only.
           EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
           EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
           EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          # Repository coordinates (derived from the runner context) — release
-          # sources, update allowlist.
-          EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
-          EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
           EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
           EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
           EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
-        run: |
-          start=$EPOCHSECONDS
-          yarn web:build
-          printf '%s\n' "- Web export: ✅ ($((EPOCHSECONDS-start))s)" | scripts/ci/step-summary.sh
 
       - name: Check deploy config
         id: deploycfg
@@ -598,9 +854,10 @@ jobs:
             "chmod +x /tmp/vps-deploy-web.sh && $REMOTE_ENV bash /tmp/vps-deploy-web.sh"
           printf '%s\n' "- VPS deploy: ✅ https://$WEB_HOSTNAME (tag $DEPLOY_TAG)" | scripts/ci/step-summary.sh
 
-      # Native mode only, and deliberately after the deploy: a JS-only tag has
-      # no Forgejo release to attach to, and the deploy must not depend on
-      # release creation (create-release runs in parallel in native mode).
+      # Native mode only: the zip is published as the `web-assets` artifact and
+      # attached to the release by publish-release with the APK assets, so the
+      # GitHub/Codeberg mirrors always carry the full asset set. No release
+      # dependency here (create-release runs in parallel).
       - name: Zip web build
         id: zip-web
         if: needs.changes.outputs.native == 'true'
@@ -612,49 +869,25 @@ jobs:
             echo "- Artifact: \`slovo-propovedi-web-v${VERSION}.zip\` ($(du -h "slovo-propovedi-web-v${VERSION}.zip" | cut -f1))"
           } | scripts/ci/step-summary.sh
 
-      - name: Upload web zip to the Forgejo Release
+      - name: Upload web zip artifact
         id: upload-web
         if: needs.changes.outputs.native == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
-          VERSION="${{ github.ref_name }}"
-          VERSION="${VERSION#v}"
-          TAG="${{ github.ref_name }}"
-
-          # create-release runs in parallel (it waits for CI first), so the
-          # release object may not exist yet — poll for it. Same 10-minute
-          # budget as create-release's CI wait.
-          RELEASE_ID=""
-          for attempt in $(seq 1 40); do
-            RELEASE_ID=$(curl -s \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG" | jq -r .id)
-            if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "null" ]; then
-              break
-            fi
-            echo "Waiting for Forgejo release $TAG (attempt $attempt/40)..."
-            if [ "$attempt" -lt 40 ]; then
-              sleep 15
-            fi
-          done
-          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
-            echo "::error::Could not resolve Forgejo release id for $TAG"
-            exit 1
-          fi
-          curl -s -X POST \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-web-v${VERSION}.zip" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: application/zip" \
-            --data-binary @slovo-propovedi-web-v${VERSION}.zip
-          summary_row "- Uploaded to the release: ✅ [$TAG](${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG)"
+        # Attached to the release in publish-release with the APK assets, so
+        # the GitHub/Codeberg mirrors include it too.
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+        with:
+          name: web-assets
+          # zip-web writes the archive to the workspace root (../ from dist/).
+          path: slovo-propovedi-web-v*.zip
+          if-no-files-found: error
+          retention-days: 30
 
       # Footer: always runs, so the summary gets a verdict table even when a
       # step above failed. An empty outcome means the step never ran, not a pass.
       - name: Job summary
         if: always()
         env:
+          ANDROID_OUTCOME: ${{ needs.android-package.result }}
           WEB_EXPORT_OUTCOME: ${{ steps.web-export.outcome }}
           DEPLOYCFG_OUTCOME: ${{ steps.deploycfg.outcome }}
           SSH_SETUP_OUTCOME: ${{ steps.ssh-setup.outcome }}
@@ -678,6 +911,7 @@ jobs:
             echo ''
             echo '| Step | Status |'
             echo '| --- | --- |'
+            summary_row android-package "$ANDROID_OUTCOME"
             summary_row web-export "$WEB_EXPORT_OUTCOME"
             summary_row deploycfg "$DEPLOYCFG_OUTCOME"
             summary_row ssh-setup "$SSH_SETUP_OUTCOME"
@@ -692,480 +926,13 @@ jobs:
           rm -rf node_modules .yarn/cache .expo dist ~/.ssh/id_ed25519 2>/dev/null || true
           find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
 
-  android:
-    # Native mode only: JS-only releases keep the previous APK (same runtime)
-    # and go out through the `ota` job instead.
-    needs: [changes, create-release]
-    if: needs.changes.outputs.native == 'true'
-    runs-on: ubuntu-24.04
-
-    concurrency:
-      group: memory-heavy-jobs
-      cancel-in-progress: false
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          # Full history + all tags: release builds are cut from a complete
-          # clone — the tag is the trigger and version tooling expects the full
-          # tag set. Publishing (which also pushes refs to Codeberg) lives in
-          # `publish-release`.
-          fetch-depth: 0
-          fetch-tags: true
-
-      # Same fail-fast gate as the `web` job — see the comment there.
-      # APK_SIGNER_SHA256 is checked here too, before the long native build.
-      - name: Validate required vars
-        env:
-          BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
-          LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
-          WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
-          MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
-          APK_SIGNER_SHA256: ${{ vars.APK_SIGNER_SHA256 }}
-        run: |
-          set -e
-
-          {
-            echo "## Release ${{ github.ref_name }} — android"
-            echo ''
-          } | scripts/ci/step-summary.sh
-
-          missing=0
-          missing_list=""
-          for v in BACKEND_API_HOSTNAME LANDING_HOSTNAME WEB_HOSTNAME MIRROR_CODEBERG_URL MIRROR_GITHUB_URL MOBILE_REPOSITORY_NAME APK_SIGNER_SHA256; do
-            if [ -z "${!v}" ]; then
-              echo "::error::Required Forgejo variable $v is not set (org- or repo-level vars) — refusing to build"
-              missing=1
-              missing_list="$missing_list \`$v\`"
-            fi
-          done
-          # Pinned release certificate(s): 64-hex SHA-256 as printed by
-          # `apksigner verify --print-certs`, comma-separated during a key
-          # rotation. Public value (shared with the landing APK refresh).
-          if [ -n "$APK_SIGNER_SHA256" ] && ! printf '%s' "$APK_SIGNER_SHA256" | grep -Eq '^[0-9A-Fa-f]{64}(,[0-9A-Fa-f]{64})*$'; then
-            echo "::error::APK_SIGNER_SHA256 must be one or more comma-separated 64-hex SHA-256 digests"
-            missing=1
-            missing_list="$missing_list \`APK_SIGNER_SHA256\` (format)"
-          fi
-          if [ "$missing" -eq 1 ]; then
-            printf '%s\n' "- Required vars: ❌ missing$missing_list" | scripts/ci/step-summary.sh
-          else
-            printf '%s\n' "- Required vars: ✅" | scripts/ci/step-summary.sh
-          fi
-          exit $missing
-
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Get yarn cache directory
-        id: yarn-cache-dir
-        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache yarn dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ${{ steps.yarn-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Setup Java JDK
-        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Restore Android SDK cache
-        id: sdk-cache
-        # Self-updating cache: restore the newest snapshot by prefix; "Save
-        # Android SDK cache" stores a new one whenever the installed packages
-        # changed (Gradle fetches NDK/CMake/build-tools on its own). A plain
-        # actions/cache with a static key is saved once and never updated, so
-        # everything installed later was re-downloaded on every run.
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: /opt/android-sdk
-          key: ${{ runner.os }}-android-sdk-v2-
-          restore-keys: |
-            ${{ runner.os }}-android-sdk-v2-
-
-      - name: Setup Android SDK
-        # A stalled dl.google.com download must fail the job, not hang it. A cold
-        # run (no cache snapshot yet) downloads ~350 MB at ~0.5 MB/s, ~13 min.
-        timeout-minutes: 30
-        env:
-          ANDROID_SDK_ROOT: /opt/android-sdk
-        run: |
-          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
-          # Skip download/unzip/mv when the SDK was restored from cache; `mv`
-          # would otherwise fail because cmdline-tools/latest already exists.
-          [ -d "$ANDROID_SDK_ROOT/cmdline-tools/latest" ] || (
-            curl -sSL -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-            unzip -q cmdline-tools.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
-            mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
-            rm cmdline-tools.zip
-          )
-
-          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-          echo "$ANDROID_SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
-          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
-
-          # `yes` never exits on its own — it gets SIGPIPE once sdkmanager
-          # stops reading, and Actions runs steps with `bash -o pipefail`,
-          # so that expected SIGPIPE (141) would otherwise fail this step
-          # even though sdkmanager itself succeeds.
-          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platform-tools" > /dev/null
-
-      - name: Cache Gradle dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Prebuild native code
-        id: prebuild
-        # app.config.ts validates these (zod, no defaults) while generating the
-        # manifest — a missing var must fail the prebuild, not emit a bad host.
-        # The four OTA vars are different: ota.config.ts is all-or-nothing, so if
-        # any is missing the generated manifest simply gets `updates.enabled: false`
-        # (the APK ships with self-update off — safe, no guard needed).
-        env:
-          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
-          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
-          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          # Repository coordinates (derived from the runner context) — release
-          # sources, update allowlist.
-          EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
-          EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
-          EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
-          EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
-          # OTA deployment values (Forgejo org/repo vars) — embedded as
-          # expo.modules.updates.* meta-data in the generated AndroidManifest.
-          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
-          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
-          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
-          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
-        run: |
-          start=$EPOCHSECONDS
-          npx expo prebuild --platform android --clean
-          printf '%s\n' "- Expo prebuild: ✅ ($((EPOCHSECONDS-start))s)" | scripts/ci/step-summary.sh
-
-      - name: Verify prebuild versionCode
-        id: verify-versioncode
-        run: |
-          # expo prebuild regenerates android/app/build.gradle from app.config.ts
-          # (AndroidConfig.Version.withVersion defaults versionCode to 1 when
-          # android.versionCode is missing), so assert the regenerated value
-          # matches the tag before building.
-          VERSION="${{ needs.create-release.outputs.version }}"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          EXPECTED_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
-          GRADLE_VERSION_CODE=$(grep 'versionCode' android/app/build.gradle | head -1 | sed 's/.*versionCode \([0-9]*\).*/\1/')
-          if [ "$GRADLE_VERSION_CODE" != "$EXPECTED_CODE" ]; then
-            echo "::error::prebuild regenerated build.gradle with versionCode ($GRADLE_VERSION_CODE) that does not match tag ($EXPECTED_CODE) — check android.versionCode in app.config.ts"
-            exit 1
-          fi
-
-      - name: Restore release keystore
-        # prebuild --clean wipes android/; the keystore must land here (before the
-        # build) and the RELEASE_* env vars are exported to later steps. A prod
-        # release MUST be signed with the release key: publishing a debug-signed
-        # APK makes in-app updates fail (signature mismatch) and is refused here.
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          if [ -z "${ANDROID_KEYSTORE_BASE64:-}" ]; then
-            echo "::error::ANDROID_KEYSTORE_BASE64 is not configured — refusing to publish a debug-signed release"
-            printf '%s\n' "- APK signing: ❌ ANDROID_KEYSTORE_BASE64 is not configured — release aborted" | scripts/ci/step-summary.sh
-            exit 1
-          fi
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
-          {
-            echo "RELEASE_STORE_FILE=$GITHUB_WORKSPACE/android/app/release.keystore"
-            echo "RELEASE_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD"
-            echo "RELEASE_KEY_ALIAS=$ANDROID_KEY_ALIAS"
-            echo "RELEASE_KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
-          } >> "$GITHUB_ENV"
-          printf '%s\n' "- APK signing: release keystore 🔐" | scripts/ci/step-summary.sh
-
-      - name: Configure Gradle for CI
-        run: |
-          # expo prebuild regenerates android/gradle.properties from its template
-          # with default JVM args (512 MiB metaspace). 1536m heap + 768m metaspace
-          # (~2.3 GB total) leaves enough RAM for the Metro node process in the
-          # memory-limited CI container — see the Build APK step for the full memory budget.
-          # In-process Kotlin compilation (below) raises daemon metaspace usage;
-          # 768m is headroom — metaspace commits only what it actually uses.
-          sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=768m/' android/gradle.properties
-          # Trim ABIs to arm64-v8a only (drop armeabi-v7a, x86, x86_64).
-          # x86/x86_64 are only for emulators; armeabi-v7a (32-bit) is dropped to
-          # halve native-compilation memory/time peak — almost all Android devices
-          # since ~2018 are arm64. The react-native-gradle-plugin reads this
-          # property and applies it to ndk.abiFilters.
-          sed -i 's/reactNativeArchitectures=.*/reactNativeArchitectures=arm64-v8a/' android/gradle.properties
-          # Compile Kotlin inside the Gradle JVM. The default strategy spawns a
-          # separate Kotlin daemon that stays alive (holding RAM) while the JS
-          # bundle task runs — in the memory-limited CI container that memory is
-          # needed by node/Metro.
-          # printf with a leading \n: if the prebuild template lacks a trailing
-          # newline, a plain echo merges this property into the previous line
-          # (corrupting it — e.g. jvmargs) and the property never takes effect.
-          printf '\nkotlin.compiler.execution.strategy=in-process\n' >> android/gradle.properties
-          # org.gradle.workers.max caps concurrent Gradle tasks (e.g. per-ABI
-          # CMake tasks, multi-module Kotlin) — it does NOT cap ninja -j inside
-          # a single CMake task: AGP derives ninja parallelism from the CPU core
-          # count (verified: react-native-gradle-plugin has no ninja/workers
-          # handling). Kept as cheap insurance; the actual fix for the
-          # native-phase memcg OOM was raising the job-container limit (see
-          # docs/decisions.md).
-          printf '\norg.gradle.workers.max=2\n' >> android/gradle.properties
-
-          # Fail fast: if a future Expo SDK changes the template lines above, the seds
-          # silently no-op and the build OOMs again with misleading logs (exit 137).
-          grep -q '^reactNativeArchitectures=arm64-v8a$' android/gradle.properties \
-            || { echo '::error::reactNativeArchitectures override did not apply — sed pattern no longer matches the Expo template'; exit 1; }
-          grep -q '^org.gradle.jvmargs=.*Xmx1536m.*MaxMetaspaceSize=768m' android/gradle.properties \
-            || { echo '::error::gradle.properties jvmargs override did not apply — sed pattern no longer matches the Expo template'; exit 1; }
-          grep -q '^kotlin.compiler.execution.strategy=in-process' android/gradle.properties \
-            || { echo '::error::kotlin.compiler.execution.strategy append did not apply'; exit 1; }
-          grep -q '^org.gradle.workers.max=2' android/gradle.properties \
-            || { echo '::error::workers.max append did not apply'; exit 1; }
-
-      - name: Check runner resources
-        run: |
-          df -h /
-          free -h
-          cat /sys/fs/cgroup/memory.max 2>/dev/null || true
-
-      - name: Build APK
-        id: build-apk
-        env:
-          # Memory budget on the memory-limited CI container (memcg; the limit
-          # is managed in the act-runner config — see docs/decisions.md):
-          #   OS/runner ~0.6 GB + Gradle JVM ~2.3 GB (Xmx1536m + 768m metaspace,
-          #   in-process Kotlin — no separate Kotlin daemon; workers.max=2 caps
-          #   concurrent Gradle tasks, not clang within one ABI) + node/Metro
-          #   main capped at 1536 MB + 2 Metro workers ~0.5 GB. Single ABI
-          #   (arm64-v8a) halves the native compile peak. Host swap was the
-          #   safety net for peaks, but the job container cannot push past its
-          #   memcg limit.
-          # NODE_OPTIONS caps the Metro bundler's Node.js heap
-          # (createBundleReleaseJsAndAssets spawns node) and applies to its
-          # forked worker processes too. CI_METRO_MAX_WORKERS is read by
-          # metro.config.js to cap transform workers (each holds ASTs in RAM).
-          # Tuning: if node starts failing with "JavaScript heap out of memory"
-          # (exit 134) instead of 137, bump NODE_OPTIONS to 1792; if OOM-kills
-          # (exit 137) persist, set CI_METRO_MAX_WORKERS=1. These values are a
-          # conservative floor now that the job-container limit is raised.
-          NODE_OPTIONS: --max-old-space-size=1536
-          CI_METRO_MAX_WORKERS: '2'
-          # Inlined into the JS bundle by Metro when assembleProdRelease triggers
-          # createBundleReleaseJsAndAssets (see src/shared/config/config.ts,
-          # src/pages/share/lib/constants.ts).
-          EXPO_PUBLIC_BACKEND_API_HOSTNAME: ${{ vars.BACKEND_API_HOSTNAME }}
-          EXPO_PUBLIC_LANDING_HOSTNAME: ${{ vars.LANDING_HOSTNAME }}
-          EXPO_PUBLIC_WEB_HOSTNAME: ${{ vars.WEB_HOSTNAME }}
-          # Repository coordinates (derived from the runner context) — release
-          # sources, update allowlist.
-          EXPO_PUBLIC_REPOSITORY_URL: ${{ github.server_url }}
-          EXPO_PUBLIC_REPOSITORY_OWNER: ${{ github.repository_owner }}
-          EXPO_PUBLIC_MIRROR_CODEBERG_URL: ${{ vars.MIRROR_CODEBERG_URL }}
-          EXPO_PUBLIC_MIRROR_GITHUB_URL: ${{ vars.MIRROR_GITHUB_URL }}
-          EXPO_PUBLIC_MOBILE_REPOSITORY_NAME: ${{ vars.MOBILE_REPOSITORY_NAME }}
-          # Same all-or-nothing OTA values as the prebuild step: app.config is
-          # re-evaluated by expo export:embed, and a missing value just turns
-          # updates off in this build (no guard needed).
-          EXPO_PUBLIC_OTA_URL: ${{ vars.EXPO_PUBLIC_OTA_URL }}
-          EXPO_PUBLIC_XPREM_APP_ID: ${{ vars.EXPO_PUBLIC_XPREM_APP_ID }}
-          EXPO_PUBLIC_XPREM_CHANNEL_NAME: ${{ vars.EXPO_PUBLIC_XPREM_CHANNEL_NAME }}
-          EXPO_PUBLIC_XPREM_BRANCH_NAME: ${{ vars.EXPO_PUBLIC_XPREM_BRANCH_NAME }}
-        run: |
-          cd android
-          free -h
-          # Product flavors (dev/prod) are applied by local config plugins
-          # (plugins/withAndroidFlavors.ts) during `expo prebuild`, so release
-          # artifacts build the prod variant assembled by assembleProdRelease.
-          # The --init-script is belt-and-suspenders: the config plugin already
-          # disables lintVital* tasks via the root build.gradle subprojects block.
-          start=$EPOCHSECONDS
-          nice -n 19 ionice -c 3 ./gradlew assembleProdRelease --no-daemon -Dorg.gradle.parallel=false --init-script ../scripts/gradle/disable-lint-vital.gradle
-          df -h /
-          printf '%s\n' "- APK build (arm64-v8a): ✅ ($((EPOCHSECONDS-start))s)" | ../scripts/ci/step-summary.sh
-
-      - name: Compute Android SDK cache key
-        id: sdk-cache-key
-        if: ${{ !cancelled() }}
-        # The key is a digest of the installed package directories: it changes
-        # only when the build installed something new.
-        # Only existing directories go to `find`: a missing one (ndk/cmake are
-        # installed by gradle only when needed) makes it exit 1, and steps run
-        # with `pipefail`. No SDK at all (setup failed early) → no key, no save.
-        run: |
-          cd /opt/android-sdk 2>/dev/null || exit 0
-          dirs=()
-          for dir in build-tools platforms ndk cmake cmdline-tools; do
-            [ -d "$dir" ] && dirs+=("$dir")
-          done
-          [ ${#dirs[@]} -gt 0 ] || exit 0
-          digest=$(find "${dirs[@]}" -mindepth 1 -maxdepth 1 | sort | sha256sum | cut -c1-16)
-          echo "key=${{ runner.os }}-android-sdk-v2-$digest" >> "$GITHUB_OUTPUT"
-
-      - name: Save Android SDK cache
-        if: ${{ !cancelled() && steps.sdk-cache-key.outputs.key != '' && steps.sdk-cache-key.outputs.key != steps.sdk-cache.outputs.cache-matched-key }}
-        continue-on-error: true
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: /opt/android-sdk
-          key: ${{ steps.sdk-cache-key.outputs.key }}
-
-      - name: Verify APK signing certificate
-        id: verify-signing
-        # "Restore release keystore" only proves A keystore is configured. This
-        # proves the APK is signed with THE release key before anything is
-        # zipped or published: a wrong keystore in the secret would otherwise
-        # ship a release that in-app updates reject (signature mismatch) and the
-        # landing APK refresh refuses to serve. Same pinned value and the same
-        # rule as the landing refresh: exactly one signer, and it must be one of
-        # the APK_SIGNER_SHA256 digests.
-        env:
-          APK_SIGNER_SHA256: ${{ vars.APK_SIGNER_SHA256 }}
-        run: |
-          set -euo pipefail
-          APK_PATH=$(find android/app/build/outputs/apk/prod/release -name "*.apk" | head -1)
-          if [ -z "$APK_PATH" ]; then
-            echo "::error::No release APK found to verify"
-            exit 1
-          fi
-          # build-tools (with apksigner) are fetched by the Gradle build itself.
-          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -mindepth 2 -maxdepth 2 -name apksigner -type f 2>/dev/null | sort -V | tail -1)
-          if [ -z "$APKSIGNER" ]; then
-            echo "::error::apksigner not found under $ANDROID_SDK_ROOT/build-tools"
-            exit 1
-          fi
-          PINNED=$(printf '%s' "$APK_SIGNER_SHA256" | tr -d '[:space:]' | tr 'A-F' 'a-f')
-          if ! OUTPUT=$("$APKSIGNER" verify --print-certs "$APK_PATH" 2>/dev/null); then
-            echo "::error::apksigner could not verify $APK_PATH"
-            printf '%s\n' "- APK signer: ❌ signature does not verify — release aborted" | scripts/ci/step-summary.sh
-            exit 1
-          fi
-          DIGESTS=$(printf '%s\n' "$OUTPUT" \
-            | sed -n 's/.*[Ss]igner.*certificate SHA-256 digest: *\([0-9A-Fa-f]\{64\}\).*/\1/p' \
-            | tr 'A-F' 'a-f' | sort -u)
-          if printf '%s' "$DIGESTS" | grep -Eqx '[0-9a-f]{64}' && case ",$PINNED," in *",$DIGESTS,"*) true ;; *) false ;; esac; then
-            echo "APK signed with the pinned release certificate: $DIGESTS"
-            printf '%s\n' "- APK signer: ✅ pinned release certificate (\`${DIGESTS:0:16}…\`)" | scripts/ci/step-summary.sh
-          else
-            echo "::error::APK is not signed with the pinned release certificate (got: ${DIGESTS:-none}) — check the ANDROID_KEYSTORE_* secrets"
-            printf '%s\n' "- APK signer: ❌ unexpected certificate (\`${DIGESTS:-none}\`) — release aborted" | scripts/ci/step-summary.sh
-            exit 1
-          fi
-
-      - name: Rename and zip APK
-        id: zip-apk
-        run: |
-          APK_PATH=$(find android/app/build/outputs/apk/prod/release -name "*.apk" | head -1)
-          APK_DIR=$(dirname "$APK_PATH")
-          VERSION="${{ needs.create-release.outputs.version }}"
-          RENAMED="Slovo.Propovedi v${VERSION}.apk"
-          cp "$APK_PATH" "$APK_DIR/$RENAMED"
-          zip -j "slovo-propovedi-v${VERSION}.zip" "$APK_DIR/$RENAMED"
-          # Integrity contract: the client verifies this digest before unpacking.
-          # `sha256sum` writes the standard "<hex>  <filename>" line.
-          sha256sum "slovo-propovedi-v${VERSION}.zip" > SHA256SUMS.txt
-          {
-            echo "- APK: \`$RENAMED\`"
-            echo "- Artifact: \`slovo-propovedi-v${VERSION}.zip\` ($(du -h "slovo-propovedi-v${VERSION}.zip" | cut -f1))"
-            echo "- Checksums: \`SHA256SUMS.txt\` ($(cat SHA256SUMS.txt))"
-          } | scripts/ci/step-summary.sh
-
-      - name: Upload release artifacts
-        id: upload-artifacts
-        # Publishing lives in the separate `publish-release` job, which consumes
-        # this artifact. A failed upload/mirror can therefore be re-run on its
-        # own without rebuilding the APK; 30 days is the practical re-run window.
-        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
-        with:
-          name: release-assets
-          path: |
-            slovo-propovedi-v${{ needs.create-release.outputs.version }}.zip
-            SHA256SUMS.txt
-          retention-days: 30
-          if-no-files-found: error
-
-      - name: Summarize release artifacts
-        run: |
-          printf '%s\n' "- Release artifacts: ✅ \`release-assets\` (zip + SHA256SUMS.txt, retained 30 days)" | scripts/ci/step-summary.sh
-
-      # Footer: always runs, so the summary gets a verdict table even when a
-      # step above failed. An empty outcome means the step never ran, not a pass.
-      - name: Job summary
-        if: always()
-        env:
-          PREBUILD_OUTCOME: ${{ steps.prebuild.outcome }}
-          VERIFY_VERSIONCODE_OUTCOME: ${{ steps.verify-versioncode.outcome }}
-          BUILD_APK_OUTCOME: ${{ steps.build-apk.outcome }}
-          VERIFY_SIGNING_OUTCOME: ${{ steps.verify-signing.outcome }}
-          ZIP_APK_OUTCOME: ${{ steps.zip-apk.outcome }}
-          UPLOAD_ARTIFACTS_OUTCOME: ${{ steps.upload-artifacts.outcome }}
-        run: |
-          [ -f scripts/ci/step-summary.sh ] || exit 0
-          status_emoji() {
-            case "$1" in
-              success) printf '✅' ;;
-              failure) printf '❌' ;;
-              cancelled) printf '🟨' ;;
-              *) printf '⏭️' ;;
-            esac
-          }
-          summary_row() { printf '| %s | %s |\n' "$1" "$(status_emoji "$2")"; }
-          {
-            echo ''
-            echo '---'
-            echo ''
-            echo '| Step | Status |'
-            echo '| --- | --- |'
-            summary_row prebuild "$PREBUILD_OUTCOME"
-            summary_row verify-versioncode "$VERIFY_VERSIONCODE_OUTCOME"
-            summary_row build-apk "$BUILD_APK_OUTCOME"
-            summary_row verify-signing "$VERIFY_SIGNING_OUTCOME"
-            summary_row zip-apk "$ZIP_APK_OUTCOME"
-            summary_row upload-artifacts "$UPLOAD_ARTIFACTS_OUTCOME"
-          } | scripts/ci/step-summary.sh || true
-
-      - name: Cleanup workspace
-        if: always()
-        run: |
-          rm -rf node_modules .yarn/cache .expo jest-cache dist android/app/build 2>/dev/null || true
-          find . -name '*.tsbuildinfo' -type f -delete 2>/dev/null || true
-          find . -name '.cache' -type d -delete 2>/dev/null || true
-
   publish-release:
-    # Native mode only: both dependencies are native-gated, so a JS-only tag
+    # Native mode only: every dependency is native-gated, so a JS-only tag
     # skips this job too. Split out of the build job so a failed attach/mirror
-    # can be re-run (re-run failed jobs) from the retained `release-assets`
-    # artifact — no APK rebuild.
-    needs: [create-release, android]
+    # can be re-run (re-run failed jobs) from the retained artifacts — no
+    # rebuild. The web zip is attached here with the APK assets, so the
+    # GitHub/Codeberg mirrors always carry the full asset set.
+    needs: [create-release, android-package, web-package]
     runs-on: ubuntu-24.04
 
     # Deliberately NOT in the `memory-heavy-jobs` concurrency group: this job
@@ -1205,7 +972,14 @@ jobs:
           name: release-assets
           path: release-assets
 
-      - name: Upload APK to the Forgejo Release
+      - name: Download web zip
+        id: download-web
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
+        with:
+          name: web-assets
+          path: web-assets
+
+      - name: Upload APK and web assets to the Forgejo Release
         id: upload-apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -1213,23 +987,40 @@ jobs:
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh; }
           VERSION="${{ needs.create-release.outputs.version }}"
           TAG="${{ github.ref_name }}"
-          RELEASE_ID=$(curl -s \
+          RELEASE_JSON=/tmp/fo-release-assets.json
+          curl -s \
             -H "Authorization: token $GITHUB_TOKEN" \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG" | jq -r .id)
+            -o "$RELEASE_JSON" \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/tags/$TAG"
+          RELEASE_ID=$(jq -r '.id // empty' "$RELEASE_JSON" 2>/dev/null || true)
           if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
             echo "::error::Could not resolve Forgejo release id for $TAG"
             exit 1
           fi
-          curl -s -X POST \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=slovo-propovedi-v${VERSION}.zip" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: application/zip" \
-            --data-binary @release-assets/slovo-propovedi-v${VERSION}.zip
-          curl -s -X POST \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=SHA256SUMS.txt" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: text/plain" \
-            --data-binary @release-assets/SHA256SUMS.txt
+
+          # Forgejo does not dedupe attachment names, so a re-run must skip
+          # assets that are already attached (GitHub handles 422, Codeberg
+          # checks names itself).
+          asset_exists() {
+            jq -e --arg name "$1" '[.assets[]? | select(.name == $name)] | length > 0' "$RELEASE_JSON" >/dev/null
+          }
+
+          upload_asset() { # <name> <path> <content-type>
+            local name=$1 path=$2 content_type=$3
+            if asset_exists "$name"; then
+              echo "::warning::$name already attached to the release — skipping"
+              return 0
+            fi
+            curl -s -X POST \
+              "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=$name" \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Content-Type: $content_type" \
+              --data-binary @"$path"
+          }
+
+          upload_asset "slovo-propovedi-v${VERSION}.zip" "release-assets/slovo-propovedi-v${VERSION}.zip" "application/zip"
+          upload_asset "SHA256SUMS.txt" "release-assets/SHA256SUMS.txt" "text/plain"
+          upload_asset "slovo-propovedi-web-v${VERSION}.zip" "web-assets/slovo-propovedi-web-v${VERSION}.zip" "application/zip"
           summary_row "- Uploaded to the release: ✅ [$TAG](${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG)"
 
       - name: Mirror release to GitHub
@@ -1342,6 +1133,25 @@ jobs:
             summary_row "- GitHub mirror: ⚠️ failed (checksum status $SUMS_UPLOAD_STATUS)"
           fi
 
+          # Web bundle rides in the same mirror release (422 = already there).
+          WEB_ZIP_FILE="slovo-propovedi-web-v${VERSION}.zip"
+          WEB_UPLOAD_STATUS=$(curl -s -o /tmp/gh-web-upload.json -w "%{http_code}" -X POST \
+            -H "$AUTH_HEADER" -H "$ACCEPT_HEADER" -H "$API_VERSION_HEADER" \
+            -H "Content-Type: application/zip" \
+            --data-binary @"web-assets/$WEB_ZIP_FILE" \
+            "$UPLOAD_BASE/releases/$RELEASE_ID/assets?name=$WEB_ZIP_FILE" || true)
+
+          if [ "$WEB_UPLOAD_STATUS" = "201" ]; then
+            echo "Uploaded $WEB_ZIP_FILE to GitHub release $RELEASE_ID"
+            summary_row "- GitHub mirror: ✅ web asset uploaded"
+          elif [ "$WEB_UPLOAD_STATUS" = "422" ]; then
+            echo "Asset $WEB_ZIP_FILE already exists on GitHub release $RELEASE_ID - skipping"
+            summary_row "- GitHub mirror: ✅ web asset already exists"
+          else
+            echo "::warning::GitHub mirror failed: web asset upload returned status $WEB_UPLOAD_STATUS - $(jq -r .message /tmp/gh-web-upload.json 2>/dev/null || true)"
+            summary_row "- GitHub mirror: ⚠️ failed (web asset status $WEB_UPLOAD_STATUS)"
+          fi
+
       - name: Mirror release to Codeberg
         id: mirror-codeberg
         env:
@@ -1363,6 +1173,8 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
           ZIP_FILE="slovo-propovedi-v${VERSION}.zip"
           ZIP_PATH="release-assets/$ZIP_FILE"
+          WEB_ZIP_FILE="slovo-propovedi-web-v${VERSION}.zip"
+          WEB_ZIP_PATH="web-assets/$WEB_ZIP_FILE"
           if [ -z "${MIRROR_CODEBERG_URL:-}" ] || [ -z "${MOBILE_REPOSITORY_NAME:-}" ]; then
             echo "::warning::MIRROR_CODEBERG_URL / MOBILE_REPOSITORY_NAME org variables are not set - skipping"
             summary_row "- Codeberg: ⚠️ skipped (MIRROR_CODEBERG_* / MOBILE_REPOSITORY_NAME not set)"
@@ -1371,9 +1183,14 @@ jobs:
           # The URL carries the owner as its only path segment; Forgejo's API
           # lives OUTSIDE the owner path, so derive origin and owner from the
           # single URL — a host or owner rename is a variable change.
-          CODEBERG_ORIGIN="${CODEBERG_ORIGIN%/*}"
+          CODEBERG_ORIGIN="${MIRROR_CODEBERG_URL%/*}"
           CODEBERG_ORG="${MIRROR_CODEBERG_URL%/}"
           CODEBERG_ORG="${CODEBERG_ORG##*/}"
+          [ -n "$CODEBERG_ORIGIN" ] || {
+            echo "::warning::CODEBERG_ORIGIN empty — MIRROR_CODEBERG_URL='${MIRROR_CODEBERG_URL:-}'"
+            summary_row "- Codeberg mirror: ⚠️ skipped (cannot derive API origin)"
+            exit 0
+          }
           API_BASE="$CODEBERG_ORIGIN/api/v1/repos/$CODEBERG_ORG/$MOBILE_REPOSITORY_NAME"
           AUTH_HEADER="Authorization: token ${MIRROR_CODEBERG_TOKEN}"
 
@@ -1394,6 +1211,7 @@ jobs:
 
           UPLOAD_ZIP=true
           UPLOAD_SUMS=true
+          UPLOAD_WEB=true
 
           if [ "$RELEASE_STATUS" = "200" ]; then
             RELEASE_ID=$(jq -r .id /tmp/cb-release.json 2>/dev/null || echo null)
@@ -1406,9 +1224,11 @@ jobs:
             # assets are the dedup mechanism: upload only what is missing.
             ZIP_EXISTS=$(jq -r --arg n "$ZIP_FILE" '[.assets[]? | select(.name == $n)] | length > 0' /tmp/cb-release.json 2>/dev/null || echo false)
             SUMS_EXISTS=$(jq -r --arg n "SHA256SUMS.txt" '[.assets[]? | select(.name == $n)] | length > 0' /tmp/cb-release.json 2>/dev/null || echo false)
+            WEB_EXISTS=$(jq -r --arg n "$WEB_ZIP_FILE" '[.assets[]? | select(.name == $n)] | length > 0' /tmp/cb-release.json 2>/dev/null || echo false)
             if [ "$ZIP_EXISTS" = "true" ]; then UPLOAD_ZIP=false; fi
             if [ "$SUMS_EXISTS" = "true" ]; then UPLOAD_SUMS=false; fi
-            if [ "$UPLOAD_ZIP" = "false" ] && [ "$UPLOAD_SUMS" = "false" ]; then
+            if [ "$WEB_EXISTS" = "true" ]; then UPLOAD_WEB=false; fi
+            if [ "$UPLOAD_ZIP" = "false" ] && [ "$UPLOAD_SUMS" = "false" ] && [ "$UPLOAD_WEB" = "false" ]; then
               echo "Assets already attached to Codeberg release $TAG - skipping upload"
               summary_row "- Codeberg mirror: ✅ asset already attached"
               exit 0
@@ -1426,7 +1246,31 @@ jobs:
             # Force is intentional: Codeberg is a read-only public mirror, so
             # its main and tags must follow Forgejo exactly. The helper only
             # answers the credential request of this single codeberg push.
-            if ! git -c credential.helper='!f() { test "$1" = get && printf "username=mirror\npassword=%s\n" "$MIRROR_CODEBERG_TOKEN"; }; f' push codeberg "+refs/remotes/origin/main:refs/heads/main" "+refs/tags/*:refs/tags/*"; then
+            # Codeberg/Gitea intermittently answers large HTTP/2 pushes with
+            # 504 + "send-pack: unexpected disconnect" while the pack HAS been
+            # processed server-side (the trailing "Everything up-to-date").
+            # Force HTTP/1.1 (known Gitea workaround), retry, and verify the
+            # tag via ls-remote before declaring failure — a 504 after
+            # server-side processing must not skip release creation.
+            PUSH_OK=""
+            for ATTEMPT in 1 2 3; do
+              if git -c http.version=HTTP/1.1 -c credential.helper='!f() { test "$1" = get && printf "username=mirror\npassword=%s\n" "$MIRROR_CODEBERG_TOKEN"; }; f' push codeberg "+refs/remotes/origin/main:refs/heads/main" "+refs/tags/*:refs/tags/*"; then
+                PUSH_OK=1
+                break
+              fi
+              # Anonymous on purpose: Codeberg is a public read-only mirror
+              # (see the comment above), so its refs are world-readable.
+              if git ls-remote --exit-code codeberg "refs/tags/$TAG" >/dev/null 2>&1; then
+                echo "tag $TAG already present on Codeberg despite push error (504 after server-side processing) - continuing"
+                PUSH_OK=1
+                break
+              fi
+              if [ "$ATTEMPT" -lt 3 ]; then
+                echo "push attempt $ATTEMPT failed; retrying in 15s"
+                sleep 15
+              fi
+            done
+            if [ -z "$PUSH_OK" ]; then
               echo "::warning::Codeberg mirror failed: git push to Codeberg failed — check that MIRROR_CODEBERG_TOKEN may write to the repo, that the Codeberg repo exists, and whether its history diverged from Forgejo"
               summary_row "- Codeberg mirror: ⚠️ failed (git push)"
               exit 0
@@ -1450,8 +1294,25 @@ jobs:
             fi
             echo "Created Codeberg release for $TAG (id: $RELEASE_ID)"
             summary_row "- Codeberg mirror: ✅ release created"
+
+            # POST /releases is idempotent for an orphaned tag: the scheduled
+            # git mirror can re-point the tag between runs, which breaks the
+            # release-to-tag association, so releases/tags/$TAG 404s even
+            # though the release (and its assets) still exist - the create
+            # then returns the SAME release with the old assets attached.
+            # Dedup by asset name here too, like the 200 branch above.
+            CB_ASSETS=$(curl -s -H "$AUTH_HEADER" "$API_BASE/releases/$RELEASE_ID" | jq -r '.assets[]?.name' 2>/dev/null || true)
+            has_asset() { printf '%s\n' "$CB_ASSETS" | grep -Fxq -- "$1"; }
+            if has_asset "$ZIP_FILE"; then UPLOAD_ZIP=false; fi
+            if has_asset "SHA256SUMS.txt"; then UPLOAD_SUMS=false; fi
+            if has_asset "$WEB_ZIP_FILE"; then UPLOAD_WEB=false; fi
+            if [ "$UPLOAD_ZIP" = "false" ] && [ "$UPLOAD_SUMS" = "false" ] && [ "$UPLOAD_WEB" = "false" ]; then
+              echo "Assets already attached to re-created Codeberg release $RELEASE_ID - skipping upload"
+              summary_row "- Codeberg mirror: ✅ asset already attached"
+              exit 0
+            fi
           else
-            echo "::warning::Codeberg mirror failed: unexpected status $RELEASE_STATUS for releases/tags/$TAG"
+            echo "::warning::Codeberg mirror failed: unexpected status $RELEASE_STATUS for $API_BASE/releases/tags/$TAG"
             summary_row "- Codeberg mirror: ⚠️ failed (status $RELEASE_STATUS)"
             exit 0
           fi
@@ -1484,6 +1345,21 @@ jobs:
             else
               echo "::warning::Codeberg mirror failed: checksum upload returned status $SUMS_UPLOAD_STATUS - $(jq -r .message /tmp/cb-sums-upload.json 2>/dev/null || true)"
               summary_row "- Codeberg mirror: ⚠️ failed (checksum upload status $SUMS_UPLOAD_STATUS)"
+            fi
+          fi
+
+          if [ "$UPLOAD_WEB" = "true" ]; then
+            WEB_UPLOAD_STATUS=$(curl -s -o /tmp/cb-web-upload.json -w "%{http_code}" -X POST \
+              -H "$AUTH_HEADER" -H "Content-Type: application/zip" \
+              --data-binary @"$WEB_ZIP_PATH" \
+              "$API_BASE/releases/$RELEASE_ID/assets?name=$WEB_ZIP_FILE" || true)
+
+            if [ "$WEB_UPLOAD_STATUS" = "201" ]; then
+              echo "Uploaded $WEB_ZIP_FILE to Codeberg release $RELEASE_ID"
+              summary_row "- Codeberg mirror: ✅ web asset uploaded"
+            else
+              echo "::warning::Codeberg mirror failed: web asset upload returned status $WEB_UPLOAD_STATUS - $(jq -r .message /tmp/cb-web-upload.json 2>/dev/null || true)"
+              summary_row "- Codeberg mirror: ⚠️ failed (web asset upload status $WEB_UPLOAD_STATUS)"
             fi
           fi
 
@@ -1524,9 +1400,14 @@ jobs:
           # The URL carries the owner as its only path segment; Forgejo's API
           # lives OUTSIDE the owner path, so derive origin and owner from the
           # single URL — a host or owner rename is a variable change.
-          CODEBERG_ORIGIN="${CODEBERG_ORIGIN%/*}"
+          CODEBERG_ORIGIN="${MIRROR_CODEBERG_URL%/*}"
           CODEBERG_ORG="${MIRROR_CODEBERG_URL%/}"
           CODEBERG_ORG="${CODEBERG_ORG##*/}"
+          [ -n "$CODEBERG_ORIGIN" ] || {
+            echo "::warning::CODEBERG_ORIGIN empty — MIRROR_CODEBERG_URL='${MIRROR_CODEBERG_URL:-}'"
+            summary_row "- Codeberg prune: ⚠️ skipped (cannot derive API origin)"
+            exit 0
+          }
           API_BASE="$CODEBERG_ORIGIN/api/v1/repos/$CODEBERG_ORG/$MOBILE_REPOSITORY_NAME"
           AUTH_HEADER="Authorization: token ${MIRROR_CODEBERG_TOKEN}"
 
@@ -1537,7 +1418,7 @@ jobs:
             "$API_BASE/releases?limit=50" || true)
 
           if [ "$RELEASES_STATUS" != "200" ]; then
-            echo "::warning::Codeberg prune failed: releases list returned status $RELEASES_STATUS"
+            echo "::warning::Codeberg prune failed: releases list returned status $RELEASES_STATUS from $API_BASE/releases?limit=50"
             summary_row "- Codeberg prune: ⚠️ failed (releases status $RELEASES_STATUS)"
             exit 0
           fi
@@ -1551,8 +1432,8 @@ jobs:
           # Newest first: created_at is the primary key, id breaks ties (the
           # endpoint already returns newest-first, but sort explicitly so the
           # keep window does not depend on server ordering). One release per
-          # line with its first .zip asset resolved up front.
-          jq -c 'sort_by([(.created_at // ""), .id]) | reverse | .[] | {id, tag: (.tag_name // ""), zip: ([.assets[]? | select(.name | endswith(".zip")) | {id, name}][0] // null)}' \
+          # line with ALL .zip assets (APK + web bundle) resolved up front.
+          jq -c 'sort_by([(.created_at // ""), .id]) | reverse | .[] | {id, tag: (.tag_name // ""), zips: [.assets[]? | select(.name | endswith(".zip")) | {id, name}]}' \
             /tmp/cb-releases.json > /tmp/cb-releases-sorted.jsonl || {
             echo "::warning::Codeberg prune failed: releases payload transform failed"
             summary_row "- Codeberg prune: ⚠️ failed (payload transform)"
@@ -1569,8 +1450,7 @@ jobs:
 
             RELEASE_ID=$(jq -r '.id' <<<"$RELEASE")
             RELEASE_TAG=$(jq -r '.tag' <<<"$RELEASE")
-            ASSET_ID=$(jq -r '.zip.id // empty' <<<"$RELEASE")
-            ASSET_NAME=$(jq -r '.zip.name // empty' <<<"$RELEASE")
+            ASSET_COUNT=$(jq -r '.zips | length' <<<"$RELEASE")
 
             WITHIN_WINDOW=false
             if [ "$INDEX" -le "$KEEP_COUNT" ]; then
@@ -1586,27 +1466,28 @@ jobs:
             fi
 
             if [ "$WITHIN_WINDOW" = "true" ]; then
-              if [ -n "$ASSET_ID" ]; then KEPT=$((KEPT + 1)); fi
+              KEPT=$((KEPT + ASSET_COUNT))
               continue
             fi
 
-            if [ -z "$ASSET_ID" ]; then
-              continue
-            fi
+            # Only .zip attachments are pruned (APK + web bundle):
+            # SHA256SUMS.txt is tiny and keeping it leaves old release pages
+            # self-consistent.
+            while IFS=$'\t' read -r ASSET_ID ASSET_NAME; do
+              [ -n "$ASSET_ID" ] || continue
 
-            # Only .zip attachments are pruned: SHA256SUMS.txt is tiny and
-            # keeping it leaves old release pages self-consistent.
-            DELETE_STATUS=$(curl -s -o /tmp/cb-delete.json -w "%{http_code}" -X DELETE \
-              -H "$AUTH_HEADER" \
-              "$API_BASE/releases/$RELEASE_ID/assets/$ASSET_ID" || true)
+              DELETE_STATUS=$(curl -s -o /tmp/cb-delete.json -w "%{http_code}" -X DELETE \
+                -H "$AUTH_HEADER" \
+                "$API_BASE/releases/$RELEASE_ID/assets/$ASSET_ID" || true)
 
-            if [ "$DELETE_STATUS" = "204" ]; then
-              echo "Pruned $ASSET_NAME from Codeberg release $RELEASE_TAG"
-              summary_row "- Codeberg prune: ✅ pruned $RELEASE_TAG ($ASSET_NAME)"
-              PRUNED=$((PRUNED + 1))
-            else
-              echo "::warning::Codeberg prune failed for $RELEASE_TAG ($ASSET_NAME): status $DELETE_STATUS - $(jq -r .message /tmp/cb-delete.json 2>/dev/null || true)"
-            fi
+              if [ "$DELETE_STATUS" = "204" ]; then
+                echo "Pruned $ASSET_NAME from Codeberg release $RELEASE_TAG"
+                summary_row "- Codeberg prune: ✅ pruned $RELEASE_TAG ($ASSET_NAME)"
+                PRUNED=$((PRUNED + 1))
+              else
+                echo "::warning::Codeberg prune failed for $RELEASE_TAG ($ASSET_NAME): status $DELETE_STATUS - $(jq -r .message /tmp/cb-delete.json 2>/dev/null || true)"
+              fi
+            done < <(jq -r '.zips[] | [.id, .name] | @tsv' <<<"$RELEASE")
           done < /tmp/cb-releases-sorted.jsonl
 
           summary_row "- Codeberg prune: kept newest $KEPT zips, pruned $PRUNED"
@@ -1618,6 +1499,7 @@ jobs:
         env:
           CHANGELOG_OUTCOME: ${{ steps.changelog.outcome }}
           DOWNLOAD_ARTIFACTS_OUTCOME: ${{ steps.download-artifacts.outcome }}
+          DOWNLOAD_WEB_OUTCOME: ${{ steps.download-web.outcome }}
           UPLOAD_APK_OUTCOME: ${{ steps.upload-apk.outcome }}
           MIRROR_GITHUB_OUTCOME: ${{ steps.mirror-github.outcome }}
           MIRROR_CODEBERG_OUTCOME: ${{ steps.mirror-codeberg.outcome }}
@@ -1641,6 +1523,7 @@ jobs:
             echo '| --- | --- |'
             summary_row changelog "$CHANGELOG_OUTCOME"
             summary_row download-artifacts "$DOWNLOAD_ARTIFACTS_OUTCOME"
+            summary_row download-web "$DOWNLOAD_WEB_OUTCOME"
             summary_row upload-apk "$UPLOAD_APK_OUTCOME"
             summary_row mirror-github "$MIRROR_GITHUB_OUTCOME"
             summary_row mirror-codeberg "$MIRROR_CODEBERG_OUTCOME"

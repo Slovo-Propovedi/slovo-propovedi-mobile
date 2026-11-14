@@ -45,7 +45,9 @@ export const WebUpdateModal = () => {
                 updateDisabled && styles.disabledButton,
               ]}
             >
-              <Text style={styles.primaryButtonText}>{UPDATE_BUTTON_TEXT}</Text>
+              <Text style={[styles.primaryButtonText, { color: currentTheme.onPrimary }]}>
+                {UPDATE_BUTTON_TEXT}
+              </Text>
             </PressableButton>
             <PressableButton
               onPress={dismiss}

@@ -2,14 +2,14 @@
 
 **Маршруты:**
 
-- `/admin/users` — список пользователей (таб `app/admin/(tabs)/users.tsx` → `pages/admin-users`)
+- `/admin/users` — список пользователей (стековый экран `app/admin/users.tsx` → `pages/admin-users`, зарегистрирован в `app/admin/_layout.tsx` с нативной шапкой и кнопкой «Назад», фолбэк `/admin`)
 - `/admin/users/create` — создание пользователя (`app/admin/users/create.tsx` → `pages/admin-user-form`)
 - `/admin/users/[id]` — деталь пользователя (`app/admin/users/[id].tsx` → `pages/admin-user-detail`)
 - `/admin/users/[id]/edit` — редактирование пользователя (`app/admin/users/[id]/edit.tsx` → `pages/admin-user-form`)
 
 **Статус:** готов
 
-Пользователь — админ-аккаунт системы. Роли (`APITypes.UserRole`): `admin` — полный доступ (включая домен users), `moderator` — контент без users, `user` — в панель не входит. Домен `/users/*` доступен **только роли admin**: таб «Пользователи» скрыт для не-admin (`app/admin/(tabs)/_layout.tsx`), а каждый экран вызывается через `useRequireAdminRole()` (редирект не-admin на `/admin`). Порт Svelte-экранов `Users/UserDetail/UserCreate/UserEdit` + общей `UserForm`.
+Пользователь — админ-аккаунт системы. Роли (`APITypes.UserRole`): `admin` — полный доступ (включая домен users), `moderator` — контент без users, `user` — в панель не входит. Домен `/users/*` доступен **только роли admin**: строка «Пользователи» на главной админки видна только admin, а каждый экран вызывается через `useRequireAdminRole()` (редирект не-admin на `/admin`). Список живёт вне таб-бара (стековый экран с шапкой, как «Источники импорта») и открывается только строкой главной. Порт Svelte-экранов `Users/UserDetail/UserCreate/UserEdit` + общей `UserForm`.
 
 ## Список
 
@@ -21,7 +21,7 @@
 - **Пагинация:** автодозагрузка при достижении конца списка (`onEndReached`, порог 0.5) — следующая страница по `page`/`limit=20`; пока идёт дозагрузка, в футере видна скелетон-строка, при ошибке — тапабельная строка «Повторить загрузку».
 - **Навигация:** тап по карточке → `/admin/users/[id]`; иконка «Создать пользователя» в шапке → `/admin/users/create`.
 - **Состояния:** загрузка списка — скелетон-строки (`AdminUserRow.Skeleton`, шапка остаётся видимой; дозагрузка — скелетон-строка в футере); пусто — `EmptyState` «Пользователей пока нет»; фильтр без совпадений — «Ничего не найдено»; ошибка — `reportError` + текст в пустом состоянии.
-- **Отступ под плавающим таб-баром:** `paddingBottom: tabBarHeight + INDENTS.low` (без `PLAYER_SIZES.miniPlayerHeight` — в админке нет мини-плеера).
+- **Отступ под нижним краем:** `paddingBottom: insets.bottom + INDENTS.low` — экран стековый, таб-бара над ним нет (без `PLAYER_SIZES.miniPlayerHeight` — в админке нет мини-плеера).
 - **Pull-to-refresh:** потягивание вниз перезагружает первую страницу (`useAdminUsers.refresh`, спиннер `isRefreshing`); клиентский фильтр применяется к свежим данным. На web — собственный тач-жест `PullToRefresh` (см. [features/web.md](../features/web.md)).
 
 ## Деталь

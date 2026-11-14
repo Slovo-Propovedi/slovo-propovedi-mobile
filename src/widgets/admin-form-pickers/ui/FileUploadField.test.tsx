@@ -12,8 +12,10 @@ const LIBRARY_LABEL = 'Выбрать из библиотеки'
 const mockedUseAdminFiles = useAdminFiles as jest.MockedFunction<typeof useAdminFiles>
 const mockedUseFileUpload = useFileUpload as jest.MockedFunction<typeof useFileUpload>
 
-const renderField = (kind: AdminFileKind) =>
-  renderWithProviders(<FileUploadField value='' kind={kind} label='Файл' onChange={jest.fn()} />)
+const renderField = (kind: AdminFileKind, value = '') =>
+  renderWithProviders(
+    <FileUploadField kind={kind} label='Файл' value={value} onChange={jest.fn()} />,
+  )
 
 describe('<FileUploadField>', () => {
   beforeEach(() => {
@@ -28,23 +30,29 @@ describe('<FileUploadField>', () => {
   })
 
   test('hides the media library button for the audio kind but keeps upload', async () => {
-    const { getByText, queryByText } = await renderField('audio')
+    const { getByRole, queryByRole } = await renderField('audio')
 
-    expect(queryByText(LIBRARY_LABEL)).toBeNull()
-    expect(getByText('Загрузить аудио')).toBeTruthy()
+    expect(queryByRole('button', { name: LIBRARY_LABEL })).toBeNull()
+    expect(getByRole('button', { name: 'Загрузить аудио' })).toBeTruthy()
   })
 
   test('hides the media library button for the text kind but keeps upload', async () => {
-    const { getByText, queryByText } = await renderField('text')
+    const { getByRole, queryByRole } = await renderField('text')
 
-    expect(queryByText(LIBRARY_LABEL)).toBeNull()
-    expect(getByText('Загрузить файл')).toBeTruthy()
+    expect(queryByRole('button', { name: LIBRARY_LABEL })).toBeNull()
+    expect(getByRole('button', { name: 'Загрузить файл' })).toBeTruthy()
   })
 
   test('shows the media library button for the image kind', async () => {
-    const { getByText } = await renderField('image')
+    const { getByRole } = await renderField('image')
 
-    expect(getByText(LIBRARY_LABEL)).toBeTruthy()
-    expect(getByText('Загрузить изображение')).toBeTruthy()
+    expect(getByRole('button', { name: LIBRARY_LABEL })).toBeTruthy()
+    expect(getByRole('button', { name: 'Загрузить изображение' })).toBeTruthy()
+  })
+
+  test('names the upload action as a replacement when the field already has a value', async () => {
+    const { getByRole } = await renderField('audio', 'https://cdn.test/a.mp3')
+
+    expect(getByRole('button', { name: 'Заменить аудио' })).toBeTruthy()
   })
 })

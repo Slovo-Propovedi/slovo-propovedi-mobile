@@ -83,9 +83,9 @@ the two canonical debug keys re-included). Keep it out of the repository.
 
 #### CI secrets (Forgejo)
 
-`release.yml` restores the keystore right after `expo prebuild --clean`
-and exports the `RELEASE_*` variables for the build step. Configure these
-repository secrets:
+`actions/release-android` (the local fallback build called from `release.yml`)
+restores the keystore right after `expo prebuild --clean` and exports the
+`RELEASE_*` variables for the build step. Configure these repository secrets:
 
 | Secret                          | Content                                            |
 | ------------------------------- | -------------------------------------------------- |
@@ -271,17 +271,20 @@ Android воспроизводятся локальными config-плагин�
 Все инъекции идемпотентны; повторный `prebuild --clean` даёт идентичное
 дерево.
 
-После prebuild манифест не содержит `expo.modules.updates.*` meta-data
-(их инжектирует unversioned-плагин `@expo/prebuild-config` независимо от
-наличия `expo-updates` — пакет фактически не установлен, его нет в
-`yarn.lock`) и `com.google.firebase.messaging.*` meta-data: оба набора
-удаляет `plugins/withAndroidManifestCleanup.ts`. Плагин зарегистрирован
-первым в `app.config.ts`, т.к. manifest-моды применяются в обратном
-порядке регистрации — так он выполняется после `expo-notifications` и
-срезает его meta-data. `expo.autolinking.exclude: ["expo-updates"]` в
-`package.json` оставлен как страховка (сейчас no-op). Разрешение
-`POST_NOTIFICATIONS` объявлено явно в `android.permissions` в
-`app.config.ts`.
+После prebuild манифест не содержит `com.google.firebase.messaging.*`
+meta-data: их срезает `plugins/withAndroidManifestCleanup.ts`;
+`expo.modules.updates.*` плагин намеренно НЕ трогает — без этих записей
+не работает self-hosted OTA. Плагин зарегистрирован первым в `app.config.ts`,
+т.к. manifest-моды применяются в обратном порядке регистрации — так он
+выполняется после `expo-notifications` и срезает его meta-data.
+
+Закоммиченный baseline `android/` собран БЕЗ OTA: prebuild запускается с
+пустыми `EXPO_PUBLIC_OTA_URL`/`EXPO_PUBLIC_XPREM_*`, потому что локальный
+`.env` не должен протекать в baseline, — `ota.config.ts` видит неполный
+набор и отдаёт `updates.enabled: false`. Релизный CI пересобирает `android/`
+с реальными `EXPO_PUBLIC_*` значениями и получает полный OTA-набор (update
+url, request headers, code signing). Разрешение `POST_NOTIFICATIONS`
+объявлено явно в `android.permissions` в `app.config.ts`.
 
 `NODE_BINARY` — машинно-специфичная настройка, в плагин НЕ входит. Если
 Gradle не видит node, добавить `NODE_BINARY=/usr/bin/node` (путь от
@@ -292,10 +295,10 @@ Gradle не видит node, добавить `NODE_BINARY=/usr/bin/node` (пу�
 > `org.gradle.jvmargs`, иначе локальное значение молча перекроет
 > плагиновое.
 
-CI: в `release.yml` шаг «Configure Gradle for CI» выполняется ПОСЛЕ
-prebuild и перекрывает `jvmargs` значениями под 4 ГБ раннер; Android-релиз
-собирается задачей `assembleProdRelease` из
-`android/app/build/outputs/apk/prod/release/`.
+CI: в `actions/release-android` (локальный fallback, вызывается из `release.yml`)
+шаг «Configure Gradle for CI» выполняется ПОСЛЕ prebuild и перекрывает
+`jvmargs` значениями под 4 ГБ раннер; Android-релиз собирается задачей
+`assembleProdRelease` из `android/app/build/outputs/apk/prod/release/`.
 
 ## Troubleshooting
 

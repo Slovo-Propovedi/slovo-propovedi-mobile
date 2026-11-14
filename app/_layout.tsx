@@ -15,12 +15,14 @@ import {
   resumeAudioManifestMigration,
 } from 'entities/offline-cache'
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
+import { loadSearchHistoryAction } from 'entities/search-history'
 import { hydrateCachedSections } from 'entities/section'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { initServerUrlAction, loadHapticsEnabled, loadToursDisabled } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
 import { ErrorBoundary, GlobalErrorHandler } from 'shared/ui/error-dialog'
-import { COLORS, ThemeProvider, useTheme } from 'shared/ui/theme'
+import { useKeyboardBottomInsetSync } from 'shared/ui/layout'
+import { COLORS, NavThemeProvider, ThemeProvider, useTheme } from 'shared/ui/theme'
 import RootLayout from './_RootLayout'
 
 /**
@@ -54,20 +56,26 @@ const SafeAreaBoundary = ({ children }: { children: ReactNode }) =>
     <>{children}</>
   )
 
-const RootLayoutWithProvider = () => (
-  <reatomContext.Provider value={ctx}>
-    <ThemeProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <ErrorBoundary>
-          <GlobalErrorHandler />
-          <SafeAreaBoundary>
-            <RootLayout />
-          </SafeAreaBoundary>
-        </ErrorBoundary>
-      </GestureHandlerRootView>
-    </ThemeProvider>
-  </reatomContext.Provider>
-)
+const RootLayoutWithProvider = () => {
+  useKeyboardBottomInsetSync()
+
+  return (
+    <reatomContext.Provider value={ctx}>
+      <ThemeProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <ErrorBoundary>
+            <NavThemeProvider>
+              <GlobalErrorHandler />
+              <SafeAreaBoundary>
+                <RootLayout />
+              </SafeAreaBoundary>
+            </NavThemeProvider>
+          </ErrorBoundary>
+        </GestureHandlerRootView>
+      </ThemeProvider>
+    </reatomContext.Provider>
+  )
+}
 
 // Purge orphaned legacy .mp3.part files, verify legacy web-cache entries,
 // hydrate the offline registry, restore the player, then re-enqueue stale
@@ -105,6 +113,7 @@ void initServerUrlAction(ctx)
 void loadHapticsEnabled(ctx)
 void loadToursDisabled(ctx)
 void loadHistoryAction(ctx)
+void loadSearchHistoryAction(ctx)
 void hydrateCachedSections(ctx)
 void hydrateCachedFeatureFlags(ctx).then(() => fetchMyFeatureFlags(ctx))
 

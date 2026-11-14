@@ -43,7 +43,9 @@ export const MediaTile = ({
       </Pressable>
       {file.used ? (
         <View style={styles.tileBadge}>
-          <Text style={styles.tileBadgeText}>{USED_BADGE}</Text>
+          <Text style={[styles.tileBadgeText, { color: currentTheme.onPrimary }]}>
+            {USED_BADGE}
+          </Text>
         </View>
       ) : null}
       <PressableButton

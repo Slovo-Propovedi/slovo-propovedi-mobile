@@ -62,7 +62,7 @@
 
 Обёртки не дублируют меню-инфраструктуру и скелетоны; кэш-состояние считает общий хук `useTrackItemCache` (`entities/offline-cache`), который каждая обёртка вызывает и передаёт в строку пропсом `cacheState`.
 
-**Снапшот для сердечка.** Пропс `sermon` передают все списки проповедей: `HistoryRow` (`getEntrySermon`), `OfflineRow` (`OfflineSermonItem.sermon`), `PlaylistTrackItem` (`TracksListData.sermon`), `PlaylistSheetRow` (`TrackListItemData.sermon`), `SermonResultRow` (экран результатов поиска) и `SearchResultsRow` (компактная выдача на «Слушать»). Где снапшота нет (id-only записи), сердечко не рендерится. Первая строка плейлиста дополнительно оборачивает сердечко в `OnboardingTarget` через `renderFavoriteButton` (цель `playlist.row-favorite`, см. [onboarding.md](./onboarding.md)).
+**Снапшот для сердечка.** Пропс `sermon` передают все списки проповедей: `HistoryRow` (`getEntrySermon`), `OfflineRow` (`OfflineSermonItem.sermon`), `PlaylistTrackItem` (`TracksListData.sermon`), `PlaylistSheetRow` (`TrackListItemData.sermon`) и `SearchResultsRow` (страница поиска: выдача и «Недавние поиски»). Где снапшота нет (id-only записи), сердечко не рендерится. Первая строка плейлиста дополнительно оборачивает сердечко в `OnboardingTarget` через `renderFavoriteButton` (цель `playlist.row-favorite`, см. [onboarding.md](./onboarding.md)).
 
 ## Скелетоны
 

@@ -51,6 +51,7 @@
 | [`features/error-handling.md`](./features/error-handling.md)           | Глобальный диалог ошибок, reportError, ErrorBoundary, информационный диалог |
 | [`features/onboarding.md`](./features/onboarding.md)                   | Онбординг: кнопка «?», сценарии и спотлайт-тур                              |
 | [`features/updates.md`](./features/updates.md)                         | Проверка обновлений и уведомления                                           |
+| [`features/ci-orchestration.md`](./features/ci-orchestration.md)       | CI: Forgejo оркестрирует, GitHub-hosted исполняет                           |
 | [`features/settings-backup.md`](./features/settings-backup.md)         | Резервная копия: экспорт/импорт настроек и локальных данных                 |
 | [`features/book-reader.md`](./features/book-reader.md)                 | Чтение FB2-книг (в разработке)                                              |
 | [`screens/listen.md`](./screens/listen.md)                             | Таб «Слушать» и его экраны                                                  |
@@ -58,9 +59,8 @@
 | [`screens/playlist-edit.md`](./screens/playlist-edit.md)               | Экран редактирования локального плейлиста                                   |
 | [`screens/playlist-list.md`](./screens/playlist-list.md)               | Экран списка плейлистов                                                     |
 | [`screens/my-playlists.md`](./screens/my-playlists.md)                 | Экран «Мои плейлисты» (редактирование порядка)                              |
-| [`screens/search-results.md`](./screens/search-results.md)             | Экран «Результаты поиска» (полные списки групп)                             |
+| [`screens/search.md`](./screens/search.md)                             | Страница поиска: состояния, области, недавние поиски, пагинация             |
 | [`screens/read.md`](./screens/read.md)                                 | Таб «Читать» (заблокирован)                                                 |
-| [`screens/study.md`](./screens/study.md)                               | Таб «Учиться» (заглушка)                                                    |
 | [`screens/more.md`](./screens/more.md)                                 | Экран «Ещё»                                                                 |
 | [`screens/settings.md`](./screens/settings.md)                         | Экран «Настройки»                                                           |
 | [`screens/about.md`](./screens/about.md)                               | Экран «О приложении»                                                        |
@@ -82,4 +82,4 @@
 
 ## Краткий контекст продукта
 
-Основной сценарий — прослушивание проповедей (секции → плейлист → плеер со скачиванием, кэшем и офлайн-фолбэком) — полностью рабочий, данные берутся с сервера через REST API (`sectionsApi.getSections()` в `src/pages/listen/model.ts`). Чтение книг (FB2), обучение и авторизация — не реализованы. Раздел книг `/read` (таб заблокирован) использует встроенную локальную БД (`src/shared/api/db/`) как временный источник данных. Все тексты интерфейса на русском. Подробности и долги — в [`debt.md`](./debt.md).
+Основной сценарий — прослушивание проповедей (секции → плейлист → плеер со скачиванием, кэшем и офлайн-фолбэком) — полностью рабочий, данные берутся с сервера через REST API (`sectionsApi.getSections()` в `src/pages/listen/model.ts`). Чтение книг (FB2) и авторизация — не реализованы. Раздел книг `/read` (таб заблокирован) использует встроенную локальную БД (`src/shared/api/db/`) как временный источник данных. Все тексты интерфейса на русском. Подробности и долги — в [`debt.md`](./debt.md).

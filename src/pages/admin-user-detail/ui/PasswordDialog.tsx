@@ -84,9 +84,11 @@ export const PasswordDialog = ({
             style={[styles.modalConfirm, { backgroundColor: currentTheme.primary }]}
           >
             {isSubmitting ? (
-              <ActivityIndicator color={COLORS.white} />
+              <ActivityIndicator color={currentTheme.onPrimary} />
             ) : (
-              <Text style={styles.modalConfirmText}>{SUBMIT_LABEL}</Text>
+              <Text style={[styles.modalConfirmText, { color: currentTheme.onPrimary }]}>
+                {SUBMIT_LABEL}
+              </Text>
             )}
           </TouchableItem>
         </View>

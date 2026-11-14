@@ -1,0 +1,9 @@
+No stale resting geometry frames during player morph on native
+Web pointer events swallowed above mini player
+Web voice input end-to-end (fake-recognizer verified)
+Voice input result handling (crash on recognized text)
+Render magnifier at target size (android clipping)
+Larger magnifier icon in circle state
+Single morphing search component (circle⇄pill)
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

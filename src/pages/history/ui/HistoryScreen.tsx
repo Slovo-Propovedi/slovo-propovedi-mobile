@@ -1,10 +1,12 @@
 import { useAtom } from '@reatom/npm-react'
 import { useNavigation } from 'expo-router'
 import { useCallback, useLayoutEffect } from 'react'
-import { FlatList, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { OnboardingHelpRow, OnboardingTarget, useTourScrollable } from 'features/onboarding'
 import { usePlaybackChoice } from 'features/playback-choice'
+import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import {
   getEntrySermon,
   historyAtom,
@@ -13,9 +15,10 @@ import {
 } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
 import { createTracksListStyles, TracksListSkeleton } from 'entities/track-list'
-import { tabBarHeightAtom } from 'shared/ui/layout'
-import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
+import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 import { resolveEntryFallbackPlaylist } from '../lib/resolveEntryFallbackPlaylist'
+import { HistoryEmptyState } from './HistoryEmptyState'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
 import { HistoryRow } from './HistoryRow'
 import { HistorySeparator } from './HistorySeparator'
@@ -40,6 +43,10 @@ export const HistoryScreen = () => {
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isPlaying] = useAtom(isPlayingAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const isBarCollapseSuspended = useIsBarCollapseSuspended()
+  const { onScroll } = useBarCollapseOnScroll({
+    isSuspended: isBarCollapseSuspended,
+  })
   const tracksListStyles = createTracksListStyles(currentTheme)
   const { modal, openAddToPlaylist } = useAddToPlaylistModal()
   const { dialog, openChoice } = usePlaybackChoice({
@@ -86,28 +93,19 @@ export const HistoryScreen = () => {
   return (
     <View style={tracksListStyles.container}>
       <OnboardingTarget id='history.rows' style={{ flex: 1 }}>
-        <FlatList
+        <Animated.FlatList
           data={entries}
+          onScroll={onScroll}
           ref={tourScrollableRef}
+          scrollEventThrottle={16}
           ItemSeparatorComponent={HistorySeparator}
+          ListEmptyComponent={<HistoryEmptyState />}
           keyExtractor={item => getEntrySermon(item)?.id ?? `${item.lastPlayedAt}`}
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: entries.length === 0 ? 'center' : undefined,
             paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
           }}
-          ListEmptyComponent={
-            <Text
-              style={{
-                color: currentTheme.textMuted,
-                flex: 1,
-                fontSize: FONT_SIZES.lg,
-                textAlign: 'center',
-              }}
-            >
-              История пуста
-            </Text>
-          }
           renderItem={({ item }) => {
             const sermonId = getEntrySermon(item)?.id
             const isCurrentAudio = sermonId !== undefined && currentAudio?.id === sermonId

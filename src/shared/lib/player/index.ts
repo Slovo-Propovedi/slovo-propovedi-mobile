@@ -1,3 +1,2 @@
 export { formatPlaybackRate } from './formatPlaybackRate'
-export { parseTimecodeSegments } from './parseTimecode'
-export { millisToMinutesAndSeconds } from './timeConverters'
+export { millisToMinutesAndSeconds, millisToSeconds } from './timeConverters'

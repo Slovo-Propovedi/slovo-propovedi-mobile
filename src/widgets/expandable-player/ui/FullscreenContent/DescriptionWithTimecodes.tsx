@@ -1,7 +1,7 @@
-import { StyleSheet, Text } from 'react-native'
+import { StyleSheet } from 'react-native'
 import { usePlayer } from 'entities/player'
-import { parseTimecodeSegments } from 'shared/lib/player'
 import { reportError } from 'shared/model/error-dialog'
+import { TimecodedText } from 'shared/ui'
 import { COLORS, FONT_SIZES } from 'shared/ui/theme'
 
 const TIMECODE_SEEK_ERROR_MESSAGE = 'Ошибка при перемотке аудио'
@@ -21,7 +21,6 @@ const localStyles = StyleSheet.create({
 
 export const DescriptionWithTimecodes = ({ description }: { description: string }) => {
   const { seekTo } = usePlayer()
-  const segments = parseTimecodeSegments(description)
 
   const handleTimecodePress = (ms: number) => {
     void seekTo(ms).catch(error => {
@@ -31,22 +30,11 @@ export const DescriptionWithTimecodes = ({ description }: { description: string 
   }
 
   return (
-    <Text style={localStyles.description}>
-      {segments.map((segment, index) =>
-        segment.type === 'timecode' ? (
-          <Text
-            accessibilityRole='link'
-            key={`timecode-${index}`}
-            style={localStyles.timecode}
-            onPress={() => handleTimecodePress(segment.ms)}
-            accessibilityLabel={`Перейти к ${segment.value}`}
-          >
-            {segment.value}
-          </Text>
-        ) : (
-          <Text key={`text-${index}`}>{segment.value}</Text>
-        ),
-      )}
-    </Text>
+    <TimecodedText
+      text={description}
+      style={localStyles.description}
+      timecodeStyle={localStyles.timecode}
+      onTimecodePress={handleTimecodePress}
+    />
   )
 }

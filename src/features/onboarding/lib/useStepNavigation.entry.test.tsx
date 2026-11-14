@@ -37,6 +37,10 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ navigate: (route: string) => mockPathnameStore.set(route) }),
 }))
 
+// The hook's blink/hold transitions run on timers; `waitFor` advances them inside
+// act, so every state update lands within an act scope.
+jest.useFakeTimers()
+
 const TARGET_RECT: OnboardingTargetRect = { height: 4, width: 3, x: 1, y: 2 }
 const ENTRY_SCENARIO_ID = 'backup'
 const ENTRY_RECTS = {
@@ -107,9 +111,12 @@ describe('useStepNavigation entry transitions', () => {
     scenariosById[ENTRY_SCENARIO_ID] = entryScenario
   })
 
-  afterEach(() => {
+  afterEach(async () => {
+    jest.clearAllTimers()
     scenariosById[ENTRY_SCENARIO_ID] = originalScenario
-    mockPathnameStore.set('/listen')
+    await act(async () => {
+      mockPathnameStore.set('/listen')
+    })
   })
 
   test(
@@ -233,9 +240,12 @@ describe('useStepNavigation pure-navigation return entry', () => {
     scenariosById.share = returnScenario
   })
 
-  afterEach(() => {
+  afterEach(async () => {
+    jest.clearAllTimers()
     scenariosById.share = originalScenario
-    mockPathnameStore.set('/listen')
+    await act(async () => {
+      mockPathnameStore.set('/listen')
+    })
   })
 
   test(

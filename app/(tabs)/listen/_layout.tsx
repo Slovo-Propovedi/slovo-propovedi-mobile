@@ -26,7 +26,6 @@ const ListenStackLayout = () => {
       }}
     >
       <Stack.Screen name='index' options={{ headerShown: false }} />
-      <Stack.Screen name='search-results' options={{ headerShown: true, title: '' }} />
       <Stack.Screen
         name='my-playlists'
         options={{
@@ -43,6 +42,7 @@ const ListenStackLayout = () => {
           title: '',
         }}
       />
+      <Stack.Screen name='preacher' options={{ title: '' }} />
       <Stack.Screen
         name='playlist'
         options={{

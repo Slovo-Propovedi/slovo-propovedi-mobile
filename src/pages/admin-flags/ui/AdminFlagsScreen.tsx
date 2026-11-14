@@ -1,10 +1,9 @@
-import { useAtom } from '@reatom/npm-react'
-import { useRouter } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import { FlatList, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useAdminListHeaderActions } from 'widgets/admin-list-header'
 import { useRequireAdminRole } from 'entities/auth'
 import { createRefreshControl, EmptyState, PullToRefresh } from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminFlags } from '../lib/useAdminFlags'
 import { AdminFlagRow } from './AdminFlagRow'
@@ -31,20 +30,23 @@ export const AdminFlagsScreen = () => {
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const { currentTheme } = useTheme()
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { flags, isError, isLoading, isRefreshing, refresh } = useAdminFlags()
+
+  const headerOptions = useAdminListHeaderActions({
+    icon: 'add-outline',
+    isRefreshing,
+    label: 'Создать флаг',
+    onAction: () => router.push(CREATE_ROUTE),
+    onRefresh: refresh,
+  })
 
   const openFlag = (id: string) => {
     router.push({ params: { id }, pathname: '/admin/flags/[id]' })
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: currentTheme.background, paddingTop: insets.top },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
+      <Stack.Screen options={headerOptions} />
       <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
         <FlatList
           data={isLoading ? [] : flags}
@@ -53,11 +55,11 @@ export const AdminFlagsScreen = () => {
           renderItem={({ item }) => <AdminFlagRow item={item} onPress={() => openFlag(item.id)} />}
           contentContainerStyle={[
             styles.listContent,
-            { paddingBottom: tabBarHeight + INDENTS.low },
+            { paddingBottom: insets.bottom + INDENTS.low },
           ]}
           ListHeaderComponent={
             <View style={styles.header}>
-              <AdminFlagsHeader onCreate={() => router.push(CREATE_ROUTE)} />
+              <AdminFlagsHeader />
             </View>
           }
           ListEmptyComponent={

@@ -37,6 +37,7 @@ jest.mock('expo-router', () => ({
 const PAGE_SIZE = 20
 const LIST_TEST_ID = 'admin-sermons-list'
 const RETRY_LABEL = 'Повторить загрузку'
+const CREATE_BUTTON_LABEL = 'Загрузить проповедь'
 
 // One faker sample is enough per page: generating a fresh DTO per row is slow.
 const buildSermons = (count: number, prefix: string) => {
@@ -108,7 +109,9 @@ describe('<AdminSermonsScreen>', () => {
 
     const { findByText } = await renderWithProviders(<AdminSermonsScreen />)
 
-    fireEvent.press(await findByText('Сила веры'))
+    await act(async () => {
+      await fireEvent.press(await findByText('Сила веры'))
+    })
 
     await waitFor(() =>
       expect(mockPush).toHaveBeenCalledWith({
@@ -121,9 +124,11 @@ describe('<AdminSermonsScreen>', () => {
   test('navigates to the create screen from the header button', async () => {
     mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
 
-    const { findByText } = await renderWithProviders(<AdminSermonsScreen />)
+    const { findByLabelText } = await renderWithProviders(<AdminSermonsScreen />)
 
-    fireEvent.press(await findByText('Загрузить проповедь'))
+    await act(async () => {
+      await fireEvent.press(await findByLabelText(CREATE_BUTTON_LABEL))
+    })
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/admin/sermons/create'))
   })
@@ -149,16 +154,22 @@ describe('<AdminSermonsScreen>', () => {
   test('reloads the list sorted by title when picked from the sort select', async () => {
     mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
 
-    const { findAllByText, findByText } = await renderWithProviders(<AdminSermonsScreen />)
+    const { findAllByText, findByText, unmount } = await renderWithProviders(<AdminSermonsScreen />)
 
-    fireEvent.press(await findByText('По дате'))
-    fireEvent.press((await findAllByText('По названию'))[0])
+    await act(async () => {
+      await fireEvent.press(await findByText('По дате'))
+    })
+    await act(async () => {
+      await fireEvent.press((await findAllByText('По названию'))[0])
+    })
 
     await waitFor(() =>
       expect(mockFindAll).toHaveBeenLastCalledWith(
         expect.objectContaining({ order: 'asc', sort: 'title' }),
       ),
     )
+
+    unmount()
   })
 
   test('reloads the first page when pulled to refresh', async () => {
@@ -185,20 +196,34 @@ describe('<AdminSermonsScreen>', () => {
       .mockRejectedValueOnce(new Error('network'))
       .mockResolvedValueOnce({ count: 1, nextCursor: null, sermons: buildSermons(1, 'fresh') })
 
-    const { findByText, getByTestId, queryByText } = await renderWithProviders(
+    const { findByText, getByTestId, queryByText, unmount } = await renderWithProviders(
       <AdminSermonsScreen />,
     )
     await findByText('page 0')
 
-    fireEvent(getByTestId(LIST_TEST_ID), 'onEndReached')
+    await act(async () => {
+      await fireEvent(getByTestId(LIST_TEST_ID), 'onEndReached')
+    })
 
     expect(await findByText(RETRY_LABEL)).toBeTruthy()
 
-    fireEvent.press(await findByText(RETRY_LABEL))
+    await act(async () => {
+      await fireEvent.press(await findByText(RETRY_LABEL))
+    })
 
     await waitFor(() => expect(queryByText(RETRY_LABEL)).toBeNull())
     // The appended row is beyond FlatList's initial window, so assert the count
     // (sermons.length) instead of the off-screen title.
     expect(await findByText('Всего: 21')).toBeTruthy()
+
+    unmount()
+  })
+
+  test('shows the upload icon button in the header', async () => {
+    mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
+
+    const { findByRole } = await renderWithProviders(<AdminSermonsScreen />)
+
+    expect(await findByRole('button', { name: CREATE_BUTTON_LABEL })).toBeTruthy()
   })
 })

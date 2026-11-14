@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native'
-import { COLORS, FONT_SIZES, INDENTS, MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, RADIUSES } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
   badge: {
@@ -28,21 +28,6 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: INDENTS.low,
     marginBottom: INDENTS.medium,
-  },
-  createButton: {
-    alignSelf: 'flex-start',
-    borderRadius: RADIUSES.low,
-    flexGrow: 0,
-    flexShrink: 0,
-    height: MIN_TOUCH_TARGET,
-    justifyContent: 'center',
-    paddingHorizontal: INDENTS.medium,
-    width: 'auto',
-  },
-  createButtonText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.base,
-    fontWeight: '600',
   },
   error: {
     fontSize: FONT_SIZES.sm,

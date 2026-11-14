@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { Modal } from 'shared/ui/modal'
-import { COLORS, FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 
 const SESSION_RESET_NOTICE =
@@ -18,6 +19,13 @@ export const ServerUrlChangeDialog = ({
   visible: boolean
 }) => {
   const { currentTheme } = useTheme()
+  const [lastShownUrl, setLastShownUrl] = useState(newUrl)
+
+  // Keep the previous URL on screen while the dialog fades out: the parent clears
+  // pendingServerUrl immediately, but the modal stays visible for the animation.
+  if (newUrl !== '' && newUrl !== lastShownUrl) setLastShownUrl(newUrl)
+
+  const shownUrl = newUrl !== '' ? newUrl : lastShownUrl
 
   return (
     <Modal visible={visible} onBackdropPress={onCancel}>
@@ -26,7 +34,7 @@ export const ServerUrlChangeDialog = ({
         <Text style={[styles.message, { color: currentTheme.textMuted }]}>
           Импорт изменит адрес сервера API на:
         </Text>
-        <Text style={[styles.url, { color: currentTheme.text }]}>{newUrl}</Text>
+        <Text style={[styles.url, { color: currentTheme.text }]}>{shownUrl}</Text>
         <Text style={[styles.message, { color: currentTheme.textMuted }]}>
           {SESSION_RESET_NOTICE}
         </Text>
@@ -34,7 +42,7 @@ export const ServerUrlChangeDialog = ({
           onPress={onConfirm}
           style={[styles.choice, { backgroundColor: currentTheme.primary }]}
         >
-          <Text style={styles.primaryText}>Применить</Text>
+          <Text style={[styles.primaryText, { color: currentTheme.onPrimary }]}>Применить</Text>
         </TouchableItem>
         <TouchableItem onPress={onCancel} style={styles.choice}>
           <Text style={[styles.choiceText, { color: currentTheme.text }]}>Отмена</Text>
@@ -64,7 +72,6 @@ const styles = StyleSheet.create({
     marginBottom: INDENTS.low,
   },
   primaryText: {
-    color: COLORS.onPrimary,
     fontSize: FONT_SIZES.base,
     fontWeight: 'bold',
   },

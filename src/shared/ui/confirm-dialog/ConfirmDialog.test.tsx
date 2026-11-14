@@ -3,6 +3,8 @@ import { Platform } from 'react-native'
 import { createKeyDownEvent } from '../../lib/testing/createKeyEvent'
 import { installFakeDom } from '../../lib/testing/installFakeDom'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
+import { DarkTheme, LightTheme } from '../theme/constants'
+import { themeModeAtom } from '../theme/model'
 import { ConfirmDialog } from './ConfirmDialog'
 
 const TITLE = 'Confirm Action'
@@ -54,6 +56,24 @@ describe('<ConfirmDialog>', () => {
 
     expect(screen.getByText('Отмена')).toBeTruthy()
     expect(screen.getByText('ОК')).toBeTruthy()
+  })
+
+  test('renders the confirm label in the themed onPrimary color', async () => {
+    await renderWithProviders(<ConfirmDialog {...defaultProps} />)
+
+    // Accent-filled button: the label must use the theme token (black in the
+    // dark theme), never a hardcoded white.
+    expect(screen.getByText('ОК')).toHaveStyle({ color: DarkTheme.onPrimary })
+  })
+
+  test('keeps the confirm label on the themed onPrimary token in the light theme', async () => {
+    const { ctx } = await renderWithProviders(<ConfirmDialog {...defaultProps} />)
+
+    await act(async () => {
+      themeModeAtom(ctx, 'light')
+    })
+
+    expect(screen.getByText('ОК')).toHaveStyle({ color: LightTheme.onPrimary })
   })
 
   test('hides the cancel button when hideCancel is true', async () => {

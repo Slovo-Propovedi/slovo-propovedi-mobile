@@ -1,10 +1,12 @@
 import { memo } from 'react'
-import { Platform, type StyleProp, Text, type TextStyle, View, type ViewStyle } from 'react-native'
+import { Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
-import Animated, { useAnimatedReaction, useSharedValue } from 'react-native-reanimated'
-import { NATIVE_MEASURER_STYLE, WEB_MEASURER_STYLE, WEB_TEXT_STYLE } from './marquee-styles'
-import { REPEAT_SPACER } from './marquee-utils'
+import { useSharedValue } from 'react-native-reanimated'
+import { type MarqueeCycle } from './marquee-cycle'
+import { MarqueeMeasurerSlot } from './marquee-measurer-slot'
+import { MarqueeTextRow } from './marquee-text-row'
 import { MarqueeTextSkeleton } from './skeleton'
+import { EdgeFadeContainer } from './text-edge-fade'
 import { useMarqueeAnimation } from './useMarqueeAnimation'
 import { useMarqueeContainerRef } from './useMarqueeContainerRef'
 import { useMarqueeGesture } from './useMarqueeGesture'
@@ -14,6 +16,12 @@ export interface MarqueeTextProps {
   /** Arms the loop immediately on overflow (player titles); others stay drag-gated. */
   autoStart?: boolean
   centerWhenStatic?: boolean
+  /** Fades the trailing clip edge while the text overflows (no solid background needed). */
+  fadeEdge?: boolean
+  /** When set, this row has no clock: it follows the leader's published cycle. */
+  followCycle?: MarqueeCycle
+  /** When set, this row publishes its own cycle for followers. */
+  publishCycle?: MarqueeCycle
   style?: StyleProp<ViewStyle>
   testID?: string
   text: string
@@ -23,6 +31,9 @@ export interface MarqueeTextProps {
 export const MarqueeText = memo(function MarqueeTextComponent({
   autoStart = false,
   centerWhenStatic = false,
+  fadeEdge = false,
+  followCycle,
+  publishCycle,
   style,
   testID,
   text,
@@ -32,15 +43,16 @@ export const MarqueeText = memo(function MarqueeTextComponent({
   const didDrag = useSharedValue(false)
   const containerRef = useMarqueeContainerRef(didDrag)
   const {
+    applyTextWidth,
     containerWidth,
+    handleContainerFallbackLayout,
     handleContainerLayout,
-    handleMeasurerLayout,
-    handleTextLayout,
     maxOffset,
+    measurerAttempt,
     needsMarquee,
     needsRepeat,
     textWidth,
-  } = useMarqueeMeasurement()
+  } = useMarqueeMeasurement(text)
 
   const { animatedStyle, clockPaused, marqueeArmed, startIdleMarquee, startX, translateX } =
     useMarqueeAnimation(
@@ -52,15 +64,9 @@ export const MarqueeText = memo(function MarqueeTextComponent({
       centerWhenStatic,
       autoStart,
       needsRepeat,
+      publishCycle,
+      followCycle,
     )
-
-  useAnimatedReaction(
-    () => ({ container: containerWidth.value, text: textWidth.value }),
-    (current, previous) => {
-      if (current.container !== previous?.container || current.text !== previous?.text)
-        startIdleMarquee()
-    },
-  )
 
   const pan = useMarqueeGesture({
     clockPaused,
@@ -75,48 +81,41 @@ export const MarqueeText = memo(function MarqueeTextComponent({
   if (!text) return null
 
   const alignSelf = needsRepeat ? 'flex-start' : centerWhenStatic ? 'center' : 'flex-start'
-  const measurerStyle: StyleProp<TextStyle> = isWeb ? WEB_MEASURER_STYLE : NATIVE_MEASURER_STYLE
-  const visibleTextStyle: StyleProp<TextStyle> = isWeb ? [textStyle, WEB_TEXT_STYLE] : textStyle
+
+  const row = (
+    <MarqueeTextRow
+      text={text}
+      isWeb={isWeb}
+      alignSelf={alignSelf}
+      textStyle={textStyle}
+      needsRepeat={needsRepeat}
+      needsMarquee={needsMarquee}
+      animatedStyle={animatedStyle}
+    />
+  )
 
   // alignSelf:'stretch' overrides a parent's alignItems:'center'; without it the
   // container shrink-wraps to the row's explicit width (maxOffset=0, overflow).
   return (
-    <View
+    <EdgeFadeContainer
       testID={testID}
-      ref={containerRef}
+      enabled={fadeEdge}
+      containerRef={containerRef}
+      fading={fadeEdge && needsRepeat}
       onLayout={handleContainerLayout}
+      fallbackOnLayout={handleContainerFallbackLayout}
       style={[{ alignSelf: 'stretch', overflow: 'hidden' }, style]}
     >
-      <GestureDetector gesture={pan}>
-        <Animated.View
-          renderToHardwareTextureAndroid
-          style={[animatedStyle, { alignSelf, flexDirection: 'row' }]}
-        >
-          <Text ellipsizeMode='clip' style={visibleTextStyle} numberOfLines={isWeb ? undefined : 1}>
-            {text}
-          </Text>
-          {needsRepeat && (
-            <>
-              <View style={{ width: REPEAT_SPACER }} />
-              <Text
-                ellipsizeMode='clip'
-                style={visibleTextStyle}
-                numberOfLines={isWeb ? undefined : 1}
-              >
-                {text}
-              </Text>
-            </>
-          )}
-        </Animated.View>
-      </GestureDetector>
-      <Text
-        style={[textStyle, measurerStyle]}
-        onLayout={isWeb ? handleMeasurerLayout : undefined}
-        onTextLayout={isWeb ? undefined : handleTextLayout}
-      >
-        {text}
-      </Text>
-    </View>
+      {/* A follower only displays; scrubbing its leader-owned phase would desync. */}
+      {followCycle ? row : <GestureDetector gesture={pan}>{row}</GestureDetector>}
+      <MarqueeMeasurerSlot
+        text={text}
+        isWeb={isWeb}
+        textStyle={textStyle}
+        attempt={measurerAttempt}
+        onTextWidth={applyTextWidth}
+      />
+    </EdgeFadeContainer>
   )
 })
 

@@ -1,5 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { useEffect } from 'react'
+import { Fragment, useEffect } from 'react'
 import { OnboardingTarget } from 'features/onboarding'
 import { type PlaylistData } from 'entities/playlist'
 import {
@@ -50,7 +50,12 @@ export const DynamicSectionsSlider = ({ onboardingTargetId }: { onboardingTarget
     renderSection({ index, navigateToPlaylistList, onItemPress, section })
 
   const renderSectionsFrom = (fromIndex: number) =>
-    sections.slice(fromIndex).map((section, offset) => renderSectionAt(section, fromIndex + offset))
+    sections.slice(fromIndex).map((section, offset) => {
+      const sectionIndex = fromIndex + offset
+      const sectionKey = section.id ?? section.title ?? sectionIndex
+
+      return <Fragment key={sectionKey}>{renderSectionAt(section, sectionIndex)}</Fragment>
+    })
 
   const renderContent = () => {
     if (sections.length === 0) return isLoading ? <SectionsSkeleton /> : <EmptyState />

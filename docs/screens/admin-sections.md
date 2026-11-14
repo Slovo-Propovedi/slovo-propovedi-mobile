@@ -11,13 +11,15 @@
 
 Раздел — это слайдер с плейлистами на главной странице сайта. Экраны портированы из Svelte-админки (`slovo-propovedi-admin`). Доменные детали (enums, reorder, зависимость drag) — в [`../features/admin.md`](../features/admin.md).
 
+**Ограничение платформы:** переупорядочивание работает на `react-native-draggable-flatlist` 4.0.3, а приложение несёт патч `patches/react-native-draggable-flatlist+4.0.3.patch` (замена `InteractionManager`, удалённого из ядра RN 0.88, на `requestAnimationFrame`) — см. [`../debt.md`](../debt.md).
+
 ## Список
 
 **Файлы:** `src/pages/admin-sections/ui/AdminSectionsScreen.tsx`, `AdminSectionsHeader.tsx`, `AdminSectionRow.tsx`, `AdminSectionBadges.tsx`, `lib/useAdminSections.ts`
 
-- **Что показывается:** шапка «Разделы» + подзаголовок + кнопка «Создать раздел»; список карточек: название, описание либо «N плейлистов», бейджи размера карточек и высоты (русские подписи из `entities/section` → `sectionLabels`); ручка `reorder-three` запускает drag.
+- **Что показывается:** шапка «Разделы» + подзаголовок + иконка-кнопка «Создать раздел» (`Ionicons add-outline`, `accessibilityLabel='Создать раздел'`) справа; список карточек: название, описание либо «N плейлистов», бейджи размера карточек и высоты (русские подписи из `entities/section` → `sectionLabels`); ручка `reorder-three` запускает drag.
 - **Откуда данные:** `sectionControllerFindAll` (`GET /section`) через `sectionsApi`; reorder — `reorderSections` (`PATCH /section/reorder`, тело `{ ids }` — **полный** упорядоченный массив id).
-- **Навигация:** тап по карточке → `/admin/sections/[id]`; «Создать раздел» → `/admin/sections/create`.
+- **Навигация:** тап по карточке → `/admin/sections/[id]`; иконка «Создать раздел» → `/admin/sections/create`.
 - **Optimistic reorder:** локальное состояние перекрывает ответ сети; на каждый `onDragEnd` сначала применяется новый порядок, при ошибке — откат к прежнему + `showToast`; запрос пропускается, если порядок не изменился (`hasOrderChanged`).
 - **Состояния:** загрузка списка — скелетон-строки (`AdminSectionRow.Skeleton`, шапка остаётся видимой; busy reorder — скелетон-строка в футере); пусто — `EmptyState` «Разделов пока нет»; ошибка загрузки — `reportError`; ошибка reorder — откат + тост.
 - **Высота и отступ под таб-баром (web):** `DraggableFlatList` рендерит собственный контейнер без `flex` — на react-native-web он растягивается по контенту, и список не скроллится (низ обрезается `body { overflow: hidden }` из `public/index.html`). Поэтому контейнеру задан `containerStyle={styles.listContainer}` с `flex: 1`, а `paddingBottom: tabBarHeight + INDENTS.low` (без `PLAYER_SIZES.miniPlayerHeight` — в админке нет мини-плеера).
