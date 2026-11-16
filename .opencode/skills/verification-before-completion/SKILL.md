@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: The done-gate. Use BEFORE claiming any task, fix, or feature is complete — every time, no exceptions. Triggers: about to say "done", "готово", "works now", writing a completion summary, or feeling relief that it "should work".
+description: The done-gate. Use BEFORE claiming any task, fix, or feature is complete — every time, no exceptions. Triggers — about to say "done", "готово", "works now", writing a completion summary, or feeling relief that it "should work".
 ---
 
 # Verification Before Completion

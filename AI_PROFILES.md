@@ -1,4 +1,4 @@
-# AI Profiles — профили моделей OpenCode
+# AI Profiles — профили моделей OpenCode и Crush
 
 В проекте настроены 4 набора моделей («профили») для локальной оркестрации
 `opencode`: оркестратор (agent `plan`/`build`/`researcher` и модель текущей
@@ -125,6 +125,29 @@ overlay. Подробности — в `.opencode/README.md` → «Фейлов�
 - `.opencode/skills/`, `tools/` — скиллы, инструменты.
 - `.opencode/lib/` — общие модули плагинов.
 
+## Тот же набор профилей в Crush (.crush/)
+
+В проекте есть зеркальная настройка для [Crush](https://github.com/charmbracelet/crush):
+root-файл `.crushrc` подключает самодостаточную конфигурацию `.crush/`, где
+профили — это bash-файлы `.crush/profiles/*.sh` с теми же именами, задающие
+два модельных слота Crush (`model large` — оркестратор, `model small` —
+исполнители). У Crush нет именованных агентов и plugin API, поэтому:
+
+- переключение — CLI `./.crush/tools/profile.sh <имя>` (persist в
+  `.crush/active-profile`, применяется при следующем старте `crush`) или
+  user-invocable скилл `project:profile` в палитре команд; в запущенной
+  сессии модели меняются пикером (`ctrl+l`);
+- агентские модели профилей сжаты в 2 слота: orchestrator → `large`,
+  worker → `small`; `opencode/big-pickle` заменён на
+  `opencode-go/deepseek-v4.1-flash` (провайдера `opencode` в Crush нет);
+- автофейловер моделей при лимитах не портирован (нет plugin API) — см.
+  `docs/debt.md`.
+
+Ролевая оркестрация (`build`/`coder`/`researcher`/`reviewer`/`scribe`)
+перенесена в ролевые скиллы `.crush/skills/agent-*/SKILL.md`, субагенты
+запускаются нативным `agent_dispatch` с `access: read/write`. Подробности и
+таблица отличий — в [`.crush/README.md`](.crush/README.md).
+
 ## Добавить свой профиль
 
 1. Создайте `.opencode/profiles/<имя>.json`:
@@ -145,6 +168,17 @@ overlay. Подробности — в `.opencode/README.md` → «Фейлов�
    ```
 
 2. Проверьте: `opencode` → `/profile` → профиль в списке → `/profile <имя>`.
+
+   Для Crush — добавьте парный `.crush/profiles/<имя>.sh`:
+
+   ```bash
+   #!/usr/bin/env bash
+   # Profile: <имя>
+   model large provider/orchestrator-model
+   model small provider/worker-model
+   ```
+
+   и переключите: `./.crush/tools/profile.sh <имя>`.
 
 ## Заметки
 

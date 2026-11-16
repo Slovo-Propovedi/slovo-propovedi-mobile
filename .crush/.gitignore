@@ -1,0 +1,13 @@
+*
+!.gitignore
+!README.md
+!config.sh
+!profiles/
+!profiles/*.sh
+!skills/
+!skills/**/
+!skills/**/SKILL.md
+!tools/
+!tools/profile.sh
+!tools/philosophy.md
+!tools/workflows.md

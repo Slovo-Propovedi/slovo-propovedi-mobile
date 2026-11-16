@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-description: Root-cause debugging discipline. Use when encountering ANY bug, test failure, or unexpected behavior — before proposing any fix. Triggers: a bug report, a red test, "doesn't work", "не работает", "падает", stack traces, intermittent failures.
+description: Root-cause debugging discipline. Use when encountering ANY bug, test failure, or unexpected behavior — before proposing any fix. Triggers — a bug report, a red test, "doesn't work", "не работает", "падает", stack traces, intermittent failures.
 ---
 
 # Systematic Debugging

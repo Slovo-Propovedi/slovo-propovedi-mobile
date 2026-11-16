@@ -1,6 +1,6 @@
 ---
 name: ponytail
-description: Lazy senior developer mode — the smallest complete change that fully solves the task. Use on ANY coding task (writing, fixing, refactoring, reviewing, choosing dependencies) and when the user says "ponytail", "be lazy", "simplest solution", "YAGNI", or complains about over-engineering or bloat. Levels: lite, full (default), ultra. Distilled from DietrichGebert/ponytail (MIT).
+description: Lazy senior developer mode — the smallest complete change that fully solves the task. Use on ANY coding task (writing, fixing, refactoring, reviewing, choosing dependencies) and when the user says "ponytail", "be lazy", "simplest solution", "YAGNI", or complains about over-engineering or bloat. Levels — lite, full (default), ultra. Distilled from DietrichGebert/ponytail (MIT).
 ---
 
 # Ponytail

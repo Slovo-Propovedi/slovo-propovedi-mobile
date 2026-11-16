@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# THIN SHIM — the only root-level file of the Crush setup.
+# Crush discovers ./.crushrc at the project root but not a config inside
+# .crush/, so this file just hands control to the self-contained setup
+# in .crush/ (base config + profiles). Never edit model wiring here.
+source .crush/config.sh
