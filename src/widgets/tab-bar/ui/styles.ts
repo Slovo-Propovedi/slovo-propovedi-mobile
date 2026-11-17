@@ -45,13 +45,21 @@ export const styles = {
     // device/web, pinning the expanded island to the collapsed 64.
     // Floating chrome stays a centered 600px column on wide screens (tablets, desktop-web).
     maxWidth: CONTENT_COLUMN_WIDTH,
-    overflow: 'hidden' as const,
+    // No overflow here: the glass surface clips itself, and the tab content is
+    // clipped by islandContent below. A host-level clip is the Safari-fragile
+    // pattern (Issue #152) and is unnecessary.
   },
   islandContent: {
     alignItems: 'center' as const,
+    // The clip lives on the content wrapper, not the island host (Issue #152):
+    // on iPad Safari the slot animated styles can freeze at the expanded
+    // geometry mid-morph, and a host-level overflow+border-radius fails to
+    // clip composited children — the frozen tabs then paint outside the pill.
+    borderRadius: RADIUSES.round,
     flex: 1,
     flexDirection: 'row' as const,
     height: '100%' as const,
+    overflow: 'hidden' as const,
   },
   // Fixed-height row keeps the measured tab-bar height stable across the morph;
   // only the island inside it changes width.

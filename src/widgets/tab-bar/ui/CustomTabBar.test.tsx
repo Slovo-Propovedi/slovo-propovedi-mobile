@@ -316,6 +316,19 @@ describe('<CustomTabBar>', () => {
     expect(styles.floatingIsland).not.toHaveProperty('height')
   })
 
+  test('clips the tab content inside the morphing pill, not the glass host', () => {
+    // Issue #152: on iPad Safari the slot animated styles can freeze at the
+    // expanded geometry mid-morph while the island shrinks, so the clip must
+    // live on the inner content wrapper — frozen tabs then cannot paint
+    // outside the pill. The glass surface clips itself (GlassSurface), so the
+    // host carries no overflow at all (same structure as the search circle).
+    expect(styles.floatingIsland).not.toHaveProperty('overflow')
+    expect(styles.islandContent).toMatchObject({
+      borderRadius: RADIUSES.round,
+      overflow: 'hidden',
+    })
+  })
+
   test('frosts the tab island, the search morph and its hidden close circle', async () => {
     await renderTabBar()
 

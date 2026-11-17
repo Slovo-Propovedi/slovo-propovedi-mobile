@@ -97,5 +97,8 @@ export const useTabIslandMorph = ({
     progress,
     restingContentStyle,
     restingIslandStyle,
+    // Settled (lagged) collapse state for the slots' committed resting
+    // geometry (TabSlot): it flips only when the morph lands, never mid-morph.
+    settledCollapsed,
   }
 }

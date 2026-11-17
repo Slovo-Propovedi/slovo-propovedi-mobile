@@ -57,6 +57,8 @@ describe('useTabIslandMorph', () => {
     // a frame, before Reanimated asserts the start-of-morph value (Issue #63).
     expect(result.current.restingIslandStyle.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
     expect(result.current.restingContentStyle.paddingLeft).toBe(ISLAND_CONTENT_PADDING_HORIZONTAL)
+    // The slots' resting layer reads the same settled flag (Issue #152).
+    expect(result.current.settledCollapsed).toBe(false)
 
     await act(async () => {
       completions[0](true)
@@ -64,6 +66,7 @@ describe('useTabIslandMorph', () => {
 
     expect(result.current.restingIslandStyle.height).toBe(TAB_BAR_ISLAND_HEIGHT)
     expect(result.current.restingContentStyle.paddingLeft).toBe(0)
+    expect(result.current.settledCollapsed).toBe(true)
   })
 
   test('fades the island out while the search field is focused', async () => {
@@ -108,6 +111,7 @@ describe('useTabIslandMorph', () => {
     const { result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT), { ctx })
 
     expect(result.current.isCollapsed).toBe(true)
+    expect(result.current.settledCollapsed).toBe(true)
     expect(result.current.restingIslandStyle.height).toBe(TAB_BAR_ISLAND_HEIGHT)
     expect(mockedWithTiming).not.toHaveBeenCalled()
   })

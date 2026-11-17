@@ -10,11 +10,14 @@ export const TabSlot = ({
   expandedWidth,
   isActive,
   isCollapsed,
+  isSettledCollapsed,
   progress,
 }: PropsWithChildren<{
   expandedWidth: number
   isActive: boolean
   isCollapsed: boolean
+  /** Settled (lagged) collapse state feeding the committed resting geometry. */
+  isSettledCollapsed: boolean
   progress: SharedValue<number>
 }>) => {
   const animatedStyle = useAnimatedStyle(() =>
@@ -25,6 +28,18 @@ export const TabSlot = ({
     }),
   )
 
+  // Non-animated resting geometry committed as the LAST style after the
+  // animated one (same pattern as the island itself, Issue #63): on iPad
+  // Safari the animated slot style can freeze mid-morph while the island
+  // shrinks (Issue #152), and the React commit at settle still writes the
+  // final slot geometry. Mid-morph it carries the START geometry because the
+  // settled flag lags until the animation lands.
+  const restingStyle = getTabSlotStyle(isSettledCollapsed ? 1 : 0, {
+    collapsedWidth: BAR_CIRCLE_SIZE,
+    expandedWidth,
+    isActive,
+  })
+
   // Collapsed, an inactive slot is zero-width but its pressable children still
   // overflow the island's edge (labels keep their intrinsic width), so they used
   // to swallow taps on the right half of the active circle. A zero-width slot
@@ -32,7 +47,7 @@ export const TabSlot = ({
   const pointerEvents = isActive || !isCollapsed ? 'auto' : 'none'
 
   return (
-    <Animated.View style={animatedStyle} pointerEvents={pointerEvents}>
+    <Animated.View pointerEvents={pointerEvents} style={[animatedStyle, restingStyle]}>
       {children}
     </Animated.View>
   )
