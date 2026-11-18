@@ -145,14 +145,14 @@ describe('getShadeHoles', () => {
 
     // Island row: height 62 at island progress 0.5, width 170 faded by focus
     // 0.5; the pill shade blends toward the row with focus, so the shade box is
-    // 107 tall and both bottom-anchored rects share y = 24. The pill hole
+    // 108 tall and both bottom-anchored rects share y = 25. The pill hole
     // keeps the full glass height (52 at pill progress 0.5) and only its bottom
     // edge follows the tuck.
     expect(holes).toEqual({
-      close: { height: 31, opacity: 1, width: 31, x: 333.5, y: 39.5 },
-      island: { height: 62, opacity: 1, width: 85, x: ROW_INNER_LEFT, y: 24 },
-      pill: { height: 52, opacity: 1, width: 296, x: 52, y: 28 },
-      search: { height: 62, opacity: 1, width: 187, x: 185, y: 24 },
+      close: { height: 31, opacity: 1, width: 31, x: 333.5, y: 40.5 },
+      island: { height: 62, opacity: 1, width: 85, x: ROW_INNER_LEFT, y: 25 },
+      pill: { height: 52, opacity: 1, width: 296, x: 52, y: 27 },
+      search: { height: 62, opacity: 1, width: 187, x: 185, y: 25 },
     })
   })
 
@@ -166,7 +166,7 @@ describe('getShadeHoles', () => {
       opacity: 0.4,
       width: ROW_INNER_WIDTH,
       x: ROW_INNER_LEFT,
-      y: 18,
+      y: 14,
     }
 
     expect(getShadeHoles({ ...LAYOUT, hasPill: true }, tuckedFrame).pill).toEqual(expectedRect)
