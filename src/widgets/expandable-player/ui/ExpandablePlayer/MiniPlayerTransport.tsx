@@ -29,11 +29,11 @@ export const MiniPlayerTransport = ({
 }) => (
   <View style={miniStyles.miniControls}>
     {showSpinner ? (
-      <ActivityIndicator size={36} color={currentTheme.text} testID='buffering-indicator' />
+      <ActivityIndicator size={30} color={currentTheme.text} testID='buffering-indicator' />
     ) : (
       <OnboardingTarget id='player.mini-play-pause'>
         <PlayerControlButton
-          size={36}
+          size={30}
           onPress={onPlayPause}
           color={currentTheme.text}
           hitSlop={MINI_PLAY_HIT_SLOP}

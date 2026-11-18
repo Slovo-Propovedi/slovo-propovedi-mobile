@@ -276,9 +276,9 @@ describe('<MiniPlayer>', () => {
     )
 
     expect(titleStyle?.fontSize).toBe(subtitleStyle?.fontSize)
-    // One step above body text on the theme scale: at arm's length on a phone the
-    // 14dp pill read smaller than Apple Music's mini text (≈17dp).
-    expect(titleStyle?.fontSize).toBe(FONT_SIZES.md)
+    // The lg step on the theme scale: both lines stay readable in the slimmer
+    // 48dp pill, like Apple Music's mini text.
+    expect(titleStyle?.fontSize).toBe(FONT_SIZES.lg)
     // Apple Music reads the two lines as one block: only the weight separates
     // them, so the subtitle must not drop to the muted color.
     expect(subtitleStyle?.color).toBe(titleStyle?.color)

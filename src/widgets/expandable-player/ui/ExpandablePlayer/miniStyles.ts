@@ -13,7 +13,7 @@ import {
 // on both sides is what makes the collapsed pill read symmetric. Apple Music
 // keeps generous air before the artwork and after the transport.
 export const MINI_CONTENT_SIDE_INSET = INDENTS.medium
-export const MINI_ARTWORK_SIZE = 40
+export const MINI_ARTWORK_SIZE = 36
 // The transport occupies the same visual box as the artwork; hitSlop restores the
 // ≥48dp touch target the icon needs.
 const MINI_PLAY_BOX_SIZE = MINI_ARTWORK_SIZE
@@ -21,7 +21,7 @@ export const MINI_PLAY_HIT_SLOP = (MIN_TOUCH_TARGET - MINI_PLAY_BOX_SIZE) / 2
 // The expanded pill spans the row content, so its right edge coincides with the
 // search circle's right edge. Centring the transport glyph on that circle's axis
 // means insetting it by the circle's half-width minus the transport's half-width:
-// 76 / 2 − 40 / 2 = 18dp.
+// 68 / 2 − 36 / 2 = 16dp.
 export const MINI_EXPANDED_TRANSPORT_RIGHT_INSET =
   BAR_CIRCLE_SIZE_EXPANDED / 2 - MINI_PLAY_BOX_SIZE / 2
 
@@ -86,7 +86,7 @@ export const createMiniStyles = (theme: ThemeColors) =>
     // only in weight (regular against semi-bold), so both lines read as one block.
     miniPlaylistName: {
       color: theme.text,
-      fontSize: FONT_SIZES.md,
+      fontSize: FONT_SIZES.lg,
       fontWeight: '400',
       marginTop: 2,
     },
@@ -99,7 +99,7 @@ export const createMiniStyles = (theme: ThemeColors) =>
     },
     miniTrackTitle: {
       color: theme.text,
-      fontSize: FONT_SIZES.md,
+      fontSize: FONT_SIZES.lg,
       fontWeight: '600',
     },
   })

@@ -28,10 +28,10 @@ export const PLAYER_SIZES = {
   albumArtLarge: '45%',
   albumArtMini: 40,
   controlButtonSize: FONT_SIZES.xxl,
-  miniPlayerHeight: 64,
+  miniPlayerHeight: 48,
   progressThumbSize: 12,
   // Approximation used only until the real height is measured (see shared/ui/layout)
-  tabBarHeight: 78,
+  tabBarHeight: 88,
 } as const
 
 export const RADIUSES = {

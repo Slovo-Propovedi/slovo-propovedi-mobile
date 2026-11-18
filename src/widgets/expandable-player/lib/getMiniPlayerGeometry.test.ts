@@ -3,6 +3,7 @@ import {
   BAR_CIRCLE_SIZE_EXPANDED,
   BAR_EXPANDED_ISLAND_TOP_MARGIN,
   BAR_OUTER_GAP,
+  BAR_PILL_ROW_GAP,
   BAR_ROW_MIN_HEIGHT,
   BAR_SIDE_INSET,
   CONTENT_COLUMN_WIDTH,
@@ -34,23 +35,23 @@ const islandBottomFromScreenBottom = (paddingBottom: number) =>
   paddingBottom + (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT) / 2
 
 describe('getMiniPlayerGeometry', () => {
-  test('measured 96dp row with 12dp bottom padding: pill rests one outer gap above the 92dp island top', () => {
+  test('measured 88dp row with 12dp bottom padding: pill rests one pill-row gap above the 84dp island top', () => {
     const paddingBottom = BAR_BOTTOM_INSET_MIN
     const tabBarHeight = BAR_ROW_MIN_HEIGHT + paddingBottom
     const { bottom } = geometryAt(tabBarHeight)
 
-    expect(islandTopFromScreenBottom(paddingBottom)).toBe(92)
-    expect(bottom).toBe(tabBarHeight - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_OUTER_GAP)
-    expect(bottom - islandTopFromScreenBottom(paddingBottom)).toBe(BAR_OUTER_GAP)
+    expect(islandTopFromScreenBottom(paddingBottom)).toBe(84)
+    expect(bottom).toBe(tabBarHeight - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP)
+    expect(bottom - islandTopFromScreenBottom(paddingBottom)).toBe(BAR_PILL_ROW_GAP)
   })
 
   test.each([0, BAR_BOTTOM_INSET_MIN, 44])(
-    'expanded pill keeps exactly BAR_OUTER_GAP above the island top (bottom padding %i)',
+    'expanded pill keeps exactly BAR_PILL_ROW_GAP above the island top (bottom padding %i)',
     paddingBottom => {
       const tabBarHeight = BAR_ROW_MIN_HEIGHT + paddingBottom
       const { bottom } = geometryAt(tabBarHeight)
 
-      expect(bottom - islandTopFromScreenBottom(paddingBottom)).toBe(BAR_OUTER_GAP)
+      expect(bottom - islandTopFromScreenBottom(paddingBottom)).toBe(BAR_PILL_ROW_GAP)
     },
   )
 
@@ -64,7 +65,7 @@ describe('getMiniPlayerGeometry', () => {
     },
   )
 
-  test('settled geometry: the vertical gap equals the horizontal island gap', () => {
+  test('settled geometry: the pill floats BAR_PILL_ROW_GAP above the island and spans the row inner edges', () => {
     const paddingBottom = BAR_BOTTOM_INSET_MIN
     const tabBarHeight = BAR_ROW_MIN_HEIGHT + paddingBottom
     const { bottom, left, width } = geometryAt(tabBarHeight)
@@ -77,8 +78,10 @@ describe('getMiniPlayerGeometry', () => {
     const horizontalGap = rowContentWidth - (islandWidth + BAR_CIRCLE_SIZE_EXPANDED)
     const verticalGap = bottom - islandTopFromScreenBottom(paddingBottom)
 
-    expect(verticalGap).toBe(horizontalGap)
-    expect(verticalGap).toBe(BAR_OUTER_GAP)
+    // Apple Music reference (Issue #153): the pill floats with a wider vertical
+    // gap than the horizontal gap between the island and the search circle.
+    expect(horizontalGap).toBe(BAR_OUTER_GAP)
+    expect(verticalGap).toBe(BAR_PILL_ROW_GAP)
 
     // The pill spans exactly the row's inner edges, so its left/right insets
     // match the island's and the search circle's.
@@ -93,6 +96,16 @@ describe('getMiniPlayerGeometry', () => {
     const halfway = geometryAt(tabBarHeight, 0.5)
 
     expect(halfway.bottom).toBeCloseTo((expanded.bottom + collapsed.bottom) / 2)
-    expect(halfway.top).toBe(SCREEN_HEIGHT - halfway.bottom - PLAYER_SIZES.miniPlayerHeight)
+    expect(halfway.top).toBe(SCREEN_HEIGHT - halfway.bottom - halfway.height)
+  })
+
+  test('grows from the compact pill to the islands height as the bar collapses', () => {
+    const tabBarHeight = BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN
+
+    expect(geometryAt(tabBarHeight, 0).height).toBe(PLAYER_SIZES.miniPlayerHeight)
+    expect(geometryAt(tabBarHeight, 1).height).toBe(TAB_BAR_ISLAND_HEIGHT)
+    expect(geometryAt(tabBarHeight, 0.5).height).toBe(
+      (PLAYER_SIZES.miniPlayerHeight + TAB_BAR_ISLAND_HEIGHT) / 2,
+    )
   })
 })

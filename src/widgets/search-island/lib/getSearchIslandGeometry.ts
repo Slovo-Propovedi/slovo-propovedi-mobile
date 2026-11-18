@@ -29,7 +29,7 @@ interface SearchIslandGeometry {
 }
 
 interface SearchIslandGeometryInput {
-  /** 0 = island expanded (76 high), 1 = collapsed (64 high). */
+  /** 0 = island expanded (68 high), 1 = collapsed (56 high). */
   barProgress: number
   /** 0 = no external close circle, 1 = the pill yields a full circle + gap to it. */
   closeProgress?: number
@@ -90,7 +90,7 @@ export const getSearchIslandGeometry = ({
   // The pill follows the island height through the morph; both stay round and
   // centered on the same row axis. Collapsed (openProgress 0) the pill is
   // exactly the search chip at the current bar state, so the closed diameter
-  // matches the island height (76 when expanded, 64 when collapsed).
+  // matches the island height (68 when expanded, 56 when collapsed).
   const height =
     TAB_BAR_ISLAND_HEIGHT + (TAB_BAR_ISLAND_HEIGHT_EXPANDED - TAB_BAR_ISLAND_HEIGHT) * (1 - bar)
   // The pill grows out of the search chip: a circle pinned to the row's right

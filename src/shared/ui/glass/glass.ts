@@ -25,36 +25,43 @@ export const GLASS = {
     // Passed to BlurView whenever the page publishes a target via
     // BlurTargetProvider (Android 12+ only; gated by supportsAndroidBackdropBlur).
     androidMethod: 'dimezisBlurViewSdk31Plus' satisfies BlurMethod,
-    // Apple Music blurs only moderately: the content behind the islands stays
-    // readable instead of melting into a flat frosted slab.
-    intensity: 40,
+    // Light blur (Issue #153): the content behind the islands stays crisp and
+    // reads through the glass instead of melting into a flat frosted slab.
+    intensity: 25,
   },
   border: { alpha: { dark: 0.12, light: 0.25 }, color: '255, 255, 255' },
   // Clear glass: the blurred backdrop smears read through the fill, which is
-  // the perceived refraction. A milky slab would hide them, so the fill stays
-  // thin enough for page content to show through on every platform.
-  fillAlpha: { dark: 0.26, light: 0.38 },
+  // the perceived refraction. Both fills are saturated tints (Issue #153):
+  // the light one reads bright white like the Apple Music pair, the dark one a
+  // firm black — intense color, but still translucent enough for the backdrop
+  // to read through instead of a near-solid slab.
+  fillAlpha: { dark: 0.26, light: 0.55 },
   web: {
-    // Classic glassmorphism: `backdrop-filter: blur(12px) saturate(140%)`.
-    // GlassSurface bypasses BlurView on web and emits both this property and its
-    // `-webkit-` twin, because Safari still honours only the prefixed form.
-    backdropFilter: 'blur(12px) saturate(140%)',
+    // Classic glassmorphism, lightened for the airier islands (Issue #153):
+    // `backdrop-filter: blur(8px) saturate(140%)`. GlassSurface bypasses
+    // BlurView on web and emits both this property and its `-webkit-` twin,
+    // because Safari still honours only the prefixed form.
+    backdropFilter: 'blur(8px) saturate(140%)',
     // Thin translucent rim: brighter in light theme so the sheet keeps an edge
     // on a bright backdrop, subtler in dark theme where contrast is plentiful.
     borderAlpha: { dark: 0.15, light: 0.45 },
-    // Translucent tint: light glass whitens the backdrop slightly, dark glass
-    // darkens it so white text keeps its contrast. Thinner than the native fill:
-    // the backdrop-filter blur already carries the refraction.
-    tintAlpha: { dark: 0.22, light: 0.14 },
+    // Translucent tint: light glass whitens the backdrop, dark glass darkens it
+    // so white text keeps its contrast. Both mirror the saturated native fills
+    // (Issue #153) and stay thinner than them: the backdrop-filter blur already
+    // carries the refraction.
+    tintAlpha: { dark: 0.24, light: 0.28 },
   },
 } as const
 
 const rgba = (channels: string, alpha: number) => `rgba(${channels}, ${alpha})`
 
-export const getGlassFill = (isLight: boolean, alphaBoost = 0) =>
-  isLight
-    ? rgba('255, 255, 255', GLASS.fillAlpha.light + alphaBoost)
-    : rgba('0, 0, 0', GLASS.fillAlpha.dark + alphaBoost)
+export const getGlassFill = (isLight: boolean, alphaBoost = 0) => {
+  // 0.55 + 0.06 is 0.6100000000000001 in IEEE 754 — round to the recipe's 2dp.
+  const alpha =
+    Math.round(((isLight ? GLASS.fillAlpha.light : GLASS.fillAlpha.dark) + alphaBoost) * 100) / 100
+
+  return isLight ? rgba('255, 255, 255', alpha) : rgba('0, 0, 0', alpha)
+}
 
 export const getGlassBorder = (isLight: boolean) =>
   rgba(GLASS.border.color, isLight ? GLASS.border.alpha.light : GLASS.border.alpha.dark)

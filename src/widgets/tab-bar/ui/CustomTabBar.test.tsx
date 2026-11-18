@@ -274,10 +274,10 @@ describe('<CustomTabBar>', () => {
 
     // The expanded mini pill is sized to this exact content box (column minus the
     // side insets) so the tab island and search circle edges line up with it.
-    // Literal 16 (not the constant) guards the generous side margins.
+    // Literal 20 (not the constant) guards the generous side margins.
     expect(styles.islandsRow).toMatchObject({
       maxWidth: 600,
-      paddingHorizontal: 16,
+      paddingHorizontal: 20,
     })
   })
 
@@ -311,8 +311,8 @@ describe('<CustomTabBar>', () => {
 
   test('leaves the island height to the animated morph instead of a static fallback', () => {
     // A static height in the island's style array shadows the animated one on
-    // device: the expanded island stays pinned to the collapsed 64 and renders
-    // visibly shorter than the 76 search circle next to it.
+    // device: the expanded island stays pinned to the collapsed 56 and renders
+    // visibly shorter than the 68 search circle next to it.
     expect(styles.floatingIsland).not.toHaveProperty('height')
   })
 
@@ -384,16 +384,16 @@ describe('<CustomTabBar>', () => {
     await renderTabBar()
 
     expect(StyleSheet.flatten(findIslandContent()?.props.style)).toMatchObject({
-      paddingLeft: 12,
-      paddingRight: 12,
+      paddingLeft: 10,
+      paddingRight: 10,
     })
   })
 
   test('collapsed circle drops the content padding so the active slot fills it', async () => {
     // A `paddingHorizontal` animated style never reaches the web DOM: Reanimated
     // updates styles through createReactDOMStyle, skipping the react-native-web
-    // preprocess step that expands shortforms. The 12dp inset then freezes and
-    // pushes the 64dp active slot past the circle's right edge.
+    // preprocess step that expands shortforms. The 8dp inset then freezes and
+    // pushes the 56dp active slot past the circle's right edge.
     await renderTabBar(0, { isCollapsed: true })
 
     expect(StyleSheet.flatten(findIslandContent()?.props.style)).toMatchObject({

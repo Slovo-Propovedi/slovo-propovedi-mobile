@@ -1,14 +1,14 @@
 import { getShadeHoles } from './getShadeHoles'
 
 // Fixture: a 400dp phone with a 14dp bottom inset. The tab row is
-// BAR_ROW_MIN_HEIGHT (84) plus that inset, so the measured row height is 98.
+// BAR_ROW_MIN_HEIGHT (76) plus that inset, so the measured row height is 90.
 const SCREEN_WIDTH = 400
-const TAB_BAR_HEIGHT = 98
+const TAB_BAR_HEIGHT = 90
 const BOTTOM_PADDING = 14
 const FULL_SCREEN_HEIGHT = 800
 // The centered content column is wider than the viewport, so its inset is 0;
-// the row then pads by BAR_SIDE_INSET (16) on each side.
-const ROW_INNER_LEFT = 16
+// the row then pads by BAR_SIDE_INSET (20) on each side.
+const ROW_INNER_LEFT = 20
 const ROW_INNER_WIDTH = SCREEN_WIDTH - ROW_INNER_LEFT * 2
 
 const LAYOUT = {
@@ -40,20 +40,20 @@ const scrollFrames = () =>
 
 describe('getShadeHoles', () => {
   test('sweeps the island hole with the island collapse morph', () => {
-    // Expanded 76dp/286dp → collapsed 64dp/64dp, the same width/height
+    // Expanded 68dp/284dp → collapsed 56dp/56dp, the same width/height
     // interpolation as the tab island's glass. The shade box follows the pill's
     // collapse, so a bottom-anchored hole keeps y = 10 through the whole sweep.
     expect(scrollFrames().map(frame => getShadeHoles(LAYOUT, frame).island)).toEqual([
-      { height: 76, opacity: 1, width: 286, x: ROW_INNER_LEFT, y: 10 },
-      { height: 73, opacity: 1, width: 230.5, x: ROW_INNER_LEFT, y: 10 },
-      { height: 70, opacity: 1, width: 175, x: ROW_INNER_LEFT, y: 10 },
-      { height: 67, opacity: 1, width: 119.5, x: ROW_INNER_LEFT, y: 10 },
-      { height: 64, opacity: 1, width: 64, x: ROW_INNER_LEFT, y: 10 },
+      { height: 68, opacity: 1, width: 284, x: ROW_INNER_LEFT, y: 10 },
+      { height: 65, opacity: 1, width: 227, x: ROW_INNER_LEFT, y: 10 },
+      { height: 62, opacity: 1, width: 170, x: ROW_INNER_LEFT, y: 10 },
+      { height: 59, opacity: 1, width: 113, x: ROW_INNER_LEFT, y: 10 },
+      { height: 56, opacity: 1, width: 56, x: ROW_INNER_LEFT, y: 10 },
     ])
   })
 
   test('sweeps the search hole open from the search circle to the pill slot', () => {
-    // A visible field forces the collapsed 64dp row; the pill keeps its right
+    // A visible field forces the collapsed 56dp row; the pill keeps its right
     // inner edge anchored and grows leftward.
     const holes = SWEEP.map(
       openProgress =>
@@ -61,11 +61,11 @@ describe('getShadeHoles', () => {
     )
 
     expect(holes).toEqual([
-      { height: 64, opacity: 1, width: 64, x: ROW_INNER_LEFT + ROW_INNER_WIDTH - 64, y: 16 },
-      { height: 64, opacity: 1, width: 122.5, x: 261.5, y: 16 },
-      { height: 64, opacity: 1, width: 181, x: 203, y: 16 },
-      { height: 64, opacity: 1, width: 239.5, x: 144.5, y: 16 },
-      { height: 64, opacity: 1, width: 298, x: ROW_INNER_LEFT + 64 + 6, y: 16 },
+      { height: 56, opacity: 1, width: 56, x: ROW_INNER_LEFT + ROW_INNER_WIDTH - 56, y: 16 },
+      { height: 56, opacity: 1, width: 116, x: 264, y: 16 },
+      { height: 56, opacity: 1, width: 176, x: 204, y: 16 },
+      { height: 56, opacity: 1, width: 236, x: 144, y: 16 },
+      { height: 56, opacity: 1, width: 296, x: ROW_INNER_LEFT + 56 + 8, y: 16 },
     ])
   })
 
@@ -78,18 +78,18 @@ describe('getShadeHoles', () => {
     }))
 
     expect(frames.map(frame => getShadeHoles(LAYOUT, frame).island)).toEqual([
-      { height: 64, opacity: 1, width: 64, x: ROW_INNER_LEFT, y: 16 },
-      { height: 64, opacity: 1, width: 48, x: ROW_INNER_LEFT, y: 16 },
-      { height: 64, opacity: 1, width: 32, x: ROW_INNER_LEFT, y: 16 },
-      { height: 64, opacity: 1, width: 16, x: ROW_INNER_LEFT, y: 16 },
-      { height: 64, opacity: 1, width: 0, x: ROW_INNER_LEFT, y: 16 },
+      { height: 56, opacity: 1, width: 56, x: ROW_INNER_LEFT, y: 16 },
+      { height: 56, opacity: 1, width: 42, x: ROW_INNER_LEFT, y: 16 },
+      { height: 56, opacity: 1, width: 28, x: ROW_INNER_LEFT, y: 16 },
+      { height: 56, opacity: 1, width: 14, x: ROW_INNER_LEFT, y: 16 },
+      { height: 56, opacity: 1, width: 0, x: ROW_INNER_LEFT, y: 16 },
     ])
     expect(frames.map(frame => getShadeHoles(LAYOUT, frame).search)).toEqual([
-      { height: 64, opacity: 1, width: 298, x: ROW_INNER_LEFT + 64 + 6, y: 16 },
-      { height: 64, opacity: 1, width: 315.5, x: 68.5, y: 16 },
-      { height: 64, opacity: 1, width: 333, x: 51, y: 16 },
-      { height: 64, opacity: 1, width: 350.5, x: 33.5, y: 16 },
-      { height: 64, opacity: 1, width: 368, x: ROW_INNER_LEFT, y: 16 },
+      { height: 56, opacity: 1, width: 296, x: ROW_INNER_LEFT + 56 + 8, y: 16 },
+      { height: 56, opacity: 1, width: 312, x: 68, y: 16 },
+      { height: 56, opacity: 1, width: 328, x: 52, y: 16 },
+      { height: 56, opacity: 1, width: 344, x: 36, y: 16 },
+      { height: 56, opacity: 1, width: 360, x: ROW_INNER_LEFT, y: 16 },
     ])
   })
 
@@ -104,14 +104,14 @@ describe('getShadeHoles', () => {
 
     expect(frames.map(frame => getShadeHoles(LAYOUT, frame).close)).toEqual([
       EMPTY_HOLE,
-      { height: 16, opacity: 1, width: 16, x: 344, y: 40 },
-      { height: 32, opacity: 1, width: 32, x: 336, y: 32 },
-      { height: 48, opacity: 1, width: 48, x: 328, y: 24 },
-      { height: 64, opacity: 1, width: 64, x: SCREEN_WIDTH - ROW_INNER_LEFT - 64, y: 16 },
+      { height: 14, opacity: 1, width: 14, x: 345, y: 37 },
+      { height: 28, opacity: 1, width: 28, x: 338, y: 30 },
+      { height: 42, opacity: 1, width: 42, x: 331, y: 23 },
+      { height: 56, opacity: 1, width: 56, x: SCREEN_WIDTH - ROW_INNER_LEFT - 56, y: 16 },
     ])
     // The pill yields exactly one close circle + gap to the fading circle.
     expect(frames.map(frame => getShadeHoles(LAYOUT, frame).search.width)).toEqual([
-      368, 350.5, 333, 315.5, 298,
+      360, 344, 328, 312, 296,
     ])
   })
 
@@ -122,11 +122,11 @@ describe('getShadeHoles', () => {
     }))
 
     expect(frames.map(frame => getShadeHoles({ ...LAYOUT, hasPill: true }, frame).pill)).toEqual([
-      { height: 64, opacity: 1, width: 368, x: ROW_INNER_LEFT, y: 10 },
-      { height: 64, opacity: 1, width: 333, x: 33.5, y: 10 },
-      { height: 64, opacity: 1, width: 298, x: 51, y: 10 },
-      { height: 64, opacity: 1, width: 263, x: 68.5, y: 10 },
-      { height: 64, opacity: 1, width: 228, x: 86, y: 10 },
+      { height: 48, opacity: 1, width: 360, x: ROW_INNER_LEFT, y: 10 },
+      { height: 50, opacity: 1, width: 328, x: 36, y: 10 },
+      { height: 52, opacity: 1, width: 296, x: 52, y: 10 },
+      { height: 54, opacity: 1, width: 264, x: 68, y: 10 },
+      { height: 56, opacity: 1, width: 232, x: 84, y: 10 },
     ])
   })
 
@@ -143,15 +143,16 @@ describe('getShadeHoles', () => {
       },
     )
 
-    // Island row: height 70 at island progress 0.5, width 175 faded by focus
+    // Island row: height 62 at island progress 0.5, width 170 faded by focus
     // 0.5; the pill shade blends toward the row with focus, so the shade box is
-    // 118.5 tall and both bottom-anchored rects share y = 27.5. The pill hole
-    // keeps the full glass height and only its bottom edge follows the tuck.
+    // 107 tall and both bottom-anchored rects share y = 24. The pill hole
+    // keeps the full glass height (52 at pill progress 0.5) and only its bottom
+    // edge follows the tuck.
     expect(holes).toEqual({
-      close: { height: 35, opacity: 1, width: 35, x: 331.5, y: 45 },
-      island: { height: 70, opacity: 1, width: 87.5, x: ROW_INNER_LEFT, y: 27.5 },
-      pill: { height: 64, opacity: 1, width: 298, x: 51, y: 30.5 },
-      search: { height: 70, opacity: 1, width: 192.75, x: 182.5, y: 27.5 },
+      close: { height: 31, opacity: 1, width: 31, x: 333.5, y: 39.5 },
+      island: { height: 62, opacity: 1, width: 85, x: ROW_INNER_LEFT, y: 24 },
+      pill: { height: 52, opacity: 1, width: 296, x: 52, y: 28 },
+      search: { height: 62, opacity: 1, width: 187, x: 185, y: 24 },
     })
   })
 
@@ -161,11 +162,11 @@ describe('getShadeHoles', () => {
     // pill's fade instead of collapsing to an empty rect.
     const tuckedFrame = { ...BASE_FRAME, focusProgress: 1, pillOpacity: 0.4 }
     const expectedRect = {
-      height: 64,
+      height: 48,
       opacity: 0.4,
       width: ROW_INNER_WIDTH,
       x: ROW_INNER_LEFT,
-      y: 16,
+      y: 18,
     }
 
     expect(getShadeHoles({ ...LAYOUT, hasPill: true }, tuckedFrame).pill).toEqual(expectedRect)
@@ -177,7 +178,7 @@ describe('getShadeHoles', () => {
   test('gives the admin row, which has no search chrome, the full inner width', () => {
     expect(getShadeHoles({ ...LAYOUT, hasSearch: false }, BASE_FRAME)).toEqual({
       close: EMPTY_HOLE,
-      island: { height: 76, opacity: 1, width: ROW_INNER_WIDTH, x: ROW_INNER_LEFT, y: 10 },
+      island: { height: 68, opacity: 1, width: ROW_INNER_WIDTH, x: ROW_INNER_LEFT, y: 10 },
       pill: EMPTY_HOLE,
       search: EMPTY_HOLE,
     })

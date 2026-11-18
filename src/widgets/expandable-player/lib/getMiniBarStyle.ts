@@ -15,7 +15,7 @@ interface MiniBarStyleInput {
  */
 export const getMiniBarStyle = (input: MiniBarStyleInput) => {
   'worklet'
-  const { bottom, left, radius, width } = getMiniPlayerGeometry(input)
+  const { bottom, height, left, radius, width } = getMiniPlayerGeometry(input)
 
-  return { borderRadius: radius, bottom, left, width }
+  return { borderRadius: radius, bottom, height, left, width }
 }

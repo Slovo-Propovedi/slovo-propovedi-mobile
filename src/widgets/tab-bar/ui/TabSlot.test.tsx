@@ -64,8 +64,8 @@ describe('<TabSlot>', () => {
     })
     const style = slot.props.style as Array<Record<string, number>>
 
-    // Literal 64 (not BAR_CIRCLE_SIZE) guards the exact circle geometry.
-    expect(style.at(-1)).toEqual({ minWidth: 0, opacity: 1, width: 64 })
+    // Literal 56 (not BAR_CIRCLE_SIZE) guards the exact circle geometry.
+    expect(style.at(-1)).toEqual({ minWidth: 0, opacity: 1, width: 56 })
   })
 
   test('gates touches of hidden slots inside the collapsed circle', async () => {

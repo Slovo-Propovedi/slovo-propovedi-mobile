@@ -48,7 +48,7 @@ const clampProgress = (progress: number) => {
  *
  * Worklet-safe: called from the animated hole props.
  * @param input - Island morph progress and the shade box geometry.
- * @param input.islandProgress - 0 = expanded 76dp row, 1 = collapsed 64dp row.
+ * @param input.islandProgress - 0 = expanded 68dp row, 1 = collapsed 56dp row.
  * @param input.screenWidth - Current viewport width.
  * @param input.shadeHeight - Animated shade height the hole is anchored in.
  * @param input.tabBarHeight - Measured height of the floating tab row.

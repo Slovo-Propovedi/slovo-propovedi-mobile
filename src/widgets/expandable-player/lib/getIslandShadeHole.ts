@@ -9,7 +9,7 @@ const clampProgress = (progress: number) => {
 
 /**
  * Cutout of the tab island, mirroring `getIslandStyle`: the width morphs from
- * the expanded row span to the 64dp circle and is multiplied by focus, because
+ * the expanded row span to the 56dp circle and is multiplied by focus, because
  * focus fades the glass island out while its width reaches zero. Height keeps
  * the island's morph (focus does not change the glass height; the zero-width
  * hole already cuts nothing).

@@ -27,10 +27,11 @@ const CAP_RATIO_MAX = 0.99
  *
  * Worklet-safe: called from Reanimated animated styles.
  * @param bottom - Mini-pill bottom edge (see `getMiniPlayerGeometry`).
+ * @param pillHeight - Mini-pill height at the same morph progress (48 ⇄ 56).
  */
-const getShadeHeight = (bottom: number) => {
+const getShadeHeight = (bottom: number, pillHeight: number) => {
   'worklet'
-  return bottom + PLAYER_SIZES.miniPlayerHeight + SHADE_TOP_OVERSCAN_PX
+  return bottom + pillHeight + SHADE_TOP_OVERSCAN_PX
 }
 
 /**
@@ -57,7 +58,7 @@ export const getShadeLocations = (
  *
  * The row is `BAR_ROW_MIN_HEIGHT + bottomPadding` tall with the islands centered
  * in its content box, so the island top sits `(BAR_ROW_MIN_HEIGHT − island) / 2`
- * below the row top. The island height morphs 76 ⇄ 64 with the bar progress, so
+ * below the row top. The island height morphs 68 ⇄ 56 with the bar progress, so
  * the no-pill shade follows the collapse as well.
  *
  * Worklet-safe: called from Reanimated animated styles.
@@ -107,13 +108,13 @@ export const getPillShadeHeight = ({
 }: PillShadeHeightInput) => {
   'worklet'
   const rowHeight = getBarShadeHeight(barProgress, bottomPadding)
-  const { bottom } = getMiniPlayerGeometry({
+  const { bottom, height } = getMiniPlayerGeometry({
     barProgress,
     fullScreenHeight,
     screenWidth,
     tabBarHeight,
   })
-  const pillHeight = getShadeHeight(bottom)
+  const pillHeight = getShadeHeight(bottom, height)
   const focus = Math.min(Math.max(focusProgress, 0), 1)
 
   return pillHeight + (rowHeight - pillHeight) * focus

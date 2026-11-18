@@ -78,7 +78,7 @@ describe('<TabButton>', () => {
     expect(label).toHaveStyle({ position: 'absolute' })
     expect(label.parent).toHaveStyle({
       alignItems: 'center',
-      height: 56,
+      height: 48,
       justifyContent: 'center',
     })
   })
@@ -86,13 +86,13 @@ describe('<TabButton>', () => {
   test('expanded item grows taller to leave a gap between icon and label', async () => {
     await renderTabButton('listen', true, progressValue(0))
 
-    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 64 })
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 60 })
   })
 
   test('leaves the item height to the morph instead of a static fallback', () => {
     // A static height in the item's style array shadows the animated one on
-    // device, so the expanded item stayed 56 tall and the icon+label looked
-    // cramped inside the 76 island.
+    // device, so the expanded item stayed 48 tall and the icon+label looked
+    // cramped inside the 68 island.
     expect(styles.tabItem).not.toHaveProperty('height')
   })
 
@@ -172,20 +172,20 @@ describe('<TabButton>', () => {
     expect(findCapsule()).toHaveStyle({ left: -10, right: -10 })
   })
 
-  test('expanded items split the 10dp neighbour gap on both sides', async () => {
+  test('expanded items split the 8dp neighbour gap on both sides', async () => {
     await renderTabButton('listen', true, progressValue(0))
 
     expect(screen.getByText('Слушать').parent).toHaveStyle({
-      marginBottom: 6,
-      marginLeft: 5,
-      marginRight: 5,
-      marginTop: 6,
+      marginBottom: 4,
+      marginLeft: 4,
+      marginRight: 4,
+      marginTop: 4,
     })
   })
 
   test('collapsed active item drops every horizontal margin so the icon centres in the circle', async () => {
     // Island padding is 0 at progress 1; a leftover margin would push the icon
-    // right of the 64dp circle centre.
+    // right of the 56dp circle centre.
     await renderTabButton('listen', true, progressValue(1))
 
     expect(screen.getByText('Слушать').parent).toHaveStyle({

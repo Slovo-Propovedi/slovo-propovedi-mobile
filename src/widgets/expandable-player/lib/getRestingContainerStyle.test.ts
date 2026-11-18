@@ -2,6 +2,7 @@ import {
   BAR_CIRCLE_SIZE,
   BAR_EXPANDED_ISLAND_TOP_MARGIN,
   BAR_OUTER_GAP,
+  BAR_PILL_ROW_GAP,
   BAR_ROW_MIN_HEIGHT,
   BAR_SIDE_INSET,
   CONTENT_COLUMN_WIDTH,
@@ -11,7 +12,10 @@ import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getRestingContainerStyle } from './getRestingContainerStyle'
 
 const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
-const EXPANDED_BOTTOM = 98 - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_OUTER_GAP
+// The collapsed pill grows to the islands' height, so its resting radius and
+// top follow the 56dp row slots, not the compact mini height.
+const COLLAPSED_PILL_RADIUS = TAB_BAR_ISLAND_HEIGHT / 2
+const EXPANDED_BOTTOM = 98 - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP
 const COLLAPSED_BOTTOM = 98 - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2
 const COLLAPSED_SIDE_INSET = BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
 
@@ -78,13 +82,13 @@ describe('getRestingContainerStyle', () => {
     const style = getRestingContainerStyle({ ...common, barCollapsed: true, expanded: false })
 
     expect(style).toEqual({
-      borderBottomLeftRadius: PILL_RADIUS,
-      borderBottomRightRadius: PILL_RADIUS,
-      borderTopLeftRadius: PILL_RADIUS,
-      borderTopRightRadius: PILL_RADIUS,
+      borderBottomLeftRadius: COLLAPSED_PILL_RADIUS,
+      borderBottomRightRadius: COLLAPSED_PILL_RADIUS,
+      borderTopLeftRadius: COLLAPSED_PILL_RADIUS,
+      borderTopRightRadius: COLLAPSED_PILL_RADIUS,
       bottom: COLLAPSED_BOTTOM,
       left: COLLAPSED_SIDE_INSET,
-      top: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      top: 800 - COLLAPSED_BOTTOM - TAB_BAR_ISLAND_HEIGHT,
       width: 400 - COLLAPSED_SIDE_INSET * 2,
     })
   })
@@ -100,13 +104,13 @@ describe('getRestingContainerStyle', () => {
     })
 
     expect(style).toEqual({
-      borderBottomLeftRadius: PILL_RADIUS,
-      borderBottomRightRadius: PILL_RADIUS,
-      borderTopLeftRadius: PILL_RADIUS,
-      borderTopRightRadius: PILL_RADIUS,
+      borderBottomLeftRadius: COLLAPSED_PILL_RADIUS,
+      borderBottomRightRadius: COLLAPSED_PILL_RADIUS,
+      borderTopLeftRadius: COLLAPSED_PILL_RADIUS,
+      borderTopRightRadius: COLLAPSED_PILL_RADIUS,
       bottom: COLLAPSED_BOTTOM,
       left: columnInset + COLLAPSED_SIDE_INSET,
-      top: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      top: 800 - COLLAPSED_BOTTOM - TAB_BAR_ISLAND_HEIGHT,
       width: 800 - (columnInset + COLLAPSED_SIDE_INSET) * 2,
     })
   })

@@ -15,7 +15,7 @@ import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import {
   BAR_EXPANDED_ISLAND_TOP_MARGIN,
-  BAR_OUTER_GAP,
+  BAR_PILL_ROW_GAP,
   BAR_ROW_MIN_HEIGHT,
   keyboardBottomInsetSv,
   setBarCollapsed,
@@ -53,15 +53,15 @@ const MASK_NAME = 'bottom-chrome-shade-holes'
 
 // Fixture row height: BAR_ROW_MIN_HEIGHT content box plus the device safe-area
 // padding CustomTabBar adds (mirrors a phone with a 14dp bottom inset).
-const TAB_BAR_HEIGHT = 98
+const TAB_BAR_HEIGHT = 90
 const SHADE_TOP_OVERSCAN_PX = 10
-// Detached pill sits one outer gap above the expanded island's top edge
+// Detached pill sits one pill-row gap above the expanded island's top edge
 // (getMiniPlayerGeometry), and the shade reaches the pill's top plus the
 // overscan.
 const EXPANDED_HEIGHT =
   TAB_BAR_HEIGHT -
   BAR_EXPANDED_ISLAND_TOP_MARGIN +
-  BAR_OUTER_GAP +
+  BAR_PILL_ROW_GAP +
   PLAYER_SIZES.miniPlayerHeight +
   SHADE_TOP_OVERSCAN_PX
 // Collapsed row: islands are centered in BAR_ROW_MIN_HEIGHT, so the pill's
@@ -69,11 +69,11 @@ const EXPANDED_HEIGHT =
 const COLLAPSED_HEIGHT =
   TAB_BAR_HEIGHT -
   (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2 +
-  PLAYER_SIZES.miniPlayerHeight +
+  TAB_BAR_ISLAND_HEIGHT +
   SHADE_TOP_OVERSCAN_PX
 // No pill: the shade anchors to the islands row top instead. The row is
 // BAR_ROW_MIN_HEIGHT plus the bottom padding, and the island is centered in it,
-// so its top gap grows as the island shrinks from the expanded 76 to 64.
+// so its top gap grows as the island shrinks from the expanded 68 to 56.
 const NO_PILL_EXPANDED_HEIGHT =
   TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2 + SHADE_TOP_OVERSCAN_PX
 const NO_PILL_COLLAPSED_HEIGHT =

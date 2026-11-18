@@ -39,6 +39,7 @@ jest.mock('shared/ui/layout', () => {
   return {
     BAR_MORPH_DURATION_MS: 300,
     BAR_OUTER_GAP: 6,
+    BAR_PILL_ROW_GAP: 10,
     CONTENT_COLUMN_WIDTH: 600,
     isBarCollapsedAtom: atom(false, 'mockIsBarCollapsedAtom'),
     isTabBarMeasuredAtom: atom(true, 'mockIsTabBarMeasuredAtom'),
@@ -122,9 +123,9 @@ jest.mock('./MiniPlayer', () => {
 })
 
 const PLAY_PAUSE_LABEL = 'play-pause'
-// The focused pill is 64 tall; sliding it down by its height plus the two outer
+// The focused pill is 48 tall; sliding it down by its height plus the two outer
 // gaps lands its top on the focused search pill's top (see CollapsedMiniPlayer).
-const MINI_TUCK_DISTANCE = 76
+const MINI_TUCK_DISTANCE = 60
 const PLAYER_UNDER_BAR_Z = 9
 const PLAYER_OVER_BAR_Z = 20
 // Slide (300 ms) plus the delayed fade (180 ms): the hidden pill leaves the tree

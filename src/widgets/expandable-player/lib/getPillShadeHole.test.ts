@@ -1,4 +1,4 @@
-import { PLAYER_SIZES } from 'shared/ui/theme'
+import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
 import { getMiniPlayerGeometry, MINI_PILL_TUCK_DISTANCE } from './getMiniPlayerGeometry'
 import { getPillShadeHole } from './getPillShadeHole'
 import { EMPTY_SHADE_HOLE, type ShadeRow } from './shadeRow'
@@ -7,7 +7,8 @@ const SCREEN_WIDTH = 400
 const TAB_BAR_HEIGHT = 98
 const FULL_SCREEN_HEIGHT = 800
 const SHADE_HEIGHT = 300
-const PILL_HEIGHT = PLAYER_SIZES.miniPlayerHeight
+// The sweep anchors at pillProgress 1, where the pill has grown to the islands.
+const PILL_HEIGHT = TAB_BAR_ISLAND_HEIGHT
 
 // The helper only anchors to the shade box top; the rest of the row is unused.
 const ROW: ShadeRow = {
@@ -106,11 +107,11 @@ describe('getPillShadeHole', () => {
         const pill = pillAt(pillProgress)
 
         return {
-          height: PILL_HEIGHT,
+          height: pill.height,
           opacity: 1,
           width: pill.width,
           x: pill.left,
-          y: SHADE_HEIGHT - (pill.bottom + PILL_HEIGHT),
+          y: SHADE_HEIGHT - (pill.bottom + pill.height),
         }
       }),
     )

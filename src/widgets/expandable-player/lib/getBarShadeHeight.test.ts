@@ -3,7 +3,6 @@ import {
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
-import { PLAYER_SIZES } from 'shared/ui/theme'
 import {
   getBarShadeHeight,
   getPillShadeHeight,
@@ -13,10 +12,10 @@ import {
 } from './getBarShadeHeight'
 import { getMiniPlayerGeometry } from './getMiniPlayerGeometry'
 
-// Bottom safe-area padding of the fixture row (BAR_ROW_MIN_HEIGHT + 14 = 98).
+// Bottom safe-area padding of the fixture row (BAR_ROW_MIN_HEIGHT + 14 = 90).
 const BOTTOM_PADDING = 14
 // Fixture device used by the mini-pill geometry helper.
-const TAB_BAR_HEIGHT = 98
+const TAB_BAR_HEIGHT = 90
 const SCREEN_WIDTH = 400
 const FULL_SCREEN_HEIGHT = 800
 const PILL_INPUT = {
@@ -29,15 +28,16 @@ const PILL_INPUT = {
 
 // Shade height with a mini pill at rest: the pill bottom plus the pill height
 // and the overscan (mirrors BarBackdropShade's worklet).
-const getPillShadeHeightAt = (barProgress: number) =>
-  getMiniPlayerGeometry({
+const getPillShadeHeightAt = (barProgress: number) => {
+  const pill = getMiniPlayerGeometry({
     barProgress,
     fullScreenHeight: FULL_SCREEN_HEIGHT,
     screenWidth: SCREEN_WIDTH,
     tabBarHeight: TAB_BAR_HEIGHT,
-  }).bottom +
-  PLAYER_SIZES.miniPlayerHeight +
-  SHADE_TOP_OVERSCAN_PX
+  })
+
+  return pill.bottom + pill.height + SHADE_TOP_OVERSCAN_PX
+}
 
 describe('getBarShadeHeight', () => {
   test('anchors to the expanded islands row top', () => {

@@ -73,7 +73,7 @@ describe('getSearchIslandGeometry', () => {
   test('collapsed pill matches the search chip diameter in either bar state', () => {
     const expandedBar = geometry({ barProgress: 0, openProgress: 0 })
 
-    // The search chip is 76 while the bar is expanded; a 64-wide pill would
+    // The search chip is 68 while the bar is expanded; a 56-wide pill would
     // leave a visible oval "last frame" instead of a circle.
     expect(expandedBar.width).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
     expect(expandedBar.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
@@ -90,8 +90,8 @@ describe('getSearchIslandGeometry', () => {
     expect(expandedBar.bottom).toBe(
       TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2,
     )
-    expect(halfwayBar.height).toBe(70)
-    expect(halfwayBar.radius).toBe(35)
+    expect(halfwayBar.height).toBe(62)
+    expect(halfwayBar.radius).toBe(31)
   })
 
   test('clamps open and bar progress outside the 0..1 range', () => {

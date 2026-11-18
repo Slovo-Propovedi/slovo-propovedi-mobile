@@ -1,4 +1,3 @@
-import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getMiniPlayerGeometry, MINI_PILL_TUCK_DISTANCE } from './getMiniPlayerGeometry'
 import { EMPTY_SHADE_HOLE, type ShadeHole, type ShadeRow } from './shadeRow'
 
@@ -42,7 +41,7 @@ export const getPillShadeHole = (row: ShadeRow, input: PillShadeInput): ShadeHol
     screenWidth: input.screenWidth,
     tabBarHeight: input.tabBarHeight,
   })
-  const height = PLAYER_SIZES.miniPlayerHeight
+  const height = pill.height
   const visibleBottom = pill.bottom - MINI_PILL_TUCK_DISTANCE * focus
 
   return {

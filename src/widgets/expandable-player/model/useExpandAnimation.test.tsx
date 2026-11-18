@@ -7,6 +7,7 @@ import {
   BAR_CIRCLE_SIZE,
   BAR_EXPANDED_ISLAND_TOP_MARGIN,
   BAR_OUTER_GAP,
+  BAR_PILL_ROW_GAP,
   BAR_ROW_MIN_HEIGHT,
   BAR_SIDE_INSET,
   setBarCollapsed,
@@ -19,7 +20,7 @@ import { useExpandAnimation } from './useExpandAnimation'
 
 const TAB_BAR_HEIGHT = 98
 const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
-const EXPANDED_BOTTOM = TAB_BAR_HEIGHT - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_OUTER_GAP
+const EXPANDED_BOTTOM = TAB_BAR_HEIGHT - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP
 const COLLAPSED_BOTTOM = TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2
 const COLLAPSED_LEFT = BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
 
@@ -166,7 +167,7 @@ describe('useExpandAnimation restingContainerStyle', () => {
 
     expect(result).not.toBeNull()
     expect(result).toMatchObject({
-      barCollapsedTop: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      barCollapsedTop: 800 - COLLAPSED_BOTTOM - TAB_BAR_ISLAND_HEIGHT,
       barExpandedTop: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
       restingContainerStyle: {
         borderBottomLeftRadius: PILL_RADIUS,
@@ -187,19 +188,20 @@ describe('useExpandAnimation restingContainerStyle', () => {
     expect(result).not.toBeNull()
     expect(result).toMatchObject({
       miniBarRestingStyle: {
-        borderRadius: PILL_RADIUS,
+        borderRadius: TAB_BAR_ISLAND_HEIGHT / 2,
         bottom: COLLAPSED_BOTTOM,
+        height: TAB_BAR_ISLAND_HEIGHT,
         left: COLLAPSED_LEFT,
         width: 400 - COLLAPSED_LEFT * 2,
       },
       restingContainerStyle: {
-        borderBottomLeftRadius: PILL_RADIUS,
-        borderBottomRightRadius: PILL_RADIUS,
-        borderTopLeftRadius: PILL_RADIUS,
-        borderTopRightRadius: PILL_RADIUS,
+        borderBottomLeftRadius: TAB_BAR_ISLAND_HEIGHT / 2,
+        borderBottomRightRadius: TAB_BAR_ISLAND_HEIGHT / 2,
+        borderTopLeftRadius: TAB_BAR_ISLAND_HEIGHT / 2,
+        borderTopRightRadius: TAB_BAR_ISLAND_HEIGHT / 2,
         bottom: COLLAPSED_BOTTOM,
         left: COLLAPSED_LEFT,
-        top: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+        top: 800 - COLLAPSED_BOTTOM - TAB_BAR_ISLAND_HEIGHT,
         width: 400 - COLLAPSED_LEFT * 2,
       },
     })
@@ -481,13 +483,13 @@ describe('getContainerGeometryStyle (expand interpolation)', () => {
 
   test('starts from the collapsed resting pill', () => {
     expect(geometry(1, 0)).toEqual({
-      borderBottomLeftRadius: PILL_RADIUS,
-      borderBottomRightRadius: PILL_RADIUS,
-      borderTopLeftRadius: PILL_RADIUS,
-      borderTopRightRadius: PILL_RADIUS,
+      borderBottomLeftRadius: TAB_BAR_ISLAND_HEIGHT / 2,
+      borderBottomRightRadius: TAB_BAR_ISLAND_HEIGHT / 2,
+      borderTopLeftRadius: TAB_BAR_ISLAND_HEIGHT / 2,
+      borderTopRightRadius: TAB_BAR_ISLAND_HEIGHT / 2,
       bottom: COLLAPSED_BOTTOM,
       left: COLLAPSED_LEFT,
-      top: 800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
+      top: 800 - COLLAPSED_BOTTOM - TAB_BAR_ISLAND_HEIGHT,
       width: 400 - COLLAPSED_LEFT * 2,
     })
   })
@@ -497,9 +499,9 @@ describe('getContainerGeometryStyle (expand interpolation)', () => {
 
     expect(style.bottom).toBe(COLLAPSED_BOTTOM / 2)
     expect(style.left).toBe(COLLAPSED_LEFT / 2)
-    expect(style.top).toBe((800 - COLLAPSED_BOTTOM - PLAYER_SIZES.miniPlayerHeight) / 2)
+    expect(style.top).toBe((800 - COLLAPSED_BOTTOM - TAB_BAR_ISLAND_HEIGHT) / 2)
     expect(style.width).toBe(400 - COLLAPSED_LEFT)
-    expect(style.borderTopLeftRadius).toBe(PILL_RADIUS / 2)
+    expect(style.borderTopLeftRadius).toBe(TAB_BAR_ISLAND_HEIGHT / 4)
   })
 
   test('interpolates upward from the expanded pill when expanding', () => {
