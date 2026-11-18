@@ -1,20 +1,23 @@
 import { createGlassStyles, getGlassBorder, getGlassFill, getGlassTint, GLASS } from './glass'
 import { getWebGlassStyle } from './webGlass'
 
-const BACKDROP_FILTER = 'blur(8px) saturate(140%)'
+const BACKDROP_FILTER = 'blur(1px) saturate(140%)'
+const LIGHT_FILL = 'rgba(208, 208, 208, 0.85)'
+const DARK_FILL = 'rgba(80, 80, 80, 0.7)'
+const WEB_DARK_FILL = 'rgba(80, 80, 80, 0.65)'
 
 describe('glass recipe', () => {
-  test('keeps a light native blur so the backdrop stays crisp', () => {
-    expect(GLASS.blur.intensity).toBe(25)
+  test('keeps a barely-there native blur so the backdrop stays crisp', () => {
+    expect(GLASS.blur.intensity).toBe(5)
     expect(GLASS.blur.androidMethod).toBe('dimezisBlurViewSdk31Plus')
   })
 
-  test('uses a saturated white translucent light fill so the island reads bright', () => {
-    expect(getGlassFill(true)).toBe('rgba(255, 255, 255, 0.55)')
+  test('uses a dense light-gray fill so the island reads bright but not white', () => {
+    expect(getGlassFill(true)).toBe(LIGHT_FILL)
   })
 
-  test('uses a saturated black translucent dark fill that still reads through', () => {
-    expect(getGlassFill(false)).toBe('rgba(0, 0, 0, 0.26)')
+  test('uses a dense dark-gray fill that still reads through', () => {
+    expect(getGlassFill(false)).toBe(DARK_FILL)
   })
 
   test('draws a white hairline rim in both themes', () => {
@@ -30,14 +33,14 @@ describe('glass recipe', () => {
   })
 
   test('web: classic glassmorphism blurs and saturates the backdrop', () => {
-    // Classic recipe, lightened for the airier islands (Issue #153):
-    // `backdrop-filter: blur(8px) saturate(140%)`. The filter is emitted twice —
+    // Classic recipe, nearly blurless like the native one:
+    // `backdrop-filter: blur(1px) saturate(140%)`. The filter is emitted twice —
     // Safari still honours only the `-webkit-` prefixed form.
     expect(GLASS.web.backdropFilter).toBe(BACKDROP_FILTER)
 
     expect(getWebGlassStyle(true, 16)).toEqual({
       backdropFilter: BACKDROP_FILTER,
-      backgroundColor: 'rgba(255, 255, 255, 0.28)',
+      backgroundColor: 'rgba(208, 208, 208, 0.8)',
       borderColor: 'rgba(255, 255, 255, 0.45)',
       borderRadius: 16,
       borderWidth: 1,
@@ -47,7 +50,7 @@ describe('glass recipe', () => {
 
   test('web: dark theme uses a denser tint and a subtler rim', () => {
     expect(getWebGlassStyle(false, 28)).toMatchObject({
-      backgroundColor: 'rgba(0, 0, 0, 0.24)',
+      backgroundColor: WEB_DARK_FILL,
       borderColor: 'rgba(255, 255, 255, 0.15)',
       borderRadius: 28,
       borderWidth: 1,
@@ -60,8 +63,8 @@ describe('glass recipe', () => {
       'rgba(255, 255, 255, 0)',
     ])
     expect(GLASS.android.sheen.heightPercent).toBe('40%')
-    expect(getGlassFill(true, GLASS.android.fillAlphaBoost)).toBe('rgba(255, 255, 255, 0.61)')
-    expect(getGlassFill(false, GLASS.android.fillAlphaBoost)).toBe('rgba(0, 0, 0, 0.32)')
+    expect(getGlassFill(true, GLASS.android.fillAlphaBoost)).toBe('rgba(208, 208, 208, 0.91)')
+    expect(getGlassFill(false, GLASS.android.fillAlphaBoost)).toBe('rgba(80, 80, 80, 0.76)')
   })
 
   test('picks the blur tint that matches the theme', () => {
@@ -73,13 +76,13 @@ describe('glass recipe', () => {
     expect(createGlassStyles(true, 38)).toEqual({
       blur: { intensity: GLASS.blur.intensity, tint: 'light' },
       containerPlain: {},
-      fill: { backgroundColor: 'rgba(255, 255, 255, 0.55)' },
+      fill: { backgroundColor: LIGHT_FILL },
       rim: { borderColor: 'rgba(255, 255, 255, 0.25)', borderRadius: 38, borderWidth: 1 },
     })
     expect(createGlassStyles(false, 9999)).toMatchObject({
       blur: { intensity: GLASS.blur.intensity, tint: 'dark' },
       containerPlain: {},
-      fill: { backgroundColor: 'rgba(0, 0, 0, 0.26)' },
+      fill: { backgroundColor: DARK_FILL },
       rim: { borderColor: 'rgba(255, 255, 255, 0.12)', borderRadius: 9999, borderWidth: 1 },
     })
   })

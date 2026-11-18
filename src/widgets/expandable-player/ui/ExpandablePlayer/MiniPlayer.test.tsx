@@ -148,6 +148,11 @@ describe('<MiniPlayer>', () => {
     capturedMovingTextProps.length = 0
   })
 
+  const findFill = (color: string) =>
+    screen.root?.queryAll(
+      instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === color,
+    ) ?? []
+
   test('renders the pill as frosted glass over the page', async () => {
     await renderMiniPlayer()
 
@@ -156,9 +161,10 @@ describe('<MiniPlayer>', () => {
     )
 
     expect(blurs).toHaveLength(1)
-    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
-      backgroundColor: getGlassFill(true),
-    })
+    // The fill is a layer ABOVE the blur: the native snapshot is opaque, so a
+    // backgroundColor underneath it would never show through.
+    expect(findFill(getGlassFill(true))).toHaveLength(1)
+    expect(StyleSheet.flatten(blurs?.[0]?.props.style)?.backgroundColor).toBeUndefined()
     expect(
       screen.root?.queryAll(instance => {
         const flat = StyleSheet.flatten(instance.props.style)
@@ -209,9 +215,8 @@ describe('<MiniPlayer>', () => {
     )
 
     expect(blurs).toHaveLength(1)
-    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
-      backgroundColor: getGlassFill(false),
-    })
+    expect(findFill(getGlassFill(false))).toHaveLength(1)
+    expect(StyleSheet.flatten(blurs?.[0]?.props.style)?.backgroundColor).toBeUndefined()
     expect(
       screen.root?.queryAll(instance => {
         const flat = StyleSheet.flatten(instance.props.style)

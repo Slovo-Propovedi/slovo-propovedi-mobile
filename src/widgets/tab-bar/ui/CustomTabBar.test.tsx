@@ -170,6 +170,11 @@ describe('<CustomTabBar>', () => {
   const findGlassBlurs = () =>
     screen.root?.queryAll(instance => instance.props.intensity === GLASS.blur.intensity) ?? []
 
+  const findFill = (color: string) =>
+    screen.root?.queryAll(
+      instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === color,
+    ) ?? []
+
   const findHairlineBorders = (color: string) =>
     screen.root?.queryAll(instance => {
       const flat = StyleSheet.flatten(instance.props.style)
@@ -337,9 +342,10 @@ describe('<CustomTabBar>', () => {
     // Island + morph container + the always-mounted public ✕ slot.
     expect(blurs).toHaveLength(3)
     expect(blurs.every(blur => blur.props.tint === 'light')).toBe(true)
-    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
-      backgroundColor: getGlassFill(true),
-    })
+    // The fill is a layer ABOVE the blur: the native snapshot is opaque, so a
+    // backgroundColor underneath it would never show through.
+    expect(findFill(getGlassFill(true))).toHaveLength(3)
+    expect(StyleSheet.flatten(blurs?.[0]?.props.style)?.backgroundColor).toBeUndefined()
     expect(findHairlineBorders(getGlassBorder(true))).toHaveLength(3)
   })
 
@@ -367,9 +373,8 @@ describe('<CustomTabBar>', () => {
 
     expect(blurs).toHaveLength(3)
     expect(blurs.every(blur => blur.props.tint === 'dark')).toBe(true)
-    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
-      backgroundColor: getGlassFill(false),
-    })
+    expect(findFill(getGlassFill(false))).toHaveLength(3)
+    expect(StyleSheet.flatten(blurs?.[0]?.props.style)?.backgroundColor).toBeUndefined()
     expect(findHairlineBorders(getGlassBorder(false))).toHaveLength(3)
   })
 

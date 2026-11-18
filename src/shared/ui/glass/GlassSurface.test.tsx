@@ -24,6 +24,11 @@ const findBlur = () =>
 const findSheen = () =>
   screen.root?.queryAll(instance => instance.props.colors === GLASS.android.sheen.colors)
 
+const findFill = (color: string) =>
+  screen.root?.queryAll(
+    instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === color,
+  ) ?? []
+
 const findRim = () =>
   screen.root?.queryAll(instance => {
     const flat = StyleSheet.flatten(instance.props.style)
@@ -38,12 +43,30 @@ describe('<GlassSurface>', () => {
     setPlatform('ios')
     await render(<GlassSurface isLight radius={28} />)
 
-    const blurs = findBlur()
+    expect(findBlur()).toHaveLength(1)
 
-    expect(blurs).toHaveLength(1)
-    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
-      backgroundColor: getGlassFill(true),
-    })
+    // The fill is a layer ABOVE the blur: the native snapshot is opaque, so a
+    // backgroundColor underneath it would never show through.
+    expect(findFill(getGlassFill(true))).toHaveLength(1)
+    expect(StyleSheet.flatten(findBlur()?.[0]?.props.style)?.backgroundColor).toBeUndefined()
+
+    // The layer order itself is the contract (GlassSurface.tsx:79-80): a native
+    // blur snapshot is opaque, so the fill must render AFTER the blur.
+    const nodes = screen.root?.queryAll(() => true) ?? []
+    const blurIndex = nodes.findIndex(instance => instance.props.intensity === GLASS.blur.intensity)
+    const fillIndex = nodes.findIndex(
+      instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === getGlassFill(true),
+    )
+
+    expect(fillIndex).toBeGreaterThan(blurIndex)
+  })
+
+  test('dark theme renders its own fill above the blur', async () => {
+    setPlatform('ios')
+    await render(<GlassSurface radius={28} isLight={false} />)
+
+    expect(findBlur()).toHaveLength(1)
+    expect(findFill(getGlassFill(false))).toHaveLength(1)
   })
 
   test('iOS renders the top-edge sheen as the light-refraction cue', async () => {
@@ -89,12 +112,9 @@ describe('<GlassSurface>', () => {
     setPlatform('android')
     await render(<GlassSurface isLight radius={28} />)
 
-    const blurs = findBlur()
-
-    // The blurred layer darkens slightly so the surface separates from content.
-    expect(StyleSheet.flatten(blurs?.[0]?.props.style)).toMatchObject({
-      backgroundColor: getGlassFill(true, GLASS.android.fillAlphaBoost),
-    })
+    // The fill layer sits above the blur and is denser on Android, so the
+    // surface separates from content even without a real backdrop blur.
+    expect(findFill(getGlassFill(true, GLASS.android.fillAlphaBoost))).toHaveLength(1)
 
     const sheen = findSheen()
 

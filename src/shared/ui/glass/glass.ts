@@ -25,42 +25,46 @@ export const GLASS = {
     // Passed to BlurView whenever the page publishes a target via
     // BlurTargetProvider (Android 12+ only; gated by supportsAndroidBackdropBlur).
     androidMethod: 'dimezisBlurViewSdk31Plus' satisfies BlurMethod,
-    // Light blur (Issue #153): the content behind the islands stays crisp and
+    // Barely-there blur: the content behind the islands stays crisp and
     // reads through the glass instead of melting into a flat frosted slab.
-    intensity: 25,
+    intensity: 5,
   },
   border: { alpha: { dark: 0.12, light: 0.25 }, color: '255, 255, 255' },
-  // Clear glass: the blurred backdrop smears read through the fill, which is
-  // the perceived refraction. Both fills are saturated tints (Issue #153):
-  // the light one reads bright white like the Apple Music pair, the dark one a
-  // firm black — intense color, but still translucent enough for the backdrop
-  // to read through instead of a near-solid slab.
-  fillAlpha: { dark: 0.26, light: 0.55 },
+  // Denser glass: the fills carry most of the island's body now that the blur
+  // is nearly gone. Neutral grays instead of pure white/black (Issue #153
+  // asked for saturated tints; the pure tones read too stark against the
+  // pages): the light fill is `#d0d0d0` — clearly darker than the theme's
+  // `#e0e0e0` skeleton gray, so the island reads gray both on the white page
+  // and on the `#e0e0e0` shade band around it; the dark one is `#505050`,
+  // which at this alpha composites to ~`#383838` over the black page —
+  // visibly gray and well above the ~`#1f1f1f` shade band, so the island
+  // keeps its own silhouette instead of blending into it.
+  fillAlpha: { dark: 0.7, light: 0.85 },
+  fillColor: { dark: '80, 80, 80', light: '208, 208, 208' },
   web: {
-    // Classic glassmorphism, lightened for the airier islands (Issue #153):
-    // `backdrop-filter: blur(8px) saturate(140%)`. GlassSurface bypasses
+    // Classic glassmorphism, nearly blurless like the native recipe:
+    // `backdrop-filter: blur(1px) saturate(140%)`. GlassSurface bypasses
     // BlurView on web and emits both this property and its `-webkit-` twin,
     // because Safari still honours only the prefixed form.
-    backdropFilter: 'blur(8px) saturate(140%)',
+    backdropFilter: 'blur(1px) saturate(140%)',
     // Thin translucent rim: brighter in light theme so the sheet keeps an edge
     // on a bright backdrop, subtler in dark theme where contrast is plentiful.
     borderAlpha: { dark: 0.15, light: 0.45 },
-    // Translucent tint: light glass whitens the backdrop, dark glass darkens it
-    // so white text keeps its contrast. Both mirror the saturated native fills
-    // (Issue #153) and stay thinner than them: the backdrop-filter blur already
-    // carries the refraction.
-    tintAlpha: { dark: 0.24, light: 0.28 },
+    // Denser tint on the same neutral grays as the native fills: light glass
+    // softens the backdrop toward gray, dark glass dims it so white text keeps
+    // its contrast. Both stay a touch thinner than the native fills.
+    tintAlpha: { dark: 0.65, light: 0.8 },
   },
 } as const
 
 const rgba = (channels: string, alpha: number) => `rgba(${channels}, ${alpha})`
 
 export const getGlassFill = (isLight: boolean, alphaBoost = 0) => {
-  // 0.55 + 0.06 is 0.6100000000000001 in IEEE 754 — round to the recipe's 2dp.
+  // 0.85 + 0.06 is 0.9099999999999999 in IEEE 754 — round to the recipe's 2dp.
   const alpha =
     Math.round(((isLight ? GLASS.fillAlpha.light : GLASS.fillAlpha.dark) + alphaBoost) * 100) / 100
 
-  return isLight ? rgba('255, 255, 255', alpha) : rgba('0, 0, 0', alpha)
+  return rgba(isLight ? GLASS.fillColor.light : GLASS.fillColor.dark, alpha)
 }
 
 export const getGlassBorder = (isLight: boolean) =>
@@ -68,8 +72,8 @@ export const getGlassBorder = (isLight: boolean) =>
 
 export const getWebGlassFill = (isLight: boolean) =>
   isLight
-    ? rgba(GLASS.border.color, GLASS.web.tintAlpha.light)
-    : rgba('0, 0, 0', GLASS.web.tintAlpha.dark)
+    ? rgba(GLASS.fillColor.light, GLASS.web.tintAlpha.light)
+    : rgba(GLASS.fillColor.dark, GLASS.web.tintAlpha.dark)
 
 export const getWebGlassBorder = (isLight: boolean) =>
   rgba(GLASS.border.color, isLight ? GLASS.web.borderAlpha.light : GLASS.web.borderAlpha.dark)

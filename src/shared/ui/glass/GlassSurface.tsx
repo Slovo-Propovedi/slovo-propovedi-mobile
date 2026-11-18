@@ -53,7 +53,7 @@ export const GlassSurface = ({
   // would silently fall back and log a warning on every mount.
   const realBlurTarget =
     isAndroid && supportsAndroidBackdropBlur() && target !== null ? target : null
-  const tint = isAndroid
+  const fill = isAndroid
     ? { backgroundColor: getGlassFill(isLight, GLASS.android.fillAlphaBoost) }
     : glass.fill
 
@@ -65,16 +65,21 @@ export const GlassSurface = ({
       {isWeb ? (
         <View style={[StyleSheet.absoluteFill, getWebGlassStyle(isLight, radius)]} />
       ) : (
-        <BlurView
-          tint={glass.blur.tint}
-          intensity={glass.blur.intensity}
-          style={[StyleSheet.absoluteFill, tint]}
-          blurTarget={realBlurTarget ?? undefined}
-          // Ask for no native blur explicitly when there is no target: a
-          // dimezis method without `blurTarget` makes expo-blur warn and fall
-          // back to `none` anyway.
-          blurMethod={realBlurTarget ? GLASS.blur.androidMethod : 'none'}
-        />
+        <>
+          <BlurView
+            tint={glass.blur.tint}
+            style={StyleSheet.absoluteFill}
+            intensity={glass.blur.intensity}
+            blurTarget={realBlurTarget ?? undefined}
+            // Ask for no native blur explicitly when there is no target: a
+            // dimezis method without `blurTarget` makes expo-blur warn and fall
+            // back to `none` anyway.
+            blurMethod={realBlurTarget ? GLASS.blur.androidMethod : 'none'}
+          />
+          {/* The fill must sit ABOVE the BlurView: a live dimezis/iOS snapshot
+              is opaque, so a backgroundColor under it never shows through. */}
+          <View style={[StyleSheet.absoluteFill, fill]} />
+        </>
       )}
       <LinearGradient
         pointerEvents='none'
