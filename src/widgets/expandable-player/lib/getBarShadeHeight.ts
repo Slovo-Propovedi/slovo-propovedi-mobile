@@ -1,8 +1,4 @@
-import {
-  BAR_ROW_MIN_HEIGHT,
-  TAB_BAR_ISLAND_HEIGHT,
-  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
-} from 'shared/ui/layout'
+import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getMiniPlayerGeometry } from './getMiniPlayerGeometry'
 
@@ -56,14 +52,14 @@ export const getShadeLocations = (
  * bottom to the top of the islands (tab island / search circle / open search
  * pill share the row top) plus the overscan.
  *
- * The row is `BAR_ROW_MIN_HEIGHT + bottomPadding` tall with the islands centered
- * in its content box, so the island top sits `(BAR_ROW_MIN_HEIGHT − island) / 2`
- * below the row top. The island height morphs 68 ⇄ 56 with the bar progress, so
- * the no-pill shade follows the collapse as well.
+ * The row is `BAR_ROW_MIN_HEIGHT + bottomPadding` tall with the islands anchored
+ * to its content box's bottom edge, so the island top sits `bottomPadding +
+ * islandHeight` above the container bottom. The island height morphs 68 ⇄ 56
+ * with the bar progress, so the no-pill shade follows the collapse as well.
  *
  * Worklet-safe: called from Reanimated animated styles.
  * @param barProgress - 0 = expanded bar, 1 = collapsed bar.
- * @param bottomPadding - Row bottom padding (`max(insets.bottom, BAR_BOTTOM_INSET_MIN)`).
+ * @param bottomPadding - Row bottom padding (`getBarBottomPadding(insets.bottom)`).
  */
 export const getBarShadeHeight = (barProgress: number, bottomPadding: number) => {
   'worklet'
@@ -71,9 +67,8 @@ export const getBarShadeHeight = (barProgress: number, bottomPadding: number) =>
   const islandHeight =
     TAB_BAR_ISLAND_HEIGHT_EXPANDED +
     (TAB_BAR_ISLAND_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) * progress
-  const islandTopGap = (BAR_ROW_MIN_HEIGHT - islandHeight) / 2
 
-  return BAR_ROW_MIN_HEIGHT + bottomPadding - islandTopGap + SHADE_TOP_OVERSCAN_PX
+  return bottomPadding + islandHeight + SHADE_TOP_OVERSCAN_PX
 }
 
 interface PillShadeHeightInput {
@@ -92,7 +87,7 @@ interface PillShadeHeightInput {
  * Worklet-safe: called from Reanimated animated styles.
  * @param input - Pill, row and focus geometry inputs.
  * @param input.barProgress - 0 = expanded bar, 1 = collapsed bar.
- * @param input.bottomPadding - Row bottom padding (max(inset, minimum inset)).
+ * @param input.bottomPadding - Row bottom padding (`getBarBottomPadding(insets.bottom)`).
  * @param input.focusProgress - 0 = pill visible, 1 = pill tucked/focused.
  * @param input.fullScreenHeight - Full device screen height.
  * @param input.screenWidth - Current window width.

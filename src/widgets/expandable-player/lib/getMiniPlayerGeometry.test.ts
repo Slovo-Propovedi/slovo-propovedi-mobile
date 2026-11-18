@@ -25,22 +25,20 @@ const geometryAt = (tabBarHeight: number, barProgress = 0) =>
     tabBarHeight,
   })
 
-// Independent model of the real islands row: a fixed content box, islands
-// centered in it, and the bottom safe-area padding below the content box.
+// Independent model of the real islands row: a fixed content box whose bottom
+// edge sits on the bottom safe-area padding line, with the islands flush
+// against it.
 const islandTopFromScreenBottom = (paddingBottom: number) =>
-  paddingBottom +
-  (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2 +
-  TAB_BAR_ISLAND_HEIGHT_EXPANDED
-const islandBottomFromScreenBottom = (paddingBottom: number) =>
-  paddingBottom + (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT) / 2
+  paddingBottom + TAB_BAR_ISLAND_HEIGHT_EXPANDED
+const islandBottomFromScreenBottom = (paddingBottom: number) => paddingBottom
 
 describe('getMiniPlayerGeometry', () => {
-  test('measured 88dp row with 12dp bottom padding: pill rests one pill-row gap above the 84dp island top', () => {
+  test('measured 88dp row with 12dp bottom padding: pill rests one pill-row gap above the 80dp island top', () => {
     const paddingBottom = BAR_BOTTOM_INSET_MIN
     const tabBarHeight = BAR_ROW_MIN_HEIGHT + paddingBottom
     const { bottom } = geometryAt(tabBarHeight)
 
-    expect(islandTopFromScreenBottom(paddingBottom)).toBe(84)
+    expect(islandTopFromScreenBottom(paddingBottom)).toBe(80)
     expect(bottom).toBe(tabBarHeight - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP)
     expect(bottom - islandTopFromScreenBottom(paddingBottom)).toBe(BAR_PILL_ROW_GAP)
   })

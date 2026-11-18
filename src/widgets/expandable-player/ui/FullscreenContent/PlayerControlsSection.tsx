@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { Text, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { type TrackCacheVisualState } from 'entities/offline-cache'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { millisToMinutesAndSeconds } from 'shared/lib/player'
 import { MovingText } from 'shared/ui'
-import { getFullscreenPlayerBottomPadding } from '../../lib/getFullscreenPlayerBottomPadding'
+import { useBarBottomPadding } from 'shared/ui/layout'
 import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { type createStyles } from '../ExpandablePlayer/styles'
 import { BoundaryHint } from './BoundaryHint'
@@ -51,17 +50,12 @@ export const PlayerControlsSection = ({
   styles: ReturnType<typeof createStyles>
   visualState: TrackCacheVisualState
 }) => {
-  const { bottom } = useSafeAreaInsets()
+  const bottomPadding = useBarBottomPadding()
   const subtitle = getPlayerSubtitle(audio, playlist)
   const [previewPosition, setPreviewPosition] = useState<null | number>(null)
 
   return (
-    <View
-      style={[
-        styles.bottomContentContainer,
-        { paddingBottom: getFullscreenPlayerBottomPadding(bottom) },
-      ]}
-    >
+    <View style={[styles.bottomContentContainer, { paddingBottom: bottomPadding }]}>
       <View style={styles.trackInfoRow}>
         <View style={styles.trackInfoTextContainer}>
           <MovingText

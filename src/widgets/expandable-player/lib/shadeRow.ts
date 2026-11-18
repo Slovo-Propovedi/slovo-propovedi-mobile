@@ -73,7 +73,7 @@ export const getShadeRow = ({
   const innerWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
 
   return {
-    bottom: tabBarHeight - (BAR_ROW_MIN_HEIGHT + height) / 2,
+    bottom: tabBarHeight - BAR_ROW_MIN_HEIGHT,
     height,
     innerLeft,
     innerWidth,

@@ -64,20 +64,18 @@ const EXPANDED_HEIGHT =
   BAR_PILL_ROW_GAP +
   PLAYER_SIZES.miniPlayerHeight +
   SHADE_TOP_OVERSCAN_PX
-// Collapsed row: islands are centered in BAR_ROW_MIN_HEIGHT, so the pill's
-// bottom sits half the leftover height above the content box's bottom edge.
+// Collapsed row: islands are flush with the content box's bottom edge, so the
+// pill's bottom sits on the same line the islands share.
 const COLLAPSED_HEIGHT =
-  TAB_BAR_HEIGHT -
-  (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2 +
-  TAB_BAR_ISLAND_HEIGHT +
-  SHADE_TOP_OVERSCAN_PX
+  TAB_BAR_HEIGHT - BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT + SHADE_TOP_OVERSCAN_PX
 // No pill: the shade anchors to the islands row top instead. The row is
-// BAR_ROW_MIN_HEIGHT plus the bottom padding, and the island is centered in it,
-// so its top gap grows as the island shrinks from the expanded 68 to 56.
+// BAR_ROW_MIN_HEIGHT plus the bottom padding, and the island is flush with its
+// bottom edge, so its top gap grows as the island shrinks from the expanded 68
+// to 56.
 const NO_PILL_EXPANDED_HEIGHT =
-  TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2 + SHADE_TOP_OVERSCAN_PX
+  TAB_BAR_HEIGHT - BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT_EXPANDED + SHADE_TOP_OVERSCAN_PX
 const NO_PILL_COLLAPSED_HEIGHT =
-  TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT) / 2 + SHADE_TOP_OVERSCAN_PX
+  TAB_BAR_HEIGHT - BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT + SHADE_TOP_OVERSCAN_PX
 // The tint is opaque and the alpha rides `stopOpacity`: react-native-svg masks
 // stopColor alpha out on native, and only stopOpacity reaches Android.
 const LIGHT_SHADE_OPAQUE = '#000000'

@@ -1,8 +1,4 @@
-import {
-  BAR_ROW_MIN_HEIGHT,
-  TAB_BAR_ISLAND_HEIGHT,
-  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
-} from 'shared/ui/layout'
+import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import {
   getBarShadeHeight,
   getPillShadeHeight,
@@ -42,27 +38,21 @@ const getPillShadeHeightAt = (barProgress: number) => {
 describe('getBarShadeHeight', () => {
   test('anchors to the expanded islands row top', () => {
     expect(getBarShadeHeight(0, BOTTOM_PADDING)).toBe(
-      BAR_ROW_MIN_HEIGHT +
-        BOTTOM_PADDING -
-        (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2 +
-        SHADE_TOP_OVERSCAN_PX,
+      BOTTOM_PADDING + TAB_BAR_ISLAND_HEIGHT_EXPANDED + SHADE_TOP_OVERSCAN_PX,
     )
   })
 
   test('follows the collapsed island down as the bar morphs', () => {
     expect(getBarShadeHeight(1, BOTTOM_PADDING)).toBe(
-      BAR_ROW_MIN_HEIGHT +
-        BOTTOM_PADDING -
-        (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT) / 2 +
-        SHADE_TOP_OVERSCAN_PX,
+      BOTTOM_PADDING + TAB_BAR_ISLAND_HEIGHT + SHADE_TOP_OVERSCAN_PX,
     )
   })
 
-  test('drops by half the island shrink so the ramp stays above the chrome', () => {
+  test('drops by the full island shrink so the ramp stays above the chrome', () => {
     const expanded = getBarShadeHeight(0, BOTTOM_PADDING)
     const collapsed = getBarShadeHeight(1, BOTTOM_PADDING)
 
-    expect(expanded - collapsed).toBe((TAB_BAR_ISLAND_HEIGHT_EXPANDED - TAB_BAR_ISLAND_HEIGHT) / 2)
+    expect(expanded - collapsed).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED - TAB_BAR_ISLAND_HEIGHT)
   })
 })
 

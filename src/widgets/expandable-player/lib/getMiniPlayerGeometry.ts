@@ -66,13 +66,13 @@ export const getMiniPlayerGeometry = ({
   const rowLeft = getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH)
   const rowContentWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
   // The measured row height includes the bottom safe-area padding and its fixed
-  // BAR_ROW_MIN_HEIGHT content box, with the islands centered in that box. The
-  // expanded pill therefore rests one pill-row gap above the expanded island's
-  // top edge — visibly detached, the Apple Music floating pair (Issue #153).
+  // BAR_ROW_MIN_HEIGHT content box, with the islands anchored to the box's
+  // bottom edge (the safe-area line). The expanded pill therefore rests one
+  // pill-row gap above the expanded island's top edge — visibly detached, the
+  // Apple Music floating pair (Issue #153).
   const expandedBottom = tabBarHeight - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP
-  // Islands are centered in the content box, so the collapsed island's bottom
-  // sits (row content - island) / 2 above the content box's bottom edge.
-  const collapsedBottom = tabBarHeight - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2
+  // The collapsed pill joins the islands on the row's bottom edge.
+  const collapsedBottom = tabBarHeight - BAR_ROW_MIN_HEIGHT
   const expandedLeft = rowLeft + BAR_SIDE_INSET
   const collapsedLeft = rowLeft + BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
   const expandedWidth = rowContentWidth

@@ -3,15 +3,14 @@ import { type Tabs } from 'expo-router'
 import { useState } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BarBackdropShade } from 'widgets/expandable-player/@x/barShade'
 import { SearchIslandMorph } from 'widgets/search-island/@x/morph'
 import { OnboardingTarget } from 'features/onboarding'
 import { GlassIsland } from 'shared/ui'
 import {
-  BAR_BOTTOM_INSET_MIN,
   BAR_ROW_MIN_HEIGHT,
   setTabBarHeight,
+  useBarBottomPadding,
   useKeyboardLiftStyle,
 } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
@@ -38,7 +37,6 @@ export const CustomTabBar = ({
   state,
 }: CustomTabBarProps) => {
   const setMeasuredTabBarHeight = useAction(setTabBarHeight)
-  const { bottom } = useSafeAreaInsets()
   const { isLight } = useTheme()
   const { handleTabPress, isTabAvailable } = useTabPress({ emitter, navigateToTab })
   const { width: windowWidth } = useWindowDimensions()
@@ -60,7 +58,7 @@ export const CustomTabBar = ({
     rowWidth,
     windowWidth,
   })
-  const bottomPadding = Math.max(bottom, BAR_BOTTOM_INSET_MIN)
+  const bottomPadding = useBarBottomPadding()
   const keyboardLiftStyle = useKeyboardLiftStyle()
 
   return (

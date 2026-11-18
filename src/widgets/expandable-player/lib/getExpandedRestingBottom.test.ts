@@ -9,12 +9,9 @@ describe('getExpandedRestingBottom', () => {
   test('sits one pill-row gap above the expanded island top', () => {
     const paddingBottom = 34
     const tabBarHeight = BAR_ROW_MIN_HEIGHT + paddingBottom
-    const islandTop =
-      paddingBottom +
-      (BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2 +
-      TAB_BAR_ISLAND_HEIGHT_EXPANDED
+    const islandTop = paddingBottom + TAB_BAR_ISLAND_HEIGHT_EXPANDED
 
-    expect(islandTop).toBe(106)
+    expect(islandTop).toBe(102)
     expect(getExpandedRestingBottom(tabBarHeight) - islandTop).toBe(BAR_PILL_ROW_GAP)
   })
 })

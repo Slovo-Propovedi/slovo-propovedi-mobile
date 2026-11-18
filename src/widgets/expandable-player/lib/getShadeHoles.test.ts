@@ -61,11 +61,11 @@ describe('getShadeHoles', () => {
     )
 
     expect(holes).toEqual([
-      { height: 56, opacity: 1, width: 56, x: ROW_INNER_LEFT + ROW_INNER_WIDTH - 56, y: 16 },
-      { height: 56, opacity: 1, width: 116, x: 264, y: 16 },
-      { height: 56, opacity: 1, width: 176, x: 204, y: 16 },
-      { height: 56, opacity: 1, width: 236, x: 144, y: 16 },
-      { height: 56, opacity: 1, width: 296, x: ROW_INNER_LEFT + 56 + 8, y: 16 },
+      { height: 56, opacity: 1, width: 56, x: ROW_INNER_LEFT + ROW_INNER_WIDTH - 56, y: 22 },
+      { height: 56, opacity: 1, width: 116, x: 264, y: 22 },
+      { height: 56, opacity: 1, width: 176, x: 204, y: 22 },
+      { height: 56, opacity: 1, width: 236, x: 144, y: 22 },
+      { height: 56, opacity: 1, width: 296, x: ROW_INNER_LEFT + 56 + 8, y: 22 },
     ])
   })
 
@@ -78,18 +78,18 @@ describe('getShadeHoles', () => {
     }))
 
     expect(frames.map(frame => getShadeHoles(LAYOUT, frame).island)).toEqual([
-      { height: 56, opacity: 1, width: 56, x: ROW_INNER_LEFT, y: 16 },
-      { height: 56, opacity: 1, width: 42, x: ROW_INNER_LEFT, y: 16 },
-      { height: 56, opacity: 1, width: 28, x: ROW_INNER_LEFT, y: 16 },
-      { height: 56, opacity: 1, width: 14, x: ROW_INNER_LEFT, y: 16 },
-      { height: 56, opacity: 1, width: 0, x: ROW_INNER_LEFT, y: 16 },
+      { height: 56, opacity: 1, width: 56, x: ROW_INNER_LEFT, y: 22 },
+      { height: 56, opacity: 1, width: 42, x: ROW_INNER_LEFT, y: 22 },
+      { height: 56, opacity: 1, width: 28, x: ROW_INNER_LEFT, y: 22 },
+      { height: 56, opacity: 1, width: 14, x: ROW_INNER_LEFT, y: 22 },
+      { height: 56, opacity: 1, width: 0, x: ROW_INNER_LEFT, y: 22 },
     ])
     expect(frames.map(frame => getShadeHoles(LAYOUT, frame).search)).toEqual([
-      { height: 56, opacity: 1, width: 296, x: ROW_INNER_LEFT + 56 + 8, y: 16 },
-      { height: 56, opacity: 1, width: 312, x: 68, y: 16 },
-      { height: 56, opacity: 1, width: 328, x: 52, y: 16 },
-      { height: 56, opacity: 1, width: 344, x: 36, y: 16 },
-      { height: 56, opacity: 1, width: 360, x: ROW_INNER_LEFT, y: 16 },
+      { height: 56, opacity: 1, width: 296, x: ROW_INNER_LEFT + 56 + 8, y: 22 },
+      { height: 56, opacity: 1, width: 312, x: 68, y: 22 },
+      { height: 56, opacity: 1, width: 328, x: 52, y: 22 },
+      { height: 56, opacity: 1, width: 344, x: 36, y: 22 },
+      { height: 56, opacity: 1, width: 360, x: ROW_INNER_LEFT, y: 22 },
     ])
   })
 
@@ -104,10 +104,10 @@ describe('getShadeHoles', () => {
 
     expect(frames.map(frame => getShadeHoles(LAYOUT, frame).close)).toEqual([
       EMPTY_HOLE,
-      { height: 14, opacity: 1, width: 14, x: 345, y: 37 },
-      { height: 28, opacity: 1, width: 28, x: 338, y: 30 },
-      { height: 42, opacity: 1, width: 42, x: 331, y: 23 },
-      { height: 56, opacity: 1, width: 56, x: SCREEN_WIDTH - ROW_INNER_LEFT - 56, y: 16 },
+      { height: 14, opacity: 1, width: 14, x: 345, y: 43 },
+      { height: 28, opacity: 1, width: 28, x: 338, y: 36 },
+      { height: 42, opacity: 1, width: 42, x: 331, y: 29 },
+      { height: 56, opacity: 1, width: 56, x: SCREEN_WIDTH - ROW_INNER_LEFT - 56, y: 22 },
     ])
     // The pill yields exactly one close circle + gap to the fading circle.
     expect(frames.map(frame => getShadeHoles(LAYOUT, frame).search.width)).toEqual([

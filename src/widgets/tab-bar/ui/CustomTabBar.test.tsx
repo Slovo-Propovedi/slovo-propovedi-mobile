@@ -293,11 +293,20 @@ describe('<CustomTabBar>', () => {
     expect(findIslandsRowAtHeight(BAR_ROW_MIN_HEIGHT + 12)).toBeDefined()
   })
 
-  test('keeps the 3-button navigation inset above the bottom floor', async () => {
+  test('lifts the row exactly to the safe-area line on 3-button navigation', async () => {
     mockBottomInset = 48
     await renderTabBar()
 
     expect(findIslandsRowAtHeight(BAR_ROW_MIN_HEIGHT + 48)).toBeDefined()
+  })
+
+  test('sits flush on the safe-area line for a real inset below the floor', async () => {
+    // A small real inset (gesture nav on some devices) must place the islands
+    // exactly on the safe-area line, without the extra floor distance.
+    mockBottomInset = 8
+    await renderTabBar()
+
+    expect(findIslandsRowAtHeight(BAR_ROW_MIN_HEIGHT + 8)).toBeDefined()
   })
 
   test('renders the expanded island at the expanded height', async () => {

@@ -50,8 +50,8 @@ interface SearchIslandGeometryInput {
  * grows, right edge anchored) is the same motion as the island collapsing into
  * the circle, so both run off one frame-synced `BAR_MORPH_DURATION_MS` progress.
  *
- * `barProgress` only owns vertical geometry (height/radius/bottom), so the pill
- * keeps matching the island height through the morph.
+ * `barProgress` owns the pill's height/radius only, keeping it on the island's
+ * height through the morph.
  *
  * `focusProgress` retracts the active-tab circle: at 1 the pill stretches to the
  * row's left inner edge (still yielding the external close slot when shown).
@@ -87,10 +87,9 @@ export const getSearchIslandGeometry = ({
   const rowInnerLeft = rowLeft + BAR_SIDE_INSET
   // Inner row width: the span the expanded island/search pill can occupy.
   const rowInnerWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
-  // The pill follows the island height through the morph; both stay round and
-  // centered on the same row axis. Collapsed (openProgress 0) the pill is
-  // exactly the search chip at the current bar state, so the closed diameter
-  // matches the island height (68 when expanded, 56 when collapsed).
+  // The pill follows the island height through the morph; both share the row's
+  // bottom line. Collapsed it is the bar state's search chip, so the closed
+  // diameter matches the island height (68 when expanded, 56 when collapsed).
   const height =
     TAB_BAR_ISLAND_HEIGHT + (TAB_BAR_ISLAND_HEIGHT_EXPANDED - TAB_BAR_ISLAND_HEIGHT) * (1 - bar)
   // The pill grows out of the search chip: a circle pinned to the row's right
@@ -116,9 +115,9 @@ export const getSearchIslandGeometry = ({
   const iconInset = INDENTS.low + (circleIconInset - INDENTS.low) * (1 - open)
 
   return {
-    // The row is BAR_ROW_MIN_HEIGHT tall plus the bottom safe-area padding and
-    // islands are centered in it, so the pill sits on the same axis.
-    bottom: tabBarHeight - (BAR_ROW_MIN_HEIGHT + height) / 2,
+    // The islands are anchored to the row content box's bottom edge (the
+    // padding line), so the pill shares that same bottom line.
+    bottom: tabBarHeight - BAR_ROW_MIN_HEIGHT,
     closeRight: rowInnerLeft,
     height,
     iconInset,

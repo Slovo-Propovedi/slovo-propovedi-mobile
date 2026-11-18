@@ -41,7 +41,7 @@ describe('getSearchIslandGeometry', () => {
     expect(collapsed.left + collapsed.width).toBe(PHONE_WIDTH - BAR_SIDE_INSET)
     expect(collapsed.height).toBe(TAB_BAR_ISLAND_HEIGHT)
     expect(collapsed.radius).toBe(TAB_BAR_ISLAND_HEIGHT / 2)
-    expect(collapsed.bottom).toBe(TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2)
+    expect(collapsed.bottom).toBe(TAB_BAR_HEIGHT - BAR_ROW_MIN_HEIGHT)
     expect(collapsed.closeRight).toBe(BAR_SIDE_INSET)
   })
 
@@ -87,9 +87,7 @@ describe('getSearchIslandGeometry', () => {
 
     expect(expandedBar.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
     expect(expandedBar.radius).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED / 2)
-    expect(expandedBar.bottom).toBe(
-      TAB_BAR_HEIGHT - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2,
-    )
+    expect(expandedBar.bottom).toBe(TAB_BAR_HEIGHT - BAR_ROW_MIN_HEIGHT)
     expect(halfwayBar.height).toBe(62)
     expect(halfwayBar.radius).toBe(31)
   })

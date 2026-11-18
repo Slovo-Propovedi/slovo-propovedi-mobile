@@ -1,9 +1,8 @@
 import { useAtom } from '@reatom/npm-react'
 import { StyleSheet, useWindowDimensions } from 'react-native'
 import Animated, { useSharedValue } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
-import { BAR_BOTTOM_INSET_MIN, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
+import { isTabBarMeasuredAtom, tabBarHeightAtom, useBarBottomPadding } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getShadeColors } from '../lib/getShadeColors'
 import { useProgressAnimation } from '../model/useProgressAnimation'
@@ -31,7 +30,6 @@ export const BarBackdropShade = ({
   hasSearch: boolean
 }) => {
   const { isLight } = useTheme()
-  const { bottom } = useSafeAreaInsets()
   const [audio] = useAtom(currentAudioAtom)
   const [expanded] = useAtom(isPlayerExpandedAtom)
   const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
@@ -41,7 +39,7 @@ export const BarBackdropShade = ({
   const hasAudio = !!audio
   // Pill geometry is only real in zones that mount the mini player.
   const hasPill = hasAudio && hasMiniPlayer
-  const bottomPadding = Math.max(bottom, BAR_BOTTOM_INSET_MIN)
+  const bottomPadding = useBarBottomPadding()
   const { layout, locations, shadeStyle, sources, svgHeight } = useShadeGeometry({
     bottomPadding,
     fullScreenHeight: screenHeight,

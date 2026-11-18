@@ -16,7 +16,7 @@ const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
 // top follow the 56dp row slots, not the compact mini height.
 const COLLAPSED_PILL_RADIUS = TAB_BAR_ISLAND_HEIGHT / 2
 const EXPANDED_BOTTOM = 98 - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP
-const COLLAPSED_BOTTOM = 98 - (BAR_ROW_MIN_HEIGHT + TAB_BAR_ISLAND_HEIGHT) / 2
+const COLLAPSED_BOTTOM = 98 - BAR_ROW_MIN_HEIGHT
 const COLLAPSED_SIDE_INSET = BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
 
 describe('getRestingContainerStyle', () => {

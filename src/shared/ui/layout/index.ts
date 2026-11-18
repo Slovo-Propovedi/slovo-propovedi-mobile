@@ -9,6 +9,7 @@ export {
   BAR_PILL_ROW_GAP,
   BAR_ROW_MIN_HEIGHT,
   BAR_SIDE_INSET,
+  getBarBottomPadding,
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from './bottomBarLayout'
@@ -18,6 +19,7 @@ export {
   useKeyboardBottomInsetSync,
   useKeyboardLiftStyle,
 } from './lib/keyboardInset'
+export { useBarBottomPadding } from './lib/useBarBottomPadding'
 export { useBarCollapseOnScroll } from './lib/useBarCollapseOnScroll'
 export {
   isBarCollapsedAtom,
