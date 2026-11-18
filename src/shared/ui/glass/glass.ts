@@ -30,16 +30,17 @@ export const GLASS = {
     intensity: 5,
   },
   border: { alpha: { dark: 0.12, light: 0.25 }, color: '255, 255, 255' },
-  // Denser glass: the fills carry most of the island's body now that the blur
-  // is nearly gone. Neutral grays instead of pure white/black (Issue #153
-  // asked for saturated tints; the pure tones read too stark against the
-  // pages): the light fill is `#d0d0d0` — clearly darker than the theme's
-  // `#e0e0e0` skeleton gray, so the island reads gray both on the white page
-  // and on the `#e0e0e0` shade band around it; the dark one is `#505050`,
-  // which at this alpha composites to ~`#383838` over the black page —
-  // visibly gray and well above the ~`#1f1f1f` shade band, so the island
-  // keeps its own silhouette instead of blending into it.
-  fillAlpha: { dark: 0.7, light: 0.85 },
+  // Translucent glass: the fills still carry the island's body now that the
+  // blur is nearly gone, but they lean transparent so the page reads through.
+  // Neutral grays instead of pure white/black (Issue #153 asked for saturated
+  // tints; the pure tones read too stark against the pages): the light fill is
+  // `#d0d0d0` — clearly darker than the theme's `#e0e0e0` skeleton gray, so the
+  // island reads gray both on the white page and on the `#e0e0e0` shade band
+  // around it; the dark one is `#505050`, which at this alpha composites to
+  // ~`#303030` over the black page — visibly gray and well above the
+  // ~`#1f1f1f` shade band, so the island keeps its own silhouette instead of
+  // blending into it.
+  fillAlpha: { dark: 0.6, light: 0.75 },
   fillColor: { dark: '80, 80, 80', light: '208, 208, 208' },
   web: {
     // Classic glassmorphism, nearly blurless like the native recipe:
@@ -50,9 +51,11 @@ export const GLASS = {
     // Thin translucent rim: brighter in light theme so the sheet keeps an edge
     // on a bright backdrop, subtler in dark theme where contrast is plentiful.
     borderAlpha: { dark: 0.15, light: 0.45 },
-    // Denser tint on the same neutral grays as the native fills: light glass
-    // softens the backdrop toward gray, dark glass dims it so white text keeps
-    // its contrast. Both stay a touch thinner than the native fills.
+    // Tint on the same neutral grays, but slightly DENSER than the native
+    // fills: light glass softens the backdrop toward gray, dark glass dims it
+    // so white text keeps its contrast. Only the alphas differ — the channels
+    // are the same; native paints a fill layer above BlurView, web emits a
+    // `backdrop-filter` sheet.
     tintAlpha: { dark: 0.65, light: 0.8 },
   },
 } as const
@@ -60,7 +63,7 @@ export const GLASS = {
 const rgba = (channels: string, alpha: number) => `rgba(${channels}, ${alpha})`
 
 export const getGlassFill = (isLight: boolean, alphaBoost = 0) => {
-  // 0.85 + 0.06 is 0.9099999999999999 in IEEE 754 — round to the recipe's 2dp.
+  // 0.6 + 0.06 is 0.6599999999999999 in IEEE 754 — round to the recipe's 2dp.
   const alpha =
     Math.round(((isLight ? GLASS.fillAlpha.light : GLASS.fillAlpha.dark) + alphaBoost) * 100) / 100
 

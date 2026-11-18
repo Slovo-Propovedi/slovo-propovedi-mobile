@@ -2,8 +2,8 @@ import { createGlassStyles, getGlassBorder, getGlassFill, getGlassTint, GLASS } 
 import { getWebGlassStyle } from './webGlass'
 
 const BACKDROP_FILTER = 'blur(1px) saturate(140%)'
-const LIGHT_FILL = 'rgba(208, 208, 208, 0.85)'
-const DARK_FILL = 'rgba(80, 80, 80, 0.7)'
+const LIGHT_FILL = 'rgba(208, 208, 208, 0.75)'
+const DARK_FILL = 'rgba(80, 80, 80, 0.6)'
 const WEB_DARK_FILL = 'rgba(80, 80, 80, 0.65)'
 
 describe('glass recipe', () => {
@@ -63,8 +63,8 @@ describe('glass recipe', () => {
       'rgba(255, 255, 255, 0)',
     ])
     expect(GLASS.android.sheen.heightPercent).toBe('40%')
-    expect(getGlassFill(true, GLASS.android.fillAlphaBoost)).toBe('rgba(208, 208, 208, 0.91)')
-    expect(getGlassFill(false, GLASS.android.fillAlphaBoost)).toBe('rgba(80, 80, 80, 0.76)')
+    expect(getGlassFill(true, GLASS.android.fillAlphaBoost)).toBe('rgba(208, 208, 208, 0.81)')
+    expect(getGlassFill(false, GLASS.android.fillAlphaBoost)).toBe('rgba(80, 80, 80, 0.66)')
   })
 
   test('picks the blur tint that matches the theme', () => {
