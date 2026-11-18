@@ -10,8 +10,7 @@ describe('getBarBottomPadding', () => {
     expect(getBarBottomPadding(0)).toBe(BAR_BOTTOM_INSET_MIN)
   })
 
-  test('floor opt-out flushes inset-less screens (mobile web viewport bottom)', () => {
-    expect(getBarBottomPadding(0, false)).toBe(0)
-    expect(getBarBottomPadding(8, false)).toBe(8)
+  test('real inset wins even below the floor', () => {
+    expect(getBarBottomPadding(8)).toBe(8)
   })
 })

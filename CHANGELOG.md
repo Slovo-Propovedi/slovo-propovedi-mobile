@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Restore the bottom clearance for the floating bar in mobile browsers
 - Anchor bottom-bar islands flush to the safe-area line
 - Keep the finished marquee line visible and sync the pair to the longer loop
 - Keep the search close slot pointer-capable through the press window

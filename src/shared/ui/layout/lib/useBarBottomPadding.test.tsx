@@ -42,12 +42,12 @@ describe('useBarBottomPadding', () => {
     expect(result.current).toBe(12)
   })
 
-  test('mobile web (coarse pointer): flush with the viewport bottom', async () => {
+  test('mobile web (coarse pointer): keeps the clearance floor like desktop', async () => {
     Platform.OS = 'web'
     window.matchMedia = matchMedia(false)
 
     const { result } = await renderHookWithProviders(() => useBarBottomPadding())
 
-    expect(result.current).toBe(0)
+    expect(result.current).toBe(12)
   })
 })

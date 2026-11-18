@@ -2,3 +2,4 @@ Translucent bottom chrome glass with shade cutouts under the floating tab-bar is
 Semibold slider section title
 Raised mini-player gap above the islands row
 Safer mini-player, search and launch-bar behavior on Android
+Bottom clearance for the floating bar in mobile browsers

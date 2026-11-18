@@ -23,16 +23,14 @@ export const BAR_PILL_ROW_GAP = 12 as const
 // player). 20 keeps the islands slightly narrower than the screen (Issue #153).
 export const BAR_SIDE_INSET = 20 as const
 // Bottom clearance below the islands for inset-less screens that still need it
-// (desktop web, and the early native frames before insets are measured). A real
-// inset places the islands flush on the safe-area line instead, and mobile web
-// opts out of the floor entirely so the islands sit on the viewport bottom.
+// (desktop web, mobile browsers, and the early native frames before insets are
+// measured). A real inset places the islands flush on the safe-area line instead.
 export const BAR_BOTTOM_INSET_MIN = 12 as const
 // Bottom padding of the floating chrome: with a real bottom inset the islands
-// sit exactly on the safe-area line (no extra distance). Inset-less screens keep
-// the clearance floor only when `applyFloor` — `useBarBottomPadding` decides it
-// (native and desktop web yes, mobile web no).
-export const getBarBottomPadding = (bottomInset: number, applyFloor = true): number =>
-  bottomInset > 0 ? bottomInset : applyFloor ? BAR_BOTTOM_INSET_MIN : 0
+// sit exactly on the safe-area line (no extra distance); inset-less screens keep
+// the clearance floor.
+export const getBarBottomPadding = (bottomInset: number): number =>
+  bottomInset > 0 ? bottomInset : BAR_BOTTOM_INSET_MIN
 // Scroll offset past which the bar collapses to a single row.
 export const COLLAPSE_SCROLL_THRESHOLD = 80 as const
 // Scroll offset at or above which the collapsed bar expands back.
