@@ -32,16 +32,13 @@ export const GLASS = {
   border: { alpha: { dark: 0.12, light: 0.25 }, color: '255, 255, 255' },
   // Translucent glass: the fills still carry the island's body now that the
   // blur is nearly gone, but they lean transparent so the page reads through.
-  // Neutral grays instead of pure white/black (Issue #153 asked for saturated
-  // tints; the pure tones read too stark against the pages): the light fill is
-  // `#d0d0d0` — clearly darker than the theme's `#e0e0e0` skeleton gray, so the
-  // island reads gray both on the white page and on the `#e0e0e0` shade band
-  // around it; the dark one is `#505050`, which at this alpha composites to
-  // ~`#303030` over the black page — visibly gray and well above the
-  // ~`#1f1f1f` shade band, so the island keeps its own silhouette instead of
-  // blending into it.
+  // Mid-gray between the first white/black pass (Issue #153 follow-up) and the
+  // old neutral grays: pure channels melted into the white/black page, so the
+  // light fill is a hair grayer than white (`#e8e8e8`) and the dark one a hair
+  // lighter than black (`#303030`) — the least gray step that still keeps the
+  // silhouette on flat backgrounds.
   fillAlpha: { dark: 0.6, light: 0.75 },
-  fillColor: { dark: '80, 80, 80', light: '208, 208, 208' },
+  fillColor: { dark: '48, 48, 48', light: '232, 232, 232' },
   web: {
     // Classic glassmorphism, nearly blurless like the native recipe:
     // `backdrop-filter: blur(1px) saturate(140%)`. GlassSurface bypasses
@@ -51,8 +48,8 @@ export const GLASS = {
     // Thin translucent rim: brighter in light theme so the sheet keeps an edge
     // on a bright backdrop, subtler in dark theme where contrast is plentiful.
     borderAlpha: { dark: 0.15, light: 0.45 },
-    // Tint on the same neutral grays, but slightly DENSER than the native
-    // fills: light glass softens the backdrop toward gray, dark glass dims it
+    // Tint on the same gray channels, but slightly DENSER than the native
+    // fills: light glass softens the backdrop toward white, dark glass dims it
     // so white text keeps its contrast. Only the alphas differ — the channels
     // are the same; native paints a fill layer above BlurView, web emits a
     // `backdrop-filter` sheet.

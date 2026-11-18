@@ -65,15 +65,12 @@ export const styles = {
   // only the island inside it changes width. The island anchors to the content
   // box's bottom edge so its silhouette sits flush on the safe-area line
   // (Issue #153), never floating above it by the leftover centering space.
-  // Positioned with zIndex 1 so the row paints above the z-auto shade on web:
-  // there the positioned shade would otherwise win the CSS step-8 paint order
-  // over this static row (document order only ranks positioned siblings), and
-  // the shade would composite over the island glass. SearchIslandMorph (zIndex
-  // 20) and the pill's later subtree (zIndex 300) stay above.
+  // zIndex 1 keeps the row above the z-auto screens on web (document order only
+  // ranks positioned siblings); SearchIslandMorph (zIndex 20) and the pill's
+  // later subtree (zIndex 300) stay above.
   islandsRow: {
     alignItems: 'flex-end' as const,
-    // Поднятый ряд рисует острова над контентом экранов; сама подложка
-    // (первый ребёнок контейнера) остаётся плоской и не композитится над пилюлей.
+    // Поднятый ряд рисует острова над контентом экранов.
     elevation: 12,
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,

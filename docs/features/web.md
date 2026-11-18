@@ -239,7 +239,7 @@ pointerUpCallback (node_modules/react-native-gesture-handler/lib/module/web/tool
 3. **Рамка** — 1px `rgba(255, 255, 255, 0.45)` в светлой теме и `0.15` в тёмной; радиус приходит из хоста.
 4. **Верхняя кромка** — общая sheen-полоса `rgba(255, 255, 255, 0.14) → 0` (`GLASS.android.sheen`) поверх листа: световая кромка, читаемая как рефракция.
 
-Тени нет: глубину даёт общая подложка `BarBackdropShade` — SVG-градиент, из которого маска вырезает следы стекла, поэтому под самим стеклом градиента нет (механика — [theme.md](./theme.md#стеклянные-нижние-острова-frosted-glass)). Прежняя SVG-рефракция (`feTurbulence` + `feDisplacementMap` в `public/index.html`) удалена вместе с маскированным кольцом.
+Тени нет: глубину читает полупрозрачная заливка стекла и 1px рамка (см. [theme.md](./theme.md#стеклянные-нижние-острова-frosted-glass)). Прежняя SVG-рефракция (`feTurbulence` + `feDisplacementMap` в `public/index.html`) удалена вместе с маскированным кольцом.
 
 Стиль описан интерфейсом `WebGlassStyle extends ViewStyle` с полями `backdropFilter`/`WebkitBackdropFilter`: RNW компилирует эти ключи в CSS, но в типах RN `ViewStyle` их нет, поэтому обходимся без `as`. Пропы `experimentalBlurMethod`/`blurMethod` — Android-only и на web не нужны. Браузеры без `backdrop-filter` показывают только полупрозрачную заливку, рамку и верхнюю sheen-кромку — контент под островом остаётся виден, просто без размытия.
 

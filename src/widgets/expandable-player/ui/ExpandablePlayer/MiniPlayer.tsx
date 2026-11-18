@@ -63,8 +63,8 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
     ref,
   ) => {
     const subtitle = getPlayerSubtitle(audio, playlist)
-    // The pill floats over the page (search overlay included), never over the
-    // tab-bar shade, so it frosts the page target instead of the chrome's.
+    // The pill floats over the page (search overlay included), never under it,
+    // so it frosts the page target instead of the chrome's.
     const pageBlurTarget = usePageBlurTarget()
     // The title owns the marquee cycle; the subtitle only follows it, so both
     // lines restart together and neither overruns the other's rhythm.

@@ -2,9 +2,9 @@ import { createGlassStyles, getGlassBorder, getGlassFill, getGlassTint, GLASS } 
 import { getWebGlassStyle } from './webGlass'
 
 const BACKDROP_FILTER = 'blur(1px) saturate(140%)'
-const LIGHT_FILL = 'rgba(208, 208, 208, 0.75)'
-const DARK_FILL = 'rgba(80, 80, 80, 0.6)'
-const WEB_DARK_FILL = 'rgba(80, 80, 80, 0.65)'
+const LIGHT_FILL = 'rgba(232, 232, 232, 0.75)'
+const DARK_FILL = 'rgba(48, 48, 48, 0.6)'
+const WEB_DARK_FILL = 'rgba(48, 48, 48, 0.65)'
 
 describe('glass recipe', () => {
   test('keeps a barely-there native blur so the backdrop stays crisp', () => {
@@ -12,11 +12,11 @@ describe('glass recipe', () => {
     expect(GLASS.blur.androidMethod).toBe('dimezisBlurViewSdk31Plus')
   })
 
-  test('uses a dense light-gray fill so the island reads bright but not white', () => {
+  test('uses a soft light fill so the island reads bright without blending into the page', () => {
     expect(getGlassFill(true)).toBe(LIGHT_FILL)
   })
 
-  test('uses a dense dark-gray fill that still reads through', () => {
+  test('uses a soft dark fill that keeps the silhouette on the black page', () => {
     expect(getGlassFill(false)).toBe(DARK_FILL)
   })
 
@@ -26,7 +26,7 @@ describe('glass recipe', () => {
   })
 
   test('every island host is shadowless', () => {
-    // The shared `BarBackdropShade` gradient, not a box shadow, carries depth.
+    // The glass reads as floating without a box shadow.
     const styles = createGlassStyles(true, 38)
 
     expect(styles.containerPlain).toEqual({})
@@ -40,7 +40,7 @@ describe('glass recipe', () => {
 
     expect(getWebGlassStyle(true, 16)).toEqual({
       backdropFilter: BACKDROP_FILTER,
-      backgroundColor: 'rgba(208, 208, 208, 0.8)',
+      backgroundColor: 'rgba(232, 232, 232, 0.8)',
       borderColor: 'rgba(255, 255, 255, 0.45)',
       borderRadius: 16,
       borderWidth: 1,
@@ -63,8 +63,8 @@ describe('glass recipe', () => {
       'rgba(255, 255, 255, 0)',
     ])
     expect(GLASS.android.sheen.heightPercent).toBe('40%')
-    expect(getGlassFill(true, GLASS.android.fillAlphaBoost)).toBe('rgba(208, 208, 208, 0.81)')
-    expect(getGlassFill(false, GLASS.android.fillAlphaBoost)).toBe('rgba(80, 80, 80, 0.66)')
+    expect(getGlassFill(true, GLASS.android.fillAlphaBoost)).toBe('rgba(232, 232, 232, 0.81)')
+    expect(getGlassFill(false, GLASS.android.fillAlphaBoost)).toBe('rgba(48, 48, 48, 0.66)')
   })
 
   test('picks the blur tint that matches the theme', () => {

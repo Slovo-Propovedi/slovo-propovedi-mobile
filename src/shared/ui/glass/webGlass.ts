@@ -16,8 +16,8 @@ interface WebGlassStyle extends ViewStyle {
  * Classic glassmorphism for the web islands: one translucent sheet that blurs
  * and saturates the backdrop, framed by a 1px translucent rim and clipped to
  * the host radius. The filter is emitted twice (standard plus `-webkit-`) so
- * Safari renders the same blur as Chromium. No shadow: the shared
- * `BarBackdropShade` gradient already carries depth.
+ * Safari renders the same blur as Chromium. No shadow: the glass keeps its
+ * silhouette without one.
  * @param isLight - Active theme; selects the tint and rim alpha.
  * @param radius - Corner radius of this surface.
  */

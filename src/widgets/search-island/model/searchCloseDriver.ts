@@ -16,9 +16,8 @@ export const isSearchCloseVisibleAtom = atom(
 )
 
 /**
- * Presence progress of the external ✕. The search frame reserves its slot and
- * the shade cuts its hole from this same value, so the width and the cutout
- * fade together.
+ * Presence progress of the external ✕. The search frame reserves its slot from
+ * this same value, so the width and the glyph fade together.
  */
 export const searchCloseMorphDriver = createAtomMorphDriver({
   atom: isSearchCloseVisibleAtom,

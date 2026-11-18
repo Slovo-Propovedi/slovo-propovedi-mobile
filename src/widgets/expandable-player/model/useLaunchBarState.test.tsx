@@ -51,7 +51,7 @@ describe('useLaunchBarState', () => {
 
     // The child seeds `settled` from the atom during the SAME render pass, so
     // the root's render-phase reset must already be in place: the first frame
-    // paints expanded geometry instead of the collapsed shade band.
+    // paints expanded geometry instead of the collapsed row.
     expect(capture.get()).toEqual({ progress: 0, settled: false })
     expect(barMorphDriver.progress.value).toBe(0)
   })

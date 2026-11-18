@@ -4,8 +4,8 @@ import { isMiniPillCollapsedAtom } from './barMorph'
 
 /**
  * Axis D of the bottom-chrome morph: the collapsed mini pill. One module-level
- * driver shared by the pill, the backdrop shade and every other surface, so the
- * morph starts from the atom flip and every surface reads one animated value.
+ * driver shared by the pill and every other surface, so the morph starts from
+ * the atom flip and every surface reads one animated value.
  */
 export const barMorphDriver = createAtomMorphDriver({
   atom: isMiniPillCollapsedAtom,
@@ -15,7 +15,7 @@ export const barMorphDriver = createAtomMorphDriver({
 /**
  * 0→1 progress of the collapsed mini pill, shared by every surface of the
  * bottom-bar morph. Lives outside React (like `keyboardBottomInsetSv`) so the
- * pill, the shade and any other surface read ONE animated value instead of each
+ * pill and any other surface read ONE animated value instead of each
  * owning a `withTiming` that micro-drifts from the others.
  */
 export const barMorphProgressSv = barMorphDriver.progress

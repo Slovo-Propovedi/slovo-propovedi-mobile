@@ -37,20 +37,6 @@ jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn(() => jest.fn()) }),
 }))
 
-const mockShadeProps: Array<{ hasMiniPlayer?: boolean; hasSearch?: boolean }> = []
-
-jest.mock('widgets/expandable-player/@x/barShade', () => {
-  const { View } = jest.requireActual('react-native')
-
-  return {
-    BarBackdropShade: (props: { hasMiniPlayer?: boolean; hasSearch?: boolean }) => {
-      mockShadeProps.push(props)
-
-      return <View style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }} />
-    },
-  }
-})
-
 let mockBottomInset = 0
 
 jest.mock('react-native-safe-area-context', () => {
@@ -106,11 +92,7 @@ const createMockEmitter = () =>
 
 const renderTabBar = async (
   activeIndex = 0,
-  {
-    hasMiniPlayer,
-    hideSearch,
-    isCollapsed = false,
-  }: { hasMiniPlayer?: boolean; hideSearch?: boolean; isCollapsed?: boolean } = {},
+  { hideSearch, isCollapsed = false }: { hideSearch?: boolean; isCollapsed?: boolean } = {},
 ) => {
   const state = createMockState(activeIndex)
   const emitter = createMockEmitter()
@@ -125,7 +107,6 @@ const renderTabBar = async (
       emitter={emitter}
       hideSearch={hideSearch}
       navigateToTab={mockNavigate}
-      hasMiniPlayer={hasMiniPlayer}
       insets={{ bottom: 0, left: 0, right: 0, top: 0 }}
     />,
     { ctx },
@@ -137,7 +118,6 @@ describe('<CustomTabBar>', () => {
     jest.clearAllMocks()
     mockBottomInset = 0
     mockIsSearchFieldVisible = false
-    mockShadeProps.length = 0
     tabIslandMorphDriver.reset()
     searchOpenMorphDriver.reset()
     searchFocusMorphDriver.reset()
@@ -201,53 +181,6 @@ describe('<CustomTabBar>', () => {
         flat?.right === 0
       )
     })[0]
-
-  test('renders the backdrop shade as the floating container first child', async () => {
-    await renderTabBar()
-
-    const container = findFloatingContainer()
-    const firstChild = container?.children[0]
-
-    if (!firstChild || typeof firstChild === 'string') throw new Error('first child not found')
-
-    // The mock renders a host View wrapped in a composite: when the composite
-    // carries no style, the rendered host sits below it.
-    const shadeNode = StyleSheet.flatten(firstChild.props.style)
-      ? firstChild
-      : firstChild.children[0]
-
-    if (!shadeNode || typeof shadeNode === 'string') throw new Error('shade node not found')
-
-    // The shade must be the first child: the tab-bar layer sits above the
-    // opaque screens, and document order keeps the islands above the shade.
-    expect(StyleSheet.flatten(shadeNode.props.style)).toMatchObject({
-      bottom: 0,
-      left: 0,
-      position: 'absolute',
-      right: 0,
-      top: 0,
-    })
-    expect(container?.children[1]).toBeTruthy()
-  })
-
-  test('passes the mini-player mount flag to the shade', async () => {
-    await renderTabBar()
-
-    // Only the user zone mounts the mini-player pill; the admin zone must tell
-    // the shade to anchor to the islands row instead.
-    expect(mockShadeProps.at(-1)).toEqual({ hasMiniPlayer: false, hasSearch: true })
-
-    mockShadeProps.length = 0
-    await renderTabBar(0, { hasMiniPlayer: true })
-
-    expect(mockShadeProps.at(-1)).toEqual({ hasMiniPlayer: true, hasSearch: true })
-
-    mockShadeProps.length = 0
-    await renderTabBar(0, { hideSearch: true })
-
-    // The admin row has no search chrome, so the shade spans its inner width.
-    expect(mockShadeProps.at(-1)).toEqual({ hasMiniPlayer: false, hasSearch: false })
-  })
 
   test('ignores a zero-height layout report', async () => {
     const { ctx } = await renderTabBar()
@@ -367,8 +300,7 @@ describe('<CustomTabBar>', () => {
       return flat?.borderRadius === RADIUSES.round && flat?.maxWidth === 600
     })[0]
 
-    // The shared `BarBackdropShade` gradient sits behind the bar; the island
-    // host itself must stay shadowless.
+    // The island host itself must stay shadowless.
     expect(StyleSheet.flatten(island?.props.style)).not.toHaveProperty('boxShadow')
   })
 

@@ -51,10 +51,10 @@ export const createCommonStyles = (theme: ThemeColors) =>
 // value `pointer-events: box-none`, leaving the overlay pointer-events:auto and
 // swallowing every touch on the page (Issue: web UI unresponsive).
 //
-// `elevation` is intentionally absent: the tab-bar backdrop is flat (the
-// elevation moved to the islands row), so the draw order is the document one —
-// screens -> tab bar (shade + islands) -> player (pill). An elevation here only
-// raced the tab-bar container's old projection and is no longer needed.
+// `elevation` is intentionally absent: the islands row carries the elevation, so
+// the draw order is the document one — screens -> tab bar (islands) -> player
+// (pill). An elevation here only raced the tab-bar container's old projection
+// and is no longer needed.
 export const miniLayerStyle = StyleSheet.create({
   layer: {
     bottom: 0,

@@ -76,6 +76,13 @@ describe('<GlassSurface>', () => {
     expect(findSheen()).toHaveLength(1)
   })
 
+  test('dark theme drops the sheen: the glass must read flat', async () => {
+    setPlatform('ios')
+    await render(<GlassSurface radius={28} isLight={false} />)
+
+    expect(findSheen()).toHaveLength(0)
+  })
+
   test('web renders the top-edge sheen above its glass sheet', async () => {
     setPlatform('web')
     await render(<GlassSurface isLight radius={28} />)

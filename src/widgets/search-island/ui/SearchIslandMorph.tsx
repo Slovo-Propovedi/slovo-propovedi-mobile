@@ -21,7 +21,7 @@ import { styles } from './SearchIslandMorph.styles'
 // circle; opened it morphs into the pill. The frame is mounted for the whole
 // tab shell (CustomTabBar renders on every tab screen, including the nested
 // playlist routes), so the two states are the same node: geometry animates and
-// content crossfades. The shared `BarBackdropShade` gradient sits behind it.
+// content crossfades.
 export const SearchIslandMorph = () => {
   const { isLight } = useTheme()
   const { width: screenWidth } = useWindowDimensions()

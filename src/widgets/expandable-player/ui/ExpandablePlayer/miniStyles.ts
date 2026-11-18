@@ -40,7 +40,7 @@ export const createMiniStyles = (theme: ThemeColors) =>
     },
     // Geometry (bottom/left/width/radius) is committed by the bar-morph styles in
     // MiniPlayer: animated during the morph, React-resting for the current state.
-    // No own shadow: the shared `BarBackdropShade` gradient sits behind the pill.
+    // No own shadow: the glass reads as floating without one.
     miniContainer: {
       alignItems: 'center',
       borderRadius: RADIUSES.round,

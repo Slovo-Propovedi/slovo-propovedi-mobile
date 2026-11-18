@@ -38,7 +38,7 @@ const Layout = () => {
           tabBar={props => (
             <>
               <SearchGate />
-              <CustomTabBar {...props} hasMiniPlayer />
+              <CustomTabBar {...props} />
               <ExpandablePlayer playlistMenuComponent={PlaylistSheetMenu} />
             </>
           )}

@@ -81,11 +81,15 @@ export const GlassSurface = ({
           <View style={[StyleSheet.absoluteFill, fill]} />
         </>
       )}
-      <LinearGradient
-        pointerEvents='none'
-        colors={GLASS.android.sheen.colors}
-        style={[styles.sheen, { height: GLASS.android.sheen.heightPercent }]}
-      />
+      {/* The sheen is a light-theme depth cue only: in the dark theme the user
+          asked for a flat glass without the white top glow. */}
+      {isLight && (
+        <LinearGradient
+          pointerEvents='none'
+          colors={GLASS.android.sheen.colors}
+          style={[styles.sheen, { height: GLASS.android.sheen.heightPercent }]}
+        />
+      )}
       {/* Web carries its rim on the glass sheet itself. */}
       {!isWeb && <View style={[StyleSheet.absoluteFill, glass.rim]} />}
     </View>

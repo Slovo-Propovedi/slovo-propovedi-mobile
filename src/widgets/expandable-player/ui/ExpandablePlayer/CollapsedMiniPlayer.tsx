@@ -68,7 +68,7 @@ export const CollapsedMiniPlayer = ({
   const miniStyles = createMiniStyles(currentTheme)
   const keyboardLiftStyle = useKeyboardLiftStyle()
   const [isHidden] = useAtom(isSearchFieldFocusedAtom)
-  // Same shared value the search frame and the shade's pill cutout read.
+  // Same shared value the search frame reads.
   const { progress: focusProgress, settled: focusSettled } =
     useAtomMorphDriver(searchFocusMorphDriver)
   const pillOpacity = useMiniPillFade(isHidden, focusProgress)

@@ -172,8 +172,7 @@ describe('<SearchIslandMorph>', () => {
   test('renders no shadow-carrying container in either state', async () => {
     const { ctx } = await renderMorph()
 
-    // The shared `BarBackdropShade` gradient sits behind the bar; the search
-    // frame and its close circle must stay shadowless.
+    // The search frame and its close circle must stay shadowless.
     expect(findShadows()).toHaveLength(0)
 
     await act(async () => {

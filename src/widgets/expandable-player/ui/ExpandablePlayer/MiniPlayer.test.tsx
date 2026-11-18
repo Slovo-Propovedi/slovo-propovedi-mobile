@@ -172,8 +172,7 @@ describe('<MiniPlayer>', () => {
         return flat?.borderColor === getGlassBorder(true) && flat?.borderWidth === 1
       }),
     ).toHaveLength(1)
-    // The pill itself carries no shadow: the shared `BarBackdropShade` gradient
-    // sits behind the whole bar complex.
+    // The pill itself carries no shadow: the glass reads as floating without one.
     expect(
       screen.root?.queryAll(
         instance => StyleSheet.flatten(instance.props.style)?.boxShadow !== undefined,
@@ -243,7 +242,7 @@ describe('<MiniPlayer>', () => {
         instance => instance.props.intensity === GLASS.blur.intensity,
       )[0]
 
-      // The pill floats over the page, not over the tab-bar shade, so it samples
+      // The pill floats over the page, so it samples
       // the page target the route publishes.
       expect(blur?.props.blurTarget).toBe(pageTarget)
     } finally {
