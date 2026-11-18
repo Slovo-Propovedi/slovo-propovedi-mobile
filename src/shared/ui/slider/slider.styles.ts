@@ -15,7 +15,7 @@ export const createSliderStyles = (theme: ThemeColors) =>
     },
     title: {
       color: theme.text,
-      fontWeight: 'normal',
+      fontWeight: '600',
       paddingBottom: INDENTS.middle,
       paddingLeft: SLIDER_REST_INSET,
     },
