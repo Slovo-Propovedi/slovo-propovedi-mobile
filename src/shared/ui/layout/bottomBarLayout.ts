@@ -15,9 +15,10 @@ export const BAR_CIRCLE_SIZE = 56 as const
 export const BAR_CIRCLE_SIZE_EXPANDED = 68 as const
 export const BAR_OUTER_GAP = 8 as const
 // Vertical gap between the floating mini-player pill and the expanded island's
-// top edge. Apple Music keeps the pill visibly detached (Issue #153); it matches
-// the horizontal outer gap between the islands in the row.
-export const BAR_PILL_ROW_GAP = 8 as const
+// top edge. Apple Music keeps the pill visibly detached (Issue #153), so the pill
+// floats higher above the islands row than the horizontal BAR_OUTER_GAP between
+// the islands themselves.
+export const BAR_PILL_ROW_GAP = 12 as const
 // Generous side margins of the floating chrome (tab bar and resting mini
 // player). 20 keeps the islands slightly narrower than the screen (Issue #153).
 export const BAR_SIDE_INSET = 20 as const
