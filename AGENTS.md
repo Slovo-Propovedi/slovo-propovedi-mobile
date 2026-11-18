@@ -209,6 +209,19 @@ See [`docs/BUILD-LOCAL.md`](docs/BUILD-LOCAL.md) → «Prebuild и config-пла
 
 Любые новые настройки приложения и пользовательские данные (новые ключи AsyncStorage, локальные базы, избранное, история и т.п.) обязаны добавляться в payload функции резервного копирования — `src/features/settings-backup/` (`model/backupPayload.ts` + `lib/readScalars.ts` / `lib/buildPayload.ts` / `lib/applyImport.ts`) — и корректно восстанавливаться при импорте в обоих режимах (`replace` и `merge`). При добавлении новой настройки обнови схему бэкапа и его тесты в том же PR; формат и семантика — в [`docs/features/settings-backup.md`](docs/features/settings-backup.md).
 
+## Changelog Maintenance
+
+The changelog is **agent-maintained**, not generated from commits. The release script only promotes what the agent wrote.
+
+When a change ships something user-facing (a `feat` commit, a user-visible `fix`, anything a user would notice), in the SAME PR/commit the agent adds:
+
+1. One concise, meaningful note to `CHANGELOG.md` under the `## [Unreleased]` section, inside the matching Keep a Changelog group (`### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed`, `### Security`). No internal noise: chores, refactors, docs, CI, dependency bumps and dev-tooling changes get no note.
+2. The same release notes (en + ru) to the fastlane working files `fastlane/metadata/android/en-US/changelogs/unreleased.txt` and `fastlane/metadata/android/ru/changelogs/unreleased.txt`. Do NOT include the "Full changelog" link there — the bump script appends it. Both files must stay within **500 chars total including the appended link** (ru link is ~127 chars), so keep them short.
+
+At release time `bump-version` renames `## [Unreleased]` to `## [X.Y.Z] - date` (and creates a fresh empty `## [Unreleased]`), and renames both `unreleased.txt` files to `<versionCode>.txt`. It FAILS if the `[Unreleased]` section has no notes or a fastlane file is missing/empty/too long — fix the notes and re-run.
+
+Other per-release artifacts follow the same principle: the Forgejo release body is extracted from the promoted `## [X.Y.Z]` section of `CHANGELOG.md` by CI — nothing to maintain by hand there.
+
 ## Agent Division of Labor: Plan vs Implement
 
 When work is delegated to a coding agent, the DELEGATOR owns analysis and planning; the CODING agent owns mechanical implementation only.

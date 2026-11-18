@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Translucent bottom chrome glass with shade cutouts under the floating tab-bar islands
+- Semibold slider section title
+- Raised mini-player gap above the islands row
+
+### Fixed
+
+- Anchor bottom-bar islands flush to the safe-area line
+- Keep the finished marquee line visible and sync the pair to the longer loop
+- Keep the search close slot pointer-capable through the press window
+- Unmount the tucked mini-player pill and gate the un-tuck press window
+- Blur page content in the bottom chrome glass on the search screen (Android)
+- Expand the launch bar pre-paint and snap the launch morph (Android)
+
 ## [0.34.0] - 2026-11-12
 
 ### Added

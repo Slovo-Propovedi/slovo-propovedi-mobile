@@ -1,75 +1,57 @@
-// Pure changelog logic: commit parsing, filtering, and markdown rendering.
-// No I/O here; callers pass raw commit subjects and receive rendered sections.
+// Pure changelog release logic: promotes the agent-maintained [Unreleased]
+// section to a released version. No I/O here; callers pass and receive text.
 
-const SIGN_OFF_PATTERN = /\s+Signed-off-by:.*$/
-const CONVENTIONAL_PATTERN = /^(\w+)(?:\([^)]*\))?!?:\s*(.*)$/
-const BUMP_VERSION_PATTERN = /^bump version to \d+\.\d+\.\d+$/
-const CHORE_NOISE_PATTERN =
-  /(bump version|gitignore|claude|validation schema|dependenc|lockfile|eslint|prettier|husky|ci|cleanup|dco|commit-msg|pre-commit|workflow)/i
+const UNRELEASED_HEADING = '## [Unreleased]'
+const BULLET_PATTERN = /^\s*- \S/
+const SECTION_STOP_PATTERN = /^(?:## \[|\[[^\]]+\]: )/
+const MAX_FASTLANE_CHARS = 500
 
-const CATEGORY_ORDER = ['Added', 'Changed', 'Deprecated', 'Removed', 'Fixed', 'Security']
+export const promoteUnreleasedSection = (changelog, version, date) => {
+  const lines = changelog.split('\n')
+  const start = lines.findIndex((line) => line === UNRELEASED_HEADING)
 
-const CATEGORY_BY_TYPE = {
-  feat: 'Added',
-  perf: 'Changed',
-  refactor: 'Changed',
-  fix: 'Fixed',
-  revert: 'Fixed',
-}
-
-const stripInlineSignoff = (subject) => subject.replace(SIGN_OFF_PATTERN, '').trim()
-
-const parseCommitSubject = (subject) => {
-  const match = CONVENTIONAL_PATTERN.exec(stripInlineSignoff(subject))
-  const description = match?.[2]?.trim()
-
-  if (!match || !description) return null
-
-  return { type: match[1], description }
-}
-
-const isBumpCommit = (commit) =>
-  commit.type === 'chore' && BUMP_VERSION_PATTERN.test(commit.description)
-
-const isInternalChore = (commit) =>
-  commit.type === 'chore' && CHORE_NOISE_PATTERN.test(commit.description)
-
-const getCategory = (commit) => {
-  if (isBumpCommit(commit) || commit.type === 'ci' || isInternalChore(commit)) return null
-  if (commit.type === 'chore') return 'Fixed'
-
-  return CATEGORY_BY_TYPE[commit.type] ?? null
-}
-
-const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1)
-
-export const getUserFacingCommits = (subjects) =>
-  subjects
-    .map(parseCommitSubject)
-    .filter(Boolean)
-    .flatMap((commit) => {
-      const category = getCategory(commit)
-      return category ? [{ ...commit, category, description: capitalize(commit.description) }] : []
-    })
-
-export const groupByCategory = (subjects) => {
-  const groups = Object.fromEntries(CATEGORY_ORDER.map((category) => [category, []]))
-
-  for (const commit of getUserFacingCommits(subjects)) {
-    groups[commit.category].push(commit.description)
+  if (start === -1) {
+    return {
+      error: `missing "${UNRELEASED_HEADING}" section in CHANGELOG.md — add release notes first`,
+    }
   }
 
-  return groups
+  let end = lines.length
+
+  for (let i = start + 1; i < lines.length; i += 1) {
+    if (SECTION_STOP_PATTERN.test(lines[i])) {
+      end = i
+      break
+    }
+  }
+
+  const body = [...lines.slice(start + 1, end)]
+
+  if (!body.some((line) => BULLET_PATTERN.test(line))) {
+    return {
+      error:
+        'the [Unreleased] section has no notes — add bullet notes under ### Added / ### Fixed / etc. before bumping',
+    }
+  }
+
+  while (body.length > 0 && body[body.length - 1].trim() === '') body.pop()
+  body.push('')
+
+  const promoted = [...lines.slice(0, start), UNRELEASED_HEADING, '', `## [${version}] - ${date}`, ...body, ...lines.slice(end)]
+
+  return { changelog: promoted.join('\n') }
 }
 
-export const generateChangelogSection = (version, date, subjects) => {
-  const groups = groupByCategory(subjects)
-  const categorySection = CATEGORY_ORDER
-    .filter((category) => groups[category].length > 0)
-    .map((category) => `### ${category}\n\n${groups[category].map((item) => `- ${item}`).join('\n')}`)
-    .join('\n\n')
+export const prepareFastlaneNote = (note, link, maxChars = MAX_FASTLANE_CHARS) => {
+  const text = note.trim()
 
-  if (categorySection.length === 0) return null
+  if (!text) return { error: 'fastlane unreleased.txt is empty — the agent must write release notes first' }
 
-  return `## [${version}] - ${date}\n\n${categorySection}`
+  const full = `${text}\n\n${link}`
+
+  if (full.length > maxChars) {
+    return { error: `fastlane unreleased.txt is too long: ${full.length} chars exceeds the ${maxChars} limit — shorten the notes` }
+  }
+
+  return { note: full }
 }

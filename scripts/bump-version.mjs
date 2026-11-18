@@ -2,7 +2,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { execFileSync, execSync } from 'node:child_process'
-import { updateChangelogFiles } from './generate-changelog.mjs'
+import { releaseChangelogFiles } from './generate-changelog.mjs'
 import { rewriteAndroidRuntimeVersion, rewriteIosRuntimeVersion } from './runtime-version-core.mjs'
 
 const GREEN = '\x1b[32m'
@@ -45,6 +45,11 @@ const fastlaneChangelogPaths = versionCode => [
   `fastlane/metadata/android/en-US/changelogs/${versionCode}.txt`,
   `fastlane/metadata/android/ru/changelogs/${versionCode}.txt`,
 ]
+// Agent-maintained working files; bump-version consumes (renames) them per release.
+const fastlaneUnreleasedPaths = [
+  'fastlane/metadata/android/en-US/changelogs/unreleased.txt',
+  'fastlane/metadata/android/ru/changelogs/unreleased.txt',
+]
 
 const git = args => execFileSync('git', args, { cwd: process.cwd(), encoding: 'utf-8' })
 
@@ -62,6 +67,7 @@ const dirtyOwnFiles = git([
   STRINGS_XML_PATH, // guarded even in js-only mode: prebuild churn here must never ride into a bump commit
   EXPO_PLIST_PATH, // guarded even in js-only mode: prebuild churn here must never ride into a bump commit
   CHANGELOG_PATH,
+  ...fastlaneUnreleasedPaths,
   'fastlane/metadata/android/en-US/changelogs',
   'fastlane/metadata/android/ru/changelogs',
 ]).trim()
@@ -226,17 +232,12 @@ if (isNativeRelease) {
   log(`→ RUNTIME_VERSION untouched (${currentRuntimeVersion})`, YELLOW)
 }
 
-// --- Generate changelog ---
+// --- Promote the [Unreleased] changelog to this release ---
 log('\n→ Updating changelog...', YELLOW)
 
 try {
-  updateChangelogFiles(
-    currentVersion,
-    newVersion,
-    newVersionCode,
-    new Date().toISOString().slice(0, 10),
-  )
-  log('✓ Updated CHANGELOG.md and fastlane changelogs', GREEN)
+  releaseChangelogFiles(newVersion, newVersionCode, new Date().toISOString().slice(0, 10))
+  log('✓ Promoted [Unreleased] in CHANGELOG.md and fastlane changelogs', GREEN)
 } catch (error) {
   exitError(`Changelog update failed: ${error.message}`)
 }
@@ -253,6 +254,8 @@ const bumpPaths = [
   ...(isNativeRelease ? [OTA_CONFIG_PATH, STRINGS_XML_PATH, EXPO_PLIST_PATH] : []),
   CHANGELOG_PATH,
   ...fastlaneChangelogPaths(newVersionCode),
+  // deletions of the consumed unreleased.txt files
+  ...fastlaneUnreleasedPaths,
 ]
 
 log('\n→ Staging version bump changes...', YELLOW)
