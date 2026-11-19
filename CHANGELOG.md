@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Semibold slider section title
 - Raised mini-player gap above the islands row
 
+### Changed
+
+- Align bottom-bar islands and mini-player edges with the slider card line; the collapsed one-line bar uses a 1.5× wider inset
+
 ### Fixed
 
 - Restore the bottom clearance for the floating bar in mobile browsers
