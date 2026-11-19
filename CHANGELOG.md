@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Align bottom-bar islands and mini-player edges with the slider card line; the collapsed one-line bar uses a 1.5× wider inset
+- In the collapsed one-line bar the tab and search buttons shrink to the mini player height (48) instead of the mini player growing; the open search field always matches the tab bar's height
 
 ### Fixed
 

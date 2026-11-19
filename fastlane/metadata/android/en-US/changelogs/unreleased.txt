@@ -1,6 +1,2 @@
-Translucent bottom chrome glass with shade cutouts under the floating tab-bar islands
-Semibold slider section title
-Raised mini-player gap above the islands row
-Safer mini-player, search and launch-bar behavior on Android
-Bottom clearance for the floating bar in mobile browsers
-Bottom bar side insets line up with the slider cards; the one-line bar is 1.5x wider
+Bar side insets now match the slider card line; the collapsed bar's tab and search buttons shrink to the mini player height while the mini player itself keeps its size; the open search field always matches the tab bar height
+Also: glass bottom chrome, semibold section titles, wider mini-player gap, safer mini-player/search/launch-bar on Android, web bottom clearance.
