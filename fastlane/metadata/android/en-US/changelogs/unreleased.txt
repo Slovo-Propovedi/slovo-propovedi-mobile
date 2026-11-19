@@ -1,6 +1,7 @@
 Search is its own page; leaving clears the query.
-Listened marks survive history eviction and restore from backup.
-Search keeps the last tab: tap returns and closes the pill.
-Background auto-advance no longer stalls seconds into the next track.
-Auto-advance no longer restarts the playlist from the first sermon.
-Web on iOS: no white gap at the bottom anymore.
+Listened marks survive eviction and backup.
+Search keeps the last tab; tap closes.
+Auto-advance no longer stalls.
+Auto-advance no longer restarts the playlist.
+Web on iOS: no bottom gap.
+Search: playlists and preachers opened from search results show the top bar again — back button, title and the playlist menu.

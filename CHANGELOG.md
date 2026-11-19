@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Blur page content in the bottom chrome glass on the search screen (Android)
 - Expand the launch bar pre-paint and snap the launch morph (Android)
 - Keep the last active tab visible and selectable in the bar while search is open (press returns to the tab and closes search); the search pill morphs open and closed reliably
+- Search: playlists and preachers opened from search results show the top bar again — back button, title and the playlist menu.
 
 ## [0.34.0] - 2026-11-12
 
