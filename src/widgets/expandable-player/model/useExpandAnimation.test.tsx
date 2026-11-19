@@ -3,6 +3,7 @@ import { act } from '@testing-library/react-native'
 import { AppState, type AppStateStatus, Text } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
+import { advanceMorphFrames } from 'shared/mocks/morphFrames'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import {
   BAR_CIRCLE_SIZE,
@@ -232,12 +233,6 @@ describe('useExpandAnimation bar-morph resting commit', () => {
   }
 
   const renderBarFlip = async (initialBarCollapsed: boolean) => {
-    const completions: Array<(finished: boolean) => void> = []
-    mockedWithTiming.mockImplementation((toValue, _config, callback) => {
-      if (typeof callback === 'function') completions.push(callback)
-      return toValue
-    })
-
     const renders: Array<ReturnType<typeof useExpandAnimation>> = []
     const ctx = createCtx()
     setBarCollapsed(ctx, initialBarCollapsed)
@@ -255,11 +250,11 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     })
     await rerender(<Harness />)
 
-    return { completions, flipRender: renders[flipRenderIndex], renders }
+    return { flipRender: renders[flipRenderIndex], renders }
   }
 
   test('keeps the start resting geometry while the bar morph is in flight', async () => {
-    const { completions, flipRender, renders } = await renderBarFlip(true)
+    const { flipRender, renders } = await renderBarFlip(true)
 
     // Mid-morph the resting style is only a fallback for the frame before the
     // animated layer asserts: it must carry the START geometry, never the
@@ -268,7 +263,7 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     expect(flipRender.restingContainerStyle).toMatchObject(COLLAPSED_RESTING)
 
     await act(async () => {
-      completions[0](true)
+      advanceMorphFrames()
     })
 
     const settledRender = renders[renders.length - 1]
@@ -277,10 +272,10 @@ describe('useExpandAnimation bar-morph resting commit', () => {
   })
 
   test('commits the destination resting geometry when the bar morph settles', async () => {
-    const { completions, renders } = await renderBarFlip(false)
+    const { renders } = await renderBarFlip(false)
 
     await act(async () => {
-      completions[0](true)
+      advanceMorphFrames()
     })
 
     const settledRender = renders[renders.length - 1]

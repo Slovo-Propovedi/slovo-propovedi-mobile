@@ -7,7 +7,7 @@ import Animated, {
 import { useTheme, withAlpha } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
 import { getTabItemStyle } from '../lib/getBarMorphStyles'
-import { getCapsuleOpacity, getTabIconOffset } from '../lib/getIslandStyle'
+import { getCapsuleOpacity, getTabIconOffset } from '../lib/getTabItemStyle'
 import { styles } from './styles'
 import { TabIcon } from './TabIcon'
 import { getTabLabel } from './tabLabels'

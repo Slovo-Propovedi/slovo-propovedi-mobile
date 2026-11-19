@@ -1,9 +1,9 @@
-import { useAction, useAtom } from '@reatom/npm-react'
-import { useCallback, useMemo } from 'react'
-import { Keyboard, useWindowDimensions } from 'react-native'
+import { useAtom } from '@reatom/npm-react'
+import { useMemo } from 'react'
+import { useWindowDimensions } from 'react-native'
 import { useAnimatedStyle } from 'react-native-reanimated'
 import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
-import { closeSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
+import { useCloseSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { GlassIsland } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
@@ -22,14 +22,15 @@ import { styles } from './SearchIslandMorph.styles'
 // circle; opened it morphs into the pill. The frame is mounted for the whole
 // tab shell (CustomTabBar renders on every tab screen, including the nested
 // playlist routes), so the two states are the same node: geometry animates and
-// content crossfades.
+// content crossfades. Opening navigates to the `/search` route; closing resets
+// the session and leaves it.
 export const SearchIslandMorph = () => {
   const { isLight } = useTheme()
   const { width: screenWidth } = useWindowDimensions()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const isSearchFieldVisible = useIsSearchFieldVisible()
   const openSearch = useOpenSearch()
-  const closeSearchAction = useAction(closeSearch)
+  const closeSearch = useCloseSearch()
   const { closeProgress, handleCloseFocusChange, settledClose, shouldShowClose } =
     useSearchFocusMorph()
   // Every morph is a module-level driver, so this frame and the glass surfaces
@@ -42,11 +43,6 @@ export const SearchIslandMorph = () => {
   const { progress: openProgress, settled: settledOpen } = useAtomMorphDriver(searchOpenMorphDriver)
   const { progress: focusProgress, settled: settledFocused } =
     useAtomMorphDriver(searchFocusMorphDriver)
-
-  const handleCloseSearch = useCallback(() => {
-    Keyboard.dismiss()
-    void closeSearchAction()
-  }, [closeSearchAction])
 
   const frameStyle = useAnimatedStyle(() => {
     const { closeRight, iconInset, iconSize, radius, ...geometry } = getSearchIslandGeometry({
@@ -97,8 +93,8 @@ export const SearchIslandMorph = () => {
         />
       </GlassIsland>
       <SearchIslandCloseSlot
+        onPress={closeSearch}
         screenWidth={screenWidth}
-        onPress={handleCloseSearch}
         openProgress={openProgress}
         tabBarHeight={tabBarHeight}
         closeProgress={closeProgress}

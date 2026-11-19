@@ -1,14 +1,12 @@
 import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
+import { getIslandContentPadding, getIslandStyle, getTabSlotStyle } from './getIslandStyle'
 import {
   getCapsuleOpacity,
-  getIslandContentPadding,
-  getIslandStyle,
   getTabIconOffset,
   getTabItemHeight,
   getTabItemHorizontalMargin,
   getTabItemVerticalMargin,
-  getTabSlotStyle,
-} from './getIslandStyle'
+} from './getTabItemStyle'
 
 const LAYOUT = { expandedWidth: 584 }
 const EXPANDED_TAB_WIDTH = 146

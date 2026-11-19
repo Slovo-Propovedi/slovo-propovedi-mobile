@@ -29,14 +29,13 @@ interface SearchIslandCloseSlotProps {
  * The circular ✕ that appears beside the pill while the field is focused or an
  * active query keeps the search open. Its opacity and scale follow the shared
  * close progress, so appearance and disappearance use the same morph duration
- * as the pill's width. It is content
- * of the same morph component, never a second shadow carrier: the search frame
- * owns the row's only boxShadow.
+ * as the pill's width. It is content of the same morph component, never a
+ * second shadow carrier: the search frame owns the row's only boxShadow.
  * @param root0 - Component props.
  * @param root0.closeProgress - 0 = hidden, 1 = fully shown.
  * @param root0.isVisible - Gates pointer events and accessibility only.
  * @param root0.oneLineProgress - The bar's one-line morph progress (outer inset + height).
- * @param root0.onPress - Closes the search session.
+ * @param root0.onPress - Closes the search route.
  * @param root0.openProgress - The island's open/close progress.
  * @param root0.restingStyle - Settled-state restatement applied after the animated style.
  * @param root0.screenWidth - Current viewport width.

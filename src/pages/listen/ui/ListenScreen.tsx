@@ -3,7 +3,6 @@ import { useEffect } from 'react'
 import Animated from 'react-native-reanimated'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTourScrollable } from 'features/onboarding'
-import { useSearchUrlSync } from 'features/sermon-search'
 import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { BLUR_TARGET_ROUTES, BlurBackdrop, createRefreshControl, PullToRefresh } from 'shared/ui'
@@ -19,9 +18,6 @@ export const ListenScreen = () => {
   const insets = useSafeAreaInsets()
   const { currentTheme } = useTheme()
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
-  // Web-only deep link (`/listen?search=`) and URL mirror: the search overlay
-  // itself is global (SearchGate); only the listen route owns the URL param.
-  useSearchUrlSync()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { onContentSizeChange, onScroll } = useBarCollapseOnScroll({
     isSuspended: isBarCollapseSuspended,

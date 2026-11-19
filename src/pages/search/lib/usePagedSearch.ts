@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   collectMatchingPreachers,
   fetchPlaylistSearchPage,
@@ -8,7 +8,7 @@ import {
 import { type PlaylistData } from 'entities/playlist'
 import { type SermonData } from 'entities/sermon'
 import { buildFirstPageState, fetchFirstPage } from './fetchFirstPage'
-import { createEmptyGroup, type GroupState, type PagedSearch } from './pagedGroup'
+import { createEmptyGroup, type GroupState, isEmptyGroup, type PagedSearch } from './pagedGroup'
 
 const DEBOUNCE_DELAY_MS = 400
 
@@ -32,9 +32,10 @@ export const usePagedSearch = (query: string): PagedSearch => {
 
     // Deferred: a synchronous setState inside an effect cascades renders.
     const prepareTimer = setTimeout(() => {
+      // Untouched empty groups need no commit; only clearing results re-renders.
       if (!isActive) {
-        setSermons(createEmptyGroup())
-        setPlaylists(createEmptyGroup())
+        setSermons(state => (isEmptyGroup(state) ? state : createEmptyGroup<SermonData>()))
+        setPlaylists(state => (isEmptyGroup(state) ? state : createEmptyGroup<PlaylistData>()))
         return
       }
 
@@ -110,13 +111,18 @@ export const usePagedSearch = (query: string): PagedSearch => {
     })
   }, [playlists.hasMore])
 
+  const preachers = useMemo(
+    () => collectMatchingPreachers(sermons.items, trimmedQuery),
+    [sermons.items, trimmedQuery],
+  )
+
   return {
     playlists: { ...playlists, loadMore: loadMorePlaylists },
     preachers: {
       hasMore: sermons.hasMore,
       isLoading: sermons.isLoading,
       isLoadingMore: sermons.isLoadingMore,
-      items: collectMatchingPreachers(sermons.items, trimmedQuery),
+      items: preachers,
       loadMore: loadMoreSermons,
     },
     sermons: { ...sermons, loadMore: loadMoreSermons },

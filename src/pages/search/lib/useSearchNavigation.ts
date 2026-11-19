@@ -6,11 +6,11 @@ import { isScreenTransitioningAtom } from 'shared/model'
 import { useNavigationGuard } from 'shared/routing'
 
 /**
- * Navigation out of the search results. The search overlay stays mounted
- * underneath the pushed route (SearchGate conceals it only after the push
- * transition ends), so back restores the exact session state; the guard collapses
- * a rapid double tap into one push. Extracted from `SearchGate` to keep it inside
- * the file-size limit.
+ * Navigation out of the search results. The detail routes live INSIDE the
+ * search route (`/search/playlist`, `/search/preacher`), so back pops them and
+ * the results — with the query, group and loaded pages — stay untouched; the
+ * route-leave reset never fires for a push inside search. The guard collapses
+ * a rapid double tap into one push.
  */
 export const useSearchNavigation = () => {
   const ctx = useCtx()
@@ -23,7 +23,7 @@ export const useSearchNavigation = () => {
         isScreenTransitioningAtom(ctx, true)
         router.push({
           params: { playlist: playlist.id },
-          pathname: '/listen/playlist',
+          pathname: '/search/playlist',
         })
       })
     },
@@ -36,7 +36,7 @@ export const useSearchNavigation = () => {
         isScreenTransitioningAtom(ctx, true)
         router.push({
           params: { artist },
-          pathname: '/listen/preacher',
+          pathname: '/search/preacher',
         })
       })
     },

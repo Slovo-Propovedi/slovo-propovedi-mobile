@@ -28,3 +28,7 @@ export const createEmptyGroup = <T>(): GroupState<T> => ({
   isLoadingMore: false,
   items: [],
 })
+
+// True while the group is still the untouched empty state.
+export const isEmptyGroup = <T>(group: GroupState<T>): boolean =>
+  group.items.length === 0 && !group.hasMore && !group.isLoading && !group.isLoadingMore

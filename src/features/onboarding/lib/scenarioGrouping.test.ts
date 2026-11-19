@@ -2,9 +2,9 @@ import { isGlobalScenario, isScenarioOnScreen } from './scenarioGrouping'
 import { scenariosById } from './scenarios'
 
 describe('scenario grouping', () => {
-  test('search is local on «Слушать» and global on every other screen', () => {
-    expect(isScenarioOnScreen(scenariosById.search, '/listen')).toBe(true)
-    expect(isGlobalScenario(scenariosById.search, '/listen')).toBe(false)
+  test('search is local on «Поиск» and global on every other screen', () => {
+    expect(isScenarioOnScreen(scenariosById.search, '/search')).toBe(true)
+    expect(isGlobalScenario(scenariosById.search, '/search')).toBe(false)
 
     expect(isScenarioOnScreen(scenariosById.search, '/more')).toBe(false)
     expect(isGlobalScenario(scenariosById.search, '/more')).toBe(true)

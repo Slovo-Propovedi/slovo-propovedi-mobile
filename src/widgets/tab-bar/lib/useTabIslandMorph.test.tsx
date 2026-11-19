@@ -1,12 +1,12 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
-import { withTiming } from 'react-native-reanimated'
 import { searchFocusMorphDriver } from 'widgets/search-island/@x/morphDrivers'
 import {
   isSearchFieldFocusedAtom,
   isSearchOpenAtom,
   searchQueryAtom,
 } from 'features/sermon-search/@x/barMorph'
+import { advanceMorphFrames, countActiveMorphFrames } from 'shared/mocks/morphFrames'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import {
   setBarCollapsed,
@@ -18,24 +18,7 @@ import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
 import { ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
 import { useTabIslandMorph } from './useTabIslandMorph'
 
-const mockedWithTiming = withTiming as jest.Mock
-const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
-  toValue: number,
-  config: unknown,
-  callback?: (finished: boolean) => void,
-) => number
-
-const MORPH_INPUT = { hideSearch: false, routeCount: 4, rowWidth: 390, windowWidth: 390 }
-
-const captureCompletions = () => {
-  const completions: Array<(finished: boolean) => void> = []
-  mockedWithTiming.mockImplementation((toValue, _config, callback) => {
-    if (typeof callback === 'function') completions.push(callback)
-    return toValue
-  })
-
-  return completions
-}
+const MORPH_INPUT = { hideSearch: false, routeCount: 3, rowWidth: 390, windowWidth: 390 }
 
 describe('useTabIslandMorph', () => {
   beforeEach(() => {
@@ -44,12 +27,7 @@ describe('useTabIslandMorph', () => {
     searchFocusMorphDriver.reset()
   })
 
-  afterEach(() => {
-    mockedWithTiming.mockImplementation(defaultWithTimingImpl)
-  })
-
   test('rests on the START shape while the morph is in flight, then the target', async () => {
-    const completions = captureCompletions()
     const { ctx, result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT))
 
     await act(async () => {
@@ -68,7 +46,7 @@ describe('useTabIslandMorph', () => {
     expect(result.current.settledOneLine).toBe(false)
 
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
 
     // Both axes land: the shape is the circle and the height is the compact 48,
@@ -81,7 +59,6 @@ describe('useTabIslandMorph', () => {
   })
 
   test('grows the circle 48 -> 68 when a visible field occupies the one-line row', async () => {
-    const completions = captureCompletions()
     const ctx = createCtx()
     const { result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT), { ctx })
 
@@ -89,9 +66,8 @@ describe('useTabIslandMorph', () => {
       setBarCollapsed(ctx, true)
     })
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
-    completions.length = 0
 
     expect(result.current.restingIslandStyle.width).toBe(TAB_BAR_ISLAND_HEIGHT)
 
@@ -108,7 +84,7 @@ describe('useTabIslandMorph', () => {
     expect(result.current.restingIslandStyle.height).toBe(TAB_BAR_ISLAND_HEIGHT)
 
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
 
     // Height and width settle together at the expanded circle diameter.
@@ -119,7 +95,6 @@ describe('useTabIslandMorph', () => {
   })
 
   test('fades the island out while the search field is focused', async () => {
-    const completions = captureCompletions()
     const { ctx, result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT))
 
     await act(async () => {
@@ -133,7 +108,7 @@ describe('useTabIslandMorph', () => {
     expect(result.current.restingIslandStyle.width).toBeGreaterThan(0)
 
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
 
     expect(result.current.restingIslandStyle.opacity).toBe(0)
@@ -152,10 +127,27 @@ describe('useTabIslandMorph', () => {
     expect(result.current.restingIslandStyle.width).toBeGreaterThan(0)
   })
 
+  test('shares the expanded width across the three visible slots only', async () => {
+    const three = createCtx()
+    const four = createCtx()
+    const visible = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT), {
+      ctx: three,
+    })
+    const withHidden = await renderHookWithProviders(
+      () => useTabIslandMorph({ ...MORPH_INPUT, routeCount: 4 }),
+      { ctx: four },
+    )
+
+    // The search route is registered in the navigator but never rendered as a
+    // slot: routing the raw route count into the width would shrink every tab.
+    expect(withHidden.result.current.expandedTabWidth).toBeLessThan(
+      visible.result.current.expandedTabWidth,
+    )
+  })
+
   test('seeds the resting shape from a collapsed bar at mount without animating', async () => {
     const ctx = createCtx()
     setBarCollapsed(ctx, true)
-    mockedWithTiming.mockClear()
 
     const { result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT), { ctx })
 
@@ -164,6 +156,6 @@ describe('useTabIslandMorph', () => {
     expect(result.current.settledOneLine).toBe(true)
     expect(result.current.restingIslandStyle.height).toBe(TAB_BAR_ISLAND_HEIGHT)
     expect(result.current.restingIslandStyle.width).toBe(TAB_BAR_ISLAND_HEIGHT)
-    expect(mockedWithTiming).not.toHaveBeenCalled()
+    expect(countActiveMorphFrames()).toBe(0)
   })
 })

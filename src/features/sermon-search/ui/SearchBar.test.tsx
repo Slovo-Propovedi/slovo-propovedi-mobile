@@ -14,13 +14,24 @@ import {
   typeSearchInput,
 } from '../model'
 import { distinctValuesAtom } from '../model-distinctValues'
-import { closeSearch } from '../model-session'
+import { resetSearchSession } from '../model-session'
 import { SearchBar } from './SearchBar'
 
 // Jest hoists mock factories above imports, so the factory may only reference
 // `mock`-prefixed bindings. This alias keeps the namespace import intact.
 const mockCreateDistinctValuesResponse =
   sermonsMocks.getSermonControllerGetDistinctValuesResponseMock
+const mockRouterBack = jest.fn()
+const mockRouterNavigate = jest.fn()
+
+jest.mock('expo-router', () => ({
+  usePathname: () => '/',
+  useRouter: () => ({
+    back: (...args: unknown[]) => mockRouterBack(...args),
+    canGoBack: () => true,
+    navigate: (...args: unknown[]) => mockRouterNavigate(...args),
+  }),
+}))
 
 jest.mock('shared/api', () => ({
   mapAllSermonsResponse: jest.fn(),
@@ -68,6 +79,8 @@ let addListenerSpy: jest.SpyInstance
 beforeEach(() => {
   const ctx = getSharedTestCtx()
 
+  mockRouterBack.mockClear()
+  mockRouterNavigate.mockClear()
   searchQueryAtom(ctx, '')
   searchInputRequestAtom(ctx, null)
   isSearchOpenAtom(ctx, false)
@@ -270,7 +283,7 @@ describe('<SearchBar>', () => {
     }
   })
 
-  test('clears the query via the clear button and keeps the search open', async () => {
+  test('clears the query via the clear button', async () => {
     const ctx = getSharedTestCtx()
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, 'вера')
@@ -279,7 +292,6 @@ describe('<SearchBar>', () => {
     await fireEvent.press(getByLabelText(CLEAR_LABEL))
 
     expect(ctx.get(searchQueryAtom)).toBe('')
-    expect(ctx.get(isSearchOpenAtom)).toBe(true)
   })
 
   test('hides the inline clear chip while the query is empty', async () => {
@@ -350,20 +362,22 @@ describe('<SearchBar>', () => {
     }
   })
 
-  test('Escape on web closes the search when the query is empty', async () => {
+  test('Escape on web with an empty query closes the search route', async () => {
     const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
       const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
+      const blurMock = (TextInput as unknown as { prototype: { blur: jest.Mock } }).prototype.blur
       await renderWithProviders(<SearchBar />, { ctx })
 
       await act(async () => {
         dispatchKeyDown(createKeyDownEvent('Escape'))
       })
 
-      await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
       expect(ctx.get(searchQueryAtom)).toBe('')
+      expect(blurMock).toHaveBeenCalled()
+      expect(mockRouterBack).toHaveBeenCalledTimes(1)
     } finally {
       restorePlatform.restore()
       restore()
@@ -450,7 +464,7 @@ describe('<SearchBar>', () => {
     expect(blurMock).toHaveBeenCalledTimes(1)
   })
 
-  test('blurs the field when the collapsed bar hides it while search stays open', async () => {
+  test('blurs the field when the pill hides it', async () => {
     const ctx = getSharedTestCtx()
     isSearchOpenAtom(ctx, true)
     const blurMock = (TextInput as unknown as { prototype: { blur: jest.Mock } }).prototype.blur
@@ -579,7 +593,7 @@ describe('<SearchBar> voice input availability', () => {
     }
   })
 
-  test('aborts the live recognizer when the search closes', async () => {
+  test('aborts the live recognizer when the search session resets', async () => {
     const dom = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
@@ -590,7 +604,7 @@ describe('<SearchBar> voice input availability', () => {
 
       await fireEvent.press(getByLabelText(MIC_LABEL))
       await act(async () => {
-        await closeSearch(ctx)
+        await resetSearchSession(ctx)
       })
 
       expect(speechInstances[0]?.abort).toHaveBeenCalledTimes(1)
@@ -644,20 +658,22 @@ describe('<SearchBar> web Escape without input focus', () => {
     }
   })
 
-  test('Escape on document closes the search when the query is empty', async () => {
+  test('Escape on document with an empty query closes the search route', async () => {
     const { dispatchKeyDown, restore } = installFakeDom()
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
     try {
       const ctx = getSharedTestCtx()
       isSearchOpenAtom(ctx, true)
+      const blurMock = (TextInput as unknown as { prototype: { blur: jest.Mock } }).prototype.blur
       await renderWithProviders(<SearchBar />, { ctx })
 
       await act(async () => {
         dispatchKeyDown(createKeyDownEvent('Escape'))
       })
 
-      await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
       expect(ctx.get(searchQueryAtom)).toBe('')
+      expect(blurMock).toHaveBeenCalled()
+      expect(mockRouterBack).toHaveBeenCalledTimes(1)
     } finally {
       restorePlatform.restore()
       restore()

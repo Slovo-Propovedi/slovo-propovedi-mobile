@@ -1,36 +1,25 @@
 import { type OnboardingScenario } from '../scenarios'
 
 export const searchScenario: OnboardingScenario = {
-  description: 'Недавние поиски и группы результатов',
+  description: 'Поиск, недавние запросы и группы результатов',
   globalFallback: true,
   icon: 'search-outline',
   id: 'search',
-  screens: ['/listen'],
+  screens: ['/search'],
   steps: [
     {
-      text: 'Поиск стал отдельной страницей: недавние запросы хранятся на устройстве, а результаты разложены по вкладкам. Сейчас перейдём на экран «Слушать» — тапнем по нему — и откроем поиск. Нажмите «Далее».',
+      text: 'Поиск открывается отдельной страницей: недавние запросы хранятся на устройстве, а результаты разложены по вкладкам. Сейчас откроем поиск пилюлей с лупой в нижней панели. Нажмите «Далее».',
       title: 'Новый поиск',
     },
     {
-      // The «Слушать» tab is an entry transition (blink + navigation), not a card.
-      // It navigates itself (auto-skipped when already on «Слушать»), so no separate
+      // The search pill is an entry transition (blink + navigation), not a card.
+      // It navigates itself (auto-skipped when already on «Поиск»), so no separate
       // pure-navigation return is needed: a return entry would reach the route first
-      // and the tab entry would then be skipped without ever blinking.
-      route: '/listen',
-      tapTargetId: 'tab.listen',
-      text: 'Переходим на экран «Слушать»…',
-      title: 'Экран «Слушать»',
-    },
-    {
-      text: 'Чтобы открыть поиск, тапните по кружку с лупой справа от панели вкладок.',
-      title: 'Кнопка поиска',
-    },
-    {
-      // Opens the search page, so the query step below can type into it.
-      tapActionId: 'open-listen-search',
+      // and the pill entry would then be skipped without ever blinking.
+      route: '/search',
       tapTargetId: 'listen.search-toggle',
-      text: 'Открываем поиск…',
-      title: 'Открываем поиск',
+      text: 'Открываем страницу «Поиск»…',
+      title: 'Страница «Поиск»',
     },
     {
       // A pass-through card floating over the live search UI while the demo query types
@@ -42,7 +31,7 @@ export const searchScenario: OnboardingScenario = {
       title: 'Вводим запрос',
     },
     {
-      // Same target id as the old compact results: it now wraps the «Проповеди» group
+      // Same target id as the old compact results: it wraps the «Проповеди» group
       // pill, which switches the full paginated list below.
       targetId: 'search-results.group-sermons',
       text: 'Результаты разложены по вкладкам «Проповеди», «Плейлисты» и «Проповедники»: переключите вкладку — под ней полный список с бесконечной прокруткой.',
@@ -78,7 +67,7 @@ export const searchScenario: OnboardingScenario = {
     {
       // No target: the recents section has no onboarding target, so the closing card
       // is a centred text card over the search page.
-      text: 'Проповедь, которую вы включили, теперь в «Недавних поисках» на странице поиска: тап — включить снова, «⋯» — убрать из истории, «Очистить» — очистить всё.',
+      text: 'Проповедь, которую вы включили, теперь в «Недавних поисках» на странице поиска: тап — включить снова, «⋯» — убрать из истории, «Очистить» — очистить всё. При уходе со страницы поиска запрос сбрасывается.',
       title: 'Недавние поиски',
     },
   ],

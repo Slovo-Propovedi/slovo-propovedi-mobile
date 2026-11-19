@@ -18,6 +18,7 @@ import { getTabIslandRestingStyles } from './getTabIslandRestingStyles'
 
 interface TabIslandMorphInput {
   hideSearch: boolean
+  /** Visible slots only: the search route is registered but never rendered as a tab. */
   routeCount: number
   /** Row width measured via onLayout; 0 until the first layout pass. */
   rowWidth: number
@@ -29,7 +30,8 @@ interface TabIslandMorphInput {
 // cover a visible search field differently on purpose: the field forces the
 // SHAPE to a circle (the row reads [circle][field]) but keeps the HEIGHT at 68,
 // so the open-field row is a 68x68 circle next to the 68 field. The compact 48
-// applies only when the field is hidden AND the bar is one-line.
+// applies only when the field is hidden AND the bar is one-line. Focus is a
+// stronger state: it retracts the island so the pill owns the row.
 export const useTabIslandMorph = ({
   hideSearch,
   routeCount,

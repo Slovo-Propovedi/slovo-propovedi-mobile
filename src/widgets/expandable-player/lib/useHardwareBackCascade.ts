@@ -1,7 +1,6 @@
-import { router, usePathname } from 'expo-router'
+import { router } from 'expo-router'
 import { useEffect } from 'react'
 import { BackHandler } from 'react-native'
-import { closeSearch, isDetailRouteOverSearch, isSearchOpenAtom } from 'features/sermon-search'
 import { closePlayerSheetAction, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { showDetailsAtom } from '../model/showDetailsAtom'
@@ -10,11 +9,10 @@ import { showPlaylistAtom } from '../model/showPlaylistAtom'
 import { showSoundSettingsAtom } from '../model/showSoundSettingsAtom'
 
 // Hardware-back cascade, topmost layer first: details → menu → sound
-// settings → playlist → expanded player → search overlay (only while it is the
-// visible top layer) → router history.
+// settings → playlist → expanded player → router history. The search route owns
+// no layer here: back on `/search` walks the router history (to the previous
+// tab), and the route-leave reset clears the search session.
 export const useHardwareBackCascade = () => {
-  const pathname = usePathname()
-
   useEffect(() => {
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
       const currentShowDetails = ctx.get(showDetailsAtom)
@@ -22,7 +20,6 @@ export const useHardwareBackCascade = () => {
       const currentShowSoundSettings = ctx.get(showSoundSettingsAtom)
       const currentShowPlaylist = ctx.get(showPlaylistAtom)
       const currentIsPlayerExpanded = ctx.get(isPlayerExpandedAtom)
-      const currentIsSearchOpen = ctx.get(isSearchOpenAtom)
       const canGoBack = router.canGoBack()
 
       if (currentShowDetails) {
@@ -60,13 +57,6 @@ export const useHardwareBackCascade = () => {
         return true
       }
 
-      if (currentIsSearchOpen && !isDetailRouteOverSearch(pathname)) {
-        void ctx.schedule(() => {
-          void closeSearch(ctx)
-        })
-        return true
-      }
-
       if (canGoBack) {
         router.back()
         return true
@@ -76,5 +66,5 @@ export const useHardwareBackCascade = () => {
     })
 
     return () => listener.remove()
-  }, [pathname])
+  }, [])
 }

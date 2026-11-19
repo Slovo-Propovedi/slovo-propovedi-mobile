@@ -1,9 +1,9 @@
+import { getIslandContentPadding } from './getIslandStyle'
 import {
-  getIslandContentPadding,
   getTabItemHeight,
   getTabItemHorizontalMargin,
   getTabItemVerticalMargin,
-} from './getIslandStyle'
+} from './getTabItemStyle'
 
 // Style payloads for the animated morph (0 = expanded bar, 1 = collapsed circle).
 //

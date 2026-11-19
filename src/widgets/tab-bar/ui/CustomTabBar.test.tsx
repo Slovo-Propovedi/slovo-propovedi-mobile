@@ -1,5 +1,5 @@
 import { createCtx } from '@reatom/framework'
-import { act, fireEvent, screen } from '@testing-library/react-native'
+import { act, fireEvent, screen, within } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import {
   searchCloseMorphDriver,
@@ -7,8 +7,7 @@ import {
   searchOpenMorphDriver,
 } from 'widgets/search-island/@x/morphDrivers'
 import { tabIslandMorphDriver } from 'widgets/tab-bar/@x/morph'
-import { isSearchOpenAtom } from 'features/sermon-search'
-import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
+import { isSearchFieldFocusedAtom, isSearchOpenAtom } from 'features/sermon-search/@x/barMorph'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
 import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
@@ -34,8 +33,11 @@ jest.mock('expo-blur', () => {
   return { BlurView: (props: Record<string, unknown>) => <View {...props} /> }
 })
 
+const mockRouterNavigate = jest.fn()
+
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn(() => jest.fn()) }),
+  useRouter: () => ({ navigate: (...args: unknown[]) => mockRouterNavigate(...args) }),
 }))
 
 let mockBottomInset = 0
@@ -54,20 +56,14 @@ const mockedShowInfo = showInfo as jest.MockedFunction<typeof showInfo>
 
 const mockOpenSearch = jest.fn()
 const mockCloseSearch = jest.fn()
-const mockCloseSearchAndExpand = jest.fn()
 let mockIsSearchFieldVisible = false
 
-jest.mock('features/sermon-search', () => {
-  const { action, atom } = jest.requireActual('@reatom/framework')
-  return {
-    closeSearch: action(() => mockCloseSearch(), 'mockCloseSearch'),
-    closeSearchAndExpand: action(() => mockCloseSearchAndExpand(), 'mockCloseSearchAndExpand'),
-    isSearchOpenAtom: atom(false, 'mockIsSearchOpenAtom'),
-    SearchBar: () => null,
-    useIsSearchFieldVisible: () => mockIsSearchFieldVisible,
-    useOpenSearch: () => mockOpenSearch,
-  }
-})
+jest.mock('features/sermon-search', () => ({
+  SearchBar: () => null,
+  useCloseSearch: () => mockCloseSearch,
+  useIsSearchFieldVisible: () => mockIsSearchFieldVisible,
+  useOpenSearch: () => mockOpenSearch,
+}))
 
 const mockNavigate = jest.fn()
 
@@ -76,9 +72,10 @@ const createMockState = (activeIndex: number) => ({
   index: activeIndex,
   key: 'tab-root',
   preloadedRouteKeys: [] as string[],
-  routeNames: ['listen', 'read', 'more'],
+  routeNames: ['listen', 'search', 'read', 'more'],
   routes: [
     { key: 'listen', name: 'listen', path: '/listen' },
+    { key: 'search', name: 'search', path: '/search' },
     { key: 'read', name: 'read', path: '/read' },
     { key: 'more', name: 'more', path: '/more' },
   ],
@@ -382,15 +379,15 @@ describe('<CustomTabBar>', () => {
     expect(islandsRow?.props.pointerEvents).toBe('box-none')
   })
 
-  test('renders a slot for every route in the navigator state', async () => {
-    const routeNames = ['listen', 'read', 'more', 'history', 'share']
+  test('renders a slot only for the three visible tabs, never for the search route', async () => {
+    const routeNames = ['listen', 'search', 'read', 'more', 'history', 'share']
     const state = {
       ...createMockState(0),
       routeNames,
       routes: routeNames.map(name => ({ key: name, name, path: `/${name}` })),
     }
 
-    const { getByText } = await renderWithProviders(
+    const { getByText, queryByText } = await renderWithProviders(
       <CustomTabBar
         state={state}
         descriptors={{}}
@@ -401,7 +398,9 @@ describe('<CustomTabBar>', () => {
       { ctx: createCtx() },
     )
 
-    // The bar no longer filters any route: each navigator route gets a slot.
+    // Search is registered as a navigator route (it owns its detail stack) but
+    // the bar never renders it as a tab slot.
+    expect(queryByText('Поиск')).toBeNull()
     expect(getByText('Слушать')).toBeTruthy()
     expect(getByText('Читать')).toBeTruthy()
     expect(getByText('Ещё')).toBeTruthy()
@@ -466,7 +465,7 @@ describe('<CustomTabBar>', () => {
     expect(getByRole('button', { name: 'Поиск' })).toBeTruthy()
   })
 
-  test('pressing the search button opens search', async () => {
+  test('pressing the search button opens the search route', async () => {
     const { getByRole } = await renderTabBar()
 
     await fireEvent.press(getByRole('button', { name: 'Поиск' }))
@@ -511,22 +510,8 @@ describe('<CustomTabBar>', () => {
     expect(mockNavigate).not.toHaveBeenCalled()
   })
 
-  test('closes the search from the active circle while the visible field forced the collapsed shape', async () => {
-    mockIsSearchFieldVisible = true
-    const { ctx, getByText } = await renderTabBar(0)
-    await act(async () => {
-      isSearchOpenAtom(ctx, true)
-    })
-
-    await fireEvent.press(getByText('Слушать'))
-
-    expect(mockCloseSearchAndExpand).toHaveBeenCalledTimes(1)
-    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
-    expect(mockNavigate).not.toHaveBeenCalled()
-  })
-
   test('does not show info dialog when tapping an active allowed tab', async () => {
-    const { getByText } = await renderTabBar(2)
+    const { getByText } = await renderTabBar(3)
 
     await fireEvent.press(getByText('Ещё'))
 
@@ -561,5 +546,87 @@ describe('<CustomTabBar>', () => {
     } finally {
       keyboardBottomInsetSv.value = 0
     }
+  })
+
+  const createBarProps = () => ({
+    descriptors: {},
+    emitter: createMockEmitter(),
+    insets: { bottom: 0, left: 0, right: 0, top: 0 },
+    navigateToTab: mockNavigate,
+  })
+
+  const findTabSlots = () =>
+    screen.root?.queryAll(
+      instance => StyleSheet.flatten(instance.props.style)?.minWidth !== undefined,
+    ) ?? []
+
+  const findActiveCapsules = () =>
+    screen.root?.queryAll(
+      instance =>
+        StyleSheet.flatten(instance.props.style)?.backgroundColor === 'rgba(241, 96, 49, 0.18)',
+    ) ?? []
+
+  test('keeps the tab the user came from active while the filtered search route is focused', async () => {
+    // `/search` is a navigator route but not a bar slot, so the focused route key
+    // matches no rendered tab. HEAD kept the underlying tab active; the route model
+    // must remember the last visible tab or the collapsed circle renders empty.
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    const props = createBarProps()
+    const { getByText, rerender } = await renderWithProviders(
+      <CustomTabBar state={createMockState(0)} {...props} />,
+      { ctx },
+    )
+
+    await rerender(<CustomTabBar state={createMockState(1)} {...props} />)
+
+    expect(getByText('Слушать')).toHaveStyle({ color: '#f16031' })
+    expect(findActiveCapsules()).toHaveLength(1)
+    // Collapsed to the active circle, exactly that slot keeps its content visible
+    // (opacity 1); an unmarked tab would render an empty 68px circle.
+    const activeSlots = findTabSlots().filter(
+      slot => StyleSheet.flatten(slot.props.style)?.opacity === 1,
+    )
+    expect(activeSlots).toHaveLength(1)
+    expect(within(activeSlots[0]).getByText('Слушать')).toBeTruthy()
+  })
+
+  test('remembered active tab follows the last real tab switch', async () => {
+    const props = createBarProps()
+    const { getByText, rerender } = await renderWithProviders(
+      <CustomTabBar state={createMockState(3)} {...props} />,
+      { ctx: createCtx() },
+    )
+
+    await rerender(<CustomTabBar state={createMockState(1)} {...props} />)
+
+    expect(getByText('Ещё')).toHaveStyle({ color: '#f16031' })
+    expect(getByText('Слушать')).not.toHaveStyle({ color: '#f16031' })
+    // Expanded bar: the remembered tab still owns the visible capsule.
+    const capsules = findActiveCapsules()
+    expect(capsules).toHaveLength(1)
+    expect(StyleSheet.flatten(capsules[0].props.style)?.opacity).toBe(1)
+  })
+
+  test('a deep link straight to search falls back to the first visible tab', async () => {
+    const { getByText } = await renderWithProviders(
+      <CustomTabBar state={createMockState(1)} {...createBarProps()} />,
+      { ctx: createCtx() },
+    )
+
+    expect(getByText('Слушать')).toHaveStyle({ color: '#f16031' })
+  })
+
+  test('pressing the remembered active tab leaves the search route', async () => {
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    const { getByText } = await renderWithProviders(
+      <CustomTabBar state={createMockState(1)} {...createBarProps()} />,
+      { ctx },
+    )
+
+    await fireEvent.press(getByText('Слушать'))
+
+    expect(mockNavigate).toHaveBeenCalledWith('listen')
   })
 })

@@ -1,36 +1,24 @@
 import { createCtx } from '@reatom/framework'
-import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Dimensions, StyleSheet } from 'react-native'
-import { withTiming } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
 import { oneLineBarMorphDriver, tabIslandMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import { TAB_BAR_ISLAND_HEIGHT_EXPANDED, tabBarHeightAtom } from 'shared/ui/layout'
+import { advanceMorphFrames } from 'shared/mocks/morphFrames'
+import {
+  isBarCollapsedAtom,
+  setBarCollapsed,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  tabBarHeightAtom,
+} from 'shared/ui/layout'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { searchCloseMorphDriver } from '../model/searchCloseDriver'
 import { searchFocusMorphDriver } from '../model/searchFocusDriver'
 import { searchOpenMorphDriver } from '../model/searchOpenDriver'
 import { SearchIslandMorph } from './SearchIslandMorph'
-
-const mockedWithTiming = withTiming as jest.Mock
-const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
-  toValue: number,
-  config: unknown,
-  callback?: (finished: boolean) => void,
-) => number
-
-const captureCompletions = () => {
-  const completions: Array<(finished: boolean) => void> = []
-  mockedWithTiming.mockImplementation((toValue, _config, callback) => {
-    if (typeof callback === 'function') completions.push(callback)
-    return toValue
-  })
-
-  return completions
-}
 
 // Jest hoists mock factories above imports, so the factory may only reference
 // `mock`-prefixed bindings. This alias keeps the namespace import intact.
@@ -75,8 +63,17 @@ jest.mock('expo-blur', () => {
   return { BlurView: (props: Record<string, unknown>) => <View {...props} /> }
 })
 
+const mockRouter = {
+  back: jest.fn(),
+  canGoBack: jest.fn(() => true),
+  navigate: jest.fn(),
+}
+const mockPathname = '/'
+
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn(() => jest.fn()) }),
+  usePathname: () => mockPathname,
+  useRouter: () => mockRouter,
 }))
 
 const SEARCH_PLACEHOLDER = 'Проповеди, проповедники, название книги'
@@ -155,15 +152,13 @@ const renderMorph = async () => {
 describe('<SearchIslandMorph>', () => {
   beforeEach(() => {
     mockIoniconsSpy.mockClear()
+    mockRouter.back.mockClear()
+    mockRouter.navigate.mockClear()
     tabIslandMorphDriver.reset()
     oneLineBarMorphDriver.reset()
     searchOpenMorphDriver.reset()
     searchFocusMorphDriver.reset()
     searchCloseMorphDriver.reset()
-  })
-
-  afterEach(() => {
-    mockedWithTiming.mockImplementation(defaultWithTimingImpl)
   })
 
   test('renders no shadow-carrying container in either state', async () => {
@@ -204,6 +199,9 @@ describe('<SearchIslandMorph>', () => {
     await act(async () => {
       isSearchOpenAtom(ctx, true)
     })
+    await act(async () => {
+      advanceMorphFrames()
+    })
 
     expect(StyleSheet.flatten(findMorphContainer().props.style).opacity).toBeUndefined()
     expect(StyleSheet.flatten(findContentWrapper(input).props.style).opacity).toBe(1)
@@ -222,6 +220,9 @@ describe('<SearchIslandMorph>', () => {
 
     await act(async () => {
       isSearchOpenAtom(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames()
     })
 
     // Open: the glyph keeps the same size and only travels with the left edge.
@@ -246,7 +247,13 @@ describe('<SearchIslandMorph>', () => {
       isSearchOpenAtom(ctx, true)
     })
     await act(async () => {
+      advanceMorphFrames()
+    })
+    await act(async () => {
       isSearchFieldFocusedAtom(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames()
     })
 
     const frame = StyleSheet.flatten(findMorphContainer().props.style)
@@ -271,6 +278,9 @@ describe('<SearchIslandMorph>', () => {
     await act(async () => {
       isSearchOpenAtom(ctx, true)
     })
+    await act(async () => {
+      advanceMorphFrames()
+    })
 
     const frame = StyleSheet.flatten(findMorphContainer().props.style)
     const expected = getSearchIslandGeometry({
@@ -290,20 +300,17 @@ describe('<SearchIslandMorph>', () => {
   })
 
   test('keeps the tab-slot frame of a focus flip until the morph settles', async () => {
-    const completions = captureCompletions()
     const { ctx } = await renderMorph()
 
-    completions.length = 0
     await act(async () => {
       isSearchOpenAtom(ctx, true)
     })
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
 
     const openFrame = StyleSheet.flatten(findMorphContainer().props.style)
 
-    completions.length = 0
     await act(async () => {
       isSearchFieldFocusedAtom(ctx, true)
     })
@@ -314,7 +321,7 @@ describe('<SearchIslandMorph>', () => {
     })
 
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
 
     const settledFrame = StyleSheet.flatten(findMorphContainer().props.style)
@@ -359,12 +366,43 @@ describe('<SearchIslandMorph>', () => {
     expect(findMorphContainer().props.pointerEvents).toBe('box-none')
   })
 
-  test('opens the search by tapping the closed circle', async () => {
-    const { ctx, getByRole } = await renderMorph()
+  test('opens the search route by tapping the closed circle', async () => {
+    const { ctx, getByPlaceholderText, getByRole } = await renderMorph()
+
+    expect(ctx.get(isSearchOpenAtom)).toBe(false)
+
+    // A collapsed bar must expand and the field must turn visible in ONE
+    // transaction: the island's morph target would otherwise flip expand→collapse
+    // in the same tick and the tap would open the route without a clean morph.
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    const openWhenBarExpanded: boolean[] = []
+    ctx.subscribe(isBarCollapsedAtom, isCollapsed => {
+      if (!isCollapsed) openWhenBarExpanded.push(ctx.get(isSearchOpenAtom))
+    })
+
+    // The morph starts from the atom subscription, so the flag must already be set
+    // when navigation is requested — a route-commit-timed write would leave the
+    // pill in its closed circle for a frame.
+    let isOpenWhenNavigating = false
+    mockRouter.navigate.mockImplementationOnce(() => {
+      isOpenWhenNavigating = ctx.get(isSearchOpenAtom)
+    })
 
     await fireEvent.press(getByRole('button', { name: SEARCH_LABEL }))
+    await act(async () => {
+      advanceMorphFrames()
+    })
 
-    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(true))
+    expect(openWhenBarExpanded).toEqual([true])
+    expect(isOpenWhenNavigating).toBe(true)
+    expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    // Tap → atom → driver → live field: the same gesture reaches the pill content.
+    expect(searchOpenMorphDriver.progress.value).toBe(1)
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true })
+    expect(findContentWrapper(input).props.pointerEvents).toBe('auto')
+    expect(mockRouter.navigate).toHaveBeenCalledWith('/search')
   })
 
   test('hides the search button from assistive tech while the field is visible', async () => {
@@ -455,7 +493,7 @@ describe('<SearchIslandMorph>', () => {
     expect(findShadows()).toHaveLength(0)
   })
 
-  test('closes the search from the external close circle', async () => {
+  test('closes the search route from the external close circle', async () => {
     const { ctx, getByLabelText, getByPlaceholderText } = await renderMorph()
 
     await act(async () => {
@@ -466,15 +504,17 @@ describe('<SearchIslandMorph>', () => {
     })
     await fireEvent.press(getByLabelText(CLOSE_LABEL))
 
-    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
+    // The close hook writes the flag before navigating, so the closing morph
+    // starts on the press tick instead of waiting for the pathname effect.
+    expect(ctx.get(searchQueryAtom)).toBe('')
+    expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
+    expect(ctx.get(isSearchOpenAtom)).toBe(false)
+    expect(mockRouter.back).toHaveBeenCalledTimes(1)
   })
 
   test('keeps the committed resting frame at the START geometry until the search morph settles', async () => {
-    const completions = captureCompletions()
     const { ctx } = await renderMorph()
 
-    // Mount-time animations (close progress seed) are not part of the flip.
-    completions.length = 0
     const closedFrame = StyleSheet.flatten(findMorphContainer().props.style)
 
     await act(async () => {
@@ -490,7 +530,7 @@ describe('<SearchIslandMorph>', () => {
     })
 
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
 
     const settledFrame = StyleSheet.flatten(findMorphContainer().props.style)
@@ -503,15 +543,13 @@ describe('<SearchIslandMorph>', () => {
   })
 
   test('keeps the pill frame of a close-into-circle flip until the morph settles', async () => {
-    const completions = captureCompletions()
     const { ctx } = await renderMorph()
 
-    completions.length = 0
     await act(async () => {
       isSearchOpenAtom(ctx, true)
     })
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
 
     const openedFrame = StyleSheet.flatten(findMorphContainer().props.style)
@@ -519,7 +557,6 @@ describe('<SearchIslandMorph>', () => {
     // Open field is always the tab bar's full height, not the collapsed circle's.
     expect(openedFrame.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
 
-    completions.length = 0
     await act(async () => {
       isSearchOpenAtom(ctx, false)
     })
@@ -531,7 +568,7 @@ describe('<SearchIslandMorph>', () => {
     })
 
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
 
     const settledFrame = StyleSheet.flatten(findMorphContainer().props.style)
@@ -541,7 +578,6 @@ describe('<SearchIslandMorph>', () => {
   })
 
   test('keeps the close slot frame of a blur-mid-fade until the fade settles', async () => {
-    const completions = captureCompletions()
     const { ctx, getByLabelText, getByPlaceholderText } = await renderMorph()
     const input = getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true })
     const closeSlotOpacity = () =>
@@ -550,15 +586,13 @@ describe('<SearchIslandMorph>', () => {
           .style,
       ).opacity
 
-    completions.length = 0
     await act(async () => {
       isSearchOpenAtom(ctx, true)
     })
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
 
-    completions.length = 0
     await act(async () => {
       fireEvent(input, 'focus')
     })
@@ -567,11 +601,10 @@ describe('<SearchIslandMorph>', () => {
     expect(closeSlotOpacity()).toBe(0)
 
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
     expect(closeSlotOpacity()).toBe(1)
 
-    completions.length = 0
     await act(async () => {
       fireEvent(input, 'blur')
     })
@@ -580,13 +613,12 @@ describe('<SearchIslandMorph>', () => {
     expect(closeSlotOpacity()).toBe(1)
 
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
     expect(closeSlotOpacity()).toBe(0)
   })
 
   test('ignores a re-delivered focus event while the close fade is in flight', async () => {
-    const completions = captureCompletions()
     const { ctx, getByLabelText, getByPlaceholderText } = await renderMorph()
     const input = getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true })
     const closeSlotOpacity = () =>
@@ -599,12 +631,11 @@ describe('<SearchIslandMorph>', () => {
       isSearchOpenAtom(ctx, true)
     })
     // Settle the open morph first; its completion would otherwise pollute the
-    // focus-fade capture below.
+    // focus-fade window below.
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
 
-    completions.length = 0
     await act(async () => {
       fireEvent(input, 'focus')
     })
@@ -617,7 +648,7 @@ describe('<SearchIslandMorph>', () => {
     expect(closeSlotOpacity()).toBe(0)
 
     await act(async () => {
-      completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
     expect(closeSlotOpacity()).toBe(1)
   })

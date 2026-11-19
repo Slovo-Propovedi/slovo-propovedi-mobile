@@ -8,9 +8,9 @@ import { Platform, type View } from 'react-native'
 // pages and looks their target up here, keyed by the page route.
 //
 // Each route keeps a STACK of targets: the page publishes its content, and a
-// full-cover overlay (the search gate) may publish its own on top while it is
-// open. The chrome always blurs the top target, and closing the overlay restores
-// the page target without waiting for the page to relayout.
+// covering layer may publish its own on top while it is visible. The chrome
+// always blurs the top target, and the popped layer restores the page target
+// without waiting for the page to relayout.
 export type BlurTargetRef = RefObject<ComponentRef<typeof View> | null>
 
 /** Dimezis hardware blur is reliable from Android 12 (API 31) up. */
@@ -30,6 +30,7 @@ export const BLUR_TARGET_ROUTES = {
   playlistList: '/listen/playlist-list',
   preacher: '/listen/preacher',
   read: '/read',
+  search: '/search',
 } as const
 
 const targets = new Map<string, BlurTargetRef[]>()

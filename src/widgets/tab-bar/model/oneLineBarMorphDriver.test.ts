@@ -1,38 +1,15 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
-import { withTiming } from 'react-native-reanimated'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/@x/barMorph'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
+import { advanceMorphFrames, countActiveMorphFrames } from 'shared/mocks/morphFrames'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
-import { BAR_MORPH_DURATION_MS, setBarCollapsed } from 'shared/ui/layout'
+import { setBarCollapsed } from 'shared/ui/layout'
 import { oneLineBarMorphDriver } from './oneLineBarMorphDriver'
-
-const mockedWithTiming = withTiming as jest.Mock
-const defaultWithTimingImpl = mockedWithTiming.getMockImplementation() as (
-  toValue: number,
-  config: unknown,
-  callback?: (finished: boolean) => void,
-) => number
-
-const captureCompletions = () => {
-  const completions: Array<(finished: boolean) => void> = []
-  mockedWithTiming.mockImplementation((toValue, _config, callback) => {
-    if (typeof callback === 'function') completions.push(callback)
-
-    return toValue
-  })
-
-  return completions
-}
 
 describe('oneLineBarMorphDriver', () => {
   beforeEach(() => {
     oneLineBarMorphDriver.reset()
-    mockedWithTiming.mockClear()
-  })
-
-  afterEach(() => {
-    mockedWithTiming.mockImplementation(defaultWithTimingImpl)
   })
 
   test('attaches one subscription no matter how many hooks mount', async () => {
@@ -44,12 +21,10 @@ describe('oneLineBarMorphDriver', () => {
       setBarCollapsed(ctx, true)
     })
 
-    expect(mockedWithTiming).toHaveBeenCalledTimes(1)
-    expect(mockedWithTiming).toHaveBeenCalledWith(
-      1,
-      { duration: BAR_MORPH_DURATION_MS },
-      expect.any(Function),
-    )
+    // Two surfaces share the driver, but only one UI-thread clock may step the
+    // shared value; the second would double the morph speed.
+    expect(countActiveMorphFrames()).toBe(1)
+    expect(oneLineBarMorphDriver.progress.value).toBe(0)
   })
 
   test('every surface reads the same shared progress value', async () => {
@@ -75,41 +50,47 @@ describe('oneLineBarMorphDriver', () => {
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
+    await act(async () => {
+      advanceMorphFrames()
+    })
     expect(result.current.progress.value).toBe(1)
     expect(result.current.settled).toBe(true)
 
     await act(async () => {
       setBarCollapsed(ctx, false)
     })
+    await act(async () => {
+      advanceMorphFrames()
+    })
     expect(result.current.progress.value).toBe(0)
     expect(result.current.settled).toBe(false)
   })
 
-  test('notifies start listeners before the timing is started, then settles', async () => {
+  test('notifies start listeners before the clock runs, then settles', async () => {
     const ctx = createCtx()
-    oneLineBarMorphDriver.ensure(ctx)
+    await renderHookWithProviders(() => useAtomMorphDriver(oneLineBarMorphDriver), { ctx })
     const events: string[] = []
     oneLineBarMorphDriver.registerStartListener(() => events.push('start'))
     oneLineBarMorphDriver.registerSettleListener(() => events.push('settle'))
-    mockedWithTiming.mockImplementation((toValue, _config, callback) => {
-      events.push('timing')
-      if (typeof callback === 'function') callback(true)
-
-      return toValue
-    })
 
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
+    // The flip commits the start on the JS tick; frames land the target later.
+    expect(events).toEqual(['start'])
+    expect(oneLineBarMorphDriver.progress.value).toBe(0)
 
-    expect(events).toEqual(['start', 'timing', 'settle'])
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    expect(events).toEqual(['start', 'settle'])
     expect(oneLineBarMorphDriver.progress.value).toBe(1)
   })
 
-  test('reports no settle for an animation that was interrupted', async () => {
-    const completions = captureCompletions()
+  test('reports no settle for the direction an interrupting flip aborted', async () => {
     const ctx = createCtx()
-    oneLineBarMorphDriver.ensure(ctx)
+    await renderHookWithProviders(() => useAtomMorphDriver(oneLineBarMorphDriver), { ctx })
     const onSettle = jest.fn()
     oneLineBarMorphDriver.registerSettleListener(onSettle)
 
@@ -119,20 +100,16 @@ describe('oneLineBarMorphDriver', () => {
     await act(async () => {
       setBarCollapsed(ctx, false)
     })
-
     await act(async () => {
-      completions[0](false)
+      advanceMorphFrames()
     })
-    expect(onSettle).not.toHaveBeenCalled()
 
-    await act(async () => {
-      completions[1](true)
-    })
+    // Only the retargeted direction lands; the aborted collapse reports nothing.
+    expect(onSettle).toHaveBeenCalledTimes(1)
     expect(onSettle).toHaveBeenCalledWith(false)
   })
 
   test('a remount cannot lose a mid-flight morph', async () => {
-    const completions = captureCompletions()
     const ctx = createCtx()
     const firstMount = await renderHookWithProviders(
       () => useAtomMorphDriver(oneLineBarMorphDriver),
@@ -142,26 +119,22 @@ describe('oneLineBarMorphDriver', () => {
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
-    expect(completions).toHaveLength(1)
+    expect(oneLineBarMorphDriver.progress.value).toBe(0)
 
     await firstMount.unmount()
 
+    // No surface owns a clock here; the flip must still arm the driver and the
+    // next mount must resume it from the current value.
     await act(async () => {
       setBarCollapsed(ctx, false)
     })
-    expect(completions).toHaveLength(2)
 
     const lateSettle = jest.fn()
     oneLineBarMorphDriver.registerSettleListener(lateSettle)
     await renderHookWithProviders(() => useAtomMorphDriver(oneLineBarMorphDriver), { ctx })
 
     await act(async () => {
-      completions[0](false)
-    })
-    expect(lateSettle).not.toHaveBeenCalled()
-
-    await act(async () => {
-      completions[1](true)
+      advanceMorphFrames()
     })
     expect(lateSettle).toHaveBeenCalledWith(false)
     expect(oneLineBarMorphDriver.progress.value).toBe(0)
@@ -174,7 +147,7 @@ describe('oneLineBarMorphDriver', () => {
     oneLineBarMorphDriver.ensure(ctx)
 
     expect(oneLineBarMorphDriver.progress.value).toBe(1)
-    expect(mockedWithTiming).not.toHaveBeenCalled()
+    expect(countActiveMorphFrames()).toBe(0)
   })
 
   test('stays expanded when a collapsed bar still shows the search field', async () => {
@@ -189,11 +162,10 @@ describe('oneLineBarMorphDriver', () => {
     })
 
     expect(oneLineBarMorphDriver.progress.value).toBe(0)
-    expect(mockedWithTiming).not.toHaveBeenCalled()
+    expect(countActiveMorphFrames()).toBe(0)
   })
 
   test('commits the start state of a flip that interrupts an in-flight morph', async () => {
-    const completions = captureCompletions()
     const ctx = createCtx()
     setBarCollapsed(ctx, true)
     const { result } = await renderHookWithProviders(
@@ -212,14 +184,10 @@ describe('oneLineBarMorphDriver', () => {
     expect(result.current.settled).toBe(false)
 
     await act(async () => {
-      completions[0](false)
-    })
-    expect(result.current.settled).toBe(false)
-
-    await act(async () => {
-      completions[1](true)
+      advanceMorphFrames()
     })
     expect(result.current.settled).toBe(true)
+    expect(oneLineBarMorphDriver.progress.value).toBe(1)
   })
 
   test('seeds the shared value from the atom without animating', () => {
@@ -229,7 +197,7 @@ describe('oneLineBarMorphDriver', () => {
     oneLineBarMorphDriver.seed(ctx)
 
     expect(oneLineBarMorphDriver.progress.value).toBe(1)
-    expect(mockedWithTiming).not.toHaveBeenCalled()
+    expect(countActiveMorphFrames()).toBe(0)
   })
 
   test('snaps the value and reports the settle without animating', () => {
@@ -242,7 +210,7 @@ describe('oneLineBarMorphDriver', () => {
 
     expect(oneLineBarMorphDriver.progress.value).toBe(1)
     expect(onSettle).toHaveBeenCalledWith(true)
-    expect(mockedWithTiming).not.toHaveBeenCalled()
+    expect(countActiveMorphFrames()).toBe(0)
   })
 
   test('resets the value, drops listeners and detaches the subscription', async () => {
@@ -260,8 +228,11 @@ describe('oneLineBarMorphDriver', () => {
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
+    await act(async () => {
+      advanceMorphFrames()
+    })
 
-    expect(mockedWithTiming).not.toHaveBeenCalled()
+    expect(oneLineBarMorphDriver.progress.value).toBe(0)
     expect(onSettle).not.toHaveBeenCalled()
   })
 })

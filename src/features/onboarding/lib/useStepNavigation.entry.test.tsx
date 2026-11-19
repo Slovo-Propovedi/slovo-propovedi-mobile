@@ -186,23 +186,23 @@ describe('useStepNavigation entry transitions', () => {
 
 describe('useStepNavigation return entries', () => {
   test(
-    'blinks the search tab entry from a foreign screen and navigates to «Слушать»',
+    'blinks the search pill entry from a foreign screen and navigates to «Поиск»',
     async () => {
       const { ctx, result } = await renderNavigation(scenariosById.search, 1, '/more')
 
-      // The tab entry is a blink transition: navigation is held while it blinks.
+      // The pill entry is a blink transition: navigation is held while it blinks.
       expect(result.current.holdNavigation).toBe(true)
 
       await waitFor(() => expect(ctx.get(onboardingEntryStepIndexAtom)).toBeNull(), {
         timeout: 8000,
       })
-      expect(mockCurrentPathname).toBe('/listen')
+      expect(mockCurrentPathname).toBe('/search')
     },
     BLINK_BUDGET_MS,
   )
 
   test.each([
-    ['search', '/listen'],
+    ['search', '/search'],
     ['share', '/more'],
   ] as const)(
     'leads from a nested screen to the %s card screen',

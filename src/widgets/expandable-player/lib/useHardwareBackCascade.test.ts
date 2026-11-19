@@ -1,7 +1,6 @@
-import { act, waitFor } from '@testing-library/react-native'
+import { act } from '@testing-library/react-native'
 import { router } from 'expo-router'
 import { BackHandler } from 'react-native'
-import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
 import { isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderHookWithProviders } from 'shared/mocks'
@@ -17,10 +16,7 @@ jest.mock('expo-router', () => ({
     back: jest.fn(),
     canGoBack: jest.fn(() => true),
   },
-  usePathname: () => mockPathname,
 }))
-
-let mockPathname = '/more'
 
 const mockedRouter = router as unknown as {
   back: jest.Mock
@@ -40,10 +36,7 @@ const pressBack = () => {
 describe('useHardwareBackCascade', () => {
   beforeEach(() => {
     backHandler = null
-    mockPathname = '/more'
     isPlayerExpandedAtom(ctx, false)
-    isSearchOpenAtom(ctx, false)
-    searchQueryAtom(ctx, '')
     mockedRouter.back.mockClear()
     mockedRouter.canGoBack.mockReturnValue(true)
 
@@ -57,10 +50,9 @@ describe('useHardwareBackCascade', () => {
     jest.restoreAllMocks()
   })
 
-  test('closes an open search before walking back through router history', async () => {
-    isSearchOpenAtom(ctx, true)
-    searchQueryAtom(ctx, 'вера')
-    await renderHookWithProviders(() => useHardwareBackCascade(), { ctx })
+  test('closes the expanded player before walking back through router history', async () => {
+    isPlayerExpandedAtom(ctx, true)
+    await renderHookWithProviders(() => useHardwareBackCascade())
 
     let handled = false
     await act(async () => {
@@ -68,28 +60,12 @@ describe('useHardwareBackCascade', () => {
     })
 
     expect(handled).toBe(true)
-    await waitFor(() => expect(ctx.get(isSearchOpenAtom)).toBe(false))
-    expect(ctx.get(searchQueryAtom)).toBe('')
+    expect(ctx.get(isPlayerExpandedAtom)).toBe(false)
     expect(mockedRouter.back).not.toHaveBeenCalled()
   })
 
-  test('pops a covered detail route and keeps the search session open', async () => {
-    mockPathname = '/listen/preacher'
-    isSearchOpenAtom(ctx, true)
-    searchQueryAtom(ctx, 'вера')
-    await renderHookWithProviders(() => useHardwareBackCascade(), { ctx })
-
-    await act(async () => {
-      expect(pressBack()).toBe(true)
-    })
-
-    expect(mockedRouter.back).toHaveBeenCalledTimes(1)
-    expect(ctx.get(isSearchOpenAtom)).toBe(true)
-    expect(ctx.get(searchQueryAtom)).toBe('вера')
-  })
-
-  test('falls through to router history when search is closed', async () => {
-    await renderHookWithProviders(() => useHardwareBackCascade(), { ctx })
+  test('falls through to router history when no player layer is open', async () => {
+    await renderHookWithProviders(() => useHardwareBackCascade())
 
     await act(async () => {
       expect(pressBack()).toBe(true)

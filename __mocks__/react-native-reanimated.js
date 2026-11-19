@@ -55,16 +55,23 @@ jest.mock('react-native-reanimated', () => {
     useDerivedValue: fn => ({ value: typeof fn === 'function' ? fn() : undefined }),
     useEvent: handler => handler,
     useFrameCallback: (callback, autostart = true) => {
-      const frameCallback = {
-        callback,
-        callbackId: frameCallbacks.length,
-        isActive: autostart,
-        setActive: jest.fn(isActive => {
-          frameCallback.isActive = isActive
-        }),
+      // Stable handle per hook instance, mirroring Reanimated's useRef-based
+      // return: re-renders must not register a second clock for one surface.
+      const holder = React.useRef(null)
+
+      if (holder.current === null) {
+        holder.current = {
+          callback,
+          callbackId: frameCallbacks.length,
+          isActive: autostart,
+          setActive: jest.fn(isActive => {
+            holder.current.isActive = isActive
+          }),
+        }
+        frameCallbacks.push(holder.current)
       }
-      frameCallbacks.push(frameCallback)
-      return frameCallback
+
+      return holder.current
     },
     useSharedValue: createMutable,
     makeMutable: createMutable,

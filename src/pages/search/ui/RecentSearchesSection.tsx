@@ -1,5 +1,5 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
-import { Fragment, useCallback, useState } from 'react'
+import { Fragment, useCallback, useMemo, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SearchResultsRow, SearchRowSeparator } from 'features/sermon-search'
 import {
@@ -37,6 +37,16 @@ export const RecentSearchesSection = ({
       void removeSearchEntryAction(ctx, sermonId)
     },
     [ctx],
+  )
+
+  // Stable per-sermon removers keep the memoized rows from re-rendering on
+  // every unrelated parent render (e.g. the navigation commit mid-morph).
+  const removeHandlers = useMemo(
+    () =>
+      new Map(
+        history.map(entry => [entry.sermon.id, () => handleRemove(entry.sermon.id)] as const),
+      ),
+    [handleRemove, history],
   )
 
   // The dialog never steals the text focus itself: opening or closing it must
@@ -80,7 +90,7 @@ export const RecentSearchesSection = ({
               onPress={onPress}
               sermon={entry.sermon}
               onAddToPlaylist={onAddToPlaylist}
-              onRemoveFromSearchHistory={() => handleRemove(entry.sermon.id)}
+              onRemoveFromSearchHistory={removeHandlers.get(entry.sermon.id)}
             />
             <SearchRowSeparator />
           </Fragment>

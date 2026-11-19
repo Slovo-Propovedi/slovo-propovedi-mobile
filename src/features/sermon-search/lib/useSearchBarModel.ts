@@ -1,9 +1,8 @@
-import { useAction, useAtom, useCtx } from '@reatom/npm-react'
+import { useAtom, useCtx } from '@reatom/npm-react'
 import { useState } from 'react'
-import { Keyboard } from 'react-native'
 import { isSearchOpenAtom, searchInputRequestAtom, searchQueryAtom } from '../model'
 import { isSearchFieldVisibleAtom } from '../model-searchField'
-import { closeSearch } from '../model-session'
+import { useCloseSearch } from './useCloseSearch'
 import { useDistinctValuesOnOpen } from './useDistinctValuesOnOpen'
 import { useExternalInputRequest } from './useExternalInputRequest'
 import { useResetInputOnClose } from './useResetInputOnClose'
@@ -33,7 +32,7 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
   const [hasSelectedSuggestion, setHasSelectedSuggestion] = useState(false)
   const [inputRequest] = useAtom(searchInputRequestAtom)
   const inputRef = useSearchInputFocus(isSearchFieldVisible)
-  const closeSearchAction = useAction(closeSearch)
+  const closeSearch = useCloseSearch()
   useDistinctValuesOnOpen(isSearchOpen)
 
   const handleChangeText = (text: string) => {
@@ -60,6 +59,9 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
   useExternalInputRequest({
     inputRequest,
     onApply: text => {
+      // An empty request is a session reset (leaving the search route): the mic
+      // may still be live behind the cleared field.
+      if (text === '') voiceInput.stopListening()
       setInputValue(text)
       setHasSelectedSuggestion(false)
     },
@@ -82,8 +84,8 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
     inputRef.current?.focus()
   }
 
-  // The pill has no always-visible close chip anymore: a non-empty query clears
-  // in place, an empty one closes the whole search (Escape path).
+  // A non-empty query clears in place; an empty one closes the whole search
+  // (the same path as the external ✕ and Escape).
   const handleClear = () => {
     if (inputValue.length > 0) {
       handleClearQuery()
@@ -92,13 +94,12 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
 
     voiceInput.stopListening()
     inputRef.current?.blur()
-    Keyboard.dismiss()
-    void closeSearchAction()
+    closeSearch()
   }
 
   const handleFocusChange = (focused: boolean) => {
-    // Blurring the field (tap outside, tab switch, keyboard dismissal) ends the
-    // voice session instead of leaving the browser microphone open.
+    // Blurring the field (tap outside, keyboard dismissal) ends the voice
+    // session instead of leaving the browser microphone open.
     if (!focused) voiceInput.stopListening()
     setIsFocused(focused)
     onFocusChange?.(focused)

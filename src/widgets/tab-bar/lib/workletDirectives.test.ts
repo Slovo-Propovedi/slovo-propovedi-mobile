@@ -8,17 +8,15 @@ import { join } from 'node:path'
 // mocked hooks run on the JS thread) cannot see it — read the source instead.
 const WORKLET_HELPERS: Array<[string, string[]]> = [
   ['getBarMorphStyles.ts', ['getIslandContentStyle', 'getTabItemStyle']],
+  ['getIslandStyle.ts', ['getIslandContentPadding', 'getIslandStyle', 'getTabSlotStyle']],
   [
-    'getIslandStyle.ts',
+    'getTabItemStyle.ts',
     [
       'getCapsuleOpacity',
-      'getIslandContentPadding',
-      'getIslandStyle',
       'getTabIconOffset',
       'getTabItemHeight',
       'getTabItemHorizontalMargin',
       'getTabItemVerticalMargin',
-      'getTabSlotStyle',
     ],
   ],
   ['getIslandMath.ts', ['clampProgress', 'getIslandHeight', 'interpolateSize']],

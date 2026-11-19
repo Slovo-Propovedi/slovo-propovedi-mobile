@@ -8,13 +8,6 @@ import { styles } from './SearchIslandMorph.styles'
 const SEARCH_LABEL = 'Поиск'
 const SEARCH_TARGET_ID = 'listen.search-toggle'
 
-interface SearchIslandContentProps {
-  isVisible: boolean
-  onFocusChange: (isFocused: boolean) => void
-  onOpenSearch: () => void
-  openProgress: SharedValue<number>
-}
-
 /**
  * Everything inside the morphing frame: the input row and the closed-circle
  * hit target. Both stay mounted; only their content opacity and pointer gates
@@ -22,7 +15,7 @@ interface SearchIslandContentProps {
  * @param root0 - Component props.
  * @param root0.isVisible - Whether the search field is visible.
  * @param root0.onFocusChange - Called when the input gains/loses focus.
- * @param root0.onOpenSearch - Opens the search from the closed circle.
+ * @param root0.onOpenSearch - Opens the search route from the closed circle.
  * @param root0.openProgress - Search morph progress (0 = circle, 1 = pill).
  */
 export const SearchIslandContent = ({
@@ -30,7 +23,12 @@ export const SearchIslandContent = ({
   onFocusChange,
   onOpenSearch,
   openProgress,
-}: SearchIslandContentProps) => {
+}: {
+  isVisible: boolean
+  onFocusChange: (isFocused: boolean) => void
+  onOpenSearch: () => void
+  openProgress: SharedValue<number>
+}) => {
   const contentStyle = useAnimatedStyle(() => ({ opacity: openProgress.value }))
 
   return (

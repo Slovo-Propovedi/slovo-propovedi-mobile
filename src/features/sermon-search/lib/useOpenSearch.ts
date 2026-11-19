@@ -1,12 +1,24 @@
 import { useAction } from '@reatom/npm-react'
+import { useRouter } from 'expo-router'
 import { useCallback } from 'react'
 import { openSearch } from '../model-session'
 
-// The search toggle's press handler: opens the search overlay. Shared so the
-// onboarding tour performs the same action instead of duplicating the open logic.
-// The returned callback is stable so tour-action registration does not churn.
+/**
+ * Opens the search route from the closed search circle.
+ *
+ * The open state (bar expanded + field visible) is written in ONE transaction
+ * before navigation: the morph drivers start from atom subscriptions, so waiting
+ * for the `/search` route commit would start the pill a frame late. One
+ * transaction also keeps the island's morph target from flipping expand-then-
+ * collapse in the same tick. The returned callback is stable so the island does
+ * not re-render per tick.
+ */
 export const useOpenSearch = () => {
+  const router = useRouter()
   const openSearchAction = useAction(openSearch)
 
-  return useCallback(() => void openSearchAction(), [openSearchAction])
+  return useCallback(() => {
+    openSearchAction()
+    router.navigate('/search')
+  }, [openSearchAction, router])
 }

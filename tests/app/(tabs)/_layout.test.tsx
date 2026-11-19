@@ -3,17 +3,8 @@ import { renderWithProviders } from 'shared/mocks'
 import Layout from '../../../app/(tabs)/_layout'
 
 // Controls whether the navigator renders the tabBar element at all, so a test
-// can prove the search gate and the player are composed INSIDE it.
+// can prove the tab bar and the player are composed INSIDE it.
 let mockIsTabBarInvoked = true
-
-// The real SearchGate pulls the player entity and the whole navigation guard
-// stack; the layout test only verifies that the overlay is wired into the tab
-// layout, so it is mocked with a marker like the other heavy chrome widgets.
-jest.mock('pages/search', () => {
-  const { Text } = jest.requireActual('react-native')
-
-  return { SearchGate: () => <Text>SEARCH_GATE</Text> }
-})
 
 jest.mock('expo-router', () => {
   const { Text } = jest.requireActual('react-native')
@@ -49,23 +40,24 @@ describe('(tabs) layout', () => {
     mockIsTabBarInvoked = true
   })
 
-  test('declares the three tab screens and mounts the floating chrome once', async () => {
-    const { getAllByText, getByText } = await renderWithProviders(<Layout />)
+  test('registers the search route alongside the three visible tabs', async () => {
+    const { getByText } = await renderWithProviders(<Layout />)
 
+    // `search` must stay registered (it owns its nested detail stack), while the
+    // custom bar hides it from the three tab slots.
     expect(getByText('listen')).toBeTruthy()
+    expect(getByText('search')).toBeTruthy()
     expect(getByText('read')).toBeTruthy()
     expect(getByText('more')).toBeTruthy()
-    expect(getAllByText('TAB_BAR')).toHaveLength(1)
-    expect(getAllByText('PLAYER')).toHaveLength(1)
-    expect(getAllByText('SEARCH_GATE')).toHaveLength(1)
+    expect(getByText('TAB_BAR')).toBeTruthy()
+    expect(getByText('PLAYER')).toBeTruthy()
   })
 
-  test('mounts the search gate and the player only inside the tabBar element', async () => {
+  test('mounts the tab bar and the player only inside the tabBar element', async () => {
     mockIsTabBarInvoked = false
 
     const { queryByText } = await renderWithProviders(<Layout />)
 
-    expect(queryByText('SEARCH_GATE')).toBeNull()
     expect(queryByText('TAB_BAR')).toBeNull()
     expect(queryByText('PLAYER')).toBeNull()
   })

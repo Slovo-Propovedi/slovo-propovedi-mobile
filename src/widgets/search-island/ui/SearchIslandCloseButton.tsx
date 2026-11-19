@@ -9,7 +9,7 @@ const CLOSE_ICON_SIZE = 48
 /**
  * Fills the circular slot beside the search pill and closes the search whole.
  * @param root0 - Component props.
- * @param root0.onPress - Closes the search session.
+ * @param root0.onPress - Closes the search route and resets the session.
  */
 export const SearchIslandCloseButton = ({ onPress }: { onPress: () => void }) => {
   const { currentTheme } = useTheme()

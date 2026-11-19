@@ -8,6 +8,7 @@ import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/model'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { advanceMorphFrames } from 'shared/mocks/morphFrames'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isBarCollapsedAtom, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
 import { miniPillOpacitySv } from '../../model/miniPillFade'
@@ -211,7 +212,7 @@ describe('<ExpandablePlayer>', () => {
     expect(mockTogglePlay).toHaveBeenCalledTimes(1)
   })
 
-  test('moves the mini player into the collapsed line while search is open with an empty query', async () => {
+  test('moves the mini player into the collapsed line while the search route shows an empty field', async () => {
     isBarCollapsedAtom(ctx, true)
     isSearchOpenAtom(ctx, true)
     tabBarHeightAtom(ctx, 98)
@@ -223,7 +224,7 @@ describe('<ExpandablePlayer>', () => {
     expect(ctx.get(oneLineBarMorphDriver.atom)).toBe(true)
   })
 
-  test('rests the mini player above the row while an active query pins the field', async () => {
+  test('rests the mini player above the row while an active query pins the field on the search route', async () => {
     isBarCollapsedAtom(ctx, true)
     isSearchOpenAtom(ctx, true)
     searchQueryAtom(ctx, 'ве')
@@ -245,6 +246,9 @@ describe('<ExpandablePlayer>', () => {
 
     await act(async () => {
       isSearchFieldFocusedAtom(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames()
     })
 
     const button = queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })
@@ -304,6 +308,7 @@ describe('<ExpandablePlayer>', () => {
 
     await act(async () => {
       completions.forEach(complete => complete(true))
+      advanceMorphFrames()
     })
 
     const landed = queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })

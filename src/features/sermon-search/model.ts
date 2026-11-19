@@ -3,6 +3,14 @@ import { action, atom } from '@reatom/framework'
 export const MIN_QUERY_LENGTH = 2
 
 export const searchQueryAtom = atom('', 'searchQueryAtom')
+
+// Whether the `/search` route is the active route of the tabs navigator. The
+// SearchTabScreen syncs this from the navigation state, so open search is
+// derived state rather than a separate session flag. Written on real
+// transitions only — the screen lives inside the tabs navigator, so the value
+// survives pushes of the nested `/search/*` stack. Open here means "the route
+// owns the navigator"; the pill may still be hidden by the collapsed bar, and a
+// hidden pill never means the route is unmounted.
 export const isSearchOpenAtom = atom(false, 'isSearchOpenAtom')
 
 // External request to type text into the visible search input (the onboarding

@@ -2,7 +2,6 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { type ReactElement, useCallback, useRef } from 'react'
 import { StyleSheet } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
-import { isSearchOpenAtom } from 'features/sermon-search/@x/suspension'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { type LocalPlaylistData } from 'entities/playlist'
 import { nextBarCollapsedState, setBarCollapsed, tabBarHeightAtom } from 'shared/ui/layout'
@@ -42,7 +41,6 @@ export const MyPlaylistsDragList = ({
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
-  const [isSearchOpen] = useAtom(isSearchOpenAtom)
   const applyBarCollapsed = useAction(setBarCollapsed)
   const wasBarCollapsedRef = useRef(false)
 
@@ -51,10 +49,9 @@ export const MyPlaylistsDragList = ({
   // as the animated lists, so the atom is written once per threshold crossing.
   const handleScrollOffsetChange = useCallback(
     (offsetY: number) => {
-      // Deliberately not useIsBarCollapseSuspended: this guard reads the raw
-      // isSearchOpenAtom (query-unqualified), and search cannot be open on this
-      // tab, so the shared hook is unnecessary here.
-      if (isSearchOpen || isPlayerExpanded || currentAudio === null) return
+      // Deliberately not useIsBarCollapseSuspended: search lives on its own tab
+      // now, so the bar can never be suspended by search on this screen.
+      if (isPlayerExpanded || currentAudio === null) return
 
       const nextCollapsed = nextBarCollapsedState(offsetY, wasBarCollapsedRef.current)
       if (nextCollapsed === null) return
@@ -62,7 +59,7 @@ export const MyPlaylistsDragList = ({
       wasBarCollapsedRef.current = nextCollapsed
       applyBarCollapsed(nextCollapsed)
     },
-    [applyBarCollapsed, currentAudio, isPlayerExpanded, isSearchOpen],
+    [applyBarCollapsed, currentAudio, isPlayerExpanded],
   )
 
   return (

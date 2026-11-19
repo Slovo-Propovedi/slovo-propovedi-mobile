@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/@x/barMorph'
+import { advanceMorphFrames } from 'shared/mocks/morphFrames'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import {
   BAR_SIDE_INSET_COLLAPSED,
@@ -40,6 +41,9 @@ describe('useRowInsetStyle', () => {
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
+    await act(async () => {
+      advanceMorphFrames()
+    })
 
     expect(result.current.insetStyle).toEqual(COLLAPSED_PADDING)
     expect(result.current.restingInsetStyle).toEqual(COLLAPSED_PADDING)
@@ -51,10 +55,16 @@ describe('useRowInsetStyle', () => {
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
+    await act(async () => {
+      advanceMorphFrames()
+    })
 
     await act(async () => {
       isSearchOpenAtom(ctx, true)
       searchQueryAtom(ctx, 'проповедь')
+    })
+    await act(async () => {
+      advanceMorphFrames()
     })
 
     expect(result.current.insetStyle).toEqual(EXPANDED_PADDING)

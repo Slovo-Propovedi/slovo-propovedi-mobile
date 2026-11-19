@@ -1,3 +1,4 @@
+import { usePathname } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useMemo } from 'react'
 import { View } from 'react-native'
@@ -5,7 +6,7 @@ import { useHistoryProgressMap, useHistorySermonIds } from 'entities/listening-h
 import { FAVORITES_PLAYLIST } from 'entities/playlist'
 import { createTracksListStyles } from 'entities/track-list'
 import { useScreenTransitionTracking } from 'shared/routing'
-import { BLUR_TARGET_ROUTES, BlurBackdrop } from 'shared/ui'
+import { BlurBackdrop } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { useCollapsingHeader } from '../lib/useCollapsingHeader'
 import { usePlaylistAddToPlaylist } from '../lib/usePlaylistAddToPlaylist'
@@ -26,6 +27,10 @@ const EMPTY_PLAYLIST = { artwork: null, description: '', id: 'default', sermons:
 
 export const PlaylistScreen = () => {
   useScreenTransitionTracking()
+  // The blur target is keyed by the CURRENT path: the screen is mounted from
+  // both the listen stack and the search route, and the chrome resolves the
+  // target by `usePathname()`.
+  const pathname = usePathname()
   const { currentTheme } = useTheme()
   const {
     isImportingCustomPlaylist,
@@ -78,49 +83,47 @@ export const PlaylistScreen = () => {
 
   const tracksListStyles = useMemo(() => createTracksListStyles(currentTheme), [currentTheme])
   const styles = useMemo(() => createStyles(currentTheme), [currentTheme])
+  const isStatusOnly = isImportingCustomPlaylist || isLoading || notFound
 
-  if (isImportingCustomPlaylist || isLoading || notFound)
-    return (
-      <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.playlist}>
+  return (
+    <BlurBackdrop routeKey={pathname}>
+      {isStatusOnly ? (
         <PlaylistStatusView
           styles={styles}
           theme={currentTheme}
           statusBarStyle={statusBarStyle}
           notFound={!isImportingCustomPlaylist && notFound}
         />
-      </BlurBackdrop>
-    )
-
-  return (
-    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.playlist}>
-      <View style={styles.container}>
-        <StatusBar style={statusBarStyle} />
-        <PlaylistTrackList
-          data={tracksListData}
-          renderItem={renderItem}
-          onScroll={scrollHandler}
-          style={tracksListStyles.container}
-          ItemSeparatorComponent={PlaylistTrackSeparator}
-          emptyMessage={
-            playlist.id === FAVORITES_PLAYLIST.id ? 'В избранном пока пусто' : undefined
-          }
-          headerElement={
-            <PlaylistHeader
-              title={title}
-              artwork={artwork}
-              theme={currentTheme}
-              description={description}
-              playAllLabel={playAllLabel}
-              headerImageHeight={headerImageHeight}
-              imageOpacityStyle={imageOpacityStyle}
-              isPlayAllDisabled={playAllTarget === null}
-              onPressPlayAll={() => void handlePressPlayAll(playAllTarget ?? undefined)}
-            />
-          }
-        />
-        {modal}
-        {renderDialog()}
-      </View>
+      ) : (
+        <View style={styles.container}>
+          <StatusBar style={statusBarStyle} />
+          <PlaylistTrackList
+            data={tracksListData}
+            renderItem={renderItem}
+            onScroll={scrollHandler}
+            style={tracksListStyles.container}
+            ItemSeparatorComponent={PlaylistTrackSeparator}
+            emptyMessage={
+              playlist.id === FAVORITES_PLAYLIST.id ? 'В избранном пока пусто' : undefined
+            }
+            headerElement={
+              <PlaylistHeader
+                title={title}
+                artwork={artwork}
+                theme={currentTheme}
+                description={description}
+                playAllLabel={playAllLabel}
+                headerImageHeight={headerImageHeight}
+                imageOpacityStyle={imageOpacityStyle}
+                isPlayAllDisabled={playAllTarget === null}
+                onPressPlayAll={() => void handlePressPlayAll(playAllTarget ?? undefined)}
+              />
+            }
+          />
+          {modal}
+          {renderDialog()}
+        </View>
+      )}
     </BlurBackdrop>
   )
 }

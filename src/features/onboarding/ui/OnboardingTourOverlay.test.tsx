@@ -420,8 +420,10 @@ describe('<OnboardingTourOverlay>', () => {
   })
 
   test('spotlights the sermon-row ⋯ menu on the search card', async () => {
+    mockPathname.mockReturnValue('/search')
+
     const MENU_RECT: OnboardingTargetRect = { height: 40, width: 40, x: 300, y: 400 }
-    const { getByTestId, getByText, queryByTestId, queryByText } = await renderAtDeck('search', 6, {
+    const { getByTestId, getByText, queryByTestId, queryByText } = await renderAtDeck('search', 5, {
       'search-results.first-sermon-menu': instances(MENU_RECT),
     })
 
@@ -435,19 +437,23 @@ describe('<OnboardingTourOverlay>', () => {
   })
 
   test('closes the playlist picker on entering the final search card', async () => {
+    mockPathname.mockReturnValue('/search')
+
     const action = jest.fn()
     registerTourAction('close-sermon-playlist-picker', action)
 
     const MENU_RECT: OnboardingTargetRect = { height: 40, width: 40, x: 300, y: 400 }
-    await renderAtDeck('search', 6, { 'search-results.first-sermon-menu': instances(MENU_RECT) })
+    await renderAtDeck('search', 5, { 'search-results.first-sermon-menu': instances(MENU_RECT) })
 
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1))
     unregisterTourAction('close-sermon-playlist-picker')
   })
 
   test('presents the playlist-picker card as a spotlight above the app modal', async () => {
+    mockPathname.mockReturnValue('/search')
+
     const PICKER_RECT: OnboardingTargetRect = { height: 200, width: 320, x: 40, y: 300 }
-    const { getAllByTestId, getByTestId, getByText } = await renderAtDeck('search', 5, {
+    const { getAllByTestId, getByTestId, getByText } = await renderAtDeck('search', 4, {
       'search.picker-modal': instances(PICKER_RECT),
     })
 
@@ -461,32 +467,34 @@ describe('<OnboardingTourOverlay>', () => {
     expect(getAllByTestId(AREA_HIGHLIGHT)).toHaveLength(1)
   })
 
-  test('blinks the search lead-up tab entry from a foreign screen before navigating', async () => {
+  test('blinks the search lead-up pill entry from a foreign screen before navigating', async () => {
     mockPathname.mockReturnValue('/more')
 
     const { getByTestId, getByText } = await renderAtDeck(
       'search',
       1,
-      { 'tab.listen': instances(SECTIONS_RECT) },
+      { 'listen.search-toggle': instances(SECTIONS_RECT) },
       ctx => onboardingEntryStepIndexAtom(ctx, 0),
     )
 
     await waitFor(() => expect(getByTestId(TAP_MODAL)).toBeTruthy())
     expect(getByText(TAP_INDICATOR)).toBeTruthy()
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/listen'), {
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/search'), {
       timeout: TAP_PHASE_TIMEOUT_MS,
     })
   })
 
-  test('skips the search lead-up tab entry when the tour starts on «Слушать»', async () => {
+  test('skips the search lead-up pill entry when the tour starts on «Поиск»', async () => {
+    mockPathname.mockReturnValue('/search')
+
     const { ctx, queryByTestId, queryByText } = await renderAtDeck(
       'search',
       1,
-      { 'tab.listen': instances(SECTIONS_RECT) },
+      { 'listen.search-toggle': instances(SECTIONS_RECT) },
       setupCtx => onboardingEntryStepIndexAtom(setupCtx, 0),
     )
 
-    // On «Слушать» the whole entry phase skips itself: no tab blink, straight to the card.
+    // On «Поиск» the whole entry phase skips itself: no pill blink, straight to the card.
     await waitFor(() => expect(ctx.get(onboardingEntryStepIndexAtom)).toBeNull())
     expect(queryByTestId(TAP_MODAL)).toBeNull()
     expect(queryByText(TAP_INDICATOR)).toBeNull()
@@ -499,7 +507,7 @@ describe('<OnboardingTourOverlay>', () => {
     mockPathname.mockReturnValue('/more')
 
     const { getByTestId, getByText, queryByTestId } = await renderAtDeck('search', 0, {
-      'tab.listen': instances(SECTIONS_RECT),
+      'listen.search-toggle': instances(SECTIONS_RECT),
     })
 
     expect(getByTestId(TOUR_MODAL)).toBeTruthy()
@@ -513,57 +521,33 @@ describe('<OnboardingTourOverlay>', () => {
     expect(queryByTestId(TOUR_MODAL)).toBeNull()
   })
 
-  test('blinks the search-toggle exit visualization before opening the search', async () => {
-    const { getByTestId, getByText } = await renderAtDeck('search', 1, {
-      'listen.search-toggle': instances(SECTIONS_RECT),
-      'tab.listen': instances(SECTIONS_RECT),
-    })
-
-    await act(async () => {
-      await fireEvent.press(getByText(NEXT_LABEL))
-    })
-
-    await waitFor(() => expect(getByTestId(TAP_MODAL)).toBeTruthy())
-    expect(getByText(TAP_INDICATOR)).toBeTruthy()
-  })
-
   test('shows the typing card while the query types, advancing only on «Далее»', async () => {
+    mockPathname.mockReturnValue('/search')
     const calls: string[] = []
-    registerTourAction('open-listen-search', () => calls.push('open'))
     registerTourAction('type-search-query', () => calls.push('type'))
 
     const { ctx, getByText } = await renderAtDeck('search', 1, {
       'listen.search-toggle': instances(SECTIONS_RECT),
-      'tab.listen': instances(SECTIONS_RECT),
     })
 
-    await act(async () => {
-      await fireEvent.press(getByText(NEXT_LABEL))
-    })
-
-    // The search-toggle exit blinks and opens the search, then the deck lands on the
-    // pass-through «Вводим запрос» card, which fires the typing on enter: the word types
-    // in parallel with the visible card.
-    await waitFor(() => expect(calls).toEqual(['open', 'type']), {
-      timeout: EXIT_FLOW_TIMEOUT_MS,
-    })
-    await waitFor(() => expect(ctx.get(onboardingTourAtom)?.deckIndex).toBe(2), {
+    // The tab entry auto-skips on «Поиск», the typing card lands and fires the
+    // typing on enter: the word types in parallel with the visible card.
+    await waitFor(() => expect(calls).toEqual(['type']), {
       timeout: EXIT_FLOW_TIMEOUT_MS,
     })
 
     // The card floats over the live UI and does not auto-advance to the groups card:
     // the typing finishes while the card stays put.
     expect(getByText('Вводим запрос')).toBeTruthy()
-    expect(ctx.get(onboardingTourAtom)?.deckIndex).toBe(2)
+    expect(ctx.get(onboardingTourAtom)?.deckIndex).toBe(1)
 
     await act(async () => {
       await fireEvent.press(getByText(NEXT_LABEL))
     })
 
-    await waitFor(() => expect(ctx.get(onboardingTourAtom)?.deckIndex).toBe(3))
-    expect(calls).toEqual(['open', 'type'])
+    await waitFor(() => expect(ctx.get(onboardingTourAtom)?.deckIndex).toBe(2))
+    expect(calls).toEqual(['type'])
 
-    unregisterTourAction('open-listen-search')
     unregisterTourAction('type-search-query')
   })
 
@@ -571,7 +555,7 @@ describe('<OnboardingTourOverlay>', () => {
     const action = jest.fn()
     registerTourAction('type-search-query', action)
 
-    const { ctx, rerender } = await renderAtDeck('search', 2)
+    const { ctx, rerender } = await renderAtDeck('search', 1)
 
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1))
 
@@ -579,13 +563,15 @@ describe('<OnboardingTourOverlay>', () => {
       rerender(<OnboardingTourOverlay />)
     })
     expect(action).toHaveBeenCalledTimes(1)
-    expect(ctx.get(onboardingTourAtom)?.deckIndex).toBe(2)
+    expect(ctx.get(onboardingTourAtom)?.deckIndex).toBe(1)
 
     unregisterTourAction('type-search-query')
   })
 
   test('blinks the first-sermon exit visualization after the «Включить проповедь» card', async () => {
-    const { getByTestId, getByText } = await renderAtDeck('search', 4, {
+    mockPathname.mockReturnValue('/search')
+
+    const { getByTestId, getByText } = await renderAtDeck('search', 3, {
       'search-results.first-sermon': instances(SECTIONS_RECT),
       'search-results.group-sermons': instances(SECTIONS_RECT),
     })

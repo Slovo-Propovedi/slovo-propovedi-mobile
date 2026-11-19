@@ -2,7 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { renderHookWithProviders } from 'shared/mocks'
-import { isSearchOpenAtom, searchQueryAtom } from '../model'
+import { isSearchOpenAtom } from '../@x/barMorph'
 import { useIsBarCollapseSuspended } from './useIsBarCollapseSuspended'
 
 const AUDIO: AudioPlayerData = {
@@ -17,18 +17,15 @@ const renderSuspension = async ({
   audio = null,
   isPlayerExpanded = false,
   isSearchOpen = false,
-  query = '',
 }: {
   audio?: AudioPlayerData | null
   isPlayerExpanded?: boolean
   isSearchOpen?: boolean
-  query?: string
 }) => {
   const ctx = createCtx()
   currentAudioAtom(ctx, audio)
   isPlayerExpandedAtom(ctx, isPlayerExpanded)
   isSearchOpenAtom(ctx, isSearchOpen)
-  searchQueryAtom(ctx, query)
 
   const { result } = await renderHookWithProviders(() => useIsBarCollapseSuspended(), { ctx })
 
@@ -48,11 +45,7 @@ describe('useIsBarCollapseSuspended', () => {
     expect(await renderSuspension({ audio: AUDIO, isPlayerExpanded: true })).toBe(true)
   })
 
-  test('stays suspended while an active search pins the field', async () => {
-    expect(await renderSuspension({ audio: AUDIO, isSearchOpen: true, query: 'вера' })).toBe(true)
-  })
-
-  test('stays suspended while search is open on an empty query', async () => {
-    expect(await renderSuspension({ audio: AUDIO, isSearchOpen: true, query: '' })).toBe(true)
+  test('stays suspended while the search route owns the screen', async () => {
+    expect(await renderSuspension({ audio: AUDIO, isSearchOpen: true })).toBe(true)
   })
 })

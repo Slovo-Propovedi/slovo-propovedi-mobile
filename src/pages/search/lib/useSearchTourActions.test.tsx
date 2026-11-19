@@ -34,7 +34,6 @@ jest.mock('features/sermon-search', () => {
   }
 })
 
-const OPEN_SEARCH = 'open-listen-search'
 const TYPE_QUERY = 'type-search-query'
 const PRESS_FIRST_SERMON = 'press-first-sermon'
 const FULL_QUERY = 'лицемерие'
@@ -64,17 +63,11 @@ const getSearchInputRequest = () =>
 const renderActions = async (
   onPressFirstSermon: (sermon: SermonData) => void,
   firstSermon: SermonData | undefined = undefined,
-  onOpenSearch: () => void = jest.fn(),
 ) => {
   const ctx = createCtx()
 
   await renderHookWithProviders(
-    () =>
-      useSearchTourActions({
-        getFirstSermon: () => firstSermon,
-        onOpenSearch,
-        onPressFirstSermon,
-      }),
+    () => useSearchTourActions({ getFirstSermon: () => firstSermon, onPressFirstSermon }),
     { ctx },
   )
 
@@ -84,19 +77,6 @@ const renderActions = async (
 describe('useSearchTourActions', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-  })
-
-  test('opens the search without typing the demo query', async () => {
-    const onOpenSearch = jest.fn()
-    const ctx = await renderActions(jest.fn(), undefined, onOpenSearch)
-
-    await act(async () => {
-      getRegisteredAction(OPEN_SEARCH)?.()
-    })
-
-    expect(onOpenSearch).toHaveBeenCalledTimes(1)
-    expect(ctx.get(searchQueryAtom)).toBe('')
-    expect(ctx.get(getSearchInputRequest())).toBeNull()
   })
 
   test('types the full demo query prefix by prefix into the visible input state', async () => {
@@ -119,11 +99,7 @@ describe('useSearchTourActions', () => {
     const ctx = createCtx()
     const { unmount } = await renderHookWithProviders(
       () =>
-        useSearchTourActions({
-          getFirstSermon: () => undefined,
-          onOpenSearch: jest.fn(),
-          onPressFirstSermon: jest.fn(),
-        }),
+        useSearchTourActions({ getFirstSermon: () => undefined, onPressFirstSermon: jest.fn() }),
       { ctx },
     )
 

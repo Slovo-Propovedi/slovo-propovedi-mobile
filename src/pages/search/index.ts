@@ -1,1 +1,1 @@
-export { SearchGate } from './ui/SearchGate'
+export { SearchTabScreen } from './ui/SearchTabScreen'

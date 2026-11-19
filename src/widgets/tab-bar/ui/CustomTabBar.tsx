@@ -1,44 +1,41 @@
-import { useAction } from '@reatom/npm-react'
-import { type Tabs } from 'expo-router'
-import { useState } from 'react'
 import { useWindowDimensions } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { SearchIslandMorph } from 'widgets/search-island/@x/morph'
 import { OnboardingTarget } from 'features/onboarding'
 import { GlassIsland } from 'shared/ui'
-import {
-  BAR_ROW_MIN_HEIGHT,
-  setTabBarHeight,
-  useBarBottomPadding,
-  useKeyboardLiftStyle,
-} from 'shared/ui/layout'
+import { BAR_ROW_MIN_HEIGHT, useBarBottomPadding, useKeyboardLiftStyle } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
+import { getVisibleTabRoutes, SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
+import { type TabBarProps } from '../lib/tabBarTypes'
+import { useActiveTabRouteKey } from '../lib/useActiveTabRouteKey'
 import { useRowInsetStyle } from '../lib/useRowInsetStyle'
+import { useTabBarMeasurement } from '../lib/useTabBarMeasurement'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
 import { TabSlot } from './TabSlot'
 import { useTabPress } from './useTabPress'
 
-interface CustomTabBarProps extends TabBarProps {
-  /** Admin tab layouts have no global search. */
-  hideSearch?: boolean
-}
-
-type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0]
-
 export const CustomTabBar = ({
   emitter,
   hideSearch = false,
   navigateToTab,
   state,
-}: CustomTabBarProps) => {
-  const setMeasuredTabBarHeight = useAction(setTabBarHeight)
+}: {
+  /** Admin tab layouts have no global search. */
+  hideSearch?: boolean
+} & TabBarProps) => {
   const { isLight } = useTheme()
-  const { handleTabPress, isTabAvailable } = useTabPress({ emitter, navigateToTab })
+  const isSearchFocused = state.routes[state.index]?.name === SEARCH_ROUTE_NAME
+  const { handleTabPress, isTabAvailable } = useTabPress({
+    emitter,
+    isSearchFocused,
+    navigateToTab,
+  })
   const { width: windowWidth } = useWindowDimensions()
-  const [rowWidth, setRowWidth] = useState(0)
-  const activeRouteKey = state.routes[state.index]?.key
+  const { onLayout, rowWidth } = useTabBarMeasurement()
+  const activeRouteKey = useActiveTabRouteKey(state.routes, state.index)
+  const visibleRoutes = getVisibleTabRoutes(state.routes)
   const {
     contentStyle,
     expandedTabWidth,
@@ -53,7 +50,7 @@ export const CustomTabBar = ({
     settledOneLine,
   } = useTabIslandMorph({
     hideSearch,
-    routeCount: state.routes.length,
+    routeCount: visibleRoutes.length,
     rowWidth,
     windowWidth,
   })
@@ -64,6 +61,7 @@ export const CustomTabBar = ({
   return (
     <Animated.View pointerEvents='box-none' style={[styles.floatingContainer, keyboardLiftStyle]}>
       <Animated.View
+        onLayout={onLayout}
         pointerEvents='box-none'
         style={[
           styles.islandsRow,
@@ -71,20 +69,9 @@ export const CustomTabBar = ({
           insetStyle,
           restingInsetStyle,
         ]}
-        onLayout={event => {
-          const { height, width } = event.nativeEvent.layout
-
-          // A hidden tab screen (display: none) reports 0×0; publishing that
-          // zero would collapse every consumer of tabBarHeightAtom for a frame.
-          if (height <= 0) return
-
-          setRowWidth(width)
-          setMeasuredTabBarHeight(height)
-        }}
       >
-        {/* Pass-through between the tab buttons: the glass host only positions
-            them, so a drag started on its padding/gaps lands on the list behind
-            the bar instead of being swallowed. */}
+        {/* Pass-through host: a drag on its padding/gaps lands on the list
+            behind the bar; pointer-inert while the focused field replaced it. */}
         <GlassIsland
           isLight={isLight}
           hostStyle={styles.floatingIsland}
@@ -92,7 +79,7 @@ export const CustomTabBar = ({
           animatedStyle={[islandStyle, restingIslandStyle]}
         >
           <Animated.View style={[styles.islandContent, contentStyle, restingContentStyle]}>
-            {state.routes.map(route => {
+            {visibleRoutes.map(route => {
               const isActive = route.key === activeRouteKey
 
               return (

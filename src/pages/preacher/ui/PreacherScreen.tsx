@@ -1,9 +1,9 @@
-import { useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams, usePathname } from 'expo-router'
 import { useEffect } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { useScreenTransitionTracking } from 'shared/routing'
 import { useHeaderTitle } from 'shared/routing/useHeaderTitle'
-import { BLUR_TARGET_ROUTES, BlurBackdrop, EmptyState } from 'shared/ui'
+import { BlurBackdrop, EmptyState } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { usePreacherSermons } from '../lib/usePreacherSermons'
 import { PreacherSermonsList } from './PreacherSermonsList'
@@ -24,6 +24,10 @@ const parseArtist = (param: string | string[] | undefined): null | string => {
 
 export const PreacherScreen = () => {
   const { artist: artistParam } = useLocalSearchParams<{ artist?: string }>()
+  // The blur target is keyed by the CURRENT path: the screen is mounted from
+  // both the listen stack and the search route, and the chrome resolves the
+  // target by `usePathname()`.
+  const pathname = usePathname()
   const artist = parseArtist(artistParam)
   const setHeaderTitle = useHeaderTitle()
   useScreenTransitionTracking()
@@ -37,7 +41,7 @@ export const PreacherScreen = () => {
   }, [artist, setHeaderTitle])
 
   return (
-    <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.preacher}>
+    <BlurBackdrop routeKey={pathname}>
       <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
         {artist ? (
           <PreacherSermonsList

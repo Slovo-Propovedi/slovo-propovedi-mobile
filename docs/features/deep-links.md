@@ -57,7 +57,8 @@ intentFilters: [
 
 Пути объявлены **точно** (`path`), а не префиксом (`pathPrefix`) — заявка покрывает ровно два маршрута:
 
-- `/listen` — таб «Слушать» (`app/(tabs)/listen/index.tsx` → `ListenScreen`); на web дополнительно принимает `?search=<q>` — экран открывает режим поиска и наполняет запрос (синхронизация `useSearchUrlSync`, см. [screens/listen.md](../screens/listen.md) → «Поиск»);
+- `/listen` — таб «Слушать» (`app/(tabs)/listen/index.tsx` → `ListenScreen`);
+- `/search` — отдельный маршрут «Поиск» (`app/(tabs)/search/index.tsx` → `SearchTabScreen`), зарегистрированный в таб-навигаторе без слота в нижней панели (открывается пилюлей с лупой); на web принимает `?search=<q>` — глубокая ссылка наполняет запрос (синхронизация `useSearchUrlSync`, вызов из `SearchTabScreen`; зеркало — `?search=` на текущем маршруте, см. [screens/search.md](../screens/search.md)).
 - `/listen/playlist` — экран плейлиста (`app/(tabs)/listen/playlist.tsx` → `PlaylistScreen`), id приходит в query (`?playlist=<uuid>`).
 
 **Query-строка в сравнении путей не участвует** — `/listen/playlist?playlist=<uuid>` матчится по `path`, а сам параметр expo-router передаёт в `useLocalSearchParams`.

@@ -1,20 +1,12 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { type Tabs } from 'expo-router'
-import {
-  closeSearch,
-  closeSearchAndExpand,
-  isSearchOpenAtom,
-  useIsSearchFieldVisible,
-} from 'features/sermon-search'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { showInfo } from 'shared/model/info-dialog'
 import { isBarCollapsedAtom, setBarCollapsed } from 'shared/ui/layout'
+import { type TabBarProps } from '../lib/tabBarTypes'
 
 type NavigateToTab = TabBarProps['navigateToTab']
 
 type TabBarEmitter = TabBarProps['emitter']
-
-type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0]
 
 interface TabRoute {
   key: string
@@ -23,26 +15,20 @@ interface TabRoute {
 
 interface UseTabPressParams {
   emitter: TabBarEmitter
+  /** Whether the filtered `/search` route currently owns the tabs navigator. */
+  isSearchFocused: boolean
   navigateToTab: NavigateToTab
 }
 
 export const UNAVAILABLE_TAB_TITLE = 'Скоро будет доступно'
 export const UNAVAILABLE_TAB_MESSAGE = 'Этот раздел будет реализован в будущих обновлениях'
 
-export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
+export const useTabPress = ({ emitter, isSearchFocused, navigateToTab }: UseTabPressParams) => {
   // Таб «Читать» открывается по фича-флагу. Пока флаги не загружены, доступ
   // закрыт (useFeatureFlag → false), то есть поведение сохраняется прежним.
   const isReadEnabled = useFeatureFlag('read')
   const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
-  const [isSearchOpen] = useAtom(isSearchOpenAtom)
-  // A visible search field forces the island into the collapsed circle shape
-  // even when the scroll driver has not written the collapsed atom (a live
-  // query suspends that driver), so the circle must own the same tap.
-  const isSearchFieldVisible = useIsSearchFieldVisible()
-  const isBarVisuallyCollapsed = isBarCollapsed || isSearchFieldVisible
   const applyBarCollapsed = useAction(setBarCollapsed)
-  const closeSearchAction = useAction(closeSearch)
-  const closeSearchAndExpandAction = useAction(closeSearchAndExpand)
 
   const isTabAvailable = (routeName: string) => {
     if (routeName === 'read') return isReadEnabled
@@ -56,13 +42,26 @@ export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
       return
     }
 
+    // While `/search` owns the navigator the rendered "active" tab is only the
+    // remembered pre-search tab — the search route itself is focused. Pressing
+    // any tab (including that one) must change the route so the leave effect
+    // closes the session; the usual active-tab no-op would trap the user.
+    if (isSearchFocused) {
+      const searchEvent = emitter.emit({
+        canPreventDefault: true,
+        target: route.key,
+        type: 'tabPress',
+      })
+
+      if (!searchEvent.defaultPrevented) navigateToTab(route.key)
+
+      return
+    }
+
     // Collapsed, the island shows only the active tab's circle: pressing it
     // expands the bar instead of the fully silent no-op it is when expanded.
-    // An open search session is dismissed in the same gesture — one atomic
-    // action so the empty field never flashes over the expanding bar.
-    if (isActive && isBarVisuallyCollapsed) {
-      if (isSearchOpen) void closeSearchAndExpandAction()
-      else applyBarCollapsed(false)
+    if (isActive && isBarCollapsed) {
+      applyBarCollapsed(false)
       return
     }
 
@@ -72,12 +71,7 @@ export const useTabPress = ({ emitter, navigateToTab }: UseTabPressParams) => {
       type: 'tabPress',
     })
 
-    if (!isActive && !event.defaultPrevented) {
-      // The search field only exists on the listen screen: leaving the tab
-      // closes it instead of leaking the open state to the next screen.
-      if (isSearchOpen) void closeSearchAction()
-      navigateToTab(route.key)
-    }
+    if (!isActive && !event.defaultPrevented) navigateToTab(route.key)
   }
 
   return { handleTabPress, isTabAvailable }

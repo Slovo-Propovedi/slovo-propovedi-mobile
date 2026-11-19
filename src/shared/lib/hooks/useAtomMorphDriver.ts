@@ -1,11 +1,13 @@
 import { useCtx } from '@reatom/npm-react'
 import { useCallback, useEffect, useState } from 'react'
+import { useFrameCallback } from 'react-native-reanimated'
 import { type AtomMorphDriver } from './atomMorphDriver'
 
 /**
  * React surface of a shared {@link AtomMorphDriver}: reads ONE module-level
- * progress value instead of starting a per-component `withTiming`, and exposes
- * the settled flag the React shadow tree may commit resting geometry for.
+ * progress value instead of starting a per-component animation, owns the
+ * UI-thread frame callback that steps the clock, and exposes the settled flag
+ * the React shadow tree may commit resting geometry for.
  *
  * `settled` seeds from the atom, a real flip immediately commits the START of
  * the new animation (`!isTarget`), and only the completion commits the target.
@@ -27,17 +29,24 @@ export const useAtomMorphDriver = (driver: AtomMorphDriver) => {
   const handleStart = useCallback((isTarget: boolean) => setSettled(!isTarget), [])
   const handleSettled = useCallback((isTarget: boolean) => setSettled(isTarget), [])
 
+  // The driver owns the clock state; this hook only supplies the frame
+  // registration Reanimated requires. `useFrameCallback` keeps the handle
+  // stable, so the effect below runs once per surface.
+  const frameCallback = useFrameCallback(driver.frameStep, false)
+
   useEffect(() => {
     const detachStart = driver.registerStartListener(handleStart)
     const detachSettle = driver.registerSettleListener(handleSettled)
+    const detachFrameHost = driver.attachFrameHost(frameCallback)
 
     driver.ensure(ctx)
 
     return () => {
       detachStart()
       detachSettle()
+      detachFrameHost()
     }
-  }, [ctx, driver, handleStart, handleSettled])
+  }, [ctx, driver, frameCallback, handleStart, handleSettled])
 
   return { progress: driver.progress, settled }
 }

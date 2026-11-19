@@ -1,8 +1,6 @@
 import { createCtx } from '@reatom/framework'
-import { isBarCollapsedAtom, setBarCollapsed } from 'shared/ui/layout'
-import { isSearchOpenAtom, searchInputRequestAtom, searchQueryAtom, typeSearchInput } from './model'
-import { isSearchFieldFocusedAtom } from './model-searchField'
-import { closeSearch, closeSearchAndExpand, openSearch } from './model-session'
+import { searchInputRequestAtom, searchQueryAtom, typeSearchInput } from './model'
+import { resetSearchSession } from './model-session'
 
 describe('sermon-search model', () => {
   test('typeSearchInput sets the query and asks the visible input to adopt the text', () => {
@@ -21,34 +19,14 @@ describe('sermon-search model', () => {
     expect(ctx.get(searchInputRequestAtom)?.nonce).toBe(firstNonce + 1)
   })
 
-  test('openSearch opens the search and closeSearch resets query and focus', async () => {
+  test('resetSearchSession clears the query and pushes an empty input request', async () => {
     const ctx = createCtx()
     searchQueryAtom(ctx, 'вера')
-    isSearchFieldFocusedAtom(ctx, true)
+    typeSearchInput(ctx, 'вера')
 
-    await openSearch(ctx)
+    await resetSearchSession(ctx)
 
-    expect(ctx.get(isSearchOpenAtom)).toBe(true)
-
-    await closeSearch(ctx)
-
-    expect(ctx.get(isSearchOpenAtom)).toBe(false)
     expect(ctx.get(searchQueryAtom)).toBe('')
-    expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
-  })
-
-  test('closeSearchAndExpand clears the session and expands the bar in one flip', async () => {
-    const ctx = createCtx()
-    isSearchOpenAtom(ctx, true)
-    searchQueryAtom(ctx, 'вера')
-    isSearchFieldFocusedAtom(ctx, true)
-    setBarCollapsed(ctx, true)
-
-    await closeSearchAndExpand(ctx)
-
-    expect(ctx.get(isSearchOpenAtom)).toBe(false)
-    expect(ctx.get(searchQueryAtom)).toBe('')
-    expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
-    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
+    expect(ctx.get(searchInputRequestAtom)).toMatchObject({ text: '' })
   })
 })

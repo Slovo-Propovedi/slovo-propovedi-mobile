@@ -8,10 +8,12 @@ import { PreacherScreen } from './PreacherScreen'
 const mockUsePreacherSermons = usePreacherSermons as jest.MockedFunction<typeof usePreacherSermons>
 const mockSetHeaderTitle = jest.fn()
 const mockUseScreenTransitionTracking = jest.fn()
+const mockPathname = '/listen/preacher'
 const mockParams: { artist?: string } = {}
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockParams,
+  usePathname: () => mockPathname,
 }))
 
 jest.mock('shared/routing/useHeaderTitle', () => ({
