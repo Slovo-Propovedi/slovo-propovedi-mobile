@@ -3,13 +3,13 @@ import { StyleSheet, type ViewStyle } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
 import { searchFocusMorphDriver } from 'widgets/search-island/@x/morphDrivers'
+import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search/model'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isBarCollapsedAtom, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
-import { isMiniPillCollapsedAtom } from '../../model/barMorph'
 import { miniPillOpacitySv } from '../../model/miniPillFade'
 import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { ExpandablePlayer } from './ExpandablePlayer'
@@ -220,7 +220,7 @@ describe('<ExpandablePlayer>', () => {
     // The empty-query search field collapses with the bar, so the row returns
     // to the compact [active circle][player][search circle] arrangement.
     expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98)
-    expect(ctx.get(isMiniPillCollapsedAtom)).toBe(true)
+    expect(ctx.get(oneLineBarMorphDriver.atom)).toBe(true)
   })
 
   test('rests the mini player above the row while an active query pins the field', async () => {
@@ -232,7 +232,7 @@ describe('<ExpandablePlayer>', () => {
 
     // The pill's collapse target keeps it detached: the field pins the row.
     expect(mockedUseExpandAnimation).toHaveBeenLastCalledWith(false, 98)
-    expect(ctx.get(isMiniPillCollapsedAtom)).toBe(false)
+    expect(ctx.get(oneLineBarMorphDriver.atom)).toBe(false)
   })
 
   test('keeps the tucked pill through the slide, then drops it from the tree', async () => {

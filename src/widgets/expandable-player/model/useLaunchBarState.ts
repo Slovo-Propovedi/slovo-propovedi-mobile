@@ -1,7 +1,7 @@
 import { useCtx } from '@reatom/npm-react'
 import { useState } from 'react'
+import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { setBarCollapsed } from 'shared/ui/layout'
-import { barMorphDriver } from './barMorphDriver'
 
 // `isBarCollapsedAtom` lives in memory only, and on Android the media service
 // keeps the JS process alive after a swipe from recents. A new activity then
@@ -15,7 +15,7 @@ export const useLaunchBarState = () => {
   // children have already seeded. The same contract as useAtomMorphDriver.seed.
   useState(() => {
     setBarCollapsed(ctx, false)
-    barMorphDriver.snap(ctx)
+    oneLineBarMorphDriver.snap(ctx)
 
     return null
   })

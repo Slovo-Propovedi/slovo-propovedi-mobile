@@ -3,16 +3,12 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { Dimensions, StyleSheet } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
-import { tabIslandMorphDriver } from 'widgets/tab-bar/@x/morph'
+import { oneLineBarMorphDriver, tabIslandMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { isSearchOpenAtom, searchQueryAtom } from 'features/sermon-search'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import {
-  TAB_BAR_ISLAND_HEIGHT,
-  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
-  tabBarHeightAtom,
-} from 'shared/ui/layout'
+import { TAB_BAR_ISLAND_HEIGHT_EXPANDED, tabBarHeightAtom } from 'shared/ui/layout'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { searchCloseMorphDriver } from '../model/searchCloseDriver'
 import { searchFocusMorphDriver } from '../model/searchFocusDriver'
@@ -160,6 +156,7 @@ describe('<SearchIslandMorph>', () => {
   beforeEach(() => {
     mockIoniconsSpy.mockClear()
     tabIslandMorphDriver.reset()
+    oneLineBarMorphDriver.reset()
     searchOpenMorphDriver.reset()
     searchFocusMorphDriver.reset()
     searchCloseMorphDriver.reset()
@@ -254,7 +251,6 @@ describe('<SearchIslandMorph>', () => {
 
     const frame = StyleSheet.flatten(findMorphContainer().props.style)
     const expected = getSearchIslandGeometry({
-      barProgress: 1,
       // Focusing the field also shows its ✕, so the shared close morph starts
       // in the same tick and reserves its slot while the pill stretches.
       closeProgress: 1,
@@ -278,7 +274,6 @@ describe('<SearchIslandMorph>', () => {
 
     const frame = StyleSheet.flatten(findMorphContainer().props.style)
     const expected = getSearchIslandGeometry({
-      barProgress: 1,
       closeProgress: 0,
       focusProgress: 0,
       oneLineProgress: 0,
@@ -324,7 +319,6 @@ describe('<SearchIslandMorph>', () => {
 
     const settledFrame = StyleSheet.flatten(findMorphContainer().props.style)
     const focused = getSearchIslandGeometry({
-      barProgress: 1,
       closeProgress: 1,
       focusProgress: 1,
       oneLineProgress: 0,
@@ -501,7 +495,10 @@ describe('<SearchIslandMorph>', () => {
 
     const settledFrame = StyleSheet.flatten(findMorphContainer().props.style)
 
-    expect(settledFrame.height).toBe(TAB_BAR_ISLAND_HEIGHT)
+    // The opened field is always the tab bar's full height: 68, even though
+    // opening search forces the tab circle (48) collapsed in the same frame.
+    expect(closedFrame.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
+    expect(settledFrame.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
     expect(settledFrame.width).toBeGreaterThan(closedFrame.width)
   })
 
@@ -519,7 +516,8 @@ describe('<SearchIslandMorph>', () => {
 
     const openedFrame = StyleSheet.flatten(findMorphContainer().props.style)
 
-    expect(openedFrame.height).toBe(TAB_BAR_ISLAND_HEIGHT)
+    // Open field is always the tab bar's full height, not the collapsed circle's.
+    expect(openedFrame.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
 
     completions.length = 0
     await act(async () => {

@@ -4,7 +4,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 /**
  * One module-level 0→1 progress shared by every surface of an atom-driven
- * morph. The in-repo bar morph (`barMorphDriver`) is built on this factory: the
+ * morph. The in-repo bar morph (`oneLineBarMorphDriver`) is built on this factory: the
  * timing starts in the atom subscription (same tick as the atom flip), so no
  * surface has to wait for a React commit before it starts moving.
  */

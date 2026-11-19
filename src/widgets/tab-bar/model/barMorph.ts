@@ -12,9 +12,9 @@ export const isTabIslandCollapsedAtom = atom(
 )
 
 // The one-line bar: collapsed AND no search field occupying the row. Only in
-// this state does the mini pill fold into the row (mirrors
-// isMiniPillCollapsedAtom in widgets/expandable-player), and the row's outer
-// side inset widens with it (BAR_SIDE_INSET_COLLAPSED).
+// this state does the mini pill fold into the row (the expandable player reads
+// the same driver), and the row's outer side inset widens with it
+// (BAR_SIDE_INSET_COLLAPSED).
 export const isOneLineBarAtom = atom(
   ctx => ctx.spy(isBarCollapsedAtom) && !ctx.spy(isSearchFieldVisibleAtom),
   'isOneLineBarAtom',

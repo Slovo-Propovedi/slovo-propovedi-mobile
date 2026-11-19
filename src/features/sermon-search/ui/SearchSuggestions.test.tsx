@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
+import { TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import { INDENTS } from 'shared/ui/theme'
 import { searchQueryAtom } from '../model'
 import { distinctValuesAtom } from '../model-distinctValues'
@@ -80,7 +80,7 @@ describe('<SearchBar> suggestions', () => {
     const dropdown = findScrollAncestor(getByText(IVAN_ZLATOUST))
     const dropdownStyle = StyleSheet.flatten(dropdown.props.style)
 
-    expect(dropdownStyle.bottom).toBe(TAB_BAR_ISLAND_HEIGHT + INDENTS.low)
+    expect(dropdownStyle.bottom).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED + INDENTS.low)
     expect(dropdownStyle.top).toBeUndefined()
   })
 

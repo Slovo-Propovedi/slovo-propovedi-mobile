@@ -7,7 +7,6 @@ import {
   CONTENT_COLUMN_WIDTH,
   getBarSideInset,
   getColumnSideInset,
-  TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 
@@ -41,8 +40,8 @@ interface MiniPlayerGeometryInput {
  * content edges (column width minus the side insets), so its left/right edges
  * line up with the tab island and the search circle.
  * Collapsed (1): a narrower pill inside the row, right of the active-tab circle
- * and left of the search circle, bottom-aligned with the islands and grown to
- * their full height (Issue #153).
+ * and left of the search circle, bottom-aligned with the islands. The pill
+ * never grows: the one-line row is uniform at the mini player height.
  *
  * Worklet-safe: called both from React (resting shadow-tree styles) and from
  * Reanimated animated styles.
@@ -78,11 +77,9 @@ export const getMiniPlayerGeometry = ({
   const collapsedLeft = rowLeft + sideInset + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
   const expandedWidth = rowContentWidth
   const collapsedWidth = screenWidth - collapsedLeft * 2
-  // The detached pill keeps the compact mini height; folded into the row it
-  // grows to the islands' height and fills its slot like the neighbours.
-  const height =
-    PLAYER_SIZES.miniPlayerHeight +
-    (TAB_BAR_ISLAND_HEIGHT - PLAYER_SIZES.miniPlayerHeight) * progress
+  // The pill keeps the compact mini height in every bar state: folded into the
+  // row it fills the uniform one-line slot without growing.
+  const height = PLAYER_SIZES.miniPlayerHeight
   const bottom = expandedBottom + (collapsedBottom - expandedBottom) * progress
   const left = expandedLeft + (collapsedLeft - expandedLeft) * progress
   const width = expandedWidth + (collapsedWidth - expandedWidth) * progress

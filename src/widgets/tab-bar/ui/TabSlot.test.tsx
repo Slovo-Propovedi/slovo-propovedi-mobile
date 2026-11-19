@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react-native'
 import { Text } from 'react-native'
 import { type SharedValue } from 'react-native-reanimated'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import { TabSlot } from './TabSlot'
 
 const progressValue = (value: number) => ({ value }) as unknown as SharedValue<number>
@@ -11,6 +12,8 @@ const renderSlot = async ({
   isActive = false,
   isCollapsed = false,
   isSettledCollapsed = false,
+  isSettledOneLine = false,
+  oneLineProgress = 0,
   progress = 0,
 } = {}) => {
   await renderWithProviders(
@@ -19,7 +22,9 @@ const renderSlot = async ({
       isCollapsed={isCollapsed}
       expandedWidth={expandedWidth}
       progress={progressValue(progress)}
+      isSettledOneLine={isSettledOneLine}
       isSettledCollapsed={isSettledCollapsed}
+      oneLineProgress={progressValue(oneLineProgress)}
     >
       <Text>tab</Text>
     </TabSlot>,
@@ -55,17 +60,39 @@ describe('<TabSlot>', () => {
     expect(style.at(-1)).toEqual({ minWidth: 0, opacity: 0, width: 0 })
   })
 
-  test('rests the collapsed active slot at the circle size', async () => {
+  test('rests the collapsed active slot at the island diameter of the open-field row', async () => {
     const slot = await renderSlot({
       isActive: true,
       isCollapsed: true,
       isSettledCollapsed: true,
+      oneLineProgress: 0,
       progress: 1,
     })
     const style = slot.props.style as Array<Record<string, number>>
 
-    // Literal 56 (not BAR_CIRCLE_SIZE) guards the exact circle geometry.
-    expect(style.at(-1)).toEqual({ minWidth: 0, opacity: 1, width: 56 })
+    // A visible field forces the circle shape but keeps the expanded height:
+    // the active slot must span the 68 island, not the compact 48.
+    expect(style.at(-1)).toEqual({
+      minWidth: 0,
+      opacity: 1,
+      width: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+    })
+  })
+
+  test('rests the collapsed active slot at the compact 48 circle in the one-line row', async () => {
+    const slot = await renderSlot({
+      isActive: true,
+      isCollapsed: true,
+      isSettledCollapsed: true,
+      isSettledOneLine: true,
+      oneLineProgress: 1,
+      progress: 1,
+    })
+    const style = slot.props.style as Array<Record<string, number>>
+
+    // Pinned to the shared compact constant: the collapsed slot must match the
+    // circle exactly, so a stray circle resize breaks this test.
+    expect(style.at(-1)).toEqual({ minWidth: 0, opacity: 1, width: TAB_BAR_ISLAND_HEIGHT })
   })
 
   test('gates touches of hidden slots inside the collapsed circle', async () => {

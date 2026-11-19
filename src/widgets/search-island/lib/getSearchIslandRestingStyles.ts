@@ -6,7 +6,6 @@ interface SearchIslandRestingStylesInput {
   settledFocused: boolean
   settledOneLine: boolean
   settledOpen: boolean
-  settledTabCollapsed: boolean
   tabBarHeight: number
 }
 
@@ -22,13 +21,11 @@ export const getSearchIslandRestingStyles = ({
   settledFocused,
   settledOneLine,
   settledOpen,
-  settledTabCollapsed,
   tabBarHeight,
 }: SearchIslandRestingStylesInput) => {
   const settledOpenProgress = settledOpen ? 1 : 0
   const settledCloseProgress = settledClose ? 1 : 0
   const { closeRight, iconInset, iconSize, radius, ...geometry } = getSearchIslandGeometry({
-    barProgress: settledTabCollapsed ? 1 : 0,
     closeProgress: settledCloseProgress,
     focusProgress: settledFocused ? 1 : 0,
     oneLineProgress: settledOneLine ? 1 : 0,

@@ -4,15 +4,13 @@ import { searchFocusMorphDriver } from 'widgets/search-island/@x/morphDrivers'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import {
-  BAR_CIRCLE_SIZE,
   BAR_CIRCLE_SIZE_EXPANDED,
   BAR_OUTER_GAP,
   BAR_SIDE_INSET_EXPANDED,
   CONTENT_COLUMN_WIDTH,
-  TAB_BAR_ISLAND_HEIGHT,
-  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
 import { isTabIslandCollapsedAtom } from '../model/barMorph'
+import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
 import { getIslandContentStyle } from './getBarMorphStyles'
 import { getIslandStyle, ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
@@ -26,11 +24,12 @@ interface TabIslandMorphInput {
   windowWidth: number
 }
 
-// Drives the island's width/height morph (expanded ⇄ circle). The atom also
-// covers a visible search field, which forces the collapsed shape even when the
-// scroll driver has not collapsed the bar yet, because the row reads
-// [active circle][field]. The progress starts in the atom subscription so the
-// morph does not wait for this component's render/commit (Android: ~130 ms).
+// Drives the island's morph on two axes: the shape axis (expanded ⇄ circle) from
+// the tab-island atom, and the height axis from the one-line atom. Both atoms
+// cover a visible search field differently on purpose: the field forces the
+// SHAPE to a circle (the row reads [circle][field]) but keeps the HEIGHT at 68,
+// so the open-field row is a 68x68 circle next to the 68 field. The compact 48
+// applies only when the field is hidden AND the bar is one-line.
 export const useTabIslandMorph = ({
   hideSearch,
   routeCount,
@@ -40,12 +39,14 @@ export const useTabIslandMorph = ({
   const [isCollapsed] = useAtom(isTabIslandCollapsedAtom)
   const [isFocused] = useAtom(isSearchFieldFocusedAtom)
   const { progress, settled: settledCollapsed } = useAtomMorphDriver(tabIslandMorphDriver)
+  const { progress: oneLineProgress, settled: settledOneLine } =
+    useAtomMorphDriver(oneLineBarMorphDriver)
   const { progress: focusProgress, settled: settledFocused } =
     useAtomMorphDriver(searchFocusMorphDriver)
 
   // The expanded island lives only in the expanded-bar state, so its width
-  // always follows the expanded side inset; the collapsed circle is a fixed
-  // size and its position comes from the row's animated padding.
+  // always follows the expanded side inset; the collapsed circle takes its
+  // diameter from the island height and its position from the row's padding.
   const rowContentWidth =
     Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
   const expandedIslandWidth = Math.max(
@@ -56,13 +57,9 @@ export const useTabIslandMorph = ({
   const islandStyle = useAnimatedStyle(() =>
     getIslandStyle(
       progress.value,
-      {
-        collapsedHeight: TAB_BAR_ISLAND_HEIGHT,
-        collapsedWidth: BAR_CIRCLE_SIZE,
-        expandedHeight: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
-        expandedWidth: expandedIslandWidth,
-      },
+      { expandedWidth: expandedIslandWidth },
       focusProgress.value,
+      oneLineProgress.value,
     ),
   )
 
@@ -74,14 +71,14 @@ export const useTabIslandMorph = ({
   // styles: the glass theme remount re-commits shadow-tree props from the first
   // render, so without it the island reverts to its launch shape (Issue #63).
   // The resting layer carries the START geometry mid-morph (`settledCollapsed`
-  // lags the atom until the morph lands) — recomputing it from the live atom
-  // would paint the destination a frame early. Pointer gating still uses the
-  // live `isCollapsed`.
+  // and `settledOneLine` lag the atoms until the morph lands) — recomputing it
+  // from the live atoms would paint the destination a frame early. Pointer gating
+  // still uses the live `isCollapsed`.
   const { content: restingContentStyle, island: restingIslandStyle } = getTabIslandRestingStyles({
-    collapsedWidth: BAR_CIRCLE_SIZE,
     expandedWidth: expandedIslandWidth,
     settledFocused,
     settledIsCollapsed: settledCollapsed,
+    settledOneLine,
   })
 
   return {
@@ -97,11 +94,15 @@ export const useTabIslandMorph = ({
     // receiving touches on the focus flip, not when it finishes fading out.
     isFocused,
     islandStyle,
+    // Height axis shared with the slots: the collapsed slot width must match the
+    // island's current diameter (68 beside an open field, 48 in the compact row).
+    oneLineProgress,
     progress,
     restingContentStyle,
     restingIslandStyle,
     // Settled (lagged) collapse state for the slots' committed resting
     // geometry (TabSlot): it flips only when the morph lands, never mid-morph.
     settledCollapsed,
+    settledOneLine,
   }
 }

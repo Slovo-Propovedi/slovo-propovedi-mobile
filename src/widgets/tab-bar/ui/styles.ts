@@ -42,7 +42,7 @@ export const styles = {
     borderRadius: RADIUSES.round,
     // No static height: the animated morph style (getIslandStyle) owns it. A
     // static height in the same style array shadows the animated property on
-    // device/web, pinning the expanded island to the collapsed 56.
+    // device/web, pinning the expanded island to the collapsed 48.
     // Floating chrome stays a centered 600px column on wide screens (tablets, desktop-web).
     maxWidth: CONTENT_COLUMN_WIDTH,
     // No overflow here: the glass surface clips itself, and the tab content is

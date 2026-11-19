@@ -1,3 +1,4 @@
+import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import {
   getCapsuleOpacity,
   getIslandContentPadding,
@@ -9,42 +10,115 @@ import {
   getTabSlotStyle,
 } from './getIslandStyle'
 
-const LAYOUT = {
-  collapsedHeight: 56,
-  collapsedWidth: 56,
-  expandedHeight: 68,
-  expandedWidth: 584,
-}
+const LAYOUT = { expandedWidth: 584 }
 const EXPANDED_TAB_WIDTH = 146
-const TAB_LAYOUT = { collapsedWidth: 56, expandedWidth: EXPANDED_TAB_WIDTH }
+const TAB_LAYOUT = { expandedWidth: EXPANDED_TAB_WIDTH }
 
 describe('getIslandStyle', () => {
-  test('the expanded island spans the full row width and grows taller', () => {
-    expect(getIslandStyle(0, LAYOUT)).toEqual({ height: 68, opacity: 1, width: 584 })
+  test('the expanded island spans the full row width at the expanded height', () => {
+    expect(getIslandStyle(0, LAYOUT)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      opacity: 1,
+      width: 584,
+    })
   })
 
-  test('the collapsed island shrinks to the circle size and height', () => {
-    expect(getIslandStyle(1, LAYOUT)).toEqual({ height: 56, opacity: 1, width: 56 })
+  test('the one-line collapsed island is a 48x48 circle', () => {
+    expect(getIslandStyle(1, LAYOUT, 0, 1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT,
+      opacity: 1,
+      width: TAB_BAR_ISLAND_HEIGHT,
+    })
   })
 
-  test('width and height interpolate linearly between both states', () => {
-    expect(getIslandStyle(0.5, LAYOUT)).toEqual({ height: 62, opacity: 1, width: 320 })
+  test('a collapsed shape on the expanded bar is a 68x68 circle', () => {
+    // A visible search field forces the circle shape while the bar keeps its
+    // expanded height, so the circle matches the 68 field beside it.
+    expect(getIslandStyle(1, LAYOUT, 0, 0)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      opacity: 1,
+      width: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+    })
+  })
+
+  test('the open-field row grows the circle 48 -> 68 with the one-line axis', () => {
+    // The field becomes visible in the one-line row: the shape stays collapsed
+    // (axis A = 1) while the one-line axis drives the height back to expanded.
+    expect(getIslandStyle(1, LAYOUT, 0, 0.5)).toEqual({
+      height: (TAB_BAR_ISLAND_HEIGHT_EXPANDED + TAB_BAR_ISLAND_HEIGHT) / 2,
+      opacity: 1,
+      width: (TAB_BAR_ISLAND_HEIGHT_EXPANDED + TAB_BAR_ISLAND_HEIGHT) / 2,
+    })
+  })
+
+  test('width interpolates from the expanded row to the current circle height', () => {
+    expect(getIslandStyle(0.5, LAYOUT)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      opacity: 1,
+      width: (584 + TAB_BAR_ISLAND_HEIGHT_EXPANDED) / 2,
+    })
+    expect(getIslandStyle(0.5, LAYOUT, 0, 1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT,
+      opacity: 1,
+      width: (584 + TAB_BAR_ISLAND_HEIGHT) / 2,
+    })
   })
 
   test('progress outside 0..1 is clamped', () => {
-    expect(getIslandStyle(-1, LAYOUT)).toEqual({ height: 68, opacity: 1, width: 584 })
-    expect(getIslandStyle(2, LAYOUT)).toEqual({ height: 56, opacity: 1, width: 56 })
+    expect(getIslandStyle(-1, LAYOUT)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      opacity: 1,
+      width: 584,
+    })
+    expect(getIslandStyle(2, LAYOUT, 0, 1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT,
+      opacity: 1,
+      width: TAB_BAR_ISLAND_HEIGHT,
+    })
+  })
+
+  test('one-line progress outside 0..1 is clamped', () => {
+    expect(getIslandStyle(1, LAYOUT, 0, -1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      opacity: 1,
+      width: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+    })
+    expect(getIslandStyle(1, LAYOUT, 0, 2)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT,
+      opacity: 1,
+      width: TAB_BAR_ISLAND_HEIGHT,
+    })
   })
 
   test('focus fades the island out and collapses its width to nothing', () => {
-    expect(getIslandStyle(0, LAYOUT, 1)).toEqual({ height: 68, opacity: 0, width: 0 })
-    expect(getIslandStyle(0, LAYOUT, 0.5)).toEqual({ height: 68, opacity: 0.5, width: 292 })
-    expect(getIslandStyle(1, LAYOUT, 1)).toEqual({ height: 56, opacity: 0, width: 0 })
+    expect(getIslandStyle(0, LAYOUT, 1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      opacity: 0,
+      width: 0,
+    })
+    expect(getIslandStyle(0, LAYOUT, 0.5)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      opacity: 0.5,
+      width: 292,
+    })
+    expect(getIslandStyle(1, LAYOUT, 1, 1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT,
+      opacity: 0,
+      width: 0,
+    })
   })
 
   test('focus progress outside 0..1 is clamped', () => {
-    expect(getIslandStyle(0, LAYOUT, -1)).toEqual({ height: 68, opacity: 1, width: 584 })
-    expect(getIslandStyle(0, LAYOUT, 2)).toEqual({ height: 68, opacity: 0, width: 0 })
+    expect(getIslandStyle(0, LAYOUT, -1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      opacity: 1,
+      width: 584,
+    })
+    expect(getIslandStyle(0, LAYOUT, 2)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      opacity: 0,
+      width: 0,
+    })
   })
 })
 
@@ -62,13 +136,31 @@ describe('getTabSlotStyle', () => {
     })
   })
 
-  test('collapsed active tab fills the circle, hidden tabs fade out to zero width', () => {
-    expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: true })).toEqual({
+  test('collapsed active tab fills the 48 circle in the one-line row', () => {
+    expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: true }, 1)).toEqual({
       minWidth: 0,
       opacity: 1,
-      width: 56,
+      width: TAB_BAR_ISLAND_HEIGHT,
     })
-    expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: false })).toEqual({
+  })
+
+  test('collapsed active tab follows the 68 island beside an open field', () => {
+    expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: true }, 0)).toEqual({
+      minWidth: 0,
+      opacity: 1,
+      width: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+    })
+  })
+
+  test('the collapsed slot width equals the island width (no oval)', () => {
+    for (const oneLine of [0, 0.5, 1])
+      expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: true }, oneLine).width).toBe(
+        getIslandStyle(1, TAB_LAYOUT, 0, oneLine).width,
+      )
+  })
+
+  test('collapsed hidden tabs fade out to zero width', () => {
+    expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: false }, 1)).toEqual({
       minWidth: 0,
       opacity: 0,
       width: 0,
@@ -94,7 +186,7 @@ describe('getIslandContentPadding', () => {
   })
 
   test('collapsed circle drops the inset so the active slot fills the circle', () => {
-    // The island shrinks to the 56dp circle and the active slot to the same
+    // The island shrinks to the 48dp circle and the active slot to the same
     // width; any leftover padding would push the icon off-centre and clip it.
     expect(getIslandContentPadding(1)).toBe(0)
   })
@@ -131,13 +223,14 @@ describe('getTabItemHeight', () => {
   })
 
   test('collapsed item stays the circle item height', () => {
-    expect(getTabItemHeight(1)).toBe(48)
+    // The uniform 48dp one-line row leaves the item 48 minus its two 4dp margins.
+    expect(getTabItemHeight(1)).toBe(TAB_BAR_ISLAND_HEIGHT - 4 * 2)
   })
 
   test('height interpolates with the morph and clamps out-of-range progress', () => {
-    expect(getTabItemHeight(0.5)).toBe(54)
+    expect(getTabItemHeight(0.5)).toBe((68 + TAB_BAR_ISLAND_HEIGHT) / 2 - 4 * 2)
     expect(getTabItemHeight(-1)).toBe(60)
-    expect(getTabItemHeight(2)).toBe(48)
+    expect(getTabItemHeight(2)).toBe(TAB_BAR_ISLAND_HEIGHT - 4 * 2)
   })
 })
 
@@ -161,7 +254,7 @@ describe('getTabItemHorizontalMargin', () => {
 
   test('collapsed active item drops the gap so its icon centres in the circle', () => {
     // The island padding is 0 at progress 1, so any leftover margin would
-    // offset the item inside the 56dp circle.
+    // offset the item inside the 48dp circle.
     expect(getTabItemHorizontalMargin(1)).toBe(0)
   })
 

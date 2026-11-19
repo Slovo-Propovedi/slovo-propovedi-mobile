@@ -1,12 +1,12 @@
 import { useCallback } from 'react'
 import { Dimensions, useWindowDimensions } from 'react-native'
 import { type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
+import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
 import { getContainerOpacity } from '../lib/getContainerOpacity'
 import { getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { type getRestingContainerStyle } from '../lib/getRestingContainerStyle'
-import { barMorphDriver } from './barMorphDriver'
 import { useAppStateSnap } from './useAppStateSnap'
 import { useGeometrySharedValues } from './useGeometrySharedValues'
 import { useOpacityStyles } from './useOpacityStyles'
@@ -39,7 +39,8 @@ export const useExpandAnimation = (
 ): UseExpandAnimationResult => {
   const progress = useSharedValue(0)
   // UI-thread mirror of the bar collapse (axis D).
-  const { progress: barProgress, settled: settledCollapsed } = useAtomMorphDriver(barMorphDriver)
+  const { progress: barProgress, settled: settledCollapsed } =
+    useAtomMorphDriver(oneLineBarMorphDriver)
   const geometryReapplyTick = useSharedValue(0)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
   // On web `Dimensions.get('screen')` is the physical `window.screen.height`,

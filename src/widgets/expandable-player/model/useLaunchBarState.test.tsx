@@ -1,9 +1,9 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
+import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { setBarCollapsed } from 'shared/ui/layout'
-import { barMorphDriver, resetBarMorphDriver } from './barMorphDriver'
 import { useLaunchBarState } from './useLaunchBarState'
 
 interface BarSurfaceState {
@@ -12,7 +12,7 @@ interface BarSurfaceState {
 }
 
 const ChildSurface = ({ onRender }: { onRender: (state: BarSurfaceState) => void }) => {
-  const { progress, settled } = useAtomMorphDriver(barMorphDriver)
+  const { progress, settled } = useAtomMorphDriver(oneLineBarMorphDriver)
   onRender({ progress: progress.value, settled })
 
   return null
@@ -37,14 +37,14 @@ const captureFirstRender = () => {
 
 describe('useLaunchBarState', () => {
   beforeEach(() => {
-    resetBarMorphDriver()
+    oneLineBarMorphDriver.reset()
   })
 
   test('expands a bar left collapsed by the previous process before the chrome seeds settled', async () => {
     const ctx = createCtx()
     setBarCollapsed(ctx, true)
-    barMorphDriver.seed(ctx)
-    expect(barMorphDriver.progress.value).toBe(1)
+    oneLineBarMorphDriver.seed(ctx)
+    expect(oneLineBarMorphDriver.progress.value).toBe(1)
 
     const capture = captureFirstRender()
     await renderWithProviders(<LaunchRoot onRender={capture.onRender} />, { ctx })
@@ -53,7 +53,7 @@ describe('useLaunchBarState', () => {
     // the root's render-phase reset must already be in place: the first frame
     // paints expanded geometry instead of the collapsed row.
     expect(capture.get()).toEqual({ progress: 0, settled: false })
-    expect(barMorphDriver.progress.value).toBe(0)
+    expect(oneLineBarMorphDriver.progress.value).toBe(0)
   })
 
   test('corrects the bar on every root mount in a process that survived a swipe from recents', async () => {
@@ -65,8 +65,8 @@ describe('useLaunchBarState', () => {
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
-    barMorphDriver.seed(ctx)
-    expect(barMorphDriver.progress.value).toBe(1)
+    oneLineBarMorphDriver.seed(ctx)
+    expect(oneLineBarMorphDriver.progress.value).toBe(1)
 
     const capture = captureFirstRender()
     await renderWithProviders(<LaunchRoot onRender={capture.onRender} />, { ctx })
@@ -77,7 +77,7 @@ describe('useLaunchBarState', () => {
   test('keeps an already expanded bar untouched', async () => {
     const ctx = createCtx()
     let changeCount = 0
-    ctx.subscribe(barMorphDriver.atom, () => {
+    ctx.subscribe(oneLineBarMorphDriver.atom, () => {
       changeCount += 1
     })
 

@@ -24,6 +24,7 @@ import {
   tabBarHeightAtom,
 } from 'shared/ui/layout'
 import { RADIUSES, themeModeAtom } from 'shared/ui/theme'
+import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { CustomTabBar } from './CustomTabBar'
 import { styles } from './styles'
 import { UNAVAILABLE_TAB_MESSAGE, UNAVAILABLE_TAB_TITLE } from './useTabPress'
@@ -119,6 +120,7 @@ describe('<CustomTabBar>', () => {
     mockBottomInset = 0
     mockIsSearchFieldVisible = false
     tabIslandMorphDriver.reset()
+    oneLineBarMorphDriver.reset()
     searchOpenMorphDriver.reset()
     searchFocusMorphDriver.reset()
     searchCloseMorphDriver.reset()
@@ -259,7 +261,7 @@ describe('<CustomTabBar>', () => {
 
   test('leaves the island height to the animated morph instead of a static fallback', () => {
     // A static height in the island's style array shadows the animated one on
-    // device: the expanded island stays pinned to the collapsed 56 and renders
+    // device: the expanded island stays pinned to the collapsed 48 and renders
     // visibly shorter than the 68 search circle next to it.
     expect(styles.floatingIsland).not.toHaveProperty('height')
   })
@@ -340,7 +342,7 @@ describe('<CustomTabBar>', () => {
     // A `paddingHorizontal` animated style never reaches the web DOM: Reanimated
     // updates styles through createReactDOMStyle, skipping the react-native-web
     // preprocess step that expands shortforms. The 8dp inset then freezes and
-    // pushes the 56dp active slot past the circle's right edge.
+    // pushes the 48dp active slot past the circle's right edge.
     await renderTabBar(0, { isCollapsed: true })
 
     expect(StyleSheet.flatten(findIslandContent()?.props.style)).toMatchObject({

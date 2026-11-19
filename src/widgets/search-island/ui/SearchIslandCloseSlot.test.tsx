@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native'
 import { makeMutable } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
 import { renderWithProviders } from 'shared/mocks'
+import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
 
@@ -14,13 +15,12 @@ const TAB_BAR_HEIGHT = 98
 const WITHIN_GRACE_MS = 100
 const AFTER_GRACE_MS = 200
 
-const createProps = (isVisible: boolean) => ({
+const createProps = (isVisible: boolean, openProgress = 1) => ({
   closeProgress: makeMutable(1),
   isVisible,
   oneLineProgress: makeMutable(1),
   onPress: jest.fn(),
-  openProgress: makeMutable(1),
-  progress: makeMutable(1),
+  openProgress: makeMutable(openProgress),
   restingStyle: {},
   screenWidth: SCREEN_WIDTH,
   tabBarHeight: TAB_BAR_HEIGHT,
@@ -28,8 +28,9 @@ const createProps = (isVisible: boolean) => ({
 
 const renderSlot = async (
   isVisible: boolean,
+  openProgress?: number,
 ): Promise<{ props: ReturnType<typeof createProps> } & RenderResult> => {
-  const props = createProps(isVisible)
+  const props = createProps(isVisible, openProgress)
   const result = await renderWithProviders(<SearchIslandCloseSlot {...props} />)
 
   return { ...result, props }
@@ -80,7 +81,6 @@ describe('<SearchIslandCloseSlot>', () => {
 
     const slotStyle = StyleSheet.flatten(findSlotGate(findCloseButton(getByLabelText)).props.style)
     const geometry = getSearchIslandGeometry({
-      barProgress: 1,
       oneLineProgress: 1,
       openProgress: 1,
       screenWidth: SCREEN_WIDTH,
@@ -88,6 +88,24 @@ describe('<SearchIslandCloseSlot>', () => {
     })
 
     expect(slotStyle).toMatchObject({ height: geometry.height, right: geometry.closeRight })
+  })
+
+  test('matches the field diameter: expanded while open, circle while closed', async () => {
+    const open = await renderSlot(true, 1)
+    const openStyle = StyleSheet.flatten(
+      findSlotGate(findCloseButton(open.getByLabelText)).props.style,
+    )
+    const closed = await renderSlot(true, 0)
+    const closedStyle = StyleSheet.flatten(
+      findSlotGate(findCloseButton(closed.getByLabelText)).props.style,
+    )
+
+    // The ✕ sits next to the open field, so it takes the field's full height.
+    expect(openStyle.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
+    expect(openStyle.width).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
+    // Hidden behind a closed field it is the search circle again.
+    expect(closedStyle.height).toBe(TAB_BAR_ISLAND_HEIGHT)
+    expect(closedStyle.width).toBe(TAB_BAR_ISLAND_HEIGHT)
   })
 
   test('re-shows the slot immediately and cancels the pending inert flip', async () => {

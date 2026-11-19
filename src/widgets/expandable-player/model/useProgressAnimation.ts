@@ -11,7 +11,7 @@ import { COLLAPSE_DURATION_MS, EXPAND_DURATION_MS } from './expandDurations'
  *
  * `settledExpanded` is the state the progress last landed on, so it lags the
  * `expanded` prop until the 300/250 ms timing completes (see the `settled` flag
- * of `useAtomMorphDriver(barMorphDriver)` for the same contract on the bar). The
+ * of `useAtomMorphDriver(oneLineBarMorphDriver)` for the same contract on the bar). The
  * React resting geometry must be restated for the SETTLED state: committing the
  * destination on the flip paints the container/pill at the target a frame before
  * Reanimated asserts the start-of-morph value, then snaps them back — the native

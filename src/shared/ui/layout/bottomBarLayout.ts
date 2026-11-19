@@ -1,11 +1,14 @@
 // Geometry of the Apple-Music-style floating bottom bar: the mini player sits in
 // a rounded island above the tab-bar island, and both collapse into one row.
 import { SLIDER_REST_INSET } from '../slider/slider-layout.lib'
+import { PLAYER_SIZES } from '../theme/themed'
 
 export const BAR_ROW_MIN_HEIGHT = 76 as const
-// Collapsed island/circle dimensions (56) and the taller expanded sizes (68).
-// The island height, the tab circle and the search circle all morph between them.
-export const TAB_BAR_ISLAND_HEIGHT = 56 as const
+// The one-line row is uniform: the collapsed island and the circle both equal
+// the mini player height (48). The expanded sizes (68) stay taller and morph
+// down to them.
+const ONE_LINE_ROW_SIZE = PLAYER_SIZES.miniPlayerHeight
+export const TAB_BAR_ISLAND_HEIGHT = ONE_LINE_ROW_SIZE
 export const TAB_BAR_ISLAND_HEIGHT_EXPANDED = 68 as const
 // The expanded island's top edge sits this far below the row's top edge: the
 // islands are anchored to the row's bottom edge (the safe-area line), so the
@@ -13,7 +16,11 @@ export const TAB_BAR_ISLAND_HEIGHT_EXPANDED = 68 as const
 // already includes the bottom safe-area padding, which keeps the offset valid
 // for any inset.
 export const BAR_EXPANDED_ISLAND_TOP_MARGIN = BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED
-export const BAR_CIRCLE_SIZE = 56 as const
+/**
+ * The circle stays circular: width = height = radius * 2 at the uniform
+ * one-line height, so its diameter deliberately mirrors the island height.
+ */
+export const BAR_CIRCLE_SIZE = ONE_LINE_ROW_SIZE
 export const BAR_CIRCLE_SIZE_EXPANDED = 68 as const
 export const BAR_OUTER_GAP = 8 as const
 // Vertical gap between the floating mini-player pill and the expanded island's

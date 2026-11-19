@@ -10,7 +10,6 @@ import {
   BAR_SIDE_INSET_EXPANDED,
   CONTENT_COLUMN_WIDTH,
   getColumnSideInset,
-  TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
@@ -109,13 +108,12 @@ describe('getMiniPlayerGeometry', () => {
     expect(halfway.top).toBe(SCREEN_HEIGHT - halfway.bottom - halfway.height)
   })
 
-  test('grows from the compact pill to the islands height as the bar collapses', () => {
+  test('keeps the mini height in both bar states: the one-line row does not grow the pill', () => {
     const tabBarHeight = BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN
 
     expect(geometryAt(tabBarHeight, 0).height).toBe(PLAYER_SIZES.miniPlayerHeight)
-    expect(geometryAt(tabBarHeight, 1).height).toBe(TAB_BAR_ISLAND_HEIGHT)
-    expect(geometryAt(tabBarHeight, 0.5).height).toBe(
-      (PLAYER_SIZES.miniPlayerHeight + TAB_BAR_ISLAND_HEIGHT) / 2,
-    )
+    expect(geometryAt(tabBarHeight, 1).height).toBe(PLAYER_SIZES.miniPlayerHeight)
+    expect(geometryAt(tabBarHeight, 0.5).height).toBe(PLAYER_SIZES.miniPlayerHeight)
+    expect(geometryAt(tabBarHeight, 1).radius).toBe(PLAYER_SIZES.miniPlayerHeight / 2)
   })
 })

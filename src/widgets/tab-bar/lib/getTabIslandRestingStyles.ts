@@ -1,12 +1,11 @@
-import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import { getIslandContentStyle } from './getBarMorphStyles'
 import { getIslandStyle } from './getIslandStyle'
 
 interface TabIslandRestingInput {
-  collapsedWidth: number
   expandedWidth: number
   settledFocused: boolean
   settledIsCollapsed: boolean
+  settledOneLine: boolean
 }
 
 // Non-animated resting geometry of the tab island for the settled bar state.
@@ -17,15 +16,19 @@ interface TabIslandRestingInput {
 // geometry on a system theme flip (same mechanism as Issue #63; see
 // expandable-player getRestingContainerStyle).
 //
-// Callers must pass the state the morph has SETTLED into, not the live atom: at
+// The height comes from the settled one-line flag (48 only when the bar is
+// one-line), the width from the settled shape flag — a collapsed island's width
+// IS that settled height, so it stays a circle.
+//
+// Callers must pass the state the morph has SETTLED into, not the live atoms: at
 // the flip the shadow tree still carries the START form, otherwise it paints the
 // destination a frame before the animated layer and visibly snaps back. At rest
 // both layers agree.
 export const getTabIslandRestingStyles = ({
-  collapsedWidth,
   expandedWidth,
   settledFocused,
   settledIsCollapsed,
+  settledOneLine,
 }: TabIslandRestingInput) => {
   const settledProgress = settledIsCollapsed ? 1 : 0
 
@@ -33,13 +36,9 @@ export const getTabIslandRestingStyles = ({
     content: getIslandContentStyle(settledProgress),
     island: getIslandStyle(
       settledProgress,
-      {
-        collapsedHeight: TAB_BAR_ISLAND_HEIGHT,
-        collapsedWidth,
-        expandedHeight: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
-        expandedWidth,
-      },
+      { expandedWidth },
       settledFocused ? 1 : 0,
+      settledOneLine ? 1 : 0,
     ),
   }
 }

@@ -1,5 +1,4 @@
 import {
-  BAR_CIRCLE_SIZE,
   BAR_OUTER_GAP,
   BAR_ROW_MIN_HEIGHT,
   CONTENT_COLUMN_WIDTH,
@@ -27,8 +26,11 @@ const ICON_SIZE = 32
  * grows, right edge anchored) is the same motion as the island collapsing into
  * the circle, so both run off one frame-synced `BAR_MORPH_DURATION_MS` progress.
  *
- * `barProgress` owns the pill's height/radius only, keeping it on the island's
- * height through the morph.
+ * `oneLineProgress` owns the closed pill's height/radius: the closed chip is the
+ * compact circle (48) only when the bar is one-line, and stays 68 while the bar
+ * is expanded. `openProgress` lifts that height to the expanded bar height, so
+ * an open field is always 68 — and a field opening from the expanded bar never
+ * dips to the compact size on its first frames.
  *
  * `focusProgress` retracts the active-tab circle: at 1 the pill stretches to the
  * row's left inner edge (still yielding the external close slot when shown).
@@ -38,16 +40,14 @@ const ICON_SIZE = 32
  *
  * Worklet-safe: called from the morph's Reanimated animated styles.
  * @param input - Screen geometry, morph progress and focus progress.
- * @param input.barProgress - 0 = island expanded, 1 = island collapsed.
  * @param input.closeProgress - 0..1 presence of the external close circle.
  * @param input.focusProgress - 0..1 retraction of the active-tab circle.
- * @param input.oneLineProgress - 0 = expanded bar, 1 = one-line bar (outer inset morph).
+ * @param input.oneLineProgress - 0 = expanded bar, 1 = one-line bar (morphs the height and the outer inset).
  * @param input.openProgress - 0 = collapsed onto the search circle, 1 = full slot.
  * @param input.screenWidth - Current viewport width.
  * @param input.tabBarHeight - Measured height of the floating tab row.
  */
 export const getSearchIslandGeometry = ({
-  barProgress,
   closeProgress = 0,
   focusProgress = 0,
   oneLineProgress,
@@ -56,41 +56,51 @@ export const getSearchIslandGeometry = ({
   tabBarHeight,
 }: SearchIslandGeometryInput): SearchIslandGeometry => {
   'worklet'
-  const bar = Math.min(Math.max(barProgress, 0), 1)
   const open = Math.min(Math.max(openProgress, 0), 1)
   const close = Math.min(Math.max(closeProgress, 0), 1)
   const focus = Math.min(Math.max(focusProgress, 0), 1)
+  const oneLine = Math.min(Math.max(oneLineProgress, 0), 1)
   // The islands row is capped to the content column and centered; absolute
   // offsets must follow the column, not the raw viewport edges. The outer side
   // inset morphs with the one-line state of the bar, not with the island axis:
   // an open field always sits on the expanded inset.
-  const sideInset = getBarSideInset(oneLineProgress)
+  const sideInset = getBarSideInset(oneLine)
   const rowLeft = getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH)
   const rowInnerLeft = rowLeft + sideInset
   // Inner row width: the span the expanded island/search pill can occupy.
   const rowInnerWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - sideInset * 2
-  // The pill follows the island height through the morph; both share the row's
-  // bottom line. Collapsed it is the bar state's search chip, so the closed
-  // diameter matches the island height (68 when expanded, 56 when collapsed).
-  const height =
-    TAB_BAR_ISLAND_HEIGHT + (TAB_BAR_ISLAND_HEIGHT_EXPANDED - TAB_BAR_ISLAND_HEIGHT) * (1 - bar)
+  // The closed pill is the bar state's search chip: the compact 48 circle only
+  // in the one-line row, the expanded 68 otherwise. It must follow the one-line
+  // axis rather than the island's shape axis, because opening the field also
+  // collapses the island shape — binding the height to that shape would shrink
+  // the chip 68 -> 48 for the first frames of every unfold.
+  const closedHeight =
+    TAB_BAR_ISLAND_HEIGHT + (TAB_BAR_ISLAND_HEIGHT_EXPANDED - TAB_BAR_ISLAND_HEIGHT) * (1 - oneLine)
+  const height = closedHeight + (TAB_BAR_ISLAND_HEIGHT_EXPANDED - closedHeight) * open
   // The pill grows out of the search chip: a circle pinned to the row's right
   // inner edge, expanding leftwards into the slot right of the active-tab circle.
-  const circleLeft = rowInnerLeft + rowInnerWidth - height
+  // The anchor uses the CLOSED diameter, so left/width stay linear in the open
+  // progress (the growing field must not feed its mid-morph height back into its
+  // own anchor); at open 0 it is exactly the search circle.
+  const circleLeft = rowInnerLeft + rowInnerWidth - closedHeight
   // The active-tab circle fades out of the layout as the field gains focus, so
-  // the pill's left target travels all the way to the row's inner edge.
-  const tabSlot = (BAR_CIRCLE_SIZE + BAR_OUTER_GAP) * (1 - focus)
+  // the pill's left target travels all the way to the row's inner edge. While
+  // the field is open, the island beside it is always the expanded-height circle
+  // (68), so the slot clears that circle and its outer gap.
+  const tabSlot = (TAB_BAR_ISLAND_HEIGHT_EXPANDED + BAR_OUTER_GAP) * (1 - focus)
   const slotLeft = rowInnerLeft + tabSlot
   const left = circleLeft + (slotLeft - circleLeft) * open
   // The close circle sits at the same right inner edge; the pill shrinks
-  // leftwards by exactly circle + gap so the outer gap stays constant. Weighted
-  // by `open` so a closing pill never drifts away from the search chip.
-  const closeSlot = (BAR_CIRCLE_SIZE + BAR_OUTER_GAP) * close * open
+  // leftwards by exactly circle + gap so the outer gap stays constant. Its
+  // diameter is the open field's height, so it yields the expanded-height circle
+  // (68 + gap), never the compact constant. Weighted by `open` so a closing pill
+  // never drifts away from the search chip.
+  const closeSlot = (TAB_BAR_ISLAND_HEIGHT_EXPANDED + BAR_OUTER_GAP) * close * open
   const openWidth = rowInnerWidth - tabSlot - closeSlot
-  const width = height + (openWidth - height) * open
+  const width = closedHeight + (openWidth - closedHeight) * open
   // The icon is the first child of the morphing frame, so its inset defines how
   // far it travels with the moving left edge. Closed it is centred in the
-  // circle (whose diameter follows the bar morph); open it keeps the pill's
+  // circle (whose diameter follows the one-line axis); open it keeps the pill's
   // compact 8dp inset. The glyph never changes size, so it stays crisp.
   const iconSize = ICON_SIZE
   const circleIconInset = (height - iconSize) / 2

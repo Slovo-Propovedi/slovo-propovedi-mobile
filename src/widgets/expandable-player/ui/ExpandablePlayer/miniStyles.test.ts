@@ -61,11 +61,12 @@ describe('mini player horizontal alignment', () => {
 })
 
 describe('mini player vertical alignment', () => {
-  test('the pill is slimmer than the row circles (Issue #153)', () => {
-    // Apple Music keeps the mini player lower than the tab/search circles; the
-    // collapsed row bottom-aligns the slimmer pill with the islands.
-    expect(PLAYER_SIZES.miniPlayerHeight).toBeLessThan(TAB_BAR_ISLAND_HEIGHT)
-    expect(PLAYER_SIZES.miniPlayerHeight).toBeLessThan(BAR_CIRCLE_SIZE)
+  test('the one-line row is uniform: the pill, the island and the circles share one height', () => {
+    // Collapsed, the tab and search circles shrink to the mini player height, so
+    // the one-line row has a single height all the way across; the pill itself
+    // never grows.
+    expect(TAB_BAR_ISLAND_HEIGHT).toBe(PLAYER_SIZES.miniPlayerHeight)
+    expect(BAR_CIRCLE_SIZE).toBe(TAB_BAR_ISLAND_HEIGHT)
     expect(styles.miniContainer.height).toBe(PLAYER_SIZES.miniPlayerHeight)
   })
 

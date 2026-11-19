@@ -1,3 +1,4 @@
+import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
 import { getIslandContentStyle, getTabItemStyle } from './getBarMorphStyles'
 
 describe('getIslandContentStyle', () => {
@@ -13,7 +14,7 @@ describe('getIslandContentStyle', () => {
     // Reanimated updates web styles through react-native-web's createReactDOMStyle
     // only; that path skips the preprocess step which expands `paddingHorizontal`.
     // The shortform therefore freezes at its mount value and pushes the collapsed
-    // 56dp slot past the circle's right edge.
+    // 48dp slot past the circle's right edge.
     expect(getIslandContentStyle(0.5)).not.toHaveProperty('paddingHorizontal')
   })
 })
@@ -31,7 +32,7 @@ describe('getTabItemStyle', () => {
 
   test('collapsed item fills the circle with no horizontal margin', () => {
     expect(getTabItemStyle(1)).toEqual({
-      height: 48,
+      height: TAB_BAR_ISLAND_HEIGHT - 4 * 2,
       marginBottom: 4,
       marginLeft: 0,
       marginRight: 0,

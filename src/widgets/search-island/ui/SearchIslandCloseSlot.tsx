@@ -19,7 +19,6 @@ interface SearchIslandCloseSlotProps {
   oneLineProgress: SharedValue<number>
   onPress: () => void
   openProgress: SharedValue<number>
-  progress: SharedValue<number>
   /** Settled-state restatement applied after the animated style (theme remount). */
   restingStyle: ViewStyle
   screenWidth: number
@@ -36,10 +35,9 @@ interface SearchIslandCloseSlotProps {
  * @param root0 - Component props.
  * @param root0.closeProgress - 0 = hidden, 1 = fully shown.
  * @param root0.isVisible - Gates pointer events and accessibility only.
- * @param root0.oneLineProgress - The bar's one-line morph progress (outer inset).
+ * @param root0.oneLineProgress - The bar's one-line morph progress (outer inset + height).
  * @param root0.onPress - Closes the search session.
  * @param root0.openProgress - The island's open/close progress.
- * @param root0.progress - The bar collapse progress.
  * @param root0.restingStyle - Settled-state restatement applied after the animated style.
  * @param root0.screenWidth - Current viewport width.
  * @param root0.tabBarHeight - Measured height of the floating tab row.
@@ -50,7 +48,6 @@ export const SearchIslandCloseSlot = ({
   oneLineProgress,
   onPress,
   openProgress,
-  progress,
   restingStyle,
   screenWidth,
   tabBarHeight,
@@ -85,7 +82,6 @@ export const SearchIslandCloseSlot = ({
 
   const style = useAnimatedStyle(() => {
     const { bottom, closeRight, height } = getSearchIslandGeometry({
-      barProgress: progress.value,
       oneLineProgress: oneLineProgress.value,
       openProgress: openProgress.value,
       screenWidth,

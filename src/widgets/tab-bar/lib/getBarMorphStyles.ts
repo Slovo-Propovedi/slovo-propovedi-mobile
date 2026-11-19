@@ -12,7 +12,7 @@ import {
 // shortforms — that expansion lives in the preprocess step this update path
 // skips. A shortform in an animated style therefore freezes at its mount-time
 // value while the rest of the morph keeps moving, which left the expanded 12dp
-// inset and 5dp item gap on the collapsed 56dp circle and pushed the active
+// inset and 5dp item gap on the collapsed 48dp circle and pushed the active
 // icon against its right edge.
 export const getIslandContentStyle = (progress: number) => {
   'worklet'

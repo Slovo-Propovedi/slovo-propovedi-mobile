@@ -45,10 +45,12 @@ export const CustomTabBar = ({
     isCollapsed,
     isFocused,
     islandStyle,
+    oneLineProgress,
     progress,
     restingContentStyle,
     restingIslandStyle,
     settledCollapsed,
+    settledOneLine,
   } = useTabIslandMorph({
     hideSearch,
     routeCount: state.routes.length,
@@ -100,6 +102,8 @@ export const CustomTabBar = ({
                   progress={progress}
                   isCollapsed={isCollapsed}
                   expandedWidth={expandedTabWidth}
+                  oneLineProgress={oneLineProgress}
+                  isSettledOneLine={settledOneLine}
                   isSettledCollapsed={settledCollapsed}
                 >
                   <OnboardingTarget id={`tab.${route.name}`} style={styles.tabButton}>

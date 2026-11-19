@@ -2,7 +2,7 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useMemo } from 'react'
 import { Keyboard, useWindowDimensions } from 'react-native'
 import { useAnimatedStyle } from 'react-native-reanimated'
-import { oneLineBarMorphDriver, tabIslandMorphDriver } from 'widgets/tab-bar/@x/morph'
+import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { closeSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { GlassIsland } from 'shared/ui'
@@ -34,9 +34,9 @@ export const SearchIslandMorph = () => {
     useSearchFocusMorph()
   // Every morph is a module-level driver, so this frame and the glass surfaces
   // it sits next to read the same progress values. Their SETTLED flags feed the
-  // resting layer; the live progress drives the animated layer.
-  const { progress: barProgress, settled: settledTabCollapsed } =
-    useAtomMorphDriver(tabIslandMorphDriver)
+  // resting layer; the live progress drives the animated layer. The pill height
+  // follows the one-line axis only: opening the field must not shrink the chip
+  // to the compact size while the island shape collapses beside it.
   const { progress: oneLineProgress, settled: settledOneLine } =
     useAtomMorphDriver(oneLineBarMorphDriver)
   const { progress: openProgress, settled: settledOpen } = useAtomMorphDriver(searchOpenMorphDriver)
@@ -50,7 +50,6 @@ export const SearchIslandMorph = () => {
 
   const frameStyle = useAnimatedStyle(() => {
     const { closeRight, iconInset, iconSize, radius, ...geometry } = getSearchIslandGeometry({
-      barProgress: barProgress.value,
       closeProgress: closeProgress.value,
       focusProgress: focusProgress.value,
       oneLineProgress: oneLineProgress.value,
@@ -75,18 +74,9 @@ export const SearchIslandMorph = () => {
         settledFocused,
         settledOneLine,
         settledOpen,
-        settledTabCollapsed,
         tabBarHeight,
       }),
-    [
-      settledClose,
-      settledFocused,
-      settledOneLine,
-      settledOpen,
-      settledTabCollapsed,
-      screenWidth,
-      tabBarHeight,
-    ],
+    [settledClose, settledFocused, settledOneLine, settledOpen, screenWidth, tabBarHeight],
   )
 
   return (
@@ -107,7 +97,6 @@ export const SearchIslandMorph = () => {
         />
       </GlassIsland>
       <SearchIslandCloseSlot
-        progress={barProgress}
         screenWidth={screenWidth}
         onPress={handleCloseSearch}
         openProgress={openProgress}

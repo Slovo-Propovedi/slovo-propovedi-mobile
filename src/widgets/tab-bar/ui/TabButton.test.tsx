@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native'
 import { type SharedValue } from 'react-native-reanimated'
 import { hapticLight } from 'shared/lib/haptics'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
 
@@ -78,7 +79,8 @@ describe('<TabButton>', () => {
     expect(label).toHaveStyle({ position: 'absolute' })
     expect(label.parent).toHaveStyle({
       alignItems: 'center',
-      height: 48,
+      // Uniform 48dp one-line row minus the item's two 4dp vertical margins.
+      height: TAB_BAR_ISLAND_HEIGHT - 4 * 2,
       justifyContent: 'center',
     })
   })
@@ -91,7 +93,7 @@ describe('<TabButton>', () => {
 
   test('leaves the item height to the morph instead of a static fallback', () => {
     // A static height in the item's style array shadows the animated one on
-    // device, so the expanded item stayed 48 tall and the icon+label looked
+    // device, so the expanded item stayed short and the icon+label looked
     // cramped inside the 68 island.
     expect(styles.tabItem).not.toHaveProperty('height')
   })
@@ -185,7 +187,7 @@ describe('<TabButton>', () => {
 
   test('collapsed active item drops every horizontal margin so the icon centres in the circle', async () => {
     // Island padding is 0 at progress 1; a leftover margin would push the icon
-    // right of the 56dp circle centre.
+    // right of the 48dp circle centre.
     await renderTabButton('listen', true, progressValue(1))
 
     expect(screen.getByText('Слушать').parent).toHaveStyle({

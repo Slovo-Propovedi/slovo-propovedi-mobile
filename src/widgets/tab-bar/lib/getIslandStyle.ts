@@ -2,14 +2,10 @@ import { MIN_TOUCH_TARGET } from 'shared/ui/theme'
 import { clampProgress, getIslandHeight, interpolateSize } from './getIslandMath'
 
 interface IslandLayout {
-  collapsedHeight: number
-  collapsedWidth: number
-  expandedHeight: number
   expandedWidth: number
 }
 
 interface TabSlotLayout {
-  collapsedWidth: number
   expandedWidth: number
   isActive: boolean
 }
@@ -32,28 +28,43 @@ const TAB_ITEM_GAP = 8
 // than one tab pitch), so it bleeds into the gap instead of hugging the label.
 export const CAPSULE_HORIZONTAL_OVERHANG = 10
 
-// Width and height of the tab island: full row width and the expanded height
-// when open, a circle when collapsed. Focus is a stronger state than collapse:
-// the whole island fades out and its width reaches zero, handing the row to the
-// focused search pill.
-export const getIslandStyle = (progress: number, layout: IslandLayout, focusProgress = 0) => {
+// Width and height of the tab island.
+//
+// The height belongs to the one-line axis (oneLineProgress): the expanded bar is
+// always 68 tall, the compact one-line bar 48. A visible search field pins the
+// bar to the expanded height even when the shape collapses to a circle, so the
+// open-field row shares one height between the island and the pill.
+//
+// The width belongs to the shape axis (progress): full row when expanded, a
+// circle when collapsed. The circle's diameter IS the current height, never a
+// fixed constant — 68x68 beside an open field, 48x48 in the compact row. Focus
+// is a stronger state than collapse: the whole island fades out and its width
+// reaches zero, handing the row to the focused search pill.
+export const getIslandStyle = (
+  progress: number,
+  layout: IslandLayout,
+  focusProgress = 0,
+  oneLineProgress = 0,
+) => {
   'worklet'
   const clamped = clampProgress(progress)
   const focus = clampProgress(focusProgress)
+  const height = getIslandHeight(clampProgress(oneLineProgress))
 
   return {
-    height: getIslandHeight(clamped),
+    height,
     opacity: 1 - focus,
-    width: interpolateSize(layout.expandedWidth, layout.collapsedWidth, clamped) * (1 - focus),
+    width: interpolateSize(layout.expandedWidth, height, clamped) * (1 - focus),
   }
 }
 
-// Per-tab width/opacity during the morph. The active tab grows into the circle;
-// the rest shrink to zero width while crossfading out, so the island's inner row
-// always sums to the animated island width.
-export const getTabSlotStyle = (progress: number, layout: TabSlotLayout) => {
+// Per-tab width/opacity during the morph. The active tab grows into the circle,
+// the rest shrink to zero width while crossfading out. The collapsed slot takes
+// the same height-derived width as the island, so it never paints outside it.
+export const getTabSlotStyle = (progress: number, layout: TabSlotLayout, oneLineProgress = 0) => {
   'worklet'
   const clamped = clampProgress(progress)
+  const collapsedWidth = getIslandHeight(clampProgress(oneLineProgress))
 
   return {
     // Fades to 0 together with the inactive slots so a zero-width collapsed slot
@@ -61,13 +72,13 @@ export const getTabSlotStyle = (progress: number, layout: TabSlotLayout) => {
     minWidth: MIN_TOUCH_TARGET * (1 - clamped),
     opacity: layout.isActive ? 1 : 1 - clamped,
     width: layout.isActive
-      ? layout.collapsedWidth + (layout.expandedWidth - layout.collapsedWidth) * (1 - clamped)
+      ? interpolateSize(layout.expandedWidth, collapsedWidth, clamped)
       : layout.expandedWidth * (1 - clamped),
   }
 }
 
 // Horizontal padding of the island's inner row: full inset when expanded, none
-// when collapsed, because the active slot then fills the whole 56dp circle.
+// when collapsed, because the active slot then fills the whole 48dp circle.
 export const getIslandContentPadding = (progress: number) => {
   'worklet'
   return ISLAND_CONTENT_PADDING_HORIZONTAL * (1 - clampProgress(progress))
@@ -101,8 +112,9 @@ export const getTabIconOffset = (progress: number) => {
   return TAB_ICON_EXPANDED_OFFSET * (1 - clamped)
 }
 
-// The item fills the island minus its vertical margins, so the taller expanded
-// island gives the icon and label a clean vertical gap.
+// The item follows the shape morph (the same axis as the label/capsule fade) and
+// fills the island minus its vertical margins: the expanded shape makes room for
+// the label, the collapsed shape keeps the icon centred in the circle.
 export const getTabItemHeight = (progress: number) => {
   'worklet'
   const clamped = clampProgress(progress)

@@ -13,8 +13,8 @@ import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getRestingContainerStyle } from './getRestingContainerStyle'
 
 const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
-// The collapsed pill grows to the islands' height, so its resting radius and
-// top follow the 56dp row slots, not the compact mini height.
+// The collapsed pill fills the uniform one-line row: its radius and top follow
+// the mini player height shared by the tab and search circles.
 const COLLAPSED_PILL_RADIUS = TAB_BAR_ISLAND_HEIGHT / 2
 const EXPANDED_BOTTOM = 98 - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP
 const COLLAPSED_BOTTOM = 98 - BAR_ROW_MIN_HEIGHT

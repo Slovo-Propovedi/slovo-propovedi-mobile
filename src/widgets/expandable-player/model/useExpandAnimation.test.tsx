@@ -2,6 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { AppState, type AppStateStatus, Text } from 'react-native'
 import { withTiming } from 'react-native-reanimated'
+import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import {
   BAR_CIRCLE_SIZE,
@@ -16,7 +17,6 @@ import {
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
-import { resetBarMorphDriver } from './barMorphDriver'
 import { useExpandAnimation } from './useExpandAnimation'
 
 const TAB_BAR_HEIGHT = 98
@@ -44,7 +44,7 @@ jest.mock('react-native/Libraries/Utilities/Dimensions', () => ({
 const mockListeners: Array<(state: AppStateStatus) => void> = []
 
 beforeEach(() => {
-  resetBarMorphDriver()
+  oneLineBarMorphDriver.reset()
   mockedWithTiming.mockClear()
   mockListeners.length = 0
   jest

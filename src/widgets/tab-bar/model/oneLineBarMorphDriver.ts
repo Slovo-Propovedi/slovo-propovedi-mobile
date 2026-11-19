@@ -4,8 +4,9 @@ import { isOneLineBarAtom } from './barMorph'
 
 /**
  * One progress for the bottom chrome's outer side inset morph, shared by the
- * islands row padding and the search pill geometry. Runs on the same duration
- * as the tab island and mini pill morphs, so the inset travels with them.
+ * islands row padding, the search pill geometry and the collapsed mini pill.
+ * Runs on the same duration as the tab island morph, so the inset travels with
+ * it.
  */
 export const oneLineBarMorphDriver = createAtomMorphDriver({
   atom: isOneLineBarAtom,

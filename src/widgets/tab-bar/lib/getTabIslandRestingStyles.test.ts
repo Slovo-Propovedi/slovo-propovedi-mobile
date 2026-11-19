@@ -1,19 +1,15 @@
-import {
-  BAR_CIRCLE_SIZE,
-  TAB_BAR_ISLAND_HEIGHT,
-  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
-} from 'shared/ui/layout'
+import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import { ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
 import { getTabIslandRestingStyles } from './getTabIslandRestingStyles'
 
 const EXPANDED_WIDTH = 584
 
-const getStyles = (settledIsCollapsed: boolean, settledFocused = false) =>
+const getStyles = (settledIsCollapsed: boolean, settledFocused = false, settledOneLine = false) =>
   getTabIslandRestingStyles({
-    collapsedWidth: BAR_CIRCLE_SIZE,
     expandedWidth: EXPANDED_WIDTH,
     settledFocused,
     settledIsCollapsed,
+    settledOneLine,
   })
 
 describe('getTabIslandRestingStyles', () => {
@@ -23,24 +19,52 @@ describe('getTabIslandRestingStyles', () => {
         paddingLeft: ISLAND_CONTENT_PADDING_HORIZONTAL,
         paddingRight: ISLAND_CONTENT_PADDING_HORIZONTAL,
       },
-      island: { height: TAB_BAR_ISLAND_HEIGHT_EXPANDED, opacity: 1, width: EXPANDED_WIDTH },
+      island: {
+        height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+        opacity: 1,
+        width: EXPANDED_WIDTH,
+      },
     })
   })
 
-  test('the collapsed bar rests at the circle size without content padding', () => {
-    expect(getStyles(true)).toEqual({
+  test('the one-line bar rests at a 48x48 circle without content padding', () => {
+    expect(getStyles(true, false, true)).toEqual({
       content: { paddingLeft: 0, paddingRight: 0 },
-      island: { height: TAB_BAR_ISLAND_HEIGHT, opacity: 1, width: BAR_CIRCLE_SIZE },
+      island: {
+        height: TAB_BAR_ISLAND_HEIGHT,
+        opacity: 1,
+        width: TAB_BAR_ISLAND_HEIGHT,
+      },
     })
   })
 
-  test('the focused bar rests invisible and widthless', () => {
+  test('a collapsed shape on the expanded bar rests at a 68x68 circle', () => {
+    // A visible search field collapses the shape but keeps the expanded height.
+    expect(getStyles(true, false, false)).toEqual({
+      content: { paddingLeft: 0, paddingRight: 0 },
+      island: {
+        height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+        opacity: 1,
+        width: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      },
+    })
+  })
+
+  test('the focused expanded bar rests invisible and widthless', () => {
     expect(getStyles(false, true)).toEqual({
       content: {
         paddingLeft: ISLAND_CONTENT_PADDING_HORIZONTAL,
         paddingRight: ISLAND_CONTENT_PADDING_HORIZONTAL,
       },
       island: { height: TAB_BAR_ISLAND_HEIGHT_EXPANDED, opacity: 0, width: 0 },
+    })
+  })
+
+  test('the focused one-line bar rests invisible at the compact height', () => {
+    expect(getStyles(true, true, true).island).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT,
+      opacity: 0,
+      width: 0,
     })
   })
 })

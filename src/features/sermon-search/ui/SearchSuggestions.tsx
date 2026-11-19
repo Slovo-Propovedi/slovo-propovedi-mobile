@@ -1,6 +1,6 @@
 import { useAtom } from '@reatom/npm-react'
 import { ScrollView, StyleSheet, Text } from 'react-native'
-import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
+import { TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { FONT_SIZES, INDENTS, RADIUSES, useTheme } from 'shared/ui/theme'
 import { getSuggestions, type Suggestion } from '../lib/suggestions'
@@ -10,8 +10,9 @@ const MAX_SUGGESTIONS = 8
 const ARTIST_LABEL = 'проповедник'
 const BOOK_LABEL = 'книга'
 // The field pill lives in the bottom bar, so the dropdown opens UPWARD: its
-// bottom edge sits one gap above the pill's top edge.
-const SUGGESTIONS_BOTTOM = TAB_BAR_ISLAND_HEIGHT + INDENTS.low
+// bottom edge sits one gap above the pill's top edge. The open field is always
+// the expanded bar height, so the dropdown clears it in every bar state.
+const SUGGESTIONS_BOTTOM = TAB_BAR_ISLAND_HEIGHT_EXPANDED + INDENTS.low
 
 export const SearchSuggestions = ({
   isFocused,
