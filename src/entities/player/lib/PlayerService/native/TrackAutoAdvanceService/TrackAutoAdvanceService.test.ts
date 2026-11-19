@@ -217,7 +217,7 @@ describe('TrackAutoAdvanceService.handleTrackChanged', () => {
     mockConsole('error')
     await AsyncStorage.setItem(CURRENT_AUDIO, JSON.stringify(audio))
     await AsyncStorage.setItem(CURRENT_PLAYLIST, '{"broken":true}')
-    jest.mocked(parsePlaylistData).mockReturnValueOnce(null)
+    jest.mocked(parsePlaylistData).mockReturnValueOnce(undefined)
 
     await trackAutoAdvanceService.handleTrackChanged(0, 1)
 
