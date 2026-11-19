@@ -3,7 +3,8 @@ import {
   BAR_CIRCLE_SIZE,
   BAR_OUTER_GAP,
   BAR_ROW_MIN_HEIGHT,
-  BAR_SIDE_INSET,
+  BAR_SIDE_INSET_COLLAPSED,
+  BAR_SIDE_INSET_EXPANDED,
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
@@ -11,13 +12,15 @@ import { getSearchIslandGeometry } from './getSearchIslandGeometry'
 
 const TAB_BAR_HEIGHT = BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN
 const PHONE_WIDTH = 400
-// 400 - two side insets: the row's inner width.
-const PHONE_ROW_WIDTH = PHONE_WIDTH - BAR_SIDE_INSET * 2
+// 400 - two side insets: the row's inner width in each bar state.
+const EXPANDED_ROW_WIDTH = PHONE_WIDTH - BAR_SIDE_INSET_EXPANDED * 2
+const COLLAPSED_ROW_WIDTH = PHONE_WIDTH - BAR_SIDE_INSET_COLLAPSED * 2
 
 const geometry = (input: {
   barProgress?: number
   closeProgress?: number
   focusProgress?: number
+  oneLineProgress?: number
   openProgress: number
   screenWidth?: number
 }) =>
@@ -25,6 +28,7 @@ const geometry = (input: {
     barProgress: input.barProgress ?? 1,
     closeProgress: input.closeProgress,
     focusProgress: input.focusProgress,
+    oneLineProgress: input.oneLineProgress ?? 1,
     openProgress: input.openProgress,
     screenWidth: input.screenWidth ?? PHONE_WIDTH,
     tabBarHeight: TAB_BAR_HEIGHT,
@@ -36,21 +40,34 @@ describe('getSearchIslandGeometry', () => {
 
     // Right-anchored on the search chip's spot: the pill is a click-equivalent
     // circle before it grows, so the first visible frame never spans the row.
-    expect(collapsed.left).toBe(PHONE_WIDTH - BAR_SIDE_INSET - BAR_CIRCLE_SIZE)
+    expect(collapsed.left).toBe(PHONE_WIDTH - BAR_SIDE_INSET_COLLAPSED - BAR_CIRCLE_SIZE)
     expect(collapsed.width).toBe(BAR_CIRCLE_SIZE)
-    expect(collapsed.left + collapsed.width).toBe(PHONE_WIDTH - BAR_SIDE_INSET)
+    expect(collapsed.left + collapsed.width).toBe(PHONE_WIDTH - BAR_SIDE_INSET_COLLAPSED)
     expect(collapsed.height).toBe(TAB_BAR_ISLAND_HEIGHT)
     expect(collapsed.radius).toBe(TAB_BAR_ISLAND_HEIGHT / 2)
     expect(collapsed.bottom).toBe(TAB_BAR_HEIGHT - BAR_ROW_MIN_HEIGHT)
-    expect(collapsed.closeRight).toBe(BAR_SIDE_INSET)
+    expect(collapsed.closeRight).toBe(BAR_SIDE_INSET_COLLAPSED)
+  })
+
+  test('one-line morph widens the outer inset of the closed circle', () => {
+    const expanded = geometry({ oneLineProgress: 0, openProgress: 0 })
+    const halfway = geometry({ oneLineProgress: 0.5, openProgress: 0 })
+    const collapsed = geometry({ oneLineProgress: 1, openProgress: 0 })
+
+    expect(expanded.left + expanded.width).toBe(PHONE_WIDTH - BAR_SIDE_INSET_EXPANDED)
+    expect(expanded.closeRight).toBe(BAR_SIDE_INSET_EXPANDED)
+    expect(halfway.closeRight).toBe((BAR_SIDE_INSET_EXPANDED + BAR_SIDE_INSET_COLLAPSED) / 2)
+    expect(collapsed.closeRight).toBe(BAR_SIDE_INSET_COLLAPSED)
   })
 
   test('openProgress 1 fills the slot right of the active-tab circle', () => {
-    const open = geometry({ openProgress: 1 })
+    // An open field always sits on the expanded inset (the bar is expanded or
+    // the mini pill is detached above the row).
+    const open = geometry({ oneLineProgress: 0, openProgress: 1 })
 
-    expect(open.left).toBe(BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
-    expect(open.width).toBe(PHONE_ROW_WIDTH - BAR_CIRCLE_SIZE - BAR_OUTER_GAP)
-    expect(open.left + open.width).toBe(PHONE_WIDTH - BAR_SIDE_INSET)
+    expect(open.left).toBe(BAR_SIDE_INSET_EXPANDED + BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
+    expect(open.width).toBe(EXPANDED_ROW_WIDTH - BAR_CIRCLE_SIZE - BAR_OUTER_GAP)
+    expect(open.left + open.width).toBe(PHONE_WIDTH - BAR_SIDE_INSET_EXPANDED)
     expect(open.height).toBe(TAB_BAR_ISLAND_HEIGHT)
   })
 
@@ -71,14 +88,16 @@ describe('getSearchIslandGeometry', () => {
   })
 
   test('collapsed pill matches the search chip diameter in either bar state', () => {
-    const expandedBar = geometry({ barProgress: 0, openProgress: 0 })
+    const expandedBar = geometry({ barProgress: 0, oneLineProgress: 0, openProgress: 0 })
 
     // The search chip is 68 while the bar is expanded; a 56-wide pill would
     // leave a visible oval "last frame" instead of a circle.
     expect(expandedBar.width).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
     expect(expandedBar.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
     expect(expandedBar.radius).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED / 2)
-    expect(expandedBar.left).toBe(PHONE_WIDTH - BAR_SIDE_INSET - TAB_BAR_ISLAND_HEIGHT_EXPANDED)
+    expect(expandedBar.left).toBe(
+      PHONE_WIDTH - BAR_SIDE_INSET_EXPANDED - TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+    )
   })
 
   test('height and radius follow the island morph, not the open progress', () => {
@@ -105,23 +124,23 @@ describe('getSearchIslandGeometry', () => {
   })
 
   test('reserves the close-circle slot only while the pill is open', () => {
-    const open = geometry({ closeProgress: 1, openProgress: 1 })
+    const open = geometry({ closeProgress: 1, oneLineProgress: 0, openProgress: 1 })
     const closed = geometry({ closeProgress: 1, openProgress: 0 })
 
-    expect(open.left).toBe(BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
-    expect(open.width).toBe(PHONE_ROW_WIDTH - (BAR_CIRCLE_SIZE + BAR_OUTER_GAP) * 2)
+    expect(open.left).toBe(BAR_SIDE_INSET_EXPANDED + BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
+    expect(open.width).toBe(EXPANDED_ROW_WIDTH - (BAR_CIRCLE_SIZE + BAR_OUTER_GAP) * 2)
     expect(closed.width).toBe(BAR_CIRCLE_SIZE)
-    expect(closed.left).toBe(PHONE_WIDTH - BAR_SIDE_INSET - BAR_CIRCLE_SIZE)
+    expect(closed.left).toBe(PHONE_WIDTH - BAR_SIDE_INSET_COLLAPSED - BAR_CIRCLE_SIZE)
   })
 
   test('animates the reserved close slot with closeProgress', () => {
-    const halfway = geometry({ closeProgress: 0.5, openProgress: 1 })
+    const halfway = geometry({ closeProgress: 0.5, oneLineProgress: 0, openProgress: 1 })
 
-    expect(halfway.width).toBe(PHONE_ROW_WIDTH - (BAR_CIRCLE_SIZE + BAR_OUTER_GAP) * 1.5)
+    expect(halfway.width).toBe(EXPANDED_ROW_WIDTH - (BAR_CIRCLE_SIZE + BAR_OUTER_GAP) * 1.5)
   })
 
   test('centers the always-mounted magnifier in the collapsed circle', () => {
-    const expandedBar = geometry({ barProgress: 0, openProgress: 0 })
+    const expandedBar = geometry({ barProgress: 0, oneLineProgress: 0, openProgress: 0 })
     const collapsedBar = geometry({ barProgress: 1, openProgress: 0 })
 
     // The closed shape is the search circle: its diameter changes with the bar
@@ -144,27 +163,41 @@ describe('getSearchIslandGeometry', () => {
   })
 
   test('focus retracts the active-tab circle and stretches the pill to the left inner edge', () => {
-    const focused = geometry({ focusProgress: 1, openProgress: 1 })
+    const focused = geometry({ focusProgress: 1, oneLineProgress: 0, openProgress: 1 })
 
-    expect(focused.left).toBe(BAR_SIDE_INSET)
-    expect(focused.width).toBe(PHONE_ROW_WIDTH)
-    expect(focused.left + focused.width).toBe(PHONE_WIDTH - BAR_SIDE_INSET)
+    expect(focused.left).toBe(BAR_SIDE_INSET_EXPANDED)
+    expect(focused.width).toBe(EXPANDED_ROW_WIDTH)
+    expect(focused.left + focused.width).toBe(PHONE_WIDTH - BAR_SIDE_INSET_EXPANDED)
   })
 
   test('focus keeps the external close slot free while the pill fills the rest', () => {
-    const focused = geometry({ closeProgress: 1, focusProgress: 1, openProgress: 1 })
+    const focused = geometry({
+      closeProgress: 1,
+      focusProgress: 1,
+      oneLineProgress: 0,
+      openProgress: 1,
+    })
 
-    expect(focused.width).toBe(PHONE_ROW_WIDTH - (BAR_CIRCLE_SIZE + BAR_OUTER_GAP))
+    expect(focused.width).toBe(EXPANDED_ROW_WIDTH - (BAR_CIRCLE_SIZE + BAR_OUTER_GAP))
   })
 
   test('centers the capped column on wide screens', () => {
     const collapsed = geometry({ openProgress: 0, screenWidth: 800 })
-    const open = geometry({ openProgress: 1, screenWidth: 800 })
+    const open = geometry({ oneLineProgress: 0, openProgress: 1, screenWidth: 800 })
 
     // (800 - 600) / 2 = 100px centered column inset.
-    expect(collapsed.left).toBe(800 - (100 + BAR_SIDE_INSET) - BAR_CIRCLE_SIZE)
+    expect(collapsed.left).toBe(800 - (100 + BAR_SIDE_INSET_COLLAPSED) - BAR_CIRCLE_SIZE)
     expect(collapsed.width).toBe(BAR_CIRCLE_SIZE)
-    expect(open.left).toBe(100 + BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
-    expect(open.width).toBe(600 - BAR_SIDE_INSET * 2 - BAR_CIRCLE_SIZE - BAR_OUTER_GAP)
+    expect(open.left).toBe(100 + BAR_SIDE_INSET_EXPANDED + BAR_CIRCLE_SIZE + BAR_OUTER_GAP)
+    expect(open.width).toBe(600 - BAR_SIDE_INSET_EXPANDED * 2 - BAR_CIRCLE_SIZE - BAR_OUTER_GAP)
+  })
+
+  test('one-line bar keeps the open pill on the expanded inset', () => {
+    // A visible field detaches the mini pill, so even with the bar collapsed
+    // the open pill uses the expanded inset, never the wider one-line inset.
+    const open = geometry({ barProgress: 1, oneLineProgress: 0, openProgress: 1 })
+
+    expect(open.width).toBe(EXPANDED_ROW_WIDTH - BAR_CIRCLE_SIZE - BAR_OUTER_GAP)
+    expect(COLLAPSED_ROW_WIDTH).toBeLessThan(EXPANDED_ROW_WIDTH)
   })
 })

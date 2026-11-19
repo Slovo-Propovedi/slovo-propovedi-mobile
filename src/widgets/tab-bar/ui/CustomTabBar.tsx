@@ -1,7 +1,7 @@
 import { useAction } from '@reatom/npm-react'
 import { type Tabs } from 'expo-router'
 import { useState } from 'react'
-import { useWindowDimensions, View } from 'react-native'
+import { useWindowDimensions } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { SearchIslandMorph } from 'widgets/search-island/@x/morph'
 import { OnboardingTarget } from 'features/onboarding'
@@ -13,6 +13,7 @@ import {
   useKeyboardLiftStyle,
 } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
+import { useRowInsetStyle } from '../lib/useRowInsetStyle'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
@@ -56,14 +57,17 @@ export const CustomTabBar = ({
   })
   const bottomPadding = useBarBottomPadding()
   const keyboardLiftStyle = useKeyboardLiftStyle()
+  const { insetStyle, restingInsetStyle } = useRowInsetStyle()
 
   return (
     <Animated.View pointerEvents='box-none' style={[styles.floatingContainer, keyboardLiftStyle]}>
-      <View
+      <Animated.View
         pointerEvents='box-none'
         style={[
           styles.islandsRow,
           { height: BAR_ROW_MIN_HEIGHT + bottomPadding, paddingBottom: bottomPadding },
+          insetStyle,
+          restingInsetStyle,
         ]}
         onLayout={event => {
           const { height, width } = event.nativeEvent.layout
@@ -114,7 +118,7 @@ export const CustomTabBar = ({
             })}
           </Animated.View>
         </GlassIsland>
-      </View>
+      </Animated.View>
       {!hideSearch && <SearchIslandMorph />}
     </Animated.View>
   )

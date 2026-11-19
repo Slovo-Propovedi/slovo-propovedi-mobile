@@ -9,7 +9,8 @@ import {
   BAR_OUTER_GAP,
   BAR_PILL_ROW_GAP,
   BAR_ROW_MIN_HEIGHT,
-  BAR_SIDE_INSET,
+  BAR_SIDE_INSET_COLLAPSED,
+  BAR_SIDE_INSET_EXPANDED,
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
@@ -22,7 +23,7 @@ const TAB_BAR_HEIGHT = 98
 const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
 const EXPANDED_BOTTOM = TAB_BAR_HEIGHT - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP
 const COLLAPSED_BOTTOM = TAB_BAR_HEIGHT - BAR_ROW_MIN_HEIGHT
-const COLLAPSED_LEFT = BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
+const COLLAPSED_LEFT = BAR_SIDE_INSET_COLLAPSED + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
 
 const mockedWithTiming = withTiming as jest.Mock
 
@@ -175,9 +176,9 @@ describe('useExpandAnimation restingContainerStyle', () => {
         borderTopLeftRadius: PILL_RADIUS,
         borderTopRightRadius: PILL_RADIUS,
         bottom: EXPANDED_BOTTOM,
-        left: BAR_SIDE_INSET,
+        left: BAR_SIDE_INSET_EXPANDED,
         top: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
-        width: 400 - BAR_SIDE_INSET * 2,
+        width: 400 - BAR_SIDE_INSET_EXPANDED * 2,
       },
     })
   })
@@ -226,8 +227,8 @@ describe('useExpandAnimation bar-morph resting commit', () => {
   }
   const EXPANDED_RESTING = {
     bottom: EXPANDED_BOTTOM,
-    left: BAR_SIDE_INSET,
-    width: 400 - BAR_SIDE_INSET * 2,
+    left: BAR_SIDE_INSET_EXPANDED,
+    width: 400 - BAR_SIDE_INSET_EXPANDED * 2,
   }
 
   const renderBarFlip = async (initialBarCollapsed: boolean) => {
@@ -301,8 +302,8 @@ describe('useExpandAnimation expand-morph resting commit', () => {
 
   const EXPANDED_RESTING = {
     bottom: EXPANDED_BOTTOM,
-    left: BAR_SIDE_INSET,
-    width: 400 - BAR_SIDE_INSET * 2,
+    left: BAR_SIDE_INSET_EXPANDED,
+    width: 400 - BAR_SIDE_INSET_EXPANDED * 2,
   }
   const FULLSCREEN_RESTING = {
     bottom: 0,
@@ -413,8 +414,8 @@ describe('useExpandAnimation first committed frame', () => {
     expect(result.miniBarStyle).toEqual(result.miniBarRestingStyle)
     expect(containerStyle).toMatchObject({
       bottom: EXPANDED_BOTTOM,
-      left: BAR_SIDE_INSET,
-      width: 400 - BAR_SIDE_INSET * 2,
+      left: BAR_SIDE_INSET_EXPANDED,
+      width: 400 - BAR_SIDE_INSET_EXPANDED * 2,
     })
     // Regression: the collapsed container is a solid `surface` rectangle sitting
     // exactly under the translucent mini pill, so the pill's BlurView only saw a
@@ -475,9 +476,9 @@ describe('getContainerGeometryStyle (expand interpolation)', () => {
       borderTopLeftRadius: PILL_RADIUS,
       borderTopRightRadius: PILL_RADIUS,
       bottom: EXPANDED_BOTTOM,
-      left: BAR_SIDE_INSET,
+      left: BAR_SIDE_INSET_EXPANDED,
       top: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
-      width: 400 - BAR_SIDE_INSET * 2,
+      width: 400 - BAR_SIDE_INSET_EXPANDED * 2,
     })
   })
 
@@ -508,9 +509,9 @@ describe('getContainerGeometryStyle (expand interpolation)', () => {
     const style = geometry(0, 0.5)
 
     expect(style.bottom).toBe(EXPANDED_BOTTOM / 2)
-    expect(style.left).toBe(BAR_SIDE_INSET / 2)
+    expect(style.left).toBe(BAR_SIDE_INSET_EXPANDED / 2)
     expect(style.top).toBe((800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight) / 2)
-    expect(style.width).toBe(400 - BAR_SIDE_INSET)
+    expect(style.width).toBe(400 - BAR_SIDE_INSET_EXPANDED)
     expect(style.borderTopLeftRadius).toBe(PILL_RADIUS / 2)
   })
 

@@ -1,5 +1,7 @@
 // Geometry of the Apple-Music-style floating bottom bar: the mini player sits in
 // a rounded island above the tab-bar island, and both collapse into one row.
+import { SLIDER_REST_INSET } from '../slider/slider-layout.lib'
+
 export const BAR_ROW_MIN_HEIGHT = 76 as const
 // Collapsed island/circle dimensions (56) and the taller expanded sizes (68).
 // The island height, the tab circle and the search circle all morph between them.
@@ -19,9 +21,25 @@ export const BAR_OUTER_GAP = 8 as const
 // floats higher above the islands row than the horizontal BAR_OUTER_GAP between
 // the islands themselves.
 export const BAR_PILL_ROW_GAP = 12 as const
-// Generous side margins of the floating chrome (tab bar and resting mini
-// player). 20 keeps the islands slightly narrower than the screen (Issue #153).
-export const BAR_SIDE_INSET = 20 as const
+// Side inset of the floating chrome while the bar is expanded (detached mini
+// pill, wide tab island, or an open search field). Equal to the sliders' left
+// rest inset, so the islands and the slider cards share one vertical line.
+export const BAR_SIDE_INSET_EXPANDED = SLIDER_REST_INSET
+// Side inset of the one-line bar (mini pill folded into the row): 1.5× the
+// expanded inset, so the collapsed row reads visibly narrower than the cards.
+export const BAR_SIDE_INSET_COLLAPSED = (BAR_SIDE_INSET_EXPANDED * 3) / 2
+/**
+ * Outer side inset of the bottom chrome at a given one-line morph progress.
+ * Worklet-safe: called from the animated styles of the tab row, the search
+ * pill and the mini pill.
+ * @param oneLineProgress - 0 = expanded bar, 1 = bar collapsed to one line.
+ */
+export const getBarSideInset = (oneLineProgress: number): number => {
+  'worklet'
+  const progress = Math.min(Math.max(oneLineProgress, 0), 1)
+
+  return BAR_SIDE_INSET_EXPANDED + (BAR_SIDE_INSET_COLLAPSED - BAR_SIDE_INSET_EXPANDED) * progress
+}
 // Bottom clearance below the islands for inset-less screens that still need it
 // (desktop web, mobile browsers, and the early native frames before insets are
 // measured). A real inset places the islands flush on the safe-area line instead.

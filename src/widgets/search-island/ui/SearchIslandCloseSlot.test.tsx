@@ -1,7 +1,9 @@
 import { act, type RenderResult } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { makeMutable } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
 import { renderWithProviders } from 'shared/mocks'
+import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
 
 const CLOSE_LABEL = 'Закрыть поиск'
@@ -15,6 +17,7 @@ const AFTER_GRACE_MS = 200
 const createProps = (isVisible: boolean) => ({
   closeProgress: makeMutable(1),
   isVisible,
+  oneLineProgress: makeMutable(1),
   onPress: jest.fn(),
   openProgress: makeMutable(1),
   progress: makeMutable(1),
@@ -70,6 +73,21 @@ describe('<SearchIslandCloseSlot>', () => {
     })
 
     expect(findSlotGate(findCloseButton(getByLabelText)).props.pointerEvents).toBe('none')
+  })
+
+  test('builds the close geometry from the one-line bar inset', async () => {
+    const { getByLabelText } = await renderSlot(true)
+
+    const slotStyle = StyleSheet.flatten(findSlotGate(findCloseButton(getByLabelText)).props.style)
+    const geometry = getSearchIslandGeometry({
+      barProgress: 1,
+      oneLineProgress: 1,
+      openProgress: 1,
+      screenWidth: SCREEN_WIDTH,
+      tabBarHeight: TAB_BAR_HEIGHT,
+    })
+
+    expect(slotStyle).toMatchObject({ height: geometry.height, right: geometry.closeRight })
   })
 
   test('re-shows the slot immediately and cancels the pending inert flip', async () => {

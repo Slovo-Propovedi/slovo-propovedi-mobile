@@ -1,4 +1,11 @@
-import { BAR_BOTTOM_INSET_MIN, getBarBottomPadding } from './bottomBarLayout'
+import { SLIDER_REST_INSET } from '../slider/slider-layout.lib'
+import {
+  BAR_BOTTOM_INSET_MIN,
+  BAR_SIDE_INSET_COLLAPSED,
+  BAR_SIDE_INSET_EXPANDED,
+  getBarBottomPadding,
+  getBarSideInset,
+} from './bottomBarLayout'
 
 describe('getBarBottomPadding', () => {
   test('real inset wins: the islands sit flush on the safe-area line', () => {
@@ -12,5 +19,23 @@ describe('getBarBottomPadding', () => {
 
   test('real inset wins even below the floor', () => {
     expect(getBarBottomPadding(8)).toBe(8)
+  })
+})
+
+describe('getBarSideInset', () => {
+  test('expanded bar shares the sliders rest inset', () => {
+    expect(BAR_SIDE_INSET_EXPANDED).toBe(SLIDER_REST_INSET)
+    expect(getBarSideInset(0)).toBe(SLIDER_REST_INSET)
+  })
+
+  test('one-line bar widens the inset to 1.5x the sliders rest inset', () => {
+    expect(BAR_SIDE_INSET_COLLAPSED).toBe(SLIDER_REST_INSET * 1.5)
+    expect(getBarSideInset(1)).toBe(SLIDER_REST_INSET * 1.5)
+  })
+
+  test('interpolates and clamps the progress', () => {
+    expect(getBarSideInset(0.5)).toBe((BAR_SIDE_INSET_EXPANDED + BAR_SIDE_INSET_COLLAPSED) / 2)
+    expect(getBarSideInset(-1)).toBe(BAR_SIDE_INSET_EXPANDED)
+    expect(getBarSideInset(2)).toBe(BAR_SIDE_INSET_COLLAPSED)
   })
 })

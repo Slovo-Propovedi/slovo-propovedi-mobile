@@ -1,4 +1,4 @@
-import { BAR_SIDE_INSET, CONTENT_COLUMN_WIDTH } from 'shared/ui/layout'
+import { CONTENT_COLUMN_WIDTH } from 'shared/ui/layout'
 import { MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
 import { CAPSULE_HORIZONTAL_OVERHANG } from '../lib/getIslandStyle'
 
@@ -65,6 +65,9 @@ export const styles = {
   // only the island inside it changes width. The island anchors to the content
   // box's bottom edge so its silhouette sits flush on the safe-area line
   // (Issue #153), never floating above it by the leftover centering space.
+  // The horizontal padding is NOT static: useRowInsetStyle animates it between
+  // the expanded and the one-line side insets (longhand paddings only — an
+  // animated paddingHorizontal never reaches the web DOM).
   // zIndex 1 keeps the row above the z-auto screens on web (document order only
   // ranks positioned siblings); SearchIslandMorph (zIndex 20) and the pill's
   // later subtree (zIndex 300) stay above.
@@ -75,7 +78,6 @@ export const styles = {
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
     maxWidth: CONTENT_COLUMN_WIDTH,
-    paddingHorizontal: BAR_SIDE_INSET,
     position: 'relative' as const,
     width: '100%' as const,
     zIndex: 1,

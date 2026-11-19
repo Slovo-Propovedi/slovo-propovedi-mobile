@@ -15,6 +15,8 @@ const PRESS_RESOLUTION_GRACE_MS = 150
 interface SearchIslandCloseSlotProps {
   closeProgress: SharedValue<number>
   isVisible: boolean
+  /** 0 = expanded bar inset, 1 = one-line bar inset. */
+  oneLineProgress: SharedValue<number>
   onPress: () => void
   openProgress: SharedValue<number>
   progress: SharedValue<number>
@@ -34,6 +36,7 @@ interface SearchIslandCloseSlotProps {
  * @param root0 - Component props.
  * @param root0.closeProgress - 0 = hidden, 1 = fully shown.
  * @param root0.isVisible - Gates pointer events and accessibility only.
+ * @param root0.oneLineProgress - The bar's one-line morph progress (outer inset).
  * @param root0.onPress - Closes the search session.
  * @param root0.openProgress - The island's open/close progress.
  * @param root0.progress - The bar collapse progress.
@@ -44,6 +47,7 @@ interface SearchIslandCloseSlotProps {
 export const SearchIslandCloseSlot = ({
   closeProgress,
   isVisible,
+  oneLineProgress,
   onPress,
   openProgress,
   progress,
@@ -82,6 +86,7 @@ export const SearchIslandCloseSlot = ({
   const style = useAnimatedStyle(() => {
     const { bottom, closeRight, height } = getSearchIslandGeometry({
       barProgress: progress.value,
+      oneLineProgress: oneLineProgress.value,
       openProgress: openProgress.value,
       screenWidth,
       tabBarHeight,

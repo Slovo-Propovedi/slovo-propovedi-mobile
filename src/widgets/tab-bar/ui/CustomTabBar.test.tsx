@@ -207,16 +207,17 @@ describe('<CustomTabBar>', () => {
     expect(styles.floatingIsland.maxWidth).toBe(600)
   })
 
-  test('insets the islands row so its content shares the mini-pill extent', async () => {
+  test('leaves the islands row side inset to the animated style', async () => {
     await renderTabBar()
 
-    // The expanded mini pill is sized to this exact content box (column minus the
-    // side insets) so the tab island and search circle edges line up with it.
-    // Literal 20 (not the constant) guards the generous side margins.
-    expect(styles.islandsRow).toMatchObject({
-      maxWidth: 600,
-      paddingHorizontal: 20,
-    })
+    // The side inset is not static: useRowInsetStyle animates it between the
+    // expanded and the one-line values as longhand paddings (an animated
+    // `paddingHorizontal` never reaches the web DOM). The 24/36 values live in
+    // useRowInsetStyle.test.ts.
+    expect(styles.islandsRow).toMatchObject({ maxWidth: 600 })
+    expect(styles.islandsRow).not.toHaveProperty('paddingHorizontal')
+    expect(styles.islandsRow).not.toHaveProperty('paddingLeft')
+    expect(styles.islandsRow).not.toHaveProperty('paddingRight')
   })
 
   test('floors the bottom inset at 12 so the islands sit low without a system inset', async () => {

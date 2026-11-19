@@ -4,8 +4,8 @@ import {
   BAR_OUTER_GAP,
   BAR_PILL_ROW_GAP,
   BAR_ROW_MIN_HEIGHT,
-  BAR_SIDE_INSET,
   CONTENT_COLUMN_WIDTH,
+  getBarSideInset,
   getColumnSideInset,
   TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
@@ -60,10 +60,12 @@ export const getMiniPlayerGeometry = ({
 }: MiniPlayerGeometryInput): MiniPlayerGeometry => {
   'worklet'
   const progress = Math.min(Math.max(barProgress, 0), 1)
-  // The islands row is capped to the content column and padded by BAR_SIDE_INSET;
-  // the collapsed pill must line up with the row's inner edges on every width.
+  // The islands row is capped to the content column and padded by the side
+  // inset, which morphs with the one-line state of the bar; the pill must line
+  // up with the row's inner edges on every width and in every bar state.
+  const sideInset = getBarSideInset(progress)
   const rowLeft = getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH)
-  const rowContentWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
+  const rowContentWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - sideInset * 2
   // The measured row height includes the bottom safe-area padding and its fixed
   // BAR_ROW_MIN_HEIGHT content box, with the islands anchored to the box's
   // bottom edge (the safe-area line). The expanded pill therefore rests one
@@ -72,8 +74,8 @@ export const getMiniPlayerGeometry = ({
   const expandedBottom = tabBarHeight - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP
   // The collapsed pill joins the islands on the row's bottom edge.
   const collapsedBottom = tabBarHeight - BAR_ROW_MIN_HEIGHT
-  const expandedLeft = rowLeft + BAR_SIDE_INSET
-  const collapsedLeft = rowLeft + BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
+  const expandedLeft = rowLeft + sideInset
+  const collapsedLeft = rowLeft + sideInset + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
   const expandedWidth = rowContentWidth
   const collapsedWidth = screenWidth - collapsedLeft * 2
   // The detached pill keeps the compact mini height; folded into the row it

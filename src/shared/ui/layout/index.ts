@@ -8,8 +8,9 @@ export {
   BAR_OUTER_GAP,
   BAR_PILL_ROW_GAP,
   BAR_ROW_MIN_HEIGHT,
-  BAR_SIDE_INSET,
-  getBarBottomPadding,
+  BAR_SIDE_INSET_COLLAPSED,
+  BAR_SIDE_INSET_EXPANDED,
+  getBarSideInset,
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from './bottomBarLayout'

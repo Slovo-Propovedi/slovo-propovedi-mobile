@@ -7,7 +7,7 @@ import {
   BAR_CIRCLE_SIZE,
   BAR_CIRCLE_SIZE_EXPANDED,
   BAR_OUTER_GAP,
-  BAR_SIDE_INSET,
+  BAR_SIDE_INSET_EXPANDED,
   CONTENT_COLUMN_WIDTH,
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
@@ -43,8 +43,11 @@ export const useTabIslandMorph = ({
   const { progress: focusProgress, settled: settledFocused } =
     useAtomMorphDriver(searchFocusMorphDriver)
 
+  // The expanded island lives only in the expanded-bar state, so its width
+  // always follows the expanded side inset; the collapsed circle is a fixed
+  // size and its position comes from the row's animated padding.
   const rowContentWidth =
-    Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
+    Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
   const expandedIslandWidth = Math.max(
     BAR_CIRCLE_SIZE_EXPANDED,
     hideSearch ? rowContentWidth : rowContentWidth - BAR_CIRCLE_SIZE_EXPANDED - BAR_OUTER_GAP,

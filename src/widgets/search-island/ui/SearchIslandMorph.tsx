@@ -2,13 +2,14 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback, useMemo } from 'react'
 import { Keyboard, useWindowDimensions } from 'react-native'
 import { useAnimatedStyle } from 'react-native-reanimated'
-import { tabIslandMorphDriver } from 'widgets/tab-bar/@x/morph'
+import { oneLineBarMorphDriver, tabIslandMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { closeSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { GlassIsland } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
+import { getSearchIslandRestingStyles } from '../lib/getSearchIslandRestingStyles'
 import { useSearchFocusMorph } from '../lib/useSearchFocusMorph'
 import { searchFocusMorphDriver } from '../model/searchFocusDriver'
 import { searchOpenMorphDriver } from '../model/searchOpenDriver'
@@ -36,6 +37,8 @@ export const SearchIslandMorph = () => {
   // resting layer; the live progress drives the animated layer.
   const { progress: barProgress, settled: settledTabCollapsed } =
     useAtomMorphDriver(tabIslandMorphDriver)
+  const { progress: oneLineProgress, settled: settledOneLine } =
+    useAtomMorphDriver(oneLineBarMorphDriver)
   const { progress: openProgress, settled: settledOpen } = useAtomMorphDriver(searchOpenMorphDriver)
   const { progress: focusProgress, settled: settledFocused } =
     useAtomMorphDriver(searchFocusMorphDriver)
@@ -50,6 +53,7 @@ export const SearchIslandMorph = () => {
       barProgress: barProgress.value,
       closeProgress: closeProgress.value,
       focusProgress: focusProgress.value,
+      oneLineProgress: oneLineProgress.value,
       openProgress: openProgress.value,
       screenWidth,
       tabBarHeight,
@@ -63,31 +67,27 @@ export const SearchIslandMorph = () => {
   // pill must not fall back to its launch geometry (Issue #63). The settled flags
   // lag their morphs, so mid-morph this layer carries the START frame instead of
   // painting the destination a frame early.
-  const { closeSlotRestingStyle, restingFrameStyle } = useMemo(() => {
-    const settledOpenProgress = settledOpen ? 1 : 0
-    const settledCloseProgress = settledClose ? 1 : 0
-    const { closeRight, iconInset, iconSize, radius, ...geometry } = getSearchIslandGeometry({
-      barProgress: settledTabCollapsed ? 1 : 0,
-      closeProgress: settledCloseProgress,
-      focusProgress: settledFocused ? 1 : 0,
-      openProgress: settledOpenProgress,
+  const { closeSlotRestingStyle, restingFrameStyle } = useMemo(
+    () =>
+      getSearchIslandRestingStyles({
+        screenWidth,
+        settledClose,
+        settledFocused,
+        settledOneLine,
+        settledOpen,
+        settledTabCollapsed,
+        tabBarHeight,
+      }),
+    [
+      settledClose,
+      settledFocused,
+      settledOneLine,
+      settledOpen,
+      settledTabCollapsed,
       screenWidth,
       tabBarHeight,
-    })
-
-    return {
-      closeSlotRestingStyle: {
-        borderRadius: geometry.height / 2,
-        bottom: geometry.bottom,
-        height: geometry.height,
-        opacity: settledOpenProgress * settledCloseProgress,
-        right: closeRight,
-        transform: [{ scale: 0.8 + 0.2 * settledCloseProgress }],
-        width: geometry.height,
-      },
-      restingFrameStyle: { ...geometry, borderRadius: radius, paddingLeft: iconInset },
-    }
-  }, [settledClose, settledFocused, settledOpen, settledTabCollapsed, screenWidth, tabBarHeight])
+    ],
+  )
 
   return (
     <>
@@ -113,6 +113,7 @@ export const SearchIslandMorph = () => {
         openProgress={openProgress}
         tabBarHeight={tabBarHeight}
         closeProgress={closeProgress}
+        oneLineProgress={oneLineProgress}
         restingStyle={closeSlotRestingStyle}
         isVisible={isSearchFieldVisible && shouldShowClose}
       />

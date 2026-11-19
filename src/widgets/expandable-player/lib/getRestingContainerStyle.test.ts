@@ -4,7 +4,8 @@ import {
   BAR_OUTER_GAP,
   BAR_PILL_ROW_GAP,
   BAR_ROW_MIN_HEIGHT,
-  BAR_SIDE_INSET,
+  BAR_SIDE_INSET_COLLAPSED,
+  BAR_SIDE_INSET_EXPANDED,
   CONTENT_COLUMN_WIDTH,
   TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
@@ -17,7 +18,7 @@ const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
 const COLLAPSED_PILL_RADIUS = TAB_BAR_ISLAND_HEIGHT / 2
 const EXPANDED_BOTTOM = 98 - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP
 const COLLAPSED_BOTTOM = 98 - BAR_ROW_MIN_HEIGHT
-const COLLAPSED_SIDE_INSET = BAR_SIDE_INSET + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
+const COLLAPSED_SIDE_INSET = BAR_SIDE_INSET_COLLAPSED + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
 
 describe('getRestingContainerStyle', () => {
   const common = { barCollapsed: false, fullScreenHeight: 800, screenWidth: 400, tabBarHeight: 98 }
@@ -31,9 +32,9 @@ describe('getRestingContainerStyle', () => {
       borderTopLeftRadius: PILL_RADIUS,
       borderTopRightRadius: PILL_RADIUS,
       bottom: EXPANDED_BOTTOM,
-      left: BAR_SIDE_INSET,
+      left: BAR_SIDE_INSET_EXPANDED,
       top: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
-      width: 400 - BAR_SIDE_INSET * 2,
+      width: 400 - BAR_SIDE_INSET_EXPANDED * 2,
     })
   })
 
@@ -53,9 +54,9 @@ describe('getRestingContainerStyle', () => {
       borderTopLeftRadius: PILL_RADIUS,
       borderTopRightRadius: PILL_RADIUS,
       bottom: EXPANDED_BOTTOM,
-      left: columnInset + BAR_SIDE_INSET,
+      left: columnInset + BAR_SIDE_INSET_EXPANDED,
       top: 800 - EXPANDED_BOTTOM - PLAYER_SIZES.miniPlayerHeight,
-      width: CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET * 2,
+      width: CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2,
     })
   })
 
@@ -63,8 +64,9 @@ describe('getRestingContainerStyle', () => {
     'expanded bar: pill edges equal the islands row content at %ipx',
     screenWidth => {
       const rowLeft = Math.max(0, (screenWidth - CONTENT_COLUMN_WIDTH) / 2)
-      const rowContentLeft = rowLeft + BAR_SIDE_INSET
-      const rowContentWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET * 2
+      const rowContentLeft = rowLeft + BAR_SIDE_INSET_EXPANDED
+      const rowContentWidth =
+        Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
       const style = getRestingContainerStyle({
         barCollapsed: false,
         expanded: false,

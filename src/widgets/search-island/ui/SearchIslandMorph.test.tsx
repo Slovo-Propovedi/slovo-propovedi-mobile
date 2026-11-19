@@ -259,6 +259,7 @@ describe('<SearchIslandMorph>', () => {
       // in the same tick and reserves its slot while the pill stretches.
       closeProgress: 1,
       focusProgress: 1,
+      oneLineProgress: 0,
       openProgress: 1,
       screenWidth: Dimensions.get('window').width,
       tabBarHeight: ctx.get(tabBarHeightAtom),
@@ -280,6 +281,7 @@ describe('<SearchIslandMorph>', () => {
       barProgress: 1,
       closeProgress: 0,
       focusProgress: 0,
+      oneLineProgress: 0,
       openProgress: 1,
       screenWidth: Dimensions.get('window').width,
       tabBarHeight: ctx.get(tabBarHeightAtom),
@@ -325,6 +327,7 @@ describe('<SearchIslandMorph>', () => {
       barProgress: 1,
       closeProgress: 1,
       focusProgress: 1,
+      oneLineProgress: 0,
       openProgress: 1,
       screenWidth: Dimensions.get('window').width,
       tabBarHeight: ctx.get(tabBarHeightAtom),
