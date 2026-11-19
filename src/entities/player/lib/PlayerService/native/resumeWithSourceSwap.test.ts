@@ -6,12 +6,21 @@ const AUDIO_URL = 'https://example.com/audio.mp3'
 const CACHED_URI = 'file:///data/cache/audio.mp3'
 
 const mockGetCachedUri = jest.fn<Promise<null | string>, [string]>()
+const mockGetCurrentIndex = jest.fn<number, []>()
+const mockGetTrackAt = jest.fn<{ audioUrl: string } | null, [number]>()
 
 jest.mock('entities/offline-cache/@x/player', () => ({
   audioCacheService: {
     getCachedUri: (url: string) => mockGetCachedUri(url),
   },
   PART_SUFFIX: '.cache.mp3',
+}))
+
+jest.mock('./PlaylistEngine', () => ({
+  playlistEngine: {
+    getCurrentIndex: () => mockGetCurrentIndex(),
+    getTrackAt: (index: number) => mockGetTrackAt(index),
+  },
 }))
 
 const createPlayerStub = () => {
@@ -27,6 +36,8 @@ describe('resumeWithSourceSwap', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {})
     positionAtom(ctx, 0)
     mockGetCachedUri.mockResolvedValue(null)
+    mockGetCurrentIndex.mockReturnValue(-1)
+    mockGetTrackAt.mockReturnValue(null)
   })
 
   afterEach(() => {
@@ -99,6 +110,26 @@ describe('resumeWithSourceSwap', () => {
 
     expect(player.play).toHaveBeenCalledTimes(1)
     expect(player.swapSource).not.toHaveBeenCalled()
+  })
+
+  test('stale requested URL → resumes the engine current track URL, no foreign swap', async () => {
+    const STALE_URL = 'https://example.com/first.mp3'
+    const ENGINE_URL = 'https://example.com/second.mp3'
+    mockGetCurrentIndex.mockReturnValue(1)
+    mockGetTrackAt.mockReturnValue({ audioUrl: ENGINE_URL })
+    // Only the stale track is cached; the engine track is not. Resolving from
+    // the engine keeps the source in agreement, so no swap may happen.
+    mockGetCachedUri.mockImplementation(url =>
+      Promise.resolve(url === STALE_URL ? CACHED_URI : null),
+    )
+    const player = createPlayerStub()
+    player.getCurrentSourceUri.mockReturnValue(ENGINE_URL)
+
+    await resumeWithSourceSwap(player, STALE_URL)
+
+    expect(mockGetCachedUri).toHaveBeenCalledWith(ENGINE_URL)
+    expect(player.swapSource).not.toHaveBeenCalled()
+    expect(player.play).toHaveBeenCalledTimes(1)
   })
 
   // Disabling sermon caching wipes the cache directory under the running queue,

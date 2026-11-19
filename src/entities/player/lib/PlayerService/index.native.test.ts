@@ -24,8 +24,10 @@ jest.mock('./native/queueLoader', () => ({
 jest.mock('./native/PlaylistEngine', () => ({
   playlistEngine: {
     destroy: jest.fn(),
+    getCurrentIndex: jest.fn(),
     getCurrentSourceUri: jest.fn(),
     getPlaylist: jest.fn(),
+    getTrackAt: jest.fn(),
     isLoaded: jest.fn(),
     setLoopMode: jest.fn(),
   },
@@ -148,6 +150,8 @@ describe('PlayerService.recoverStreamAfterReconnect', () => {
     positionAtom(ctx, 0)
     isStalledOfflineAtom(ctx, false)
     mockedEngine.getCurrentSourceUri.mockReturnValue(NETWORK_URL)
+    mockedEngine.getCurrentIndex.mockReturnValue(-1)
+    mockedEngine.getTrackAt.mockReturnValue(null)
     mockedEngine.isLoaded.mockReturnValue(true)
   })
 
@@ -242,6 +246,25 @@ describe('PlayerService.recoverStreamAfterReconnect', () => {
 
     expect(loadSpy).toHaveBeenCalledWith(NETWORK_URL, 5000)
     expect(replaceSpy).not.toHaveBeenCalled()
+  })
+
+  test('heal targets the engine current track, not the stale passed URL', async () => {
+    const STALE_URL = 'https://example.com/first.mp3'
+    const ENGINE_URL = 'https://example.com/second.mp3'
+    mockedEngine.getCurrentIndex.mockReturnValue(1)
+    mockedEngine.getTrackAt.mockReturnValue({
+      artist: 'Author 2',
+      artwork: null,
+      audioUrl: ENGINE_URL,
+      id: 'sermon-2',
+      title: 'Second Sermon',
+    })
+    positionAtom(ctx, 42000)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+
+    await playerService.recoverStreamAfterReconnect(STALE_URL)
+
+    expect(replaceSpy).toHaveBeenCalledWith(ENGINE_URL, 42000)
   })
 
   test('successful replace heal re-asserts lock screen metadata after replaceAudio', async () => {

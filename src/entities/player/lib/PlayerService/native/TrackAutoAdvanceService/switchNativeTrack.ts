@@ -54,20 +54,21 @@ export const switchNativeTrack = async ({
     await AsyncStorage.multiGet([CURRENT_AUDIO, CURRENT_PLAYLIST]),
   )
   const storedAudio = parseAudioPlayerData(storedMap[CURRENT_AUDIO])
-  const playlist = parsePlaylistData(storedMap[CURRENT_PLAYLIST])
-  if (!playlist) {
-    reportParseFailure('CURRENT_PLAYLIST', storedMap[CURRENT_PLAYLIST], 'плейлиста')
-    return
-  }
   const newTrack = playlistEngine.getTrackAt(currentIndex)
   if (!newTrack) return
   if (storedAudio?.id === newTrack.id) return
 
-  const newAudio = { ...newTrack, artwork: playlist.artwork }
+  // The native switch already happened, so JS state must not stay on the
+  // previous track even when the playlist context is unreadable. Degrade to a
+  // metadata-only update: no playlist artwork, history flush or playlist title.
+  const playlist = parsePlaylistData(storedMap[CURRENT_PLAYLIST])
+  if (!playlist) reportParseFailure('CURRENT_PLAYLIST', storedMap[CURRENT_PLAYLIST], 'плейлиста')
+
+  const newAudio = playlist ? { ...newTrack, artwork: playlist.artwork } : newTrack
   const resumeMs = getResumePosition(ctx.get(historyAtom), newTrack.id, ctx.get(sermonProgressAtom))
   await setCurrentAudioAction(ctx, newAudio)
 
-  if (previousIndex !== undefined) {
+  if (playlist && previousIndex !== undefined) {
     const oldSermonId = playlistEngine.getTrackAt(previousIndex)?.id ?? storedAudio?.id
     if (oldSermonId) {
       const snapshot = playlistEngine.getSnapshot(previousIndex)
@@ -85,7 +86,7 @@ export const switchNativeTrack = async ({
   await seekToResume(resumeMs)
   await savePlaybackProgress(ctx, { positionMs: resumeMs, sermonId: newTrack.id })
   lockScreenControls.setMetadata(playlistEngine.getPlaylist(), {
-    albumTitle: playlist.title,
+    albumTitle: playlist?.title,
     artist: newAudio.artist,
     artworkUrl: newAudio.artwork,
     title: newAudio.title,

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Background auto-advance no longer stops playback a couple of seconds into the next track
+- Auto-advance no longer restarts the playlist from the first sermon in some cases
 - Restore the bottom clearance for the floating bar in mobile browsers
 - Keep the listened/progress indication for sermons evicted from the capped listening history (per-sermon progress store; also restored from backups and legacy installs)
 - Anchor bottom-bar islands flush to the safe-area line

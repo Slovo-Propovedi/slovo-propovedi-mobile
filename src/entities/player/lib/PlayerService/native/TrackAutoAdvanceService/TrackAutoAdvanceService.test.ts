@@ -2,7 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { type PlaylistData } from 'entities/playlist/@x/player'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST } from 'shared/config'
+import { mockConsole } from 'shared/mocks'
+import { setCurrentAudioAction } from '../../../../model'
 import { playlistEngine } from '../PlaylistEngine'
+import { parsePlaylistData } from './parsers'
 import { trackAutoAdvanceService } from './TrackAutoAdvanceService'
 
 const HISTORY_ATOM = '@@TEST_HISTORY_ATOM'
@@ -44,8 +47,8 @@ jest.mock('../LockScreenControls', () => ({
   lockScreenControls: { setMetadata: (...args: unknown[]) => mockSetMetadata(...args) },
 }))
 jest.mock('./parsers', () => ({
-  parseAudioPlayerData: (raw: null | string) => (raw ? JSON.parse(raw) : null),
-  parsePlaylistData: (raw: null | string) => (raw ? JSON.parse(raw) : null),
+  parseAudioPlayerData: jest.fn((raw: null | string) => (raw ? JSON.parse(raw) : null)),
+  parsePlaylistData: jest.fn((raw: null | string) => (raw ? JSON.parse(raw) : null)),
 }))
 
 const mockPlaylist = { title: 'Playlist' } as unknown as PlaylistData
@@ -207,6 +210,19 @@ describe('TrackAutoAdvanceService.handleTrackChanged', () => {
       artworkUrl: playlist.artwork,
       title: secondAudio.title,
     })
+    expect(mockStartBackgroundCaching).toHaveBeenCalledWith(secondAudio.audioUrl)
+  })
+
+  test('updates the current audio from the engine when the playlist payload is invalid', async () => {
+    mockConsole('error')
+    await AsyncStorage.setItem(CURRENT_AUDIO, JSON.stringify(audio))
+    await AsyncStorage.setItem(CURRENT_PLAYLIST, '{"broken":true}')
+    jest.mocked(parsePlaylistData).mockReturnValueOnce(null)
+
+    await trackAutoAdvanceService.handleTrackChanged(0, 1)
+
+    expect(setCurrentAudioAction).toHaveBeenCalledWith(expect.anything(), secondAudio)
+    expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
     expect(mockStartBackgroundCaching).toHaveBeenCalledWith(secondAudio.audioUrl)
   })
 })

@@ -9,6 +9,7 @@ import {
 import { isStalledOfflineAtom } from '../../stalledOffline'
 import { type LockScreenMetadata } from '../types'
 import { playlistEngine } from './PlaylistEngine'
+import { resolveEngineAudioUrl } from './resolveEngineAudioUrl'
 
 interface HealablePlayerService {
   loadAudio: (audioUrl: string, initialPositionMs?: number) => Promise<unknown>
@@ -42,10 +43,13 @@ export const recoverStreamAfterReconnect = async (
   audioUrl: string,
 ): Promise<void> => {
   if (!audioUrl) return
+  // The passed URL may be the previous track while the native queue already
+  // advanced; the engine is the source of truth for heal targeting.
+  const targetUrl = resolveEngineAudioUrl(audioUrl)
   const lastResolvedUrl = playlistEngine.getCurrentSourceUri()
   if (lastResolvedUrl === null || lastResolvedUrl.startsWith(CACHE_URI_PREFIX)) return
   if (!playlistEngine.isLoaded()) {
-    const player = await service.loadAudio(audioUrl, ctx.get(positionAtom))
+    const player = await service.loadAudio(targetUrl, ctx.get(positionAtom))
     if (player) reassertMetadata(service)
     return
   }
@@ -57,7 +61,7 @@ export const recoverStreamAfterReconnect = async (
   // resumes exactly the track that stalled.
   const stalledOffline = ctx.get(isStalledOfflineAtom)
   const shouldResume = isPlaying || stalledOffline
-  const player = await service.replaceAudio(audioUrl, ctx.get(positionAtom))
+  const player = await service.replaceAudio(targetUrl, ctx.get(positionAtom))
   if (shouldResume) await service.play()
   if (player) reassertMetadata(service)
 }

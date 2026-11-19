@@ -1,6 +1,7 @@
 import { audioCacheService, PART_SUFFIX } from 'entities/offline-cache/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { positionAtom } from '../../../model'
+import { resolveEngineAudioUrl } from './resolveEngineAudioUrl'
 
 interface SourceSwapPlayer {
   getCurrentSourceUri: () => null | string
@@ -30,13 +31,16 @@ const sourceAlreadyServesCache = (sourceUrl: null | string): boolean =>
  * `file://` source — a bare play silently does nothing. Rebinding through
  * `swapSource` re-resolves the source and keeps the current position.
  * @param player - Queue control actions used to swap the source and resume.
- * @param audioUrl - Network URL of the track being resumed. Always pass the
- * original server URL: the cache key and the re-resolve are computed from it.
+ * @param requestedAudioUrl - Network URL of the track being resumed. The native
+ * queue is the source of truth: when it already sits on another track (the async
+ * switch gap left a stale atom URL), its current track URL is used instead so a
+ * cached file of the previous track is never swapped into the live slot.
  */
 export const resumeWithSourceSwap = async (
   player: SourceSwapPlayer,
-  audioUrl: string,
+  requestedAudioUrl: string,
 ): Promise<void> => {
+  const audioUrl = resolveEngineAudioUrl(requestedAudioUrl)
   let cachedUri: null | string = null
   try {
     cachedUri = await audioCacheService.getCachedUri(audioUrl)

@@ -1,4 +1,5 @@
-Search opens as a separate page from the pill; leaving clears the query.
-Listened/progress marks survive eviction from the 100-entry history cap; backup import restores them too.
-Search keeps the last active tab: tap it to return and close; the pill morphs open and closed reliably.
-Background auto-advance no longer stalls playback a couple of seconds into the next track.
+Search opens as its own page; leaving clears the query.
+Listened/progress marks survive history eviction (100-entry cap) and restore from backup.
+Search keeps the last tab: tap to return and close; the pill morphs reliably.
+Background auto-advance no longer stalls playback seconds into the next track.
+Auto-advance no longer restarts the playlist from the first sermon.

@@ -28,7 +28,7 @@ export const usePlayerTrackState = ({
 
   const playlistList = currentPlaylist ? currentPlaylist.sermons : []
 
-  const hasValidPlaylist = currentPlaylist != null && index != null
+  const hasValidPlaylist = currentPlaylist != null && index != null && index >= 0
 
   return {
     hasValidPlaylist,
