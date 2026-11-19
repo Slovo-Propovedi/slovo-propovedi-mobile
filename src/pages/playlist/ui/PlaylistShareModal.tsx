@@ -14,6 +14,9 @@ const COPY_ICON = 'copy-outline'
 const SEND_TEXT = 'Отправить ссылку'
 const COPY_TEXT = 'Копировать ссылку'
 const QR_SIZE = 220
+// The white QR card is the widest element; the column matches its outer width
+// so the title and action rows align with the card's left edge.
+const QR_CARD_SIZE = QR_SIZE + 2 * INDENTS.medium
 // Custom share URLs pack ~22 chars per sermon, so up to 200 sermons ≈ 4.4 KB. Past QR
 // byte-mode capacity (~2953 bytes) the qrcode core throws during render — a crash on
 // modal open. 1000 also keeps codes comfortably scannable; longer links fall back to
@@ -51,6 +54,7 @@ export const PlaylistShareModal = ({
 
         {isShareSupported && (
           <PlaylistMenuRow
+            isFlush
             text={SEND_TEXT}
             onPress={onShare}
             onboardingTargetId='playlist.share-modal-send'
@@ -59,6 +63,7 @@ export const PlaylistShareModal = ({
         )}
 
         <PlaylistMenuRow
+          isFlush
           text={COPY_TEXT}
           onPress={onCopy}
           onboardingTargetId='playlist.share-modal-copy'
@@ -71,8 +76,10 @@ export const PlaylistShareModal = ({
 
 const styles = StyleSheet.create({
   container: {
+    alignSelf: 'center',
     paddingBottom: INDENTS.medium,
     paddingTop: INDENTS.medium,
+    width: QR_CARD_SIZE,
   },
   qrCard: {
     alignSelf: 'center',
@@ -85,7 +92,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.lg,
     fontWeight: '600',
     paddingBottom: INDENTS.medium,
-    paddingHorizontal: INDENTS.high,
+    paddingHorizontal: 0,
     paddingTop: INDENTS.low,
   },
 })

@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
 import { PlaylistShareModal } from './PlaylistShareModal'
 
@@ -36,10 +37,15 @@ jest.mock('features/onboarding', () => {
 })
 
 const URL = 'https://slovo-propovedi.ru/listen/playlist?playlist=abc-123'
+const SHARE_TEXT = 'Поделиться плейлистом'
 const COPY_TEXT = 'Копировать ссылку'
 const SEND_TEXT = 'Отправить ссылку'
 const QR_TEST_ID = 'qr-code'
 const MAX_QR_URL_LENGTH = 1000
+const QR_SIZE = 220
+// INDENTS.medium is the padding of the white QR card around the code.
+const QR_CARD_PADDING = 16
+const SHARE_COLUMN_WIDTH = QR_SIZE + 2 * QR_CARD_PADDING
 
 const renderModal = ({
   onClose = jest.fn(),
@@ -118,6 +124,11 @@ describe('<PlaylistShareModal>', () => {
     expect(screen.queryByTestId(QR_TEST_ID)).toBeNull()
     expect(screen.getByText(COPY_TEXT)).toBeTruthy()
     expect(screen.getByText(SEND_TEXT)).toBeTruthy()
+
+    // Without the QR card the column keeps its width, so the left edge does not jump.
+    const column = StyleSheet.flatten(screen.getByText(SHARE_TEXT).parent?.props.style)
+
+    expect(column.width).toBe(SHARE_COLUMN_WIDTH)
   })
 
   test('renders the QR code at the maximum URL length boundary', async () => {
@@ -127,5 +138,32 @@ describe('<PlaylistShareModal>', () => {
 
     expect(mockQrCodeValue).toHaveBeenCalledWith(boundaryUrl)
     expect(screen.getByTestId(QR_TEST_ID)).toBeTruthy()
+  })
+
+  test('sizes and centers the share column to the QR card width', async () => {
+    await renderModal()
+
+    const column = StyleSheet.flatten(screen.getByText(SHARE_TEXT).parent?.props.style)
+
+    expect(column.width).toBe(SHARE_COLUMN_WIDTH)
+    expect(column.alignSelf).toBe('center')
+  })
+
+  test('aligns the title with the QR card left edge', async () => {
+    await renderModal()
+
+    const title = StyleSheet.flatten(screen.getByText(SHARE_TEXT).props.style)
+
+    expect(title.paddingHorizontal).toBe(0)
+  })
+
+  test('renders the action rows flush with the column edge', async () => {
+    await renderModal()
+
+    for (const rowName of [SEND_TEXT, COPY_TEXT]) {
+      const row = StyleSheet.flatten(screen.getByText(rowName).parent?.props.style)
+
+      expect(row.paddingHorizontal).toBe(0)
+    }
   })
 })

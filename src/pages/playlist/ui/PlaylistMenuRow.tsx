@@ -7,6 +7,7 @@ import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 export interface PlaylistMenuRowProps {
   icon: ReactNode
   isDisabled?: boolean
+  isFlush?: boolean
   onboardingTargetId?: string
   onPress: () => void
   text: string
@@ -16,6 +17,7 @@ export interface PlaylistMenuRowProps {
 export const PlaylistMenuRow = ({
   icon,
   isDisabled = false,
+  isFlush = false,
   onboardingTargetId,
   onPress,
   text,
@@ -31,7 +33,11 @@ export const PlaylistMenuRow = ({
     <OnboardingTarget id={onboardingTargetId}>
       <PressableButton
         onPress={handlePress}
-        style={[styles.dropdownItem, isDisabled && styles.dropdownItemDisabled]}
+        style={[
+          styles.dropdownItem,
+          isFlush && styles.dropdownItemFlush,
+          isDisabled && styles.dropdownItemDisabled,
+        ]}
       >
         <View style={styles.dropdownIcon}>{icon}</View>
         <Text
@@ -57,5 +63,8 @@ const styles = StyleSheet.create({
     paddingVertical: INDENTS.middle,
   },
   dropdownItemDisabled: { opacity: 0.5 },
+  // In the share modal the rows line up with the QR card's left edge instead
+  // of the menu dropdown's indent.
+  dropdownItemFlush: { paddingHorizontal: 0 },
   dropdownItemText: { fontSize: FONT_SIZES.base },
 })

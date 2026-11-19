@@ -4,4 +4,5 @@ Search keeps the last tab; tap closes.
 Auto-advance no longer stalls.
 Auto-advance no longer restarts the playlist.
 Web on iOS: no bottom gap.
-Search: playlists and preachers opened from search results show the top bar again — back button, title and the playlist menu.
+Search: playlists and preachers from results show the top bar — back, title, menu.
+Share playlist: title and actions line up with the QR code.
