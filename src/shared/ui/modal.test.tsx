@@ -1,9 +1,11 @@
+import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Platform, StyleSheet, Text } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { createKeyDownEvent } from '../lib/testing/createKeyEvent'
 import { installFakeDom } from '../lib/testing/installFakeDom'
 import { renderWithProviders } from '../mocks/renderWithProviders'
+import { toastAtom } from '../model/toast'
 import { Modal } from './modal'
 
 // Platform.OS is read once at module load, so the cap can't be toggled by
@@ -13,6 +15,7 @@ jest.mock('./layout/appMaxWidth', () => ({ APP_MAX_CONTENT_WIDTH: DESKTOP_COLUMN
 
 const BACKDROP_TEST_ID = 'modal-backdrop'
 const CHILDREN_TEXT = 'Modal Content'
+const TOAST_MESSAGE = 'Ссылка скопирована'
 const onBackdropPressMock = jest.fn()
 
 const isDescendantOf = (element: TestInstance, ancestor: TestInstance): boolean => {
@@ -109,6 +112,31 @@ describe('<Modal>', () => {
     expect(style.maxWidth).toBe(DESKTOP_COLUMN_WIDTH)
     expect(style.width).toBe('100%')
     expect(style.alignSelf).toBe('center')
+  })
+})
+
+describe('<Modal> toast overlay', () => {
+  test('mounts the toast beside the backdrop so it paints above the dialog', async () => {
+    const ctx = createCtx()
+    toastAtom(ctx, TOAST_MESSAGE)
+
+    await renderWithProviders(
+      <Modal visible onBackdropPress={onBackdropPressMock}>
+        <Text>{CHILDREN_TEXT}</Text>
+      </Modal>,
+      { ctx },
+    )
+
+    const toast = screen.getByText(TOAST_MESSAGE).parent
+    const backdropPressable = screen.getByTestId(BACKDROP_TEST_ID)
+
+    if (toast === null) throw new Error('toast must be mounted inside the modal')
+
+    expect(toast.props.accessibilityRole).toBe('alert')
+    // A native modal window paints above the app root, where the other Toast
+    // lives; this one must sit in the modal root, outside the dialog content.
+    expect(isDescendantOf(toast, backdropPressable)).toBe(false)
+    expect(toast.parent).toBe(backdropPressable.parent?.parent)
   })
 })
 

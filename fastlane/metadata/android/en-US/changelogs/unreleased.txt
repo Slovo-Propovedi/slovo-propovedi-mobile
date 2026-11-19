@@ -1,8 +1,8 @@
-Search is its own page; leaving clears the query.
+Search is its own page; leaving clears it.
 Listened marks survive eviction and backup.
 Search keeps the last tab; tap closes.
-Auto-advance no longer stalls.
-Auto-advance no longer restarts the playlist.
+Auto-advance no longer stalls or restarts.
 Web on iOS: no bottom gap.
 Search: playlists and preachers from results show the top bar — back, title, menu.
 Share playlist: title and actions line up with the QR code.
+Copy toast now shows above open dialogs.

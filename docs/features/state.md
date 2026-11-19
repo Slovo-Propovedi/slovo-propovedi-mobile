@@ -34,6 +34,7 @@
 ## Паттерны
 
 - **Атом + экшен set** — простые атомы (`atom<T>(initial, name)`) обновляются через `action`, который сначала делает побочные операции, затем `ctx.schedule(() => atom(ctx, value))`.
+- **Тост поверх модалок** — `Toast` (`src/shared/ui/toast/Toast.tsx`) смонтирован и в корне (`app/_RootLayout.tsx`), и внутри `shared/ui/modal` рядом с backdrop: нативный `Modal` рисуется поверх корневого дерева, поэтому без второго экземпляра тост из-под открытой модалки (например, «Ссылка скопирована» в «Поделиться плейлистом») был бы не виден.
 - **Персистенция в AsyncStorage** — внутри экшена до `ctx.schedule` выполняется `await AsyncStorage.setItem(KEY, ...)`. Примеры: `setCurrentAudioAction`, `setVolumeAction`, `setRepeatModeAction` (`model.ts`), `setThemeMode` (`theme/model.ts`), `setServerUrlAction`.
 - **Безопасный парсинг** — восстановление из AsyncStorage через `getParseJsonWithSchema(schema)` (`src/shared/model/getParseJsonWithSchema.ts`, оборачивает Zod `safeParse`). Пример: `initializePlayer` (`src/entities/player/lib/initializePlayer.ts`), `getCachedSections`.
 - **Атомы, синхронизируемые с expo-audio** — `isPlaying/position/duration/volume/isBuffering/isSeeking` обновляются из статус-событий `PlayerStatusListener`/`nativePlayerHelpers`.

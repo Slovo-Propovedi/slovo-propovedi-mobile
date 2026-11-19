@@ -6,6 +6,7 @@ import { hapticLight } from '../lib/haptics'
 import { APP_MAX_CONTENT_WIDTH } from './layout/appMaxWidth'
 import { useTheme } from './theme/ThemeContext/useTheme'
 import { INDENTS } from './theme/themed'
+import { Toast } from './toast/Toast'
 
 const BACKDROP_TEST_ID = 'modal-backdrop'
 
@@ -74,6 +75,10 @@ export const Modal = ({
           {children}
         </View>
       </View>
+      {/* A native modal window paints above the app root, so the root-level
+          Toast would be hidden behind the backdrop. Mounting a second Toast
+          inside the modal keeps toasts visible while a dialog is open. */}
+      <Toast />
     </RNModal>
   )
 }
