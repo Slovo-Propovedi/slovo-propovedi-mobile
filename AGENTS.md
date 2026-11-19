@@ -104,17 +104,22 @@ app/
 ├── settings.tsx          # → pages/settings (вне таб-группы)
 ├── about.tsx             # → pages/about (вне таб-группы)
 └── (tabs)/
-    ├── _layout.tsx       # 3 таба + CustomTabBar + ExpandablePlayer
+    ├── _layout.tsx       # 3 таба + маршрут search (без слота) + CustomTabBar + ExpandablePlayer
     ├── listen/           # Стек раздела «Слушать»
     │   ├── _layout.tsx
     │   ├── index.tsx     # → pages/listen (главный экран)
     │   ├── playlist.tsx  # → pages/playlist
     │   └── playlist-list.tsx
+    ├── search/           # Отдельный маршрут «Поиск» (открывается пилюлей, не таб-слот)
+    │   ├── _layout.tsx   # Stack, headerShown: false
+    │   ├── index.tsx     # → pages/search (SearchTabScreen)
+    │   ├── playlist.tsx  # → pages/playlist
+    │   └── preacher.tsx  # → pages/preacher
     ├── read.tsx          # → pages/read (таб, ЗАБЛОКИРОВАН)
     └── more.tsx          # → pages/more
 ```
 
-**Important:** Screen logic lives in `src/pages/`, `app/` only re-exports.
+**Important:** Screen logic lives in `src/pages/`, `app/` only re-exports. The `search` route stays registered in the tabs navigator (it owns the nested `/search/playlist`, `/search/preacher` stack), but `CustomTabBar` filters it out of the slot list: the bar always shows three tabs, and the search pill opens `/search`.
 
 ### FSD Slice Structure
 
@@ -229,6 +234,16 @@ When work is delegated to a coding agent, the DELEGATOR owns analysis and planni
 - The delegator hands over a ready implementation plan: exact files to change, what to change in each, the chosen approach (no alternatives to weigh), verification commands, and a commit plan. Root-cause analysis, library/node_modules research, and design decisions happen BEFORE delegation.
 - The coding agent does NOT do open-ended exploration, architecture research, or option weighing. Allowed: reading the specific files named in the task (plus the minimal call-graph context needed to apply the change), running checks/tests, committing.
 - If the plan turns out to be wrong or a required fact is missing, the coding agent STOPS and reports back with the blocking fact instead of improvising a design.
+
+### Agent Session Hygiene: Fresh Sessions Over Follow-ups
+
+ALWAYS spawn a NEW subagent session for each new task, with a self-contained brief covering everything the agent needs: repo paths, the current uncommitted feature state, constraints, and the expected report format. Do NOT send follow-up prompts to already-running or previously used sessions to "continue the work".
+
+Rationale:
+
+- A reused session carries its full history in the context window — every follow-up pays for all previous turns again, burning tokens and degrading quality as context grows.
+- A fresh session reads only `AGENTS.md`, the brief, and the files it actually needs — cheaper, and reasoning stays sharp.
+- Exception (narrow): continuing an INTERRUPTED run of the same task in the same session is allowed only when the brief fully restates what remains to be done.
 
 ## Barrel Export Rules
 

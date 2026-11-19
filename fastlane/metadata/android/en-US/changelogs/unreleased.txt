@@ -1,2 +1,3 @@
-Bar side insets now match the slider card line; the collapsed bar's tab and search buttons shrink to the mini player height while the mini player itself keeps its size; the open search field always matches the tab bar height
-Also: glass bottom chrome, semibold section titles, wider mini-player gap, safer mini-player/search/launch-bar on Android, web bottom clearance.
+Search opens as a separate page from the pill; the query clears when you leave.
+Listened/progress marks now survive being pushed out of the 100-entry listening history cap; backup import restores them too.
+Search keeps the last active tab in the bar: tap it to return and close the search; the pill morphs open and closed reliably.

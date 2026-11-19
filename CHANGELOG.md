@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Translucent bottom chrome glass with shade cutouts under the floating tab-bar islands
 - Semibold slider section title
 - Raised mini-player gap above the islands row
+- Search opens as a separate page from the pill; the query clears when you leave
 
 ### Changed
 
@@ -21,12 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Restore the bottom clearance for the floating bar in mobile browsers
+- Keep the listened/progress indication for sermons evicted from the capped listening history (per-sermon progress store; also restored from backups and legacy installs)
 - Anchor bottom-bar islands flush to the safe-area line
 - Keep the finished marquee line visible and sync the pair to the longer loop
-- Keep the search close slot pointer-capable through the press window
 - Unmount the tucked mini-player pill and gate the un-tuck press window
 - Blur page content in the bottom chrome glass on the search screen (Android)
 - Expand the launch bar pre-paint and snap the launch morph (Android)
+- Keep the last active tab visible and selectable in the bar while search is open (press returns to the tab and closes search); the search pill morphs open and closed reliably
 
 ## [0.34.0] - 2026-11-12
 
