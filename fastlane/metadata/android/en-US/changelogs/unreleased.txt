@@ -1,3 +1,4 @@
-Search opens as a separate page from the pill; the query clears when you leave.
-Listened/progress marks now survive being pushed out of the 100-entry listening history cap; backup import restores them too.
-Search keeps the last active tab in the bar: tap it to return and close the search; the pill morphs open and closed reliably.
+Search opens as a separate page from the pill; leaving clears the query.
+Listened/progress marks survive eviction from the 100-entry history cap; backup import restores them too.
+Search keeps the last active tab: tap it to return and close; the pill morphs open and closed reliably.
+Background auto-advance no longer stalls playback a couple of seconds into the next track.

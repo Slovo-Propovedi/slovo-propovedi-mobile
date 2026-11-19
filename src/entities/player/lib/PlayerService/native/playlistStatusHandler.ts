@@ -10,10 +10,14 @@ import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdva
  * queue-end completion path. Queue end is a single `didJustFinish` at the last
  * media item with loop 'none'; the stale-event guard from the single-player
  * era still applies (expo-audio #34301).
+ * Native auto-advance emits `playing:false` while the engine swaps tracks —
+ * that edge is not an interruption, so `markAutoAdvanceInFlight` opens a window
+ * that the next stable `playing:true` closes.
  * @param callbacks - Service lifecycle callbacks.
  */
 export const createPlaylistStatusHandler = (callbacks: StatusCallbacks) => {
   let wasPlaying = false
+  let autoAdvanceInFlight = false
   let armed = false
   let queueEndHandled = false
   let staleWarned = false
@@ -27,7 +31,7 @@ export const createPlaylistStatusHandler = (callbacks: StatusCallbacks) => {
     )
   }
 
-  return (status: AudioPlaylistStatus): void => {
+  const handleStatus = (status: AudioPlaylistStatus): void => {
     if (status.currentIndex !== currentIndex) {
       currentIndex = status.currentIndex
       queueEndHandled = false
@@ -46,9 +50,20 @@ export const createPlaylistStatusHandler = (callbacks: StatusCallbacks) => {
       void trackAutoAdvanceService.handleQueueEnd()
     }
 
-    if (wasPlaying !== status.playing) callbacks.onAudioInterruption(!status.playing)
+    if (wasPlaying !== status.playing) {
+      // The transition edge of a native auto-advance is not an interruption.
+      const suppressEdge = autoAdvanceInFlight
+      if (status.playing) autoAdvanceInFlight = false
+      if (!suppressEdge) callbacks.onAudioInterruption(!status.playing)
+    }
     wasPlaying = status.playing
   }
+
+  const markAutoAdvanceInFlight = (): void => {
+    autoAdvanceInFlight = true
+  }
+
+  return { handleStatus, markAutoAdvanceInFlight }
 }
 
 /**
@@ -58,12 +73,14 @@ export const createPlaylistStatusHandler = (callbacks: StatusCallbacks) => {
  * @param isMuted - Suppresses status consumption while stopping/unloading.
  */
 export const wirePlaylistStatus = (callbacks: StatusCallbacks, isMuted: () => boolean): void => {
-  const handleStatus = createPlaylistStatusHandler(callbacks)
+  const { handleStatus, markAutoAdvanceInFlight } = createPlaylistStatusHandler(callbacks)
   playlistEngine.setCallbacks({
     onStatus: status => {
       if (!isMuted()) handleStatus(status)
     },
-    onTrackChanged: (previousIndex, currentIndex) =>
-      void trackAutoAdvanceService.handleTrackChanged(previousIndex, currentIndex),
+    onTrackChanged: (previousIndex, currentIndex) => {
+      markAutoAdvanceInFlight()
+      void trackAutoAdvanceService.handleTrackChanged(previousIndex, currentIndex)
+    },
   })
 }

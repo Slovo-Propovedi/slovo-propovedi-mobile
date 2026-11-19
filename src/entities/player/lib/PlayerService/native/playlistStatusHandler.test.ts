@@ -47,40 +47,42 @@ describe('createPlaylistStatusHandler queue end', () => {
   })
 
   test('handles a genuine didJustFinish exactly once', () => {
-    const handler = createPlaylistStatusHandler(createCallbacks())
+    const { handleStatus } = createPlaylistStatusHandler(createCallbacks())
 
-    handler(statusWith({ currentTime: 60 }))
-    handler(statusWith({ currentTime: 120, didJustFinish: true }))
-    handler(statusWith({ currentTime: 120, didJustFinish: true }))
+    handleStatus(statusWith({ currentTime: 60 }))
+    handleStatus(statusWith({ currentTime: 120, didJustFinish: true }))
+    handleStatus(statusWith({ currentTime: 120, didJustFinish: true }))
 
     expect(mockHandleQueueEnd).toHaveBeenCalledTimes(1)
   })
 
   test('does not handle a didJustFinish before a healthy status armed the listener', () => {
-    const handler = createPlaylistStatusHandler(createCallbacks())
+    const { handleStatus } = createPlaylistStatusHandler(createCallbacks())
 
-    handler(statusWith({ currentTime: 120, didJustFinish: true, isLoaded: false }))
+    handleStatus(statusWith({ currentTime: 120, didJustFinish: true, isLoaded: false }))
 
     expect(mockHandleQueueEnd).not.toHaveBeenCalled()
   })
 
   test('ignores a stale didJustFinish fired right after a track change', () => {
-    const handler = createPlaylistStatusHandler(createCallbacks())
+    const { handleStatus } = createPlaylistStatusHandler(createCallbacks())
 
-    handler(statusWith({ currentIndex: 1, currentTime: 0 }))
-    handler(statusWith({ currentIndex: 1, currentTime: 10, didJustFinish: true, duration: 120 }))
+    handleStatus(statusWith({ currentIndex: 1, currentTime: 0 }))
+    handleStatus(
+      statusWith({ currentIndex: 1, currentTime: 10, didJustFinish: true, duration: 120 }),
+    )
 
     expect(mockHandleQueueEnd).not.toHaveBeenCalled()
     expect(console.warn).toHaveBeenCalled()
   })
 
   test('re-arms the queue-end guard after the track changes', () => {
-    const handler = createPlaylistStatusHandler(createCallbacks())
+    const { handleStatus } = createPlaylistStatusHandler(createCallbacks())
 
-    handler(statusWith({ currentIndex: 0, currentTime: 60 }))
-    handler(statusWith({ currentIndex: 0, currentTime: 120, didJustFinish: true }))
-    handler(statusWith({ currentIndex: 1, currentTime: 0 }))
-    handler(statusWith({ currentIndex: 1, currentTime: 120, didJustFinish: true }))
+    handleStatus(statusWith({ currentIndex: 0, currentTime: 60 }))
+    handleStatus(statusWith({ currentIndex: 0, currentTime: 120, didJustFinish: true }))
+    handleStatus(statusWith({ currentIndex: 1, currentTime: 0 }))
+    handleStatus(statusWith({ currentIndex: 1, currentTime: 120, didJustFinish: true }))
 
     expect(mockHandleQueueEnd).toHaveBeenCalledTimes(2)
   })
@@ -93,20 +95,20 @@ describe('createPlaylistStatusHandler interruption edges', () => {
 
   test('reports playing→false as an interruption and false→true as its end', () => {
     const callbacks = createCallbacks()
-    const handler = createPlaylistStatusHandler(callbacks)
+    const { handleStatus } = createPlaylistStatusHandler(callbacks)
 
-    handler(statusWith({ playing: true }))
-    handler(statusWith({ playing: false }))
-    handler(statusWith({ playing: true }))
+    handleStatus(statusWith({ playing: true }))
+    handleStatus(statusWith({ playing: false }))
+    handleStatus(statusWith({ playing: true }))
 
     expect(callbacks.onAudioInterruption.mock.calls).toEqual([[false], [true], [false]])
   })
 
   test('mirrors every status into the atom sync', () => {
-    const handler = createPlaylistStatusHandler(createCallbacks())
+    const { handleStatus } = createPlaylistStatusHandler(createCallbacks())
     const status = statusWith({ currentTime: 42 })
 
-    handler(status)
+    handleStatus(status)
 
     expect(mockSyncPlaylistStatus).toHaveBeenCalledWith(status)
   })
