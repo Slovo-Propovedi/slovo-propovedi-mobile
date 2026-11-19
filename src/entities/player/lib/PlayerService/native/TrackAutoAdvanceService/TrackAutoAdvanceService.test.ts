@@ -223,6 +223,12 @@ describe('TrackAutoAdvanceService.handleTrackChanged', () => {
 
     expect(setCurrentAudioAction).toHaveBeenCalledWith(expect.anything(), secondAudio)
     expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
+    expect(mockSetMetadata).toHaveBeenCalledWith(mockPlaylist, {
+      albumTitle: undefined,
+      artist: secondAudio.artist,
+      artworkUrl: secondAudio.artwork,
+      title: secondAudio.title,
+    })
     expect(mockStartBackgroundCaching).toHaveBeenCalledWith(secondAudio.audioUrl)
   })
 })

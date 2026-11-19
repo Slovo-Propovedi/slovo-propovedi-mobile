@@ -50,12 +50,13 @@ export const createPlaylistStatusHandler = (callbacks: StatusCallbacks) => {
       void trackAutoAdvanceService.handleQueueEnd()
     }
 
-    if (wasPlaying !== status.playing) {
-      // The transition edge of a native auto-advance is not an interruption.
-      const suppressEdge = autoAdvanceInFlight
-      if (status.playing) autoAdvanceInFlight = false
-      if (!suppressEdge) callbacks.onAudioInterruption(!status.playing)
-    }
+    // A queue end is never a transition, so its didJustFinish edge is reported.
+    if (status.didJustFinish) autoAdvanceInFlight = false
+    // The edge that settles the window is still the transition, not an interruption.
+    const suppressEdge = autoAdvanceInFlight
+    if (status.playing) autoAdvanceInFlight = false
+    if (wasPlaying !== status.playing && !suppressEdge)
+      callbacks.onAudioInterruption(!status.playing)
     wasPlaying = status.playing
   }
 

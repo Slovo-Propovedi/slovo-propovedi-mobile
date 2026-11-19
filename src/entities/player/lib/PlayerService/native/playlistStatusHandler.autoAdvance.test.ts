@@ -86,6 +86,28 @@ describe('createPlaylistStatusHandler native auto-advance window', () => {
     expect(callbacks.onAudioInterruption).not.toHaveBeenCalled()
   })
 
+  test('closes the window on a settled playing status without an edge (Android path)', () => {
+    const { callbacks, handleStatus, markAutoAdvanceInFlight } = setup()
+
+    handleStatus(statusWith({ playing: true }))
+    markAutoAdvanceInFlight()
+    handleStatus(statusWith({ currentIndex: 1, playing: true }))
+    handleStatus(statusWith({ currentIndex: 1, playing: false }))
+
+    expect(callbacks.onAudioInterruption.mock.calls).toEqual([[false], [true]])
+  })
+
+  test('didJustFinish closes the window', () => {
+    const { callbacks, handleStatus, markAutoAdvanceInFlight } = setup()
+
+    handleStatus(statusWith({ playing: true }))
+    callbacks.onAudioInterruption.mockClear()
+    markAutoAdvanceInFlight()
+    handleStatus(statusWith({ currentTime: 120, didJustFinish: true, playing: false }))
+
+    expect(callbacks.onAudioInterruption).toHaveBeenCalledWith(true)
+  })
+
   test('opens the window from the wired trackChanged event', () => {
     const callbacks = { onAudioInterruption: jest.fn() }
     jest.mocked(playlistEngine.setCallbacks).mockClear()
