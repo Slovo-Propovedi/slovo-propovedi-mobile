@@ -46,10 +46,21 @@
       /* These styles make html/body full-height and paint the reset area with the
          app brand colour. ThemeProvider overrides the background at runtime with
          the active theme, so a dark theme does not flash this light fallback on
-         overscroll. `overscroll-behavior: none` kills the rubber-band area. */
+         overscroll. `overscroll-behavior: none` kills the rubber-band area.
+
+         iOS WebKit does not resolve `height: 100%` against the dynamic viewport:
+         in Safari it points at the static viewport, so the page ends above the
+         physical bottom and the html/body background shows through; in the
+         standalone PWA (`viewport-fit=cover`) it excludes the bottom safe-area
+         band, so the app's own `insets.bottom` padding lands on an already
+         shortened shell. `100dvh` tracks the toolbar, and the env() extension
+         puts the shell's bottom edge exactly on the PWA safe-area line (env() is
+         0 in the browser) — the tab bar stays the only place applying the inset. */
       html,
       body {
         height: 100%;
+        height: 100dvh;
+        height: calc(100dvh + env(safe-area-inset-bottom));
         width: 100%;
         /* Reset the UA body margin: keeps the first-frame layout viewport from
            expanding (mobile shrink-to-fit) and recentering the fixed splash

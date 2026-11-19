@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Web on iOS: removed the white gap at the bottom of the screen in Safari and in the installed PWA
 - Background auto-advance no longer stops playback a couple of seconds into the next track
 - Auto-advance no longer restarts the playlist from the first sermon in some cases
 - Restore the bottom clearance for the floating bar in mobile browsers
