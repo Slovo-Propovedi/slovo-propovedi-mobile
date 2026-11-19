@@ -53,14 +53,18 @@
          physical bottom and the html/body background shows through; in the
          standalone PWA (`viewport-fit=cover`) it excludes the bottom safe-area
          band, so the app's own `insets.bottom` padding lands on an already
-         shortened shell. `100dvh` tracks the toolbar, and the env() extension
-         puts the shell's bottom edge exactly on the PWA safe-area line (env() is
-         0 in the browser) — the tab bar stays the only place applying the inset. */
+         shortened shell. `100dvh` tracks the toolbar in both, so it is the base
+         height. The env() extension is scoped to the standalone display mode: it
+         puts the shell's bottom edge exactly on the PWA safe-area line, while
+         in-browser Safari reports env() unreliably under `viewport-fit=cover`
+         with dynamic toolbars (≈34px while collapsed) — the extension would
+         overflow the visible viewport and `overflow: hidden` would clip the tab
+         bar's inset padding. In the browser plain `100dvh` already tracks the
+         toolbar viewport. */
       html,
       body {
         height: 100%;
         height: 100dvh;
-        height: calc(100dvh + env(safe-area-inset-bottom));
         width: 100%;
         /* Reset the UA body margin: keeps the first-frame layout viewport from
            expanding (mobile shrink-to-fit) and recentering the fixed splash
@@ -70,6 +74,12 @@
         background-color: #f16031;
         overflow: hidden;
         overscroll-behavior: none;
+      }
+      @media (display-mode: standalone) {
+        html,
+        body {
+          height: calc(100dvh + env(safe-area-inset-bottom));
+        }
       }
       /* These styles make the root element full-height */
       #root {
