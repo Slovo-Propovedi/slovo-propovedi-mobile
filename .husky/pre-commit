@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 # Husky pre-commit hook: signed-commit guard + lint-staged/typecheck/patches.
-# Bypass with --no-verify.
+# Mandatory on every commit: never bypass (--no-verify) — fix the cause instead.
 
 # 1. Signed-commit guard. `.git/config` is local and not shared by git, so the
 # guard cannot enable signing for everyone — it fails loudly until each

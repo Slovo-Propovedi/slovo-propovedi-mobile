@@ -2,7 +2,8 @@
 
 # Husky commit-msg hook: DCO auto-sign + commitlint validation.
 # Runs after the editor saves the commit message; receives the message
-# file path as $1. Bypass with --no-verify.
+# file path as $1. Mandatory on every commit: never bypass (--no-verify),
+# fix the cause instead.
 
 # 1. DCO auto-sign: ensure Signed-off-by trailer with proper format.
 # Strips any existing Signed-off-by lines (may be malformed) and re-adds
