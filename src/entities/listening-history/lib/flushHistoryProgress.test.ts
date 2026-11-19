@@ -4,11 +4,13 @@ import { type PlaylistData } from 'entities/playlist/@x/listening-history'
 import { type AudioPlayerData } from 'entities/sermon/@x/listening-history'
 import { LISTENING_HISTORY } from 'shared/config'
 import { historyAtom } from '../model/historyAtom'
+import { sermonProgressAtom } from '../model/progressAtom'
 import { type ListeningHistory, type ListeningHistoryEntry } from '../model/types'
 import { MAX_HISTORY_ENTRIES } from './constants'
 import { flushHistoryProgressAction } from './flushHistoryProgress'
 import { getEntrySermon } from './getEntrySermon'
 import * as liveProgressStorage from './liveProgressStorage'
+import { readProgressRecords } from './progressStorage'
 
 const mockAudio: AudioPlayerData = {
   artist: 'Author',
@@ -346,5 +348,22 @@ describe('flushHistoryProgressAction', () => {
 
     expect(ctx.get(historyAtom)[0].positionMs).toBe(2000000)
     expect(clearSpy).toHaveBeenCalledTimes(1)
+  })
+
+  test('commits a progress record alongside the catalog entry', async () => {
+    await AsyncStorage.clear()
+    const ctx = createCtx()
+
+    await flushHistoryProgressAction(ctx, {
+      durationMs: 2000,
+      positionMs: 1000,
+      sermon: mockAudio,
+    })
+
+    const progress = ctx.get(sermonProgressAtom)
+    expect(progress['sermon-1']?.positionMs).toBe(1000)
+    expect(progress['sermon-1']?.durationMs).toBe(2000)
+    expect(progress['sermon-1']?.updatedAt).toBeGreaterThan(0)
+    expect(await readProgressRecords()).toEqual(progress)
   })
 })

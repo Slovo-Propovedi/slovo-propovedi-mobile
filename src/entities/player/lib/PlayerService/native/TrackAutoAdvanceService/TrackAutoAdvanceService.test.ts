@@ -6,6 +6,7 @@ import { playlistEngine } from '../PlaylistEngine'
 import { trackAutoAdvanceService } from './TrackAutoAdvanceService'
 
 const HISTORY_ATOM = '@@TEST_HISTORY_ATOM'
+const SERMON_PROGRESS_ATOM = '@@TEST_SERMON_PROGRESS_ATOM'
 const mockGetResumePosition = jest.fn().mockReturnValue(0)
 const mockMarkHistoryCompleted = jest.fn().mockResolvedValue(undefined)
 const mockRecordSermonSwitch = jest.fn().mockResolvedValue(undefined)
@@ -14,7 +15,10 @@ const mockStartBackgroundCaching = jest.fn()
 const mockSetMetadata = jest.fn()
 
 jest.mock('shared/lib/reatom-ctx', () => ({
-  ctx: { get: (atom: unknown) => (atom === HISTORY_ATOM ? [] : undefined) },
+  ctx: {
+    get: (atom: unknown) =>
+      atom === HISTORY_ATOM ? [] : atom === SERMON_PROGRESS_ATOM ? {} : undefined,
+  },
 }))
 
 jest.mock('entities/listening-history/@x/player', () => ({
@@ -23,6 +27,7 @@ jest.mock('entities/listening-history/@x/player', () => ({
   historyAtom: HISTORY_ATOM,
   markHistoryCompletedAction: (...args: unknown[]) => mockMarkHistoryCompleted(...args),
   recordSermonSwitchAction: (...args: unknown[]) => mockRecordSermonSwitch(...args),
+  sermonProgressAtom: SERMON_PROGRESS_ATOM,
 }))
 
 jest.mock('../../../../model', () => ({

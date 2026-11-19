@@ -2,8 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { LISTENING_HISTORY } from 'shared/config'
 import { historyAtom } from '../model/historyAtom'
+import { sermonProgressAtom } from '../model/progressAtom'
 import { type ListeningHistory, type ListeningHistoryEntry } from '../model/types'
 import { clearHistoryAction } from './clearHistory'
+import { readProgressRecords, writeProgressRecords } from './progressStorage'
 
 const makeEntry = (
   sermonId: string,
@@ -48,5 +50,18 @@ describe('clearHistoryAction', () => {
       (await AsyncStorage.getItem(LISTENING_HISTORY)) ?? '[]',
     ) as ListeningHistory
     expect(stored).toEqual([])
+  })
+
+  test('clears progress records in storage and atom', async () => {
+    const record = { durationMs: 60_000, positionMs: 30_000, updatedAt: 1 }
+    const ctx = createCtx()
+    historyAtom(ctx, [makeEntry('sermon-1')])
+    await writeProgressRecords({ 'sermon-1': record, 'sermon-2': record })
+    sermonProgressAtom(ctx, { 'sermon-1': record, 'sermon-2': record })
+
+    await clearHistoryAction(ctx)
+
+    expect(ctx.get(sermonProgressAtom)).toEqual({})
+    expect(await readProgressRecords()).toEqual({})
   })
 })

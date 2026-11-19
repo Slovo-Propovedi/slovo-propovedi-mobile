@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LISTENING_HISTORY, LISTENING_PROGRESS_SNAPSHOT } from 'shared/config'
 import { type ListeningHistory, type ListeningHistoryEntry } from '../model/types'
 import { getEntrySermon } from './getEntrySermon'
+import { readProgressRecords } from './progressStorage'
 import { reconcileOnHydration } from './reconcileOnHydration'
 
 const makeEntry = (
@@ -82,7 +83,7 @@ describe('reconcileOnHydration', () => {
     expect(snapshot).toBeNull()
   })
 
-  test('silently drops a snapshot whose sermonId is absent from the catalog', async () => {
+  test('moves a snapshot whose sermonId is absent from the catalog into the progress store', async () => {
     const entry = makeEntry('sermon-1', { durationMs: 1000, positionMs: 500 })
     const data: ListeningHistory = [entry]
     await AsyncStorage.setItem(LISTENING_HISTORY, JSON.stringify(data))
@@ -96,7 +97,12 @@ describe('reconcileOnHydration', () => {
     // Catalog is unchanged (no matching entry to reconcile into)
     expect(result).toHaveLength(1)
     expect(result[0].positionMs).toBe(500)
-    // Orphan snapshot is cleared
+    // The evicted sermon's progress survives in the unbounded store instead of
+    // disappearing with the snapshot.
+    expect(await readProgressRecords()).toEqual({
+      'unknown-sermon': { durationMs: 1000, positionMs: 200, updatedAt: expect.any(Number) },
+    })
+    // Orphan snapshot is cleared after the move
     const snapshot = await AsyncStorage.getItem(LISTENING_PROGRESS_SNAPSHOT)
     expect(snapshot).toBeNull()
   })

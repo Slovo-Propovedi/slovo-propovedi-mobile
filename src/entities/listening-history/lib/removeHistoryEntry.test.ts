@@ -1,7 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { historyAtom } from '../model/historyAtom'
+import { sermonProgressAtom } from '../model/progressAtom'
 import { type ListeningHistoryEntry } from '../model/types'
 import { getEntrySermon } from './getEntrySermon'
+import { readProgressRecords, writeProgressRecords } from './progressStorage'
 import { removeHistoryEntryAction } from './removeHistoryEntry'
 
 const makeEntry = (
@@ -53,5 +56,24 @@ describe('removeHistoryEntryAction', () => {
     await removeHistoryEntryAction(ctx, 'unknown')
 
     expect(ctx.get(historyAtom)).toHaveLength(1)
+  })
+
+  test('removes the progress record of the deleted sermon', async () => {
+    await AsyncStorage.clear()
+    const record = { durationMs: 60_000, positionMs: 30_000, updatedAt: 1 }
+    const ctx = createCtx()
+    historyAtom(ctx, [makeEntry('sermon-1'), makeEntry('sermon-2')])
+    await writeProgressRecords({ 'sermon-1': record, 'sermon-2': record })
+    sermonProgressAtom(ctx, { 'sermon-1': record, 'sermon-2': record })
+
+    await removeHistoryEntryAction(ctx, 'sermon-1')
+
+    const progress = ctx.get(sermonProgressAtom)
+    expect(progress['sermon-1']).toBeUndefined()
+    // Оставшаяся запись каталога перезаписывает свою progress-запись коммитом.
+    expect(progress['sermon-2']?.positionMs).toBe(500)
+    const stored = await readProgressRecords()
+    expect(stored['sermon-1']).toBeUndefined()
+    expect(stored['sermon-2']?.positionMs).toBe(500)
   })
 })

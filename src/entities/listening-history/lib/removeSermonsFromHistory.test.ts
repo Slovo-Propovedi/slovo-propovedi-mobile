@@ -1,8 +1,11 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { historyAtom } from '../model/historyAtom'
+import { sermonProgressAtom } from '../model/progressAtom'
 import { type ListeningHistoryEntry } from '../model/types'
 import { getEntrySermon } from './getEntrySermon'
 import { writeHistory } from './historyStorage'
+import { readProgressRecords, writeProgressRecords } from './progressStorage'
 import { removeSermonsFromHistoryAction } from './removeSermonsFromHistory'
 
 jest.mock('./historyStorage', () => ({
@@ -73,5 +76,26 @@ describe('removeSermonsFromHistoryAction', () => {
 
     expect(ctx.get(historyAtom)).toHaveLength(1)
     expect(mockedWriteHistory).not.toHaveBeenCalled()
+  })
+
+  test('removes progress records of the deleted sermons only', async () => {
+    await AsyncStorage.clear()
+    const record = { durationMs: 60_000, positionMs: 30_000, updatedAt: 1 }
+    const ctx = createCtx()
+    historyAtom(ctx, [makeEntry('sermon-1'), makeEntry('sermon-2'), makeEntry('sermon-3')])
+    await writeProgressRecords({ 'sermon-1': record, 'sermon-2': record, 'sermon-3': record })
+    sermonProgressAtom(ctx, { 'sermon-1': record, 'sermon-2': record, 'sermon-3': record })
+
+    await removeSermonsFromHistoryAction(ctx, ['sermon-1', 'sermon-3'])
+
+    const progress = ctx.get(sermonProgressAtom)
+    expect(progress['sermon-1']).toBeUndefined()
+    expect(progress['sermon-3']).toBeUndefined()
+    // Оставшаяся запись каталога перезаписывает свою progress-запись коммитом.
+    expect(progress['sermon-2']?.positionMs).toBe(500)
+    const stored = await readProgressRecords()
+    expect(stored['sermon-1']).toBeUndefined()
+    expect(stored['sermon-3']).toBeUndefined()
+    expect(stored['sermon-2']?.positionMs).toBe(500)
   })
 })

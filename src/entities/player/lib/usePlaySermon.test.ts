@@ -65,6 +65,7 @@ jest.mock('entities/listening-history/@x/player', () => {
     historyAtom: atom([], 'mockHistoryAtom'),
     recordPlaybackStartAction: (...args: unknown[]) => mockRecordPlaybackStart(...args),
     recordSermonSwitchAction: (...args: unknown[]) => mockRecordSermonSwitch(...args),
+    sermonProgressAtom: atom({}, 'mockSermonProgressAtom'),
   }
 })
 

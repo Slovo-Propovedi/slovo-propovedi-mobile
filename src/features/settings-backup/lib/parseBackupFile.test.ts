@@ -59,6 +59,34 @@ describe('parseBackupFile', () => {
     expect(parseBackupFile(badData)).toEqual({ status: 'invalid' })
   })
 
+  test('accepts a backup with a valid sermonProgress section', () => {
+    const withProgress = JSON.stringify({
+      data: {
+        sermonProgress: {
+          'sermon-1': { durationMs: 60_000, positionMs: 30_000, updatedAt: 1 },
+        },
+      },
+      exportedAt: '2026-01-01T00:00:00.000Z',
+      kind: BACKUP_KIND,
+      version: BACKUP_VERSION,
+    })
+
+    expect(parseBackupFile(withProgress).status).toBe('ok')
+  })
+
+  test('rejects a backup with an invalid sermonProgress section', () => {
+    const badProgress = JSON.stringify({
+      data: {
+        sermonProgress: { 'sermon-1': { durationMs: -5, positionMs: 30_000, updatedAt: 1 } },
+      },
+      exportedAt: '2026-01-01T00:00:00.000Z',
+      kind: BACKUP_KIND,
+      version: BACKUP_VERSION,
+    })
+
+    expect(parseBackupFile(badProgress).status).toBe('invalid')
+  })
+
   test('accepts an old backup that keeps basic-auth credentials in the instance url', () => {
     const oldBackup = JSON.stringify({
       data: {

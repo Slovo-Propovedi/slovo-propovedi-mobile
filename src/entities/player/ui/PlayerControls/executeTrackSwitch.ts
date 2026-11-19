@@ -3,6 +3,7 @@ import {
   getResumePosition,
   historyAtom,
   recordSermonSwitchAction,
+  sermonProgressAtom,
 } from 'entities/listening-history/@x/player'
 import { type PlaylistData } from 'entities/playlist/@x/player'
 import { type AudioPlayerData, toAudioPlayerData } from 'entities/sermon/@x/player'
@@ -53,7 +54,7 @@ export const executeTrackSwitch = async ({
 
   // Persist new track's start position for crash-consistency (matches auto-advance path)
   const history = ctx.get(historyAtom)
-  const resumeMs = getResumePosition(history, baseAudio.id)
+  const resumeMs = getResumePosition(history, baseAudio.id, ctx.get(sermonProgressAtom))
   void savePlaybackProgress(ctx, { positionMs: resumeMs, sermonId: baseAudio.id }).catch(error => {
     console.error('[executeTrackSwitch] savePlaybackProgress failed:', error)
     reportError(error, 'Ошибка при сохранении позиции трека')

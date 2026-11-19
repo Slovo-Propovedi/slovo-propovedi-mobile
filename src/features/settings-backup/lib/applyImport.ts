@@ -1,5 +1,4 @@
 import { action, type Ctx } from '@reatom/framework'
-import { loadHistoryAction, readHistory, writeHistory } from 'entities/listening-history'
 import {
   loadMyPlaylists,
   normalizeLocalPlaylist,
@@ -16,25 +15,9 @@ import {
 } from 'entities/search-history'
 import { type BackupImportData, type BackupImportMode } from '../model/backupPayload'
 import { applyPlayerScalars, applySettingsScalars, applyYouTubeImport } from './applyBackupScalars'
-import { mergeHistory } from './mergeHistory'
+import { applyHistory } from './applyHistory'
 import { mergePlaylists } from './mergePlaylists'
 import { mergeSearchHistory } from './mergeSearchHistory'
-
-const applyHistory = async (
-  ctx: Ctx,
-  data: BackupImportData,
-  mode: BackupImportMode,
-): Promise<void> => {
-  if (!data.listeningHistory) return
-
-  const next =
-    mode === 'replace'
-      ? data.listeningHistory
-      : mergeHistory(await readHistory(), data.listeningHistory)
-
-  await writeHistory(next)
-  await loadHistoryAction(ctx)
-}
 
 const applySearchHistory = async (
   ctx: Ctx,

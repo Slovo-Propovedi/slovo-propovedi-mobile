@@ -4,6 +4,7 @@ import {
   getResumePosition,
   historyAtom,
   recordSermonSwitchAction,
+  sermonProgressAtom,
 } from 'entities/listening-history/@x/player'
 import { CURRENT_AUDIO, CURRENT_PLAYLIST } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
@@ -63,7 +64,7 @@ export const switchNativeTrack = async ({
   if (storedAudio?.id === newTrack.id) return
 
   const newAudio = { ...newTrack, artwork: playlist.artwork }
-  const resumeMs = getResumePosition(ctx.get(historyAtom), newTrack.id)
+  const resumeMs = getResumePosition(ctx.get(historyAtom), newTrack.id, ctx.get(sermonProgressAtom))
   await setCurrentAudioAction(ctx, newAudio)
 
   if (previousIndex !== undefined) {

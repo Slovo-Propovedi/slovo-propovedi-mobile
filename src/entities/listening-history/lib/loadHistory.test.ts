@@ -4,9 +4,11 @@ import { LISTENING_HISTORY, LISTENING_PROGRESS_SNAPSHOT } from 'shared/config'
 import { mockConsole } from 'shared/mocks'
 import { reportError } from 'shared/model/error-dialog'
 import { historyAtom, isHistoryLoadedAtom } from '../model/historyAtom'
+import { sermonProgressAtom } from '../model/progressAtom'
 import { type ListeningHistory, type ListeningHistoryEntry } from '../model/types'
 import { getEntrySermon } from './getEntrySermon'
 import { loadHistoryAction } from './loadHistory'
+import { clearProgressRecords, readProgressRecords, writeProgressRecords } from './progressStorage'
 
 jest.mock('shared/model/error-dialog', () => ({
   reportError: jest.fn(),
@@ -118,5 +120,96 @@ describe('loadHistoryAction', () => {
     const entry = ctx.get(historyAtom)[0]
     expect(entry.durationMs).toBe(60_000)
     expect(entry.positionMs).toBe(60_000)
+  })
+
+  test('first hydration seeds legacy progress records from the catalog', async () => {
+    const lastPlayedAt = 5_000
+    await AsyncStorage.setItem(
+      LISTENING_HISTORY,
+      JSON.stringify([
+        makeEntry('sermon-1', { durationMs: 60_000, lastPlayedAt, positionMs: 30_000 }),
+        makeEntry('sermon-2', { durationMs: 0, lastPlayedAt, positionMs: 0 }),
+      ]),
+    )
+
+    const ctx = createCtx()
+    await loadHistoryAction(ctx)
+
+    const progress = ctx.get(sermonProgressAtom)
+    expect(progress['sermon-1']).toEqual({
+      durationMs: 60_000,
+      positionMs: 30_000,
+      updatedAt: lastPlayedAt,
+    })
+    // Запись 0/0 не несёт информации о прослушанности — сид не выполняется.
+    expect(progress['sermon-2']).toBeUndefined()
+    expect(await readProgressRecords()).toEqual(progress)
+  })
+
+  test('repeated load does not re-seed legacy records', async () => {
+    const lastPlayedAt = 5_000
+    await AsyncStorage.setItem(
+      LISTENING_HISTORY,
+      JSON.stringify([
+        makeEntry('sermon-1', { durationMs: 60_000, lastPlayedAt, positionMs: 30_000 }),
+      ]),
+    )
+
+    const ctx = createCtx()
+    await loadHistoryAction(ctx)
+    await clearProgressRecords()
+
+    await loadHistoryAction(ctx)
+
+    expect(ctx.get(sermonProgressAtom)).toEqual({})
+  })
+
+  test('first hydration keeps stored progress records over legacy derivation', async () => {
+    const lastPlayedAt = 5_000
+    await AsyncStorage.setItem(
+      LISTENING_HISTORY,
+      JSON.stringify([
+        makeEntry('sermon-1', { durationMs: 60_000, lastPlayedAt, positionMs: 30_000 }),
+      ]),
+    )
+    await writeProgressRecords({
+      'sermon-1': { durationMs: 60_000, positionMs: 45_000, updatedAt: 9_000 },
+    })
+
+    const ctx = createCtx()
+    await loadHistoryAction(ctx)
+
+    expect(ctx.get(sermonProgressAtom)['sermon-1']).toEqual({
+      durationMs: 60_000,
+      positionMs: 45_000,
+      updatedAt: 9_000,
+    })
+  })
+
+  test('keeps a progress record committed during hydration over the stale disk snapshot', async () => {
+    await writeProgressRecords({
+      'sermon-1': { durationMs: 60_000, positionMs: 10_000, updatedAt: 1 },
+    })
+
+    const ctx = createCtx()
+    // A playback flush lands after the disk read started: the atom already holds
+    // a fresher record that the snapshot being read cannot see.
+    sermonProgressAtom(ctx, {
+      'sermon-2': { durationMs: 90_000, positionMs: 40_000, updatedAt: 2 },
+    })
+
+    await loadHistoryAction(ctx)
+
+    const progress = ctx.get(sermonProgressAtom)
+    expect(progress['sermon-2']).toEqual({
+      durationMs: 90_000,
+      positionMs: 40_000,
+      updatedAt: 2,
+    })
+    expect(progress['sermon-1']).toEqual({
+      durationMs: 60_000,
+      positionMs: 10_000,
+      updatedAt: 1,
+    })
   })
 })

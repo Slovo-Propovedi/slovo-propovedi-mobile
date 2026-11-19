@@ -2,6 +2,7 @@ import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { historyAtom } from '../model/historyAtom'
+import { sermonProgressAtom } from '../model/progressAtom'
 import { type ListeningHistoryEntry } from '../model/types'
 import { useHistoryProgress } from './useHistoryProgress'
 
@@ -85,5 +86,45 @@ describe('useHistoryProgress', () => {
     })
 
     expect(result.current).toBe(1)
+  })
+
+  test('falls back to the progress record when the catalog has no entry', async () => {
+    const ctx = createCtx()
+    sermonProgressAtom(ctx, {
+      'evicted-sermon': { durationMs: 2000, positionMs: 1000, updatedAt: 1 },
+    })
+
+    const { result } = await renderHookWithProviders(() => useHistoryProgress('evicted-sermon'), {
+      ctx,
+    })
+
+    expect(result.current).toBe(0.5)
+  })
+
+  test('catalog entry wins over the progress record', async () => {
+    const ctx = createCtx()
+    historyAtom(ctx, [makeEntry('sermon-1', { durationMs: 1000, positionMs: 1000 })])
+    sermonProgressAtom(ctx, {
+      'sermon-1': { durationMs: 2000, positionMs: 500, updatedAt: 1 },
+    })
+
+    const { result } = await renderHookWithProviders(() => useHistoryProgress('sermon-1'), { ctx })
+
+    expect(result.current).toBe(1)
+  })
+
+  test('reacts to progress atom changes', async () => {
+    const ctx = createCtx()
+
+    const { result } = await renderHookWithProviders(() => useHistoryProgress('sermon-1'), { ctx })
+    expect(result.current).toBeUndefined()
+
+    await act(async () => {
+      sermonProgressAtom(ctx, {
+        'sermon-1': { durationMs: 2000, positionMs: 1000, updatedAt: 1 },
+      })
+    })
+
+    expect(result.current).toBe(0.5)
   })
 })

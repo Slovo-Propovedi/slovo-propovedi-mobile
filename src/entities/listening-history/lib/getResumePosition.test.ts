@@ -1,5 +1,6 @@
 import { type ListeningHistory } from '../model/types'
 import { getResumePosition } from './getResumePosition'
+import { type SermonProgressRecord } from './progressStorage'
 
 const makeEntries = (overrides: Record<string, unknown> = {}): ListeningHistory => [
   {
@@ -25,31 +26,63 @@ const makeEntries = (overrides: Record<string, unknown> = {}): ListeningHistory 
 
 describe('getResumePosition', () => {
   test('returns 0 when no entries exist', () => {
-    expect(getResumePosition([], 'sermon-1')).toBe(0)
+    expect(getResumePosition([], 'sermon-1', {})).toBe(0)
   })
 
   test('returns 0 when entry is completed', () => {
     const entries = makeEntries({ durationMs: 3_600_000, positionMs: 3_595_000 })
-    expect(getResumePosition(entries, 'sermon-1')).toBe(0)
+    expect(getResumePosition(entries, 'sermon-1', {})).toBe(0)
   })
 
   test('returns positionMs for partial entry', () => {
     const entries = makeEntries({ durationMs: 3_600_000, positionMs: 1_800_000 })
-    expect(getResumePosition(entries, 'sermon-1')).toBe(1_800_000)
+    expect(getResumePosition(entries, 'sermon-1', {})).toBe(1_800_000)
   })
 
   test('returns 0 when positionMs is 0', () => {
     const entries = makeEntries({ durationMs: 3_600_000, positionMs: 0 })
-    expect(getResumePosition(entries, 'sermon-1')).toBe(0)
+    expect(getResumePosition(entries, 'sermon-1', {})).toBe(0)
   })
 
   test('returns 0 for unknown sermon id', () => {
     const entries = makeEntries()
-    expect(getResumePosition(entries, 'unknown-id')).toBe(0)
+    expect(getResumePosition(entries, 'unknown-id', {})).toBe(0)
   })
 
   test('returns 0 when durationMs is 0 (not started)', () => {
     const entries = makeEntries({ durationMs: 0, positionMs: 0 })
-    expect(getResumePosition(entries, 'sermon-1')).toBe(0)
+    expect(getResumePosition(entries, 'sermon-1', {})).toBe(0)
+  })
+
+  test('falls back to the progress record when the catalog has no entry', () => {
+    const records: Record<string, SermonProgressRecord> = {
+      'evicted-sermon': { durationMs: 3_600_000, positionMs: 900_000, updatedAt: 1 },
+    }
+    expect(getResumePosition([], 'evicted-sermon', records)).toBe(900_000)
+  })
+
+  test('falls back to 0 for a completed progress record', () => {
+    const records: Record<string, SermonProgressRecord> = {
+      'evicted-sermon': { durationMs: 3_600_000, positionMs: 3_595_000, updatedAt: 1 },
+    }
+    expect(getResumePosition([], 'evicted-sermon', records)).toBe(0)
+  })
+
+  test('falls back to 0 for a zero-position progress record', () => {
+    const records: Record<string, SermonProgressRecord> = {
+      'evicted-sermon': { durationMs: 3_600_000, positionMs: 0, updatedAt: 1 },
+    }
+    expect(getResumePosition([], 'evicted-sermon', records)).toBe(0)
+  })
+
+  test('catalog entry wins over the progress record', () => {
+    const records: Record<string, SermonProgressRecord> = {
+      'sermon-1': { durationMs: 3_600_000, positionMs: 900_000, updatedAt: 1 },
+    }
+    expect(getResumePosition(makeEntries(), 'sermon-1', records)).toBe(1_800_000)
+  })
+
+  test('returns 0 when neither catalog nor progress record exists', () => {
+    expect(getResumePosition([], 'unknown-id', {})).toBe(0)
   })
 })

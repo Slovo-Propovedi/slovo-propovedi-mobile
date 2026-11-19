@@ -20,6 +20,11 @@ const createAsyncStorageMocks = () => {
   register('setItem', async (key: string, value: string) => {
     storage[key] = value
   })
+  register('multiSet', async (entries: Array<[string, string]>) => {
+    for (const [key, value] of entries) {
+      storage[key] = value
+    }
+  })
   register('removeItem', async (key: string) => {
     delete storage[key]
   })

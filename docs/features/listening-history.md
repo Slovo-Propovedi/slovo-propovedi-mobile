@@ -17,11 +17,14 @@ src/entities/listening-history/
 ├── model/
 │   ├── types.ts              # Zod-схемы: listeningHistoryEntrySchema, listeningHistorySchema; типы ListeningHistoryEntry, ListeningHistory (sermon опционален)
 │   ├── historyAtom.ts        # Атомы historyAtom + isHistoryLoadedAtom (вынесены для разрыва цикла history ↔ commitHistory)
-│   ├── commitHistory.ts      # Атомарный коммит истории: sync historyAtom до writeHistory (анти-гонка lost-update)
+│   ├── commitHistory.ts      # Атомарный коммит истории: sync historyAtom + sermonProgressAtom до записи в сторедж (анти-гонка lost-update)
+│   ├── progressAtom.ts       # Атом sermonProgressAtom: Record<sermonId, SermonProgressRecord> — гидратируется в loadHistoryAction
 └── lib/
     ├── constants.ts          # COMPLETION_REMAINING_MS (10 000), MAX_HISTORY_ENTRIES (100), MANUAL_LISTENED_DURATION_MS (1)
     ├── historyStorage.ts     # readHistory / writeHistory (обёртки над getCachedJson/setCachedJson + очередь записей)
     ├── liveProgressStorage.ts    # Мини-снапшот LISTENING_PROGRESS_SNAPSHOT: liveProgressSnapshotSchema (Zod) + read/clear
+    ├── progressStorage.ts     # НЕОГРАНИЧЕННОЕ per-sermon хранилище прогресса: ключи sermonProgress:<id>, zod-схема, promise-очередь записей (read/write/remove/clear)
+    ├── deriveProgressRecords.ts   # Деривация progress-записей из записей каталога (легаси-миграция, импорт бэкапа)
     ├── buildHistoryEntry.ts  # Фабрика новой записи: санитизация sermon (убирает playlists), снапшот context-playlist; buildSanitizedSermon
     ├── buildManualPlaylist.ts # Синтетический slim-плейлист из одного sermon (fallback, когда нет контекстного плейлиста)
     ├── isEntryCompleted.ts   # Правило завершённости (см. ниже) — публичное
@@ -30,7 +33,7 @@ src/entities/listening-history/
     ├── resolveEntryPlaylist.ts   # resolvePlaylistBySermon(playlistId, sermonId, fallback): live dynamicSectionsAtom (через @x entities/section/@x/listening-history) → sections-cache → fallback-плейлист
     ├── sortAndCapEntries.ts  # Дедупликация по sermon.id + сортировка по lastPlayedAt desc + обрезка до MAX_HISTORY_ENTRIES
     ├── upsertHistoryProgress.ts # Чистый upsert прогресса (create-or-update) для flushHistoryProgressAction — вынесен из lib/flushHistoryProgress.ts (лимит строк)
-    ├── loadHistory.ts        # loadHistoryAction — гидрация каталога: reconcile со снапшотом, слияние с in-memory (только до первой гидрации), sortAndCapEntries, ставит isHistoryLoadedAtom (finally)
+    ├── loadHistory.ts        # loadHistoryAction — гидрация каталога: reconcile со снапшотом, слияние с in-memory (каталог и per-sermon прогресс — только до первой гидрации), sortAndCapEntries, ставит isHistoryLoadedAtom (finally)
     ├── recordPlaybackStart.ts # recordPlaybackStartAction — старт воспроизведения: новая запись / перемещение в начало / сброс завершённой
     ├── markHistoryCompleted.ts # markHistoryCompletedAction — завершение/восстановление записи (upsert по snapshot'у проповеди, см. «Завершение трека»)
     ├── removeHistoryEntry.ts  # removeHistoryEntryAction — удаление записи по sermon.id
@@ -64,6 +67,9 @@ export { recordSermonSwitchAction }
 export { removeSermonsFromHistoryAction }
 export { useHistoryProgressMap }
 export { useHistorySermonIds }
+export { clearProgressRecords, readProgressRecords, writeProgressRecords }
+export { sermonProgressMapSchema }
+export { deriveProgressRecords }
 export {
   clearHistoryAction,
   historyAtom,
@@ -95,6 +101,7 @@ import {
   getResumePosition,
   recordPlaybackStartAction,
   recordSermonSwitchAction,
+  sermonProgressAtom,
   type ListeningHistory,
 } from 'entities/listening-history/@x/player'
 ```
@@ -110,6 +117,7 @@ export { markHistoryCompletedAction } from '../lib/markHistoryCompleted'
 export { recordPlaybackStartAction } from '../lib/recordPlaybackStart'
 export { recordSermonSwitchAction } from '../lib/recordSermonSwitch'
 export { historyAtom } from '../model/historyAtom'
+export { sermonProgressAtom } from '../model/progressAtom'
 export { type ListeningHistory } from '../model/types'
 ```
 
@@ -206,7 +214,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 При тапе на проповедь в `usePlayNewSermon` (`src/entities/player/lib/usePlaySermon.ts`):
 
-1. `getResumePosition(history, sermonId)` определяет позицию resume:
+1. `getResumePosition(history, sermonId, ctx.get(sermonProgressAtom))` определяет позицию resume (запись каталога приоритетна, иначе фолбэк на progress-запись — см. «Хранилище прогресса»):
    - Нет записи → 0
    - Запись завершена → 0
    - `positionMs ≤ 0` → 0
@@ -218,7 +226,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 ### Кнопки Next/Prev (`usePlayerToggleTrack`)
 
-При переключении через кнопки Next/Prev (`src/entities/player/ui/PlayerControls/usePlayerToggleTrack.ts`) позиция resume вычисляется из истории через `ctx.get(historyAtom)` + `getResumePosition(history, sermonId)`. Позиция старого трека flush'ится через `recordSermonSwitchAction({ markOldCompleted: false, ... })`.
+При переключении через кнопки Next/Prev (`src/entities/player/ui/PlayerControls/usePlayerToggleTrack.ts`, путь `executeTrackSwitch.ts`) позиция resume вычисляется через `getResumePosition(history, sermonId, ctx.get(sermonProgressAtom))`. Позиция старого трека flush'ится через `recordSermonSwitchAction({ markOldCompleted: false, ... })`.
 
 ### Очередь
 
@@ -226,7 +234,7 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 ### Нативный переход (`TrackAutoAdvanceService`)
 
-Переход между треками внутри очереди выполняет нативный движок; JS узнаёт о нём из `trackChanged` и в `handleTrackChanged` считает resume через `ctx.get(historyAtom)` + `getResumePosition(history, newTrack.id)`, затем делает `seekToResume` (пропуск при `resumeMs <= 0` и в пределах 10с от конца). При замороженном JS `trackChanged` не обрабатывается: история и атомы «догоняются» при возврате в foreground через `reconcileOnForeground` (см. «Возврат в foreground»). Повтор трека — нативный single-item loop, `trackChanged` не порождает, поэтому per-loop событий истории нет.
+Переход между треками внутри очереди выполняет нативный движок; JS узнаёт о нём из `trackChanged` и в `handleTrackChanged` → `switchNativeTrack` считает resume через `getResumePosition(ctx.get(historyAtom), newTrack.id, ctx.get(sermonProgressAtom))`, затем делает `seekToResume` (пропуск при `resumeMs <= 0` и в пределах 10с от конца). При замороженном JS `trackChanged` не обрабатывается: история и атомы «догоняются» при возврате в foreground через `reconcileOnForeground` (см. «Возврат в foreground»). Повтор трека — нативный single-item loop, `trackChanged` не порождает, поэтому per-loop событий истории нет.
 
 ## Запись прогресса
 
@@ -265,10 +273,10 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 1. читает каталог + снапшот;
 2. снапшота нет → каталог возвращается как есть (позиция каталога сохраняется);
-3. снапшот без совпадающей записи (или запись завершена) → дропается, каталог не меняется;
+3. снапшот без совпадающей записи (проповедь уже вытеснена из капнутого каталога) → upsert в неограниченный per-sermon progress-store (`writeProgressRecords`), затем снапшот чистится; снапшот завершённой записи → дропается, каталог не меняется;
 4. иначе — мержит в запись: `positionMs = snapshot.positionMs`, `durationMs = max(entry, snapshot)`, пишет каталог и чистит снапшот.
 
-**Гонка гидрации.** `loadHistoryAction` сливает прочитанный с диска каталог с записями, уже появившимися в `historyAtom` (10с-флаш, завершение трека): in-memory идёт первым, а `sortAndCapEntries` на равном `lastPlayedAt` оставляет первую запись — то есть побеждает in-memory-версия с более свежим прогрессом. Тамбстоуны удалённых в этой сессии проповедей (`forgottenSermons`) не дают записям воскреснуть с диска. Слияние выполняется только до первой гидрации (`isHistoryLoadedAtom === false`); повторные вызовы (импорт резервной копии) читают диск как источник истины и атом не разбавляют.
+**Гонка гидрации.** `loadHistoryAction` сливает прочитанный с диска каталог с записями, уже появившимися в `historyAtom` (10с-флаш, завершение трека): in-memory идёт первым, а `sortAndCapEntries` на равном `lastPlayedAt` оставляет первую запись — то есть побеждает in-memory-версия с более свежим прогрессом. Тамбстоуны удалённых в этой сессии проповедей (`forgottenSermons`) не дают записям воскреснуть с диска. Тем же слиянием (только до первой гидрации) защищён и `sermonProgressAtom`: записи прогресса, пришедшие от флеша между чтением диска и отложенной записью атома, ложатся поверх прочитанного снимка и не затираются им. Слияние выполняется только до первой гидрации (`isHistoryLoadedAtom === false`); повторные вызовы (импорт резервной копии) читают диск как источник истины и атом не разбавляют.
 
 ### Мини-снапшот (LEGACY)
 
@@ -298,11 +306,36 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 Авто-повтор трека (loop `'single'`) не порождает `trackChanged`, поэтому история при повторах не обновляется — прежнее поведение «каждый повтор отмечал завершение» отменено.
 
+## Хранилище прогресса (per-sermon)
+
+Отдельно от каталога живёт **НЕОГРАНИЧЕННОЕ per-sermon хранилище прогресса** — источник индикации «прослушан и насколько» для проповедей, вытесненных из обрезанного каталога (100 записей, `MAX_HISTORY_ENTRIES`):
+
+- **Ключи** — `sermonProgress:<sermonId>` (префикс `SERMON_PROGRESS_PREFIX` объявлен в самой сущности — `lib/progressStorage.ts`, прецедент entity-owned ключей — `entities/offline-cache/lib/storageKeys.ts`). На один sermonId — одна запись; записей может быть сколько угодно, лимита нет.
+- **Значение** — JSON `{ positionMs, durationMs, updatedAt }`, валидируется Zod-схемой `sermonProgressRecordSchema` (все поля nonnegative). Хранилище недоверенное: каждая запись читается через `safeParse`, невалидные отбрасываются.
+- **API** (`lib/progressStorage.ts`): `readProgressRecords` (getAllKeys + multiGet по префиксу), `writeProgressRecords` (один multiSet), `removeProgressRecords` (multiRemove, пустой список — no-op), `clearProgressRecords` (getAllKeys + multiRemove по префиксу). Все записи — через сериализованную promise-очередь (тот же паттерн, что у `historyStorage`).
+- **Атом** — `sermonProgressAtom` (`model/progressAtom.ts`): `Record<string, SermonProgressRecord>`, гидратируется из хранилища в `loadHistoryAction` (через `ctx.schedule`, вместе с `historyAtom`).
+
+### Пути записи (синхронизация с каталогом)
+
+- **commitHistory** (все 9 писателей каталога): после sync-обновления атомов каждая запись `next` зеркалится в `sermonProgressAtom` (мерж: старые ключи сохраняются, ключи из `next` перезаписываются) и в хранилище (`writeProgressRecords` только для записей из `next`). Поэтому `markSermonListened`/`markSermonsListened`/flush/переключение/завершение синхронизируют прогресс автоматически — «Пометить все прослушанными» больше не вытесняет чужие отметки: вытесненные из каталога записи живут в прогресс-хранилище.
+- **Удаление** (паритет): `removeHistoryEntryAction` → `removeProgressRecords([id])`, `removeSermonsFromHistoryAction` → `removeProgressRecords(найденные id)`, `clearHistoryAction` → `clearProgressRecords()` + сброс атома. Ключ снимается с атома до коммита (иначе мерж в `commitHistory` вернул бы его), запись в хранилище — после коммита (общая очередь сохраняет порядок).
+- **Гидрация + одноразовая легаси-миграция** (`loadHistoryAction`): при **первой** гидрации (`isHistoryLoadedAtom === false` до вызова) записи каталога, у которых нет записи в progress-карте и `positionMs > 0` (запись 0/0 не несёт информации о прослушанности), сеются в хранилище через `deriveProgressRecords` (`record = { positionMs, durationMs, updatedAt: lastPlayedAt }`) и пишутся `writeProgressRecords`. Повторные `loadHistoryAction` (импорт бэкапа) сид не выполняют — они пишут прогресс явно.
+- **Резервная копия**: секция `sermonProgress` в payload (`buildPayload` читает `readProgressRecords`), при импорте — `replace` стирает старые записи и пишет файловые + деривацию из каталога, `merge` сохраняет по каждому id запись с более свежим `updatedAt` (подробнее — [settings-backup.md](./settings-backup.md)).
+
+### Чтение слиянием
+
+Каталог приоритетнее, прогресс-хранилище — базовый слой:
+
+- `useHistoryProgressMap()` строит Map из **всех** записей `sermonProgressAtom` (включая вытесненные из каталога) и **добавляет поверх** значения из `historyAtom` (catalog wins; конфликт практически невозможен — обе записи пишутся одним коммитом).
+- `useHistoryProgress(id)` подписан на оба атома; значение — из записи каталога, при её отсутствии — из progress-записи.
+- `getResumePosition(entries, sermonId, progressRecords)` — третий аргумент (progress-карта); запись каталога приоритетна, иначе фолбэк на progress-запись по тем же правилам (завершена/0 → 0). Все вызывающие (`playNewSermonAsync`, `executeTrackSwitch`, `switchNativeTrack`) передают `ctx.get(sermonProgressAtom)`.
+- `useHistorySermonIds` остался каталог-only — это осознанное решение: проверка «есть ли в истории» должна отражать именно каталог.
+
 ## Прогресс в UI
 
 ### Хранение и вычисление
 
-- **Stored** — `useHistoryProgressMap()` возвращает `Map<string, number>` (0..1), вычисляемую из `historyAtom` (`getEntrySermon(entry).id` + `isEntryCompleted`). Используется в списках как единственный источник прогресса.
+- **Stored** — `useHistoryProgressMap()` возвращает `Map<string, number>` (0..1), вычисляемую слиянием `sermonProgressAtom` (базовый слой, все записи) и `historyAtom` (поверх; `getEntrySermon(entry).id` + `isEntryCompleted`). Используется в списках как единственный источник прогресса.
 - **Live-чтения нет.** Хуки `useLiveSermonProgress` / `useSermonProgress` и атом `getLiveProgressAtom` удалены: строки списков не подписаны на `positionAtom`/`durationAtom`, поэтому не ре-рендерятся 2 раза в секунду во время воспроизведения. Значение строки обновляется **только по событиям** (старт, пауза/flush, переключение, завершение, удаление) — когда `historyAtom` меняется целиком.
 
 ### Отображение
@@ -337,12 +370,12 @@ Per-sermon семантика вынесена в чистый хелпер `com
 
 | Сьют                       | Файл                                        | Что проверяет                                                                                                                                                                                                                                                                                                                                                                        |
 | -------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `loadHistory`              | `lib/loadHistory.test.ts`                   | Загрузка из storage; пустой storage → пустой атом; `isHistoryLoadedAtom` после гидрации и при ошибке чтения; дроп осиротевшего снапшота; более свежая in-memory запись побеждает старый диск                                                                                                                                                                                         |
+| `loadHistory`              | `lib/loadHistory.test.ts`                   | Загрузка из storage; пустой storage → пустой атом; `isHistoryLoadedAtom` после гидрации и при ошибке чтения; дроп осиротевшего снапшота; более свежая in-memory запись побеждает старый диск; первая гидрация сеет легаси-миграцию прогресса (запись 0/0 — нет), повторная — нет; хранящиеся progress-записи не перезаписываются деривацией                                            |
 | `recordPlaybackStart`      | `lib/recordPlaybackStart.test.ts`           | Новая запись (позиция 0), сброс завершённой, перемещение незавершённой, merge-ветка со strip `playlists`                                                                                                                                                                                                                                                                             |
 | `flushHistoryProgress`     | `lib/flushHistoryProgress.test.ts`          | Upsert: создание записи при отсутствии + синтетический плейлист + вытеснение на капе; обновление позиции/длительности без изменения `lastPlayedAt`; персист; deferred-флаш пропускает завершённую запись и создаёт запись при отсутствии; immediate-флаш перезаписывает её реальным прогрессом без изменения `lastPlayedAt`; создание с durationMs 0 → self-heal при следующем флаше |
 | `markHistoryCompleted`     | `lib/markHistoryCompleted.test.ts`          | positionMs = durationMs, живая длительность из параметра, синтетическое завершение нулевой записи, создание завершённой записи из снапшота (с длительностью и без), no-op без записи и без снапшота                                                                                                                                                                                  |
-| `removeHistoryEntry`       | `lib/removeHistoryEntry.test.ts`            | Удаление по id, no-op для неизвестного id                                                                                                                                                                                                                                                                                                                                            |
-| `clearHistory`             | `lib/clearHistory.test.ts`                  | Очистка атома и storage                                                                                                                                                                                                                                                                                                                                                              |
+| `removeHistoryEntry`       | `lib/removeHistoryEntry.test.ts`            | Удаление по id, no-op для неизвестного id; progress-запись удалённой проповеди чистится (атом + хранилище)                                                                                                                                                                                                                                                                           |
+| `clearHistory`             | `lib/clearHistory.test.ts`                  | Очистка атома и storage; progress-записи чистятся в хранилище и атоме                                                                                                                                                                                                                                                                                                                |
 | `progressFlusher`          | `lib/PlayerService/progressFlusher.test.ts` | `scheduleHistoryFlush` и `flushProgress`: ранний выход без audio; серия schedules → один write; durationMs захватывается при schedule; `cancelScheduledHistoryFlush`; `flushProgress` отменяет debounce; flush создаёт запись с текущим плейлистом; deferred пропускает завершённую; **capture-at-schedule: смена sermon в окне дебаунса не приводит к cross-track contamination**   |
 | `usePlaybackProgressSaver` | `lib/usePlaybackProgressSaver.test.tsx`     | 10с-тик пишет bound-ключ + flush каталога с sermon/duration/position; пауза и position ≤ 0 → без flush; skip-first-tick после смены audio; AppState background → flush, inactive → нет; unmount чистит интервал; **playlist из `currentPlaylistAtom` попадает в flush-payload**                                                                                                      |
 | `race (commitHistory)`     | `lib/historyRace.test.ts`                   | Конкурентный flush + remove: атом содержит оба эффекта до завершения persistence; авто-переход: `markHistoryCompletedAction` + `recordPlaybackStartAction` без await — обе трансформации выживают                                                                                                                                                                                    |
@@ -350,11 +383,13 @@ Per-sermon семантика вынесена в чистый хелпер `com
 | `isEntryCompleted`         | `lib/isEntryCompleted.test.ts`              | Границы: >10с осталось (false), 10с осталось (true), position = duration на длинном треке (true), короткий трек (5с) при position = duration (true), короткий трек частично (false), duration = 0 (false), отрицательная duration (false)                                                                                                                                            |
 | `buildHistoryEntry`        | `lib/buildHistoryEntry.test.ts`             | Фабрика записи: sanitizer убирает `playlists`, контекстный плейлист содержит один sermon, начальные позиции 0, top-level `sermon` отсутствует                                                                                                                                                                                                                                        |
 | `sortAndCapEntries`        | `lib/sortAndCapEntries.test.ts`             | Дедупликация по sermon.id (остаётся самая свежая), сортировка по lastPlayedAt desc, обрезка до MAX_HISTORY_ENTRIES                                                                                                                                                                                                                                                                   |
-| `getResumePosition`        | `lib/getResumePosition.test.ts`             | Нет записи → 0, завершённая → 0, position ≤ 0 → 0, иначе positionMs                                                                                                                                                                                                                                                                                                                  |
+| `getResumePosition`        | `lib/getResumePosition.test.ts`             | Нет записи → 0, завершённая → 0, position ≤ 0 → 0, иначе positionMs; фолбэк на progress-запись (каталог приоритетен), завершённая/нулевая progress-запись → 0                                                                                                                                                                                                                        |
 | `liveProgressStorage`      | `lib/liveProgressStorage.test.ts`           | Чтение валидного снапшота; невалидный JSON/отсутствие/поля с отрицательными значениями → undefined; очистка                                                                                                                                                                                                                                                                          |
-| `useHistoryProgressMap`    | `lib/useHistoryProgressMap.test.ts`         | Пустой history → пустая Map, completed → 1, partial → position/duration, position ≤ 0 → пропуск                                                                                                                                                                                                                                                                                      |
+| `progressStorage`          | `lib/progressStorage.test.ts`               | Чтение/запись/удаление/очистка per-sermon прогресса; невалидные записи (битый JSON, schema-промах) отбрасываются; перезапись по sermonId; очистка не трогает чужие ключи                                                                                                                                                                                                             |
+| `useHistoryProgress`       | `lib/useHistoryProgress.test.tsx`           | Per-row подписка: ratio/completed/unknown/zero/undefined sermonId; реакция на историю; фолбэк на progress-запись при отсутствии записи каталога, каталог побеждает; реакция на sermonProgressAtom                                                                                                                                                                                    |
+| `useHistoryProgressMap`    | `lib/useHistoryProgressMap.test.tsx`        | Пустой history → пустая Map, completed → 1, partial → position/duration, position ≤ 0 → пропуск; вытесненная из каталога запись остаётся в Map, каталог побеждает при конфликте, нулевые progress-записи пропускаются                                                                                                                                                                |
 | `markSermonListened`       | `lib/markSermonListened.test.ts`            | Upsert: создание завершённой записи (synthetic duration 1), обновление существующей до завершённой, идемпотентность для завершённой, не трогает `lastPlayedAt` при обновлении, персист                                                                                                                                                                                               |
-| `markSermonsListened`      | `lib/markSermonsListened.test.ts`           | Массовая отметка: один writeHistory для нескольких проповедей, завершение частичных записей с сохранением `lastPlayedAt`, смесь create+complete, пустой массив без записи, вытеснение на капе                                                                                                                                                                                        |
+| `markSermonsListened`      | `lib/markSermonsListened.test.ts`           | Массовая отметка: один writeHistory для нескольких проповедей, завершение частичных записей с сохранением `lastPlayedAt`, смесь create+complete, пустой массив без записи, вытеснение на капе; коммит зеркалит progress-записи, вытесненные записи сохраняют свой прогресс                                                                                                             |
 | `removeSermonsFromHistory` | `lib/removeSermonsFromHistory.test.ts`      | Массовое удаление: один writeHistory для нескольких id, неизвестные id → no-op, пустой массив без записи                                                                                                                                                                                                                                                                             |
 | `useHistorySermonIds`      | `lib/useHistorySermonIds.test.ts`           | Пустой history → пустой Set, все sermon-id из истории (включая записи с нулевым прогрессом)                                                                                                                                                                                                                                                                                          |
 | `buildHistoryMenuActions`  | `lib/buildHistoryMenuActions.test.ts`       | Инвариант «isCompleted без inHistory → игнорируется»: при `!inHistory` всегда маркировка, при `inHistory && !isCompleted` маркировка + удаление, при `inHistory && isCompleted` только удаление; иконки и тексты пунктов                                                                                                                                                             |

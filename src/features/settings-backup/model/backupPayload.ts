@@ -1,5 +1,5 @@
 import z from 'zod'
-import { listeningHistorySchema } from 'entities/listening-history'
+import { listeningHistorySchema, sermonProgressMapSchema } from 'entities/listening-history'
 import { myPlaylistsArraySchema, sectionSettingsDraftSchema } from 'entities/playlist'
 import { searchHistorySchema } from 'entities/search-history'
 import {
@@ -23,6 +23,9 @@ const backupDataSchema = z.object({
   myPlaylistsSectionSettings: sectionSettingsDraftSchema.optional(),
   player: playerBackupSchema.optional(),
   searchHistory: searchHistorySchema.optional(),
+  // НЕОГРАНИЧЕННОЕ per-sermon хранилище прогресса: сохраняет индикацию
+  // «прослушан» для проповедей, вытесненных из обрезанного каталога истории.
+  sermonProgress: sermonProgressMapSchema.optional(),
   settings: settingsBackupSchema.optional(),
   youtubeImport: youtubeImportBackupSchema.optional(),
 })

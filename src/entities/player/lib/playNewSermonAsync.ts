@@ -1,4 +1,8 @@
-import { getResumePosition, historyAtom } from 'entities/listening-history/@x/player'
+import {
+  getResumePosition,
+  historyAtom,
+  sermonProgressAtom,
+} from 'entities/listening-history/@x/player'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { nullIfEmpty } from 'shared/lib/utils/nullIfEmpty'
@@ -43,6 +47,7 @@ export const playNewSermonAsync = async (
     const currentPosition = ctx.get(positionAtom)
     const currentDuration = ctx.get(durationAtom)
     const history = ctx.get(historyAtom)
+    const progressRecords = ctx.get(sermonProgressAtom)
 
     // Artwork rule: the sermon's own artwork wins, the playlist's is the fallback.
     const newAudio: AudioPlayerData = {
@@ -86,7 +91,7 @@ export const playNewSermonAsync = async (
       play: deps.play,
       replaceAudio: deps.replaceAudio,
       resumeAfterPause: deps.resumeAfterPause,
-      resumeMs: getResumePosition(history, sermonId),
+      resumeMs: getResumePosition(history, sermonId, progressRecords),
       seekTo: deps.seekTo,
       sermonId,
     })

@@ -42,6 +42,7 @@
   "exportedAt": "2026-10-08T12:34:56.789Z",
   "data": {
     "listeningHistory": [],
+    "sermonProgress": {},
     "myPlaylists": [],
     "myPlaylistsSectionSettings": {},
     "searchHistory": [],
@@ -73,6 +74,7 @@
 - `kind` = `'slovo-propovedi-backup'`, `version` = `1` (`BACKUP_KIND` / `BACKUP_VERSION`).
 - `exportedAt` — ISO-строка момента экспорта.
 - `listeningHistory`, `myPlaylists`, `myPlaylistsSectionSettings`, `searchHistory` — валидируются **владельческими** схемами (`listeningHistorySchema`, `myPlaylistsArraySchema`, `sectionSettingsDraftSchema`, `searchHistorySchema`), а не копиями.
+- `sermonProgress` — НЕОГРАНИЧЕННОЕ per-sermon хранилище прогресса прослушивания (`sermonProgress:<sermonId>` → `{ positionMs, durationMs, updatedAt }`, схема `sermonProgressMapSchema` из `entities/listening-history`). Несёт индикацию «прослушан и насколько» для проповедей, вытесненных из обрезанного каталога истории (100 записей). Опционально: старые файлы без секции читаются — записи деривируются из каталога при импорте.
 - `settings` — подмножество скаляров: `themeMode` (`'system' | 'light' | 'dark'`), `dynamicColors`, `hapticsEnabled`, `serverUrl` (только `https://`), `sermonCachingEnabled`, `toursDisabled`, `toursSeenVersion` (строка). Все поля опциональны. `serverUrl` валидируется `HTTP_URL_PATTERN` (`/^https:\/\/.+/`): значение с `http://` делает файл невалидным (ветка `invalid`, тост «Файл резервной копии не удалось прочитать»).
 - `player` — `playbackRate`, `repeatMode`, `balance`, `pitch`, `equalizerEnabled`, `equalizerGains` (те же схемы плеера, что и при восстановлении).
 - `youtubeImport` — `source`, `invidiousBaseUrl`: ослабленная до partial `legacyImportSettingsSchema` из `shared/model` (терпит userinfo ради старых файлов, см. [Общий контракт с импортом аудио](#общий-контракт-с-импортом-аудио)).
@@ -125,6 +127,11 @@
 Различие режимов касается **только истории прослушивания, истории поиска и плейлистов**; скаляры всегда накладываются по присутствующим полям.
 
 - **История.** `replace` — данные файла; `merge` — `mergeHistory`: дедупликация по `sermon.id`, при совпадении побеждает запись с более свежим `lastPlayedAt`, сортировка по убыванию и обрезка до лимита истории (100, инвариант `sortAndCapEntries`).
+- **Прогресс прослушивания (`sermonProgress`).** Синхронизируется вместе с историей в `applyHistory`:
+  - деривация: записи каталога, отсутствующие в секции `sermonProgress` (позиция > 0), превращаются в progress-записи `{ positionMs, durationMs, updatedAt: lastPlayedAt }` — так старый файл без секции восстанавливает индикацию из каталога;
+  - `replace` — старые записи стираются (`clearProgressRecords`), затем пишутся файловые + деривированные;
+  - `merge` — по каждому sermonId побеждает запись с более свежим `updatedAt` (деривация — источник для id, которых нет в секции);
+  - после записи `loadHistoryAction` гидратирует атом прогресса из хранилища. Секция применяется только вместе с `listeningHistory` (как и остальные секции, отсутствие — no-op).
 - **История поиска.** `replace` — данные файла как есть; `merge` — `mergeSearchHistory`: дедупликация по `sermon.id`, при совпадении побеждает запись с более свежим `savedAt`, сортировка по убыванию и обрезка до лимита (20, инвариант `sortAndCapSearchEntries` из `entities/search-history`). После записи `loadSearchHistoryAction` перечитывает историю в атом. **Отсутствие секции в файле — no-op**: локальная история не трогается ни в одном режиме (так же, как отсутствие остальных секций).
 - **Плейлисты.** `replace` — нормализованные импортированные + `withFavoritesFirst`; `merge` — `mergePlaylists`: объединение по `id` (импортированный выигрывает по названию), id-участники (`sermonIds`) объединяются с дедупликацией, проповеди внутри — по `id` (импортированная выигрывает), затем инвариант «Избранные первыми» и «Избранные существуют».
 - **Настройки секции.** Применяются через `updateSectionSettings` (коммит атома) + `persistSectionSettings` (запись в хранилище) — повторный `loadSectionSettings` не нужен, атом уже актуален.

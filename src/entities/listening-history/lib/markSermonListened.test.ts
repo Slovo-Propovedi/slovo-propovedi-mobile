@@ -1,13 +1,16 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createCtx } from '@reatom/framework'
 import { type PlaylistData } from 'entities/playlist/@x/listening-history'
 import { type AudioPlayerData } from 'entities/sermon/@x/listening-history'
 import { historyAtom } from '../model/historyAtom'
+import { sermonProgressAtom } from '../model/progressAtom'
 import { type ListeningHistoryEntry } from '../model/types'
 import { MANUAL_LISTENED_DURATION_MS, MAX_HISTORY_ENTRIES } from './constants'
 import { getEntrySermon } from './getEntrySermon'
 import { writeHistory } from './historyStorage'
 import { isEntryCompleted } from './isEntryCompleted'
 import { markSermonListenedAction } from './markSermonListened'
+import { readProgressRecords } from './progressStorage'
 
 jest.mock('./historyStorage', () => ({
   writeHistory: jest.fn(),
@@ -169,5 +172,18 @@ describe('markSermonListenedAction', () => {
     expect(atomState).toHaveLength(MAX_HISTORY_ENTRIES)
     expect(atomState.some(e => getEntrySermon(e)?.id === 'fresh-sermon')).toBe(true)
     expect(atomState.some(e => getEntrySermon(e)?.id === 'sermon-0')).toBe(false)
+  })
+
+  test('commits a progress record for the marked sermon', async () => {
+    await AsyncStorage.clear()
+    const ctx = createCtx()
+
+    await markSermonListenedAction(ctx, mockAudio)
+
+    const progress = ctx.get(sermonProgressAtom)
+    expect(progress['sermon-1']?.positionMs).toBe(MANUAL_LISTENED_DURATION_MS)
+    expect(progress['sermon-1']?.durationMs).toBe(MANUAL_LISTENED_DURATION_MS)
+    expect(progress['sermon-1']?.updatedAt).toBeGreaterThan(0)
+    expect(await readProgressRecords()).toEqual(progress)
   })
 })
