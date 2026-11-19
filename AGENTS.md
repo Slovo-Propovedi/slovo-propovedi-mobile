@@ -50,6 +50,8 @@ npm run build:all            # Build all platforms
 
 **Centralized verification:** full runs are NEVER part of an implementation task and NEVER run in parallel with each other. Agents working on delegated tasks must NOT run project-wide checks on their own (`yarn lint`, `yarn lint:fix`, `yarn check:types`, `yarn check:unused`, full `yarn test`, `yarn testFinal*`, `yarn test:native`, gradle builds). During implementation an agent runs only targeted, file-scoped checks: a single test file (`yarn test --watch=false <single test path>`) or lint limited to the files it edited.
 
+**Exception — the commit contract:** the husky pre-commit run triggered by a plain `git commit` (`lint:staged` + `check:types` + `check:patches`) is part of the commit contract, is mandatory on every commit, and is **not** one of those forbidden ad-hoc runs. Let it run and pass; see "Pre-commit Hooks".
+
 The full verification pass runs ONCE as a SEPARATE dedicated task, AFTER all implementation tasks are finished: the orchestrator delegates it as a single task and routes any failures back to the responsible agent. Full runs are never executed concurrently — two concurrent full runs hang the machine (laptop freeze). This holds in single-agent and multi-agent sessions alike.
 
 ## Mandatory Workflows: SDD, Plan-Implement, TDD
@@ -705,6 +707,10 @@ yarn lint:staged && yarn check:types && yarn check:patches
 
 Runs ESLint fix + Prettier on staged files, then TypeScript check, then the patch guard (`check:patches`).
 
+**.husky/commit-msg** validates the conventional-commit message (commitlint) and appends the DCO `Signed-off-by:` trailer.
+
+**Never bypass.** NEVER pass `--no-verify`/`-n` to `git commit`; never skip, disable or tamper with the `commit-msg` hook. If a hook fails, fix the underlying issue — lint-staged findings in the files you touched, type errors, patch drift — and re-commit. Never weaken the check instead. The `commit-msg` hook is what adds `Signed-off-by:`, so a bypassed commit is an unsigned commit that fails the DCO gate.
+
 ## Commit Convention
 
 Conventional commits with these types:
@@ -724,6 +730,10 @@ Conventional commits with these types:
 Max header length: 100 characters
 
 Commit messages are English only (header and body) — see [`docs/conventions.md`](docs/conventions.md).
+
+- Hooks must pass on every commit — no `--no-verify`/`-n`, never skip `commit-msg`.
+- Every commit message ends with a `Signed-off-by:` trailer, added by the `commit-msg` hook. When amending, use `git commit --amend -s` so the trailer is refreshed.
+- Reason: on 2026-11-20 six commits landed unsigned via `--no-verify` and the history had to be rewritten and force-pushed.
 
 ## Key Dependencies
 
