@@ -47,6 +47,7 @@ const SHADOW_OFFSET_Y = 18
 // The backdrop blur frame is larger than the body on every side, which is what
 // feathers the body's edges.
 const SHADOW_FEATHER = 20
+const SHADOW_BLUR_RADIUS = 10
 const SHADOW_FILL = 'rgba(0, 0, 0, 0.09)'
 // The row itself only keeps a small shape-breathing gap under the pill.
 const SMALL_GAP = INDENTS.low
@@ -61,7 +62,7 @@ const TRACK_FILL = { dark: COLORS.black, light: COLORS.white } as const
 // Web cannot feather the native layers: react-native-web drops RN's array-form
 // `filter`, and expo-blur is only a thin `backdrop-filter` there. Safari renders
 // the same geometry (body shifted down + blur radius) as a CSS box-shadow.
-const WEB_SHADOW = '0px 18px 10px rgba(0, 0, 0, 0.09)'
+const WEB_SHADOW = `0px ${SHADOW_OFFSET_Y}px ${SHADOW_BLUR_RADIUS}px ${SHADOW_FILL}`
 
 const ORIGINAL_PLATFORM = Platform.OS
 
