@@ -59,6 +59,7 @@ const mockCloseSearch = jest.fn()
 let mockIsSearchFieldVisible = false
 
 jest.mock('features/sermon-search', () => ({
+  focusSearchInput: jest.fn(),
   SearchBar: () => null,
   useCloseSearch: () => mockCloseSearch,
   useIsSearchFieldVisible: () => mockIsSearchFieldVisible,
