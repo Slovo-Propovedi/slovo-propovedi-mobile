@@ -9,6 +9,7 @@ import { createPubSub } from './playerPubSub'
 import { createWebPlayerState } from './playerState'
 import { recoverStreamAfterReconnect as heal, resumeWebAfterPause } from './reconnectHeal'
 import { createResumeSeekReassert, type ResumeSeekReassertHandle } from './resumeSeekReassert'
+import { handleWebTrackEnd } from './trackAutoAdvance'
 import { createTrackElement } from './trackElement'
 import { createVolumeControl } from './volumeControl'
 
@@ -83,6 +84,9 @@ export class WebPlayerService {
       isCurrentAudio: current => current === this.audioInstance,
       mediaSession: this.controllers.mediaSession,
       noteLivePosition: this.controllers.resume.noteLivePosition,
+      onTrackEnd: () => {
+        void handleWebTrackEnd(this)
+      },
       restoreInterruptedPosition: this.controllers.resume.maybeRestore,
       resumeSeekReassert: this.resumeReassert.reassert,
       startStatusTracker: this.controllers.statusTracker.start,

@@ -1,11 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { historyAtom, sermonProgressAtom } from 'entities/listening-history/@x/player'
 import { audioCacheService, sermonCachingEnabledAtom } from 'entities/offline-cache/@x/player'
+import { type PlaylistData } from 'entities/playlist/@x/player'
 import { CURRENT_SOUND_DURATION } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { isOnlineAtom } from 'shared/model/network'
 import {
   currentAudioAtom,
+  currentPlaylistAtom,
   durationAtom,
+  RepeatMode,
+  repeatModeAtom,
+  setCurrentAudioAction,
   setDurationAction,
   setIsBufferingAction,
   setIsPlayingAction,
@@ -27,13 +33,29 @@ jest.mock('entities/offline-cache/@x/player', () => ({
   audioCacheService: { isCached: jest.fn() },
 }))
 
+jest.mock('entities/listening-history/@x/player', () => ({
+  getResumePosition: jest.fn(() => 0),
+  historyAtom: jest.fn(),
+  recordSermonSwitchAction: jest.fn().mockResolvedValue(undefined),
+  sermonProgressAtom: jest.fn(),
+}))
+
+jest.mock('../../playbackProgress', () => ({
+  savePlaybackProgress: jest.fn().mockResolvedValue(undefined),
+}))
+
 jest.mock('../BackgroundCachingService', () => ({
   startBackgroundCaching: jest.fn(),
 }))
 
 jest.mock('../../../model', () => ({
   currentAudioAtom: jest.fn(),
+  currentPlaylistAtom: jest.fn(),
   durationAtom: jest.fn(),
+  positionAtom: jest.fn(),
+  RepeatMode: { Off: 'off', Queue: 'queue', Track: 'track' },
+  repeatModeAtom: jest.fn(),
+  setCurrentAudioAction: jest.fn(),
   setDurationAction: jest.fn(),
   setIsBufferingAction: jest.fn(),
   setIsPlayingAction: jest.fn(),
@@ -68,9 +90,35 @@ const AUDIO_EVENT_TYPES = [
   'playing',
 ] as const
 
+const FIRST_AUDIO_URL = 'https://example.com/first.mp3'
+const SECOND_AUDIO_URL = 'https://example.com/second.mp3'
+
+const queuePlaylist: PlaylistData = {
+  artwork: 'playlist.jpg',
+  id: 'playlist-1',
+  sermons: [
+    { artist: 'A', artwork: 'a.jpg', audioUrl: FIRST_AUDIO_URL, id: 'sermon-1', title: 'One' },
+    { artist: 'B', artwork: 'b.jpg', audioUrl: SECOND_AUDIO_URL, id: 'sermon-2', title: 'Two' },
+  ],
+  title: 'Queue Playlist',
+}
+
 const mockSermonContext = () => {
   ;(ctx.get as jest.Mock).mockImplementation(atom => {
     if (atom === currentAudioAtom) return { id: 'sermon-1' }
+    if (atom === durationAtom) return 100000
+    return undefined
+  })
+}
+
+const mockQueueContext = (currentIndex: number) => {
+  ;(ctx.get as jest.Mock).mockImplementation(atom => {
+    if (atom === currentAudioAtom) return queuePlaylist.sermons[currentIndex]
+    if (atom === currentPlaylistAtom) return queuePlaylist
+    if (atom === repeatModeAtom) return RepeatMode.Queue
+    if (atom === isOnlineAtom) return true
+    if (atom === historyAtom) return []
+    if (atom === sermonProgressAtom) return {}
     if (atom === durationAtom) return 100000
     return undefined
   })
@@ -630,5 +678,23 @@ describe('WebPlayerService resume-seek reassert wiring', () => {
     audioStubs[0].fireEvent('playing')
 
     expect(audioStubs[0].element.currentTime).toBe(0)
+  })
+})
+
+describe('WebPlayerService track auto-advance', () => {
+  test('a natural end advances to the next track in repeat-queue mode', async () => {
+    mockQueueContext(0)
+    await playerService.loadAudio(FIRST_AUDIO_URL)
+    await playerService.loadAudio(FIRST_AUDIO_URL)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+
+    audioStubs[1].fireEvent('ended')
+    await flushAutoCache()
+
+    expect(replaceSpy).toHaveBeenCalledWith(SECOND_AUDIO_URL, 0)
+    expect(setCurrentAudioAction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ id: 'sermon-2' }),
+    )
   })
 })
