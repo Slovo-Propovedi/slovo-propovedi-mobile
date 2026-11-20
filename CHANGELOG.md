@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Search: playlists and preachers opened from search results show the top bar again — back button, title and the playlist menu.
 - Share playlist: title and actions line up with the QR code.
 - Copy toast now shows above open dialogs.
+- Bottom bar morphing works again on Android — islands, search pill and the mini player respond to taps and scrolls.
 
 ## [0.34.0] - 2026-11-12
 

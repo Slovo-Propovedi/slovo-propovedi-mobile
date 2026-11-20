@@ -1,9 +1,8 @@
 import { type FrameInfo, makeMutable, type SharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
-// Upper bound on a single frame delta: a stalled/backgrounded UI thread reports
-// a multi-second `timeSincePreviousFrame` that would otherwise teleport the
-// morph to its target instead of playing the missed frames.
+// Upper bound on a single frame delta: a stalled UI thread reports a
+// multi-second delta that would teleport the morph instead of playing frames.
 const MAX_FRAME_DELTA_MS = 100
 
 export interface AtomMorphClock {
@@ -25,9 +24,8 @@ interface AtomMorphClockConfig {
 }
 
 // Frame-driven progress instead of wall-clock `withTiming`: the morph advances
-// only as far as the frames it actually received, so a JS stall cannot collapse
-// it into its end state. One clock per driver; the React surface provides the
-// frame callback, because only a hook can register one with Reanimated.
+// only as far as the frames it received, so a JS stall cannot collapse it into
+// its end state. One clock per driver; the React surface supplies the frames.
 export const createAtomMorphClock = ({
   durationMs,
   onSettled,
@@ -40,17 +38,23 @@ export const createAtomMorphClock = ({
   const generation = makeMutable(0)
   const hosts = new Set<MorphFrameHost>()
 
-  // Only the first attached surface steps the clock: N callbacks advancing the
-  // same shared value would run the morph N times faster. The rest stay as
-  // standby hosts so an unmount hands the clock over instead of stopping it.
+  // JS mirrors: a shared value write from JS lands on the UI thread
+  // asynchronously and a same-tick read is stale, so JS decides on these flags.
+  let isAnimatingFlag = false
+  let generationCounter = 0
+
+  // Only the first attached surface steps the clock: N callbacks would run the
+  // morph N times faster; the rest stay standby so an unmount hands it over.
   const syncActiveHosts = () => {
     const [primary] = hosts
-    for (const host of hosts) host.setActive(host === primary && isAnimating.value)
+    for (const host of hosts) host.setActive(host === primary && isAnimatingFlag)
   }
 
   const settle = (isTarget: boolean, landedGeneration: number) => {
-    if (landedGeneration !== generation.value) return
+    if (landedGeneration !== generationCounter) return
 
+    // The UI worklet already stopped the clock; the JS flag drives activation.
+    isAnimatingFlag = false
     syncActiveHosts()
     onSettled(isTarget)
   }
@@ -64,9 +68,9 @@ export const createAtomMorphClock = ({
     const step = delta / durationMs
     const remaining = destination - progress.value
 
-    // Landing exactly on the target (never overshooting) keeps the final
-    // resting geometry and the settle flag in sync: a frame that leaves a
-    // fractional remainder would settle on a later frame instead.
+    // Landing exactly on the target (never overshooting) keeps the resting
+    // geometry and the settle flag in sync: a fractional remainder would only
+    // settle on a later frame.
     if (Math.abs(remaining) <= step) {
       progress.value = destination
       isAnimating.value = false
@@ -79,17 +83,20 @@ export const createAtomMorphClock = ({
   }
 
   // `destination` must not be named `target`: the parameter would shadow the
-  // shared value, turning `target.value` into a property write on a number
-  // (the web crash when a route flip passed 0).
+  // shared value, turning `target.value` into a property write on a number.
   const start = (destination: number) => {
-    generation.value += 1
+    generationCounter += 1
+    generation.value = generationCounter
     target.value = destination
+    isAnimatingFlag = true
     isAnimating.value = true
     syncActiveHosts()
   }
 
   const snapTo = (value: number) => {
-    generation.value += 1
+    generationCounter += 1
+    generation.value = generationCounter
+    isAnimatingFlag = false
     isAnimating.value = false
     syncActiveHosts()
     progress.value = value
@@ -103,9 +110,9 @@ export const createAtomMorphClock = ({
       return () => {
         hosts.delete(host)
         host.setActive(false)
-        // With no host left the clock is parked at its current value (no
-        // frames run), so a flip arriving during teardown stays pending and the
-        // next mounted surface resumes it instead of landing on a dead handle.
+        // With no host left the clock is parked, so a flip arriving during
+        // teardown stays pending for the next mounted surface instead of
+        // landing on a dead handle.
         syncActiveHosts()
       }
     },

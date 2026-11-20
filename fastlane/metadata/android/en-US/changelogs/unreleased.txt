@@ -1,8 +1,9 @@
 Search is its own page; leaving clears it.
-Listened marks survive eviction and backup.
+Listened marks survive eviction/backup.
 Search keeps the last tab; tap closes.
-Auto-advance no longer stalls or restarts.
+Auto-advance no longer stalls/restarts.
 Web on iOS: no bottom gap.
-Search: playlists and preachers from results show the top bar — back, title, menu.
-Share playlist: title and actions line up with the QR code.
-Copy toast now shows above open dialogs.
+Search: playlists and preachers show the top bar again.
+Share playlist: title/actions align with the QR code.
+Copy toast shows above open dialogs.
+Bottom bar morphs work again on Android.
