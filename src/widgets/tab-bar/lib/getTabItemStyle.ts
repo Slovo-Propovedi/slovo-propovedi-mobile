@@ -39,9 +39,10 @@ export const getTabIconOffset = (progress: number) => {
   return TAB_ICON_EXPANDED_OFFSET * (1 - clamped)
 }
 
-// The item follows the shape morph (the same axis as the label/capsule fade) and
-// fills the island minus its vertical margins: the expanded shape makes room for
-// the label, the collapsed shape keeps the icon centred in the circle.
+// The item fills the island minus its vertical margins on the one-line (height)
+// axis: 60 in the 68 island (expanded bar and search-open circle), 40 in the 48
+// compact row. Reading the shape axis instead left the search-open item 40 tall
+// inside a 68 circle, resting above its centre.
 export const getTabItemHeight = (progress: number) => {
   'worklet'
   const clamped = clampProgress(progress)

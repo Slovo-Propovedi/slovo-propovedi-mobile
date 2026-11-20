@@ -51,18 +51,24 @@ export const getIslandStyle = (
 // Per-tab width/opacity during the morph. The active tab grows into the circle,
 // the rest shrink to zero width while crossfading out. The collapsed slot takes
 // the same height-derived width as the island, so it never paints outside it.
+//
+// The slot height always matches the island height (one-line axis), never the
+// shape axis: beside an open search field the island is a 68 circle on a
+// collapsed shape, and a slot sized from the 48 one-line row would centre its
+// item 10dp above the circle centre.
 export const getTabSlotStyle = (progress: number, layout: TabSlotLayout, oneLineProgress = 0) => {
   'worklet'
   const clamped = clampProgress(progress)
-  const collapsedWidth = getIslandHeight(clampProgress(oneLineProgress))
+  const islandHeight = getIslandHeight(clampProgress(oneLineProgress))
 
   return {
     // Fades to 0 together with the inactive slots so a zero-width collapsed slot
     // never keeps an invisible 48dp hit area next to the circle.
+    height: islandHeight,
     minWidth: MIN_TOUCH_TARGET * (1 - clamped),
     opacity: layout.isActive ? 1 : 1 - clamped,
     width: layout.isActive
-      ? interpolateSize(layout.expandedWidth, collapsedWidth, clamped)
+      ? interpolateSize(layout.expandedWidth, islandHeight, clamped)
       : layout.expandedWidth * (1 - clamped),
   }
 }

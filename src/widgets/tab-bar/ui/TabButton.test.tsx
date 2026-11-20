@@ -41,6 +41,7 @@ const renderTabButton = async (
   isActive = false,
   collapseProgress = progressValue(0),
   isBarVisuallyCollapsed = false,
+  oneLineProgress?: SharedValue<number>,
 ) =>
   await renderWithProviders(
     <TabButton
@@ -48,6 +49,7 @@ const renderTabButton = async (
       isActive={isActive}
       routeKey={routeName}
       routeName={routeName}
+      oneLineProgress={oneLineProgress}
       collapseProgress={collapseProgress}
       isBarVisuallyCollapsed={isBarVisuallyCollapsed}
     />,
@@ -72,7 +74,7 @@ describe('<TabButton>', () => {
   })
 
   test('takes the label out of layout so the icon centers in the collapsed circle', async () => {
-    await renderTabButton('listen', true, progressValue(1))
+    await renderTabButton('listen', true, progressValue(1), false, progressValue(1))
 
     const label = screen.getByText('Слушать')
 
@@ -83,6 +85,15 @@ describe('<TabButton>', () => {
       height: TAB_BAR_ISLAND_HEIGHT - 4 * 2,
       justifyContent: 'center',
     })
+  })
+
+  test('sizes the item from the one-line axis so the icon centers in the search-open circle', async () => {
+    // Search-open: shape collapsed (A = 1) but the visible field keeps the
+    // island at 68. The item must be 68 - 8 margins; sizing it from A leaves a
+    // 40-tall item resting above the circle centre.
+    await renderTabButton('listen', true, progressValue(1), false, progressValue(0))
+
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 60 })
   })
 
   test('expanded item grows taller to leave a gap between icon and label', async () => {

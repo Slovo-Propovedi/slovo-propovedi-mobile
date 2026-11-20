@@ -123,11 +123,13 @@ describe('getIslandStyle', () => {
 describe('getTabSlotStyle', () => {
   test('expanded tabs share the full width and stay opaque', () => {
     expect(getTabSlotStyle(0, { ...TAB_LAYOUT, isActive: false })).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
       minWidth: 48,
       opacity: 1,
       width: EXPANDED_TAB_WIDTH,
     })
     expect(getTabSlotStyle(0, { ...TAB_LAYOUT, isActive: true })).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
       minWidth: 48,
       opacity: 1,
       width: EXPANDED_TAB_WIDTH,
@@ -136,6 +138,7 @@ describe('getTabSlotStyle', () => {
 
   test('collapsed active tab fills the 48 circle in the one-line row', () => {
     expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: true }, 1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT,
       minWidth: 0,
       opacity: 1,
       width: TAB_BAR_ISLAND_HEIGHT,
@@ -144,10 +147,31 @@ describe('getTabSlotStyle', () => {
 
   test('collapsed active tab follows the 68 island beside an open field', () => {
     expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: true }, 0)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
       minWidth: 0,
       opacity: 1,
       width: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
     })
+  })
+
+  test('slot height equals the island height in every morph state', () => {
+    // Vertical geometry follows the one-line axis, never the shape axis: the
+    // search-open island is a 68 circle on a collapsed shape, and a slot sized
+    // from the 48 one-line row leaves the item resting above the circle centre.
+    for (const progress of [0, 0.5, 1])
+      for (const oneLine of [0, 0.5, 1])
+        expect(getTabSlotStyle(progress, { ...TAB_LAYOUT, isActive: true }, oneLine).height).toBe(
+          getIslandStyle(progress, TAB_LAYOUT, 0, oneLine).height,
+        )
+  })
+
+  test('slot height interpolates 68 -> 48 with the one-line axis', () => {
+    expect(getTabSlotStyle(0, { ...TAB_LAYOUT, isActive: true }, 0).height).toBe(
+      TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+    )
+    expect(getTabSlotStyle(0, { ...TAB_LAYOUT, isActive: true }, 1).height).toBe(
+      TAB_BAR_ISLAND_HEIGHT,
+    )
   })
 
   test('the collapsed slot width equals the island width (no oval)', () => {
@@ -159,6 +183,7 @@ describe('getTabSlotStyle', () => {
 
   test('collapsed hidden tabs fade out to zero width', () => {
     expect(getTabSlotStyle(1, { ...TAB_LAYOUT, isActive: false }, 1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT,
       minWidth: 0,
       opacity: 0,
       width: 0,
@@ -167,6 +192,7 @@ describe('getTabSlotStyle', () => {
 
   test('hidden tab opacity crossfades with progress', () => {
     expect(getTabSlotStyle(0.5, { ...TAB_LAYOUT, isActive: false })).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
       minWidth: 24,
       opacity: 0.5,
       width: EXPANDED_TAB_WIDTH / 2,

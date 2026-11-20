@@ -33,8 +33,9 @@ export const TabSlot = ({
   // animated one (same pattern as the island itself, Issue #63): on iPad
   // Safari the animated slot style can freeze mid-morph while the island
   // shrinks (Issue #152), and the React commit at settle still writes the
-  // final slot geometry. Mid-morph it carries the START geometry because the
-  // settled flags lag until the animation lands.
+  // final slot geometry (width and the island-matching height). Mid-morph it
+  // carries the START geometry because the settled flags lag until the
+  // animation lands.
   const restingStyle = getTabSlotStyle(
     isSettledCollapsed ? 1 : 0,
     { expandedWidth, isActive },

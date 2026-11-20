@@ -48,16 +48,31 @@ describe('<TabSlot>', () => {
 
     expect(style).toHaveLength(2)
     // The animated layer follows the live mid-morph progress…
-    expect(style[0]).toEqual({ minWidth: 24, opacity: 0.5, width: 50 })
+    expect(style[0]).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      minWidth: 24,
+      opacity: 0.5,
+      width: 50,
+    })
     // …and the committed resting layer carries the SETTLED (start) geometry.
-    expect(style[1]).toEqual({ minWidth: 48, opacity: 1, width: 100 })
+    expect(style[1]).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      minWidth: 48,
+      opacity: 1,
+      width: 100,
+    })
   })
 
   test('rests the collapsed inactive slot at zero width and opacity', async () => {
     const slot = await renderSlot({ isCollapsed: true, isSettledCollapsed: true, progress: 1 })
     const style = slot.props.style as Array<Record<string, number>>
 
-    expect(style.at(-1)).toEqual({ minWidth: 0, opacity: 0, width: 0 })
+    expect(style.at(-1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      minWidth: 0,
+      opacity: 0,
+      width: 0,
+    })
   })
 
   test('rests the collapsed active slot at the island diameter of the open-field row', async () => {
@@ -73,6 +88,7 @@ describe('<TabSlot>', () => {
     // A visible field forces the circle shape but keeps the expanded height:
     // the active slot must span the 68 island, not the compact 48.
     expect(style.at(-1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
       minWidth: 0,
       opacity: 1,
       width: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
@@ -92,7 +108,12 @@ describe('<TabSlot>', () => {
 
     // Pinned to the shared compact constant: the collapsed slot must match the
     // circle exactly, so a stray circle resize breaks this test.
-    expect(style.at(-1)).toEqual({ minWidth: 0, opacity: 1, width: TAB_BAR_ISLAND_HEIGHT })
+    expect(style.at(-1)).toEqual({
+      height: TAB_BAR_ISLAND_HEIGHT,
+      minWidth: 0,
+      opacity: 1,
+      width: TAB_BAR_ISLAND_HEIGHT,
+    })
   })
 
   test('gates touches of hidden slots inside the collapsed circle', async () => {

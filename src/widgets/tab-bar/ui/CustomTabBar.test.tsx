@@ -591,6 +591,19 @@ describe('<CustomTabBar>', () => {
     expect(within(activeSlots[0]).getByText('Слушать')).toBeTruthy()
   })
 
+  test('sizes the active item from the one-line axis so the icon centers in the search-open circle', async () => {
+    // Search-open: the island collapses to a circle (shape axis A = 1) while the
+    // visible field keeps the height at 68 (one-line axis D = 0). Sizing the
+    // item from A leaves it 40 tall inside the 68 slot, resting above centre.
+    const ctx = createCtx()
+    isSearchOpenAtom(ctx, true)
+    await renderWithProviders(<CustomTabBar state={createMockState(0)} {...createBarProps()} />, {
+      ctx,
+    })
+
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 60 })
+  })
+
   test('remembered active tab follows the last real tab switch', async () => {
     const props = createBarProps()
     const { getByText, rerender } = await renderWithProviders(

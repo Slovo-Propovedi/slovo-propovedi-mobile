@@ -20,6 +20,7 @@ export const TabButton = ({
   isActive,
   isBarVisuallyCollapsed = false,
   isDisabled,
+  oneLineProgress,
   onPress,
   routeKey,
   routeName,
@@ -31,15 +32,20 @@ export const TabButton = ({
   // keeps its press haptic like the search circle instead of being silent.
   isBarVisuallyCollapsed?: boolean
   isDisabled?: boolean
+  // One-line (height) axis: owns the item height so it fills the island in every
+  // state, including the 68 search-open circle on a collapsed shape.
+  oneLineProgress?: SharedValue<number>
   onPress: () => void
   routeKey: string
   routeName: string
 }) => {
   const { currentTheme } = useTheme()
   const fallbackProgress = useSharedValue(0)
+  const fallbackOneLineProgress = useSharedValue(0)
   const labelProgress = collapseProgress ?? fallbackProgress
+  const itemProgress = oneLineProgress ?? fallbackOneLineProgress
   const labelStyle = useAnimatedStyle(() => ({ opacity: 1 - labelProgress.value }))
-  const itemStyle = useAnimatedStyle(() => getTabItemStyle(labelProgress.value))
+  const itemStyle = useAnimatedStyle(() => getTabItemStyle(labelProgress.value, itemProgress.value))
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: getTabIconOffset(labelProgress.value) }],
   }))
