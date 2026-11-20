@@ -212,7 +212,7 @@ describe('<CustomTabBar>', () => {
 
     // The side inset is not static: useRowInsetStyle animates it between the
     // expanded and the one-line values as longhand paddings (an animated
-    // `paddingHorizontal` never reaches the web DOM). The 24/36 values live in
+    // `paddingHorizontal` never reaches the web DOM). The 25/36 values live in
     // useRowInsetStyle.test.ts.
     expect(styles.islandsRow).toMatchObject({ maxWidth: 600 })
     expect(styles.islandsRow).not.toHaveProperty('paddingHorizontal')

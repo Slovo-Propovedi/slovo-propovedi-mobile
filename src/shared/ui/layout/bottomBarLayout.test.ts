@@ -31,17 +31,18 @@ describe('getBarBottomPadding', () => {
 })
 
 describe('getBarSideInset', () => {
-  test('expanded bar shares the sliders rest inset', () => {
-    expect(BAR_SIDE_INSET_EXPANDED).toBe(SLIDER_REST_INSET)
-    expect(getBarSideInset(0)).toBe(SLIDER_REST_INSET)
+  test('expanded bar sits 1 px right of the sliders rest inset', () => {
+    expect(BAR_SIDE_INSET_EXPANDED).toBe(SLIDER_REST_INSET + 1)
+    expect(getBarSideInset(0)).toBe(SLIDER_REST_INSET + 1)
   })
 
-  test('one-line bar widens the inset to 1.5x the sliders rest inset', () => {
+  test('one-line bar keeps its original 1.5x the sliders rest inset', () => {
     expect(BAR_SIDE_INSET_COLLAPSED).toBe(SLIDER_REST_INSET * 1.5)
     expect(getBarSideInset(1)).toBe(SLIDER_REST_INSET * 1.5)
   })
 
   test('interpolates and clamps the progress', () => {
+    expect(getBarSideInset(0.5)).toBe(SLIDER_REST_INSET * 1.25 + 0.5)
     expect(getBarSideInset(0.5)).toBe((BAR_SIDE_INSET_EXPANDED + BAR_SIDE_INSET_COLLAPSED) / 2)
     expect(getBarSideInset(-1)).toBe(BAR_SIDE_INSET_EXPANDED)
     expect(getBarSideInset(2)).toBe(BAR_SIDE_INSET_COLLAPSED)

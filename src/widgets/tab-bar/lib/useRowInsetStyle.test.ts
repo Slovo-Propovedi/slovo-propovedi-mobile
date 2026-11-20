@@ -26,7 +26,7 @@ describe('useRowInsetStyle', () => {
     oneLineBarMorphDriver.reset()
   })
 
-  test('shares the sliders rest inset while the bar floats expanded', async () => {
+  test('sits 1 px right of the sliders rest inset while the bar floats expanded', async () => {
     const ctx = createCtx()
     const { result } = await renderHookWithProviders(() => useRowInsetStyle(), { ctx })
 
@@ -71,8 +71,8 @@ describe('useRowInsetStyle', () => {
     expect(result.current.restingInsetStyle).toEqual(EXPANDED_PADDING)
   })
 
-  test('ties the two insets to the sliders rest line', () => {
-    expect(BAR_SIDE_INSET_EXPANDED).toBe(SLIDER_REST_INSET)
+  test('offsets only the expanded inset by 1 px from the sliders rest line', () => {
+    expect(BAR_SIDE_INSET_EXPANDED).toBe(SLIDER_REST_INSET + 1)
     expect(BAR_SIDE_INSET_COLLAPSED).toBe(SLIDER_REST_INSET * 1.5)
   })
 })

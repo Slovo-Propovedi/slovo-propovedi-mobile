@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Align bottom-bar islands and mini-player edges with the slider card line; the collapsed one-line bar uses a 1.5× wider inset
 - In the collapsed one-line bar the tab and search buttons shrink to the mini player height (48) instead of the mini player growing; the open search field always matches the tab bar's height
 - Bottom-bar islands morph faster (200 ms)
+- Tab-bar islands and chrome pills are offset 1 px from the slider cards' rest line in the expanded state, so their edges never coincide with the cards.
 
 ### Fixed
 

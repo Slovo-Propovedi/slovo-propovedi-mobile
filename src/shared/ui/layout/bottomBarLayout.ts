@@ -28,13 +28,19 @@ export const BAR_OUTER_GAP = 8 as const
 // floats higher above the islands row than the horizontal BAR_OUTER_GAP between
 // the islands themselves.
 export const BAR_PILL_ROW_GAP = 12 as const
+// The expanded chrome sits 1 px off the sliders' rest line: an edge that
+// coincides exactly with the slider cards' edge reads as one merged card (user
+// report 2026-11-20). The collapsed one-line state keeps its original width.
+const BAR_SIDE_INSET_OFFSET = 1 as const
 // Side inset of the floating chrome while the bar is expanded (detached mini
-// pill, wide tab island, or an open search field). Equal to the sliders' left
-// rest inset, so the islands and the slider cards share one vertical line.
-export const BAR_SIDE_INSET_EXPANDED = SLIDER_REST_INSET
+// pill, wide tab island, or an open search field). 1 px right of the sliders'
+// rest inset (SLIDER_REST_INSET), so the islands and the slider cards never
+// share an edge line.
+export const BAR_SIDE_INSET_EXPANDED = SLIDER_REST_INSET + BAR_SIDE_INSET_OFFSET
 // Side inset of the one-line bar (mini pill folded into the row): 1.5× the
-// expanded inset, so the collapsed row reads visibly narrower than the cards.
-export const BAR_SIDE_INSET_COLLAPSED = (BAR_SIDE_INSET_EXPANDED * 3) / 2
+// sliders' rest inset — unchanged by the 1 px expanded-state offset, so the
+// collapsed row keeps its original width.
+export const BAR_SIDE_INSET_COLLAPSED = (SLIDER_REST_INSET * 3) / 2
 /**
  * Outer side inset of the bottom chrome at a given one-line morph progress.
  * Worklet-safe: called from the animated styles of the tab row, the search
