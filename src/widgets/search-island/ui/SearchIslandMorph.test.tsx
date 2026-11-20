@@ -349,7 +349,9 @@ describe('<SearchIslandMorph>', () => {
       isSearchOpenAtom(ctx, true)
     })
 
-    expect(findContentWrapper(input).props.pointerEvents).toBe('auto')
+    // The open row is only a positioning shell: its paddings fall through to
+    // the focus surface under the content, while the input and buttons stay hit.
+    expect(findContentWrapper(input).props.pointerEvents).toBe('box-none')
   })
 
   test('lets drags beside the pill content pass through to the list', async () => {
@@ -401,7 +403,7 @@ describe('<SearchIslandMorph>', () => {
     // Tap → atom → driver → live field: the same gesture reaches the pill content.
     expect(searchOpenMorphDriver.progress.value).toBe(1)
     const input = getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true })
-    expect(findContentWrapper(input).props.pointerEvents).toBe('auto')
+    expect(findContentWrapper(input).props.pointerEvents).toBe('box-none')
     expect(mockRouter.navigate).toHaveBeenCalledWith('/search')
   })
 

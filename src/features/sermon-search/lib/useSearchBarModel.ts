@@ -1,7 +1,7 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { isSearchOpenAtom, searchInputRequestAtom, searchQueryAtom } from '../model'
-import { isSearchFieldVisibleAtom } from '../model-searchField'
+import { isSearchFieldVisibleAtom, searchFocusRequestAtom } from '../model-searchField'
 import { useCloseSearch } from './useCloseSearch'
 import { useDistinctValuesOnOpen } from './useDistinctValuesOnOpen'
 import { useExternalInputRequest } from './useExternalInputRequest'
@@ -31,9 +31,18 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
   const [isFocused, setIsFocused] = useState(false)
   const [hasSelectedSuggestion, setHasSelectedSuggestion] = useState(false)
   const [inputRequest] = useAtom(searchInputRequestAtom)
+  const [focusRequest] = useAtom(searchFocusRequestAtom)
   const inputRef = useSearchInputFocus(isSearchFieldVisible)
   const closeSearch = useCloseSearch()
   useDistinctValuesOnOpen(isSearchOpen)
+
+  // Focus stays user-driven: a tap anywhere on the open pill's surface requests
+  // focus through the nonce atom, so nothing focuses on mount or open.
+  useEffect(() => {
+    if (focusRequest === 0) return
+
+    inputRef.current?.focus()
+  }, [focusRequest, inputRef])
 
   const handleChangeText = (text: string) => {
     setInputValue(text)

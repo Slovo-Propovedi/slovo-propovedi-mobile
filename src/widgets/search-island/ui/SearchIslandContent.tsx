@@ -1,12 +1,19 @@
-import { View } from 'react-native'
+import { useAction } from '@reatom/npm-react'
+import { Pressable, View } from 'react-native'
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import { OnboardingTarget } from 'features/onboarding'
-import { SearchBar } from 'features/sermon-search'
+import { focusSearchInput, SearchBar } from 'features/sermon-search'
 import { TouchableButton } from 'shared/ui/touchable-button'
 import { styles } from './SearchIslandMorph.styles'
 
 const SEARCH_LABEL = 'Поиск'
 const SEARCH_TARGET_ID = 'listen.search-toggle'
+// Both layers are visibility-gated together, so they share the two a11y values.
+const A11Y_IMPORTANT = 'yes'
+const A11Y_HIDDEN = 'no-hide-descendants'
+// The focus surface carries identity only for tests: it is not an accessible
+// control (the input is), so text/role queries genuinely do not apply.
+export const SEARCH_FOCUS_SURFACE_TEST_ID = 'search-focus-surface'
 
 /**
  * Everything inside the morphing frame: the input row and the closed-circle
@@ -29,15 +36,29 @@ export const SearchIslandContent = ({
   onOpenSearch: () => void
   openProgress: SharedValue<number>
 }) => {
+  const requestFocus = useAction(focusSearchInput)
   const contentStyle = useAnimatedStyle(() => ({ opacity: openProgress.value }))
 
   return (
     <>
+      {/* The open pill is one big focus target. This transparent layer sits
+          under the content, so taps in the row's paddings reach it while the
+          input, mic and clear button stay hittable as later siblings. It is
+          not a button: the input itself is the control. */}
+      <Pressable
+        tabIndex={-1}
+        onPress={requestFocus}
+        style={styles.tapTargetLayer}
+        testID={SEARCH_FOCUS_SURFACE_TEST_ID}
+        accessibilityElementsHidden={isVisible}
+        pointerEvents={isVisible ? 'auto' : 'none'}
+        importantForAccessibility={isVisible ? A11Y_HIDDEN : A11Y_IMPORTANT}
+      />
       <Animated.View
         style={[styles.content, contentStyle]}
         accessibilityElementsHidden={!isVisible}
-        pointerEvents={isVisible ? 'auto' : 'none'}
-        importantForAccessibility={isVisible ? 'yes' : 'no-hide-descendants'}
+        pointerEvents={isVisible ? 'box-none' : 'none'}
+        importantForAccessibility={isVisible ? A11Y_IMPORTANT : A11Y_HIDDEN}
       >
         <SearchBar onFocusChange={onFocusChange} />
       </Animated.View>
@@ -45,7 +66,7 @@ export const SearchIslandContent = ({
         style={styles.tapTargetLayer}
         accessibilityElementsHidden={isVisible}
         pointerEvents={isVisible ? 'none' : 'auto'}
-        importantForAccessibility={isVisible ? 'no-hide-descendants' : 'yes'}
+        importantForAccessibility={isVisible ? A11Y_HIDDEN : A11Y_IMPORTANT}
       >
         <OnboardingTarget id={SEARCH_TARGET_ID} style={styles.tapTargetFill}>
           <TouchableButton

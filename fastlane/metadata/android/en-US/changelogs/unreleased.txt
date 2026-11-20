@@ -1,8 +1,9 @@
-Search page: leaving clears the query, the last tab stays (tap closes), details keep the top bar.
+Search page: leaving clears it; last tab stays (tap closes); details keep the top bar.
 Listened marks survive eviction/backup.
 Auto-advance: no stalls/restarts.
 Web on iOS: no bottom gap.
-Share playlist lines align with the QR.
+Share playlist rows match the QR.
 Copy toast above open dialogs.
-Bottom bar morphs again on Android.
-Search: active tab icon is centered in its circle while search is open.
+Bar morphs again on Android.
+Search: active tab icon stays in its circle.
+Search: tap anywhere on the open pill focuses the input.

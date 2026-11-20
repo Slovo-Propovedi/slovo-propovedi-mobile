@@ -38,7 +38,7 @@ export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boole
   const isQueryEmpty = inputValue.length === 0
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} pointerEvents='box-none'>
       <TextInput
         ref={inputRef}
         value={inputValue}

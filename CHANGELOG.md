@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Copy toast now shows above open dialogs.
 - Bottom bar morphing works again on Android — islands, search pill and the mini player respond to taps and scrolls.
 - Search: the active tab icon is centered in its circle while the search field is open.
+- Search: tapping anywhere on the open pill focuses the input.
 
 ## [0.34.0] - 2026-11-12
 

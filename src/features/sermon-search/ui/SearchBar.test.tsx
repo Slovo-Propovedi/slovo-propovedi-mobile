@@ -14,6 +14,7 @@ import {
   typeSearchInput,
 } from '../model'
 import { distinctValuesAtom } from '../model-distinctValues'
+import { focusSearchInput, searchFocusRequestAtom } from '../model-searchField'
 import { resetSearchSession } from '../model-session'
 import { SearchBar } from './SearchBar'
 
@@ -83,6 +84,7 @@ beforeEach(() => {
   mockRouterNavigate.mockClear()
   searchQueryAtom(ctx, '')
   searchInputRequestAtom(ctx, null)
+  searchFocusRequestAtom(ctx, 0)
   isSearchOpenAtom(ctx, false)
   distinctValuesAtom(ctx, null)
   setBarCollapsed(ctx, false)
@@ -206,6 +208,20 @@ describe('<SearchBar>', () => {
     await flushAnimationFrame()
 
     expect(focusMock).not.toHaveBeenCalled()
+  })
+
+  test('focuses the input when the open pill requests focus from a surface tap', async () => {
+    const ctx = getSharedTestCtx()
+    isSearchOpenAtom(ctx, true)
+    const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
+    await renderWithProviders(<SearchBar />, { ctx })
+    focusMock.mockClear()
+
+    await act(async () => {
+      focusSearchInput(ctx)
+    })
+
+    expect(focusMock).toHaveBeenCalledTimes(1)
   })
 
   test('clearing the query keeps the input focused for continued typing', async () => {

@@ -1,4 +1,4 @@
-import { atom } from '@reatom/framework'
+import { action, atom } from '@reatom/framework'
 import { isBarCollapsedAtom } from 'shared/ui/layout'
 import { isSearchOpenAtom, MIN_QUERY_LENGTH, searchQueryAtom } from './model'
 
@@ -27,3 +27,12 @@ export const isSearchBarCollapseSuspendedAtom = atom(
   ctx => ctx.spy(isSearchOpenAtom),
   'isSearchBarCollapseSuspendedAtom',
 )
+
+// External request to focus the visible search input: a tap anywhere on the
+// open pill's surface bumps the nonce, and `SearchBar` focuses the field once
+// per request. Focus stays user-driven — only a real gesture raises this.
+export const searchFocusRequestAtom = atom(0, 'searchFocusRequestAtom')
+
+export const focusSearchInput = action(ctx => {
+  searchFocusRequestAtom(ctx, ctx.get(searchFocusRequestAtom) + 1)
+}, 'focusSearchInput')
