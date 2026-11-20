@@ -15,6 +15,8 @@ import { playSafely } from './playSafely'
 interface ExecuteTrackSwitchParams {
   ctx: Ctx
   newIndex: number
+  /** Auto-advance marks the finished track completed; manual next/prev keeps it at its position. */
+  options?: { markOldCompleted?: boolean }
   play: () => Promise<void>
   playlist: PlaylistData
   replaceAudio: (url: string, positionMs?: number) => Promise<unknown>
@@ -30,6 +32,7 @@ interface ExecuteTrackSwitchParams {
 export const executeTrackSwitch = async ({
   ctx,
   newIndex,
+  options,
   play,
   playlist,
   replaceAudio,
@@ -63,7 +66,7 @@ export const executeTrackSwitch = async ({
   // Flush old track's position to history before switching
   if (oldAudio?.id && oldAudio.id !== baseAudio.id)
     void recordSermonSwitchAction(ctx, {
-      markOldCompleted: false,
+      markOldCompleted: options?.markOldCompleted ?? false,
       newAudio: historyAudio,
       newPlaylist: playlist,
       oldDurationMs: ctx.get(durationAtom),

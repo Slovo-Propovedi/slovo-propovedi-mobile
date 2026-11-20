@@ -78,6 +78,7 @@ const advanceToNextTrack = async (
   await executeTrackSwitch({
     ctx,
     newIndex: target.newIndex,
+    options: { markOldCompleted: true },
     play: service.play,
     playlist: currentPlaylist,
     replaceAudio: service.replaceAudio,

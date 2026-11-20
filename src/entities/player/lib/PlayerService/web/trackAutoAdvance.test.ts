@@ -143,6 +143,10 @@ describe('handleWebTrackEnd', () => {
       expect.anything(),
       expect.objectContaining({ id: 'sermon-2' }),
     )
+    expect(mockRecordSermonSwitch).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ markOldCompleted: true, oldSermonId: 'sermon-1' }),
+    )
   })
 
   test('repeat queue wraps from the last track to the first', async () => {
