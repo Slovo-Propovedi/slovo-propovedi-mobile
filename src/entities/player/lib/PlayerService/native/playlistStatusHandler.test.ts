@@ -125,6 +125,21 @@ describe('createPlaylistStatusHandler interruption edges', () => {
     expect(mockSyncPlaylistStatus).toHaveBeenCalledWith(status)
   })
 
+  test('closes the advance window when the freshly selected track fails', () => {
+    const callbacks = createCallbacks()
+    const { handleStatus, markAutoAdvanceInFlight } = createPlaylistStatusHandler(callbacks)
+
+    handleStatus(statusWith({ playing: true }))
+    callbacks.onAudioInterruption.mockClear()
+
+    markAutoAdvanceInFlight()
+    handleStatus(
+      statusWith({ currentIndex: 1, error: { code: 2001, message: SOURCE_ERROR }, playing: false }),
+    )
+
+    expect(callbacks.onAudioInterruption.mock.calls).toEqual([[true]])
+  })
+
   test('clears the offline stall once a loaded status reports playing', () => {
     isStalledOfflineAtom(ctx, true)
     const { handleStatus } = createPlaylistStatusHandler(createCallbacks())

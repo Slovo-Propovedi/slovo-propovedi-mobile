@@ -81,6 +81,17 @@ describe('createPlaylistErrorReporter', () => {
     expect(ctx.get(isStalledOfflineAtom)).toBe(true)
   })
 
+  test('reports the same failure again after a recovery cycle', () => {
+    const { reportStatus } = createPlaylistErrorReporter()
+
+    reportStatus(errorStatus())
+    reportStatus(statusWith({ isLoaded: true, playing: true }))
+    reportStatus(errorStatus())
+
+    expect(mockReportPlaybackError).toHaveBeenCalledTimes(2)
+    expect(ctx.get(isStalledOfflineAtom)).toBe(true)
+  })
+
   test('ignores a regular status without an error', () => {
     const { reportStatus } = createPlaylistErrorReporter()
 

@@ -19,14 +19,20 @@ const buildErrorKey = (status: AudioPlaylistStatus, errorKind: string): string =
  * the stalled-offline flag that the reconnect heal consumes (the same flag the
  * buffer-stall path sets in `nativePlayerHelpers`; the existing playing-resumed
  * and queue-build paths clear it). The dedupe state is per wiring, so a rebuilt
- * queue starts clean.
+ * queue starts clean, and a loaded playing status (recovery) clears it so the
+ * next recurrence of the same failure is reported and re-flags the stall.
  */
 export const createPlaylistErrorReporter = () => {
   let lastReportedErrorKey: null | string = null
 
   const reportStatus = (status: AudioPlaylistStatus): void => {
     const error = status.error
-    if (!error) return
+    if (!error) {
+      // A loaded, playing status is the recovery edge; the next failure on the
+      // same track and kind is a new cycle and must be reported again.
+      if (status.isLoaded && status.playing) lastReportedErrorKey = null
+      return
+    }
 
     const errorKind = describeError(error)
     const errorKey = buildErrorKey(status, errorKind)

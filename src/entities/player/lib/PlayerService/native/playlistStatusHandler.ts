@@ -15,7 +15,8 @@ import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdva
  * era still applies (expo-audio #34301).
  * Native auto-advance emits `playing:false` while the engine swaps tracks —
  * that edge is not an interruption, so `markAutoAdvanceInFlight` opens a window
- * that the next stable `playing:true` closes.
+ * that the next stable `playing:true` closes. A failure of the freshly selected
+ * track closes the window too: the engine is dead, so its pause edge must flush.
  * @param callbacks - Service lifecycle callbacks.
  */
 export const createPlaylistStatusHandler = (callbacks: StatusCallbacks) => {
@@ -56,8 +57,9 @@ export const createPlaylistStatusHandler = (callbacks: StatusCallbacks) => {
       void trackAutoAdvanceService.handleQueueEnd()
     }
 
-    // A queue end is never a transition, so its didJustFinish edge is reported.
-    if (status.didJustFinish) autoAdvanceInFlight = false
+    // A queue end is never a transition, and a failed fresh track kills the
+    // pending advance for good, so their playing edges must be reported.
+    if (status.didJustFinish || status.error) autoAdvanceInFlight = false
     // The edge that settles the window is still the transition, not an interruption.
     const suppressEdge = autoAdvanceInFlight
     if (status.playing) autoAdvanceInFlight = false
