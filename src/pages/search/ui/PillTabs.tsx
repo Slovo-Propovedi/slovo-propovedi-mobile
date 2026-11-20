@@ -1,6 +1,6 @@
 import { BlurView } from 'expo-blur'
 import { Fragment, type ReactElement } from 'react'
-import { ScrollView, View } from 'react-native'
+import { Platform, ScrollView, View } from 'react-native'
 import { GLASS } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { getScopeTrackFill, styles } from './PillTabs.styles'
@@ -39,6 +39,9 @@ export const PillTabs = ({
 }: PillTabsProps) => {
   const { isLight } = useTheme()
   const isResults = variant === 'results'
+  // Web cannot feather the two native layers (see trackWebShadow), so there the
+  // shadow lives on the track itself instead.
+  const isWeb = Platform.OS === 'web'
   const trackFill = getScopeTrackFill(isLight)
 
   const content = items.map(item => {
@@ -75,19 +78,26 @@ export const PillTabs = ({
 
   const shadowedTrack = (
     <View style={stretch ? styles.scopeTrackWrapper : undefined}>
-      <View style={styles.shadowBody} testID='pill-tabs-shadow-body' />
-      <BlurView
-        // Decorative feather layer with no blur target: selecting a dimezis
-        // method would make expo-blur warn and fall back to `none` anyway.
-        blurMethod='none'
-        style={styles.shadowBlur}
-        testID='pill-tabs-shadow-blur'
-        intensity={GLASS.blur.intensity}
-        tint={isLight ? 'light' : 'dark'}
-      />
+      {!isWeb && <View style={styles.shadowBody} testID='pill-tabs-shadow-body' />}
+      {!isWeb && (
+        <BlurView
+          // Decorative feather layer with no blur target: selecting a dimezis
+          // method would make expo-blur warn and fall back to `none` anyway.
+          blurMethod='none'
+          style={styles.shadowBlur}
+          testID='pill-tabs-shadow-blur'
+          intensity={GLASS.blur.intensity}
+          tint={isLight ? 'light' : 'dark'}
+        />
+      )}
       <View
         testID='pill-tabs-track'
-        style={[styles.track, { backgroundColor: trackFill }, stretch && styles.trackStretch]}
+        style={[
+          styles.track,
+          { backgroundColor: trackFill },
+          isWeb && styles.trackWebShadow,
+          stretch && styles.trackStretch,
+        ]}
       >
         {content}
       </View>

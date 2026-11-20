@@ -1,5 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native'
-import { StyleSheet } from 'react-native'
+import { Platform, StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
 import { GLASS } from 'shared/ui'
 import {
@@ -58,6 +58,12 @@ const SELECTED_FILL = () => withAlpha(DarkTheme.text, 0.18)
 // drawable, and `transparent`/near-invisible alpha counts as none (device-
 // verified). Painting the surrounding color keeps the cell invisible by design.
 const TRACK_FILL = { dark: COLORS.black, light: COLORS.white } as const
+// Web cannot feather the native layers: react-native-web drops RN's array-form
+// `filter`, and expo-blur is only a thin `backdrop-filter` there. Safari renders
+// the same geometry (body shifted down + blur radius) as a CSS box-shadow.
+const WEB_SHADOW = '0px 18px 10px rgba(0, 0, 0, 0.09)'
+
+const ORIGINAL_PLATFORM = Platform.OS
 
 const trackStyle = () => StyleSheet.flatten(screen.getByTestId(TRACK_ID).props.style)
 
@@ -134,6 +140,24 @@ describe('<PillTabs>', () => {
     expect(blurStyle.right).toBe(-SHADOW_FEATHER)
     expect(blurStyle.top).toBe(SHADOW_OFFSET_Y - SHADOW_FEATHER)
     expect(blurStyle.bottom).toBe(-(SHADOW_OFFSET_Y + SHADOW_FEATHER))
+  })
+
+  test('web: casts the shadow as a CSS box-shadow on the track, without feather layers', async () => {
+    Platform.OS = 'web'
+
+    try {
+      await renderWithProviders(<PillTabs items={ITEMS} value='sermons' onChange={jest.fn()} />)
+
+      // RNW cannot translate RN's array-form blur into CSS, and expo-blur on web
+      // is a 1px backdrop-filter — both feather layers would leave a hard edge.
+      expect(screen.queryByTestId(SHADOW_BODY_ID)).toBeNull()
+      expect(screen.queryByTestId(SHADOW_BLUR_ID)).toBeNull()
+      // The track itself carries the same geometry: pill shifted down 18px,
+      // blurred 10px, upper part hidden behind the opaque track.
+      expect(trackStyle().boxShadow).toBe(WEB_SHADOW)
+    } finally {
+      Platform.OS = ORIGINAL_PLATFORM
+    }
   })
 
   test('marks only the active pill as selected (radio semantics)', async () => {

@@ -97,4 +97,13 @@ export const styles = StyleSheet.create({
     padding: TRACK_PADDING,
   },
   trackStretch: { flexGrow: 1, width: '100%' },
+  // Web draws the shadow as a CSS box-shadow on the track instead of the two
+  // feather layers above: react-native-web cannot translate RN's array-form
+  // `filter` into CSS (the style is dropped, leaving a crisp un-blurred shape)
+  // and expo-blur on web is only a 1px backdrop-filter, too thin to feather the
+  // body. Safari renders this box-shadow correctly; the same offset + blur
+  // radius keeps the geometry identical to the native body → blur → track stack.
+  trackWebShadow: {
+    boxShadow: `0px ${SHADOW_OFFSET_Y}px ${SHADOW_BLUR_RADIUS}px ${SHADOW_FILL}`,
+  },
 })
