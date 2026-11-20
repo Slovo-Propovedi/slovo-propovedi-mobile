@@ -1,8 +1,8 @@
-Search: clears on leave; last tab stays; details keep top bar; pill tap focuses.
-Listened marks survive eviction.
-Auto-advance: no stalls or lock-screen freeze (Android).
-Web: no iOS bottom gap; blurred tabs; player advances per repeat mode.
-Share rows match QR; copy toast above dialogs.
-Bar morphs again; islands morph faster on Android.
-Playback errors surface and heal on reconnect.
+Search: clears on leave; last tab; details keep bar; pill focuses.
+Listen marks survive eviction.
+Auto-advance: no stalls or lock freeze (Android).
+Web: no iOS gap; blurred tabs; repeat-mode advance.
+Share rows match QR; toast above dialogs.
+Bar morphs; islands faster.
+Playback errors heal online.
 OTA reload keeps brand orange in light theme.

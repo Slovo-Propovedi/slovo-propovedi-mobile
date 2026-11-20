@@ -96,8 +96,16 @@ const mockedUseColorScheme = useColorScheme as jest.MockedFunction<typeof useCol
 const UPDATE_ID = 'update-1'
 
 const DYNAMIC_COLOR_CASES = [
-  { expectedBackground: LightTheme.primary, scheme: 'light' as const },
-  { expectedBackground: DarkTheme.background, scheme: 'dark' as const },
+  {
+    expectedBackground: LightTheme.primary,
+    expectedIcon: lightSplashAsset.localUri,
+    scheme: 'light' as const,
+  },
+  {
+    expectedBackground: DarkTheme.background,
+    expectedIcon: darkSplashAsset.localUri,
+    scheme: 'dark' as const,
+  },
 ]
 
 const newUpdate = (updateId: string): UpdateInfoNew => ({
@@ -200,7 +208,7 @@ describe('useOtaAutoApply', () => {
 
   test.each(DYNAMIC_COLOR_CASES)(
     'keeps the static brand background in $scheme theme when dynamic colors are enabled',
-    async ({ expectedBackground, scheme }) => {
+    async ({ expectedBackground, expectedIcon, scheme }) => {
       mockedUseColorScheme.mockReturnValue(scheme)
       const { ctx } = await mount()
       await act(async () => {
@@ -210,7 +218,10 @@ describe('useOtaAutoApply', () => {
 
       expect(mockReloadAsync).toHaveBeenCalledWith(
         expect.objectContaining({
-          reloadScreenOptions: expect.objectContaining({ backgroundColor: expectedBackground }),
+          reloadScreenOptions: expect.objectContaining({
+            backgroundColor: expectedBackground,
+            image: { height: 152, url: expectedIcon, width: 152 },
+          }),
         }),
       )
     },

@@ -223,7 +223,7 @@ The changelog is **agent-maintained**, not generated from commits. The release s
 When a change ships something user-facing (a `feat` commit, a user-visible `fix`, anything a user would notice), in the SAME PR/commit the agent adds:
 
 1. One concise, meaningful note to `CHANGELOG.md` under the `## [Unreleased]` section, inside the matching Keep a Changelog group (`### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed`, `### Security`). No internal noise: chores, refactors, docs, CI, dependency bumps and dev-tooling changes get no note.
-2. The same release notes (en + ru) to the fastlane working files `fastlane/metadata/android/en-US/changelogs/unreleased.txt` and `fastlane/metadata/android/ru/changelogs/unreleased.txt`. Do NOT include the "Full changelog" link there — the bump script appends it. Both files must stay within **500 chars total including the appended link** (ru link is ~127 chars), so keep them short.
+2. The same release notes (en + ru) to the fastlane working files `fastlane/metadata/android/en-US/changelogs/unreleased.txt` and `fastlane/metadata/android/ru/changelogs/unreleased.txt`. Do NOT include the "Full changelog" link there — the bump script appends it. Both files must stay within **500 chars total including the appended link** (ru link is ~117 chars), so keep them short.
 
 At release time `bump-version` renames `## [Unreleased]` to `## [X.Y.Z] - date` (and creates a fresh empty `## [Unreleased]`), and renames both `unreleased.txt` files to `<versionCode>.txt`. It FAILS if the `[Unreleased]` section has no notes or a fastlane file is missing/empty/too long — fix the notes and re-run.
 
