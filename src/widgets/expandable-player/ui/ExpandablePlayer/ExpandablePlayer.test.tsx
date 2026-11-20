@@ -129,9 +129,9 @@ const PLAY_PAUSE_LABEL = 'play-pause'
 const MINI_TUCK_DISTANCE = 60
 const PLAYER_UNDER_BAR_Z = 9
 const PLAYER_OVER_BAR_Z = 20
-// Slide (300 ms) plus the delayed fade (180 ms): the hidden pill leaves the tree
-// only after the whole tuck has landed.
-const TUCK_TEARDOWN_MS = 480
+// Slide (300 ms, mocked above) plus the delayed fade (120 ms): the hidden pill
+// leaves the tree only after the whole tuck has landed.
+const TUCK_TEARDOWN_MS = 420
 
 const mockedWithTiming = withTiming as jest.Mock
 const defaultWithTimingImpl = mockedWithTiming.getMockImplementation()

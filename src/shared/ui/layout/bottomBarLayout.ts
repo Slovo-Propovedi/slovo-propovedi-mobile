@@ -60,4 +60,4 @@ export const getBarBottomPadding = (bottomInset: number): number =>
 export const COLLAPSE_SCROLL_THRESHOLD = 80 as const
 // Scroll offset at or above which the collapsed bar expands back.
 export const EXPAND_TOP_THRESHOLD = 4 as const
-export const BAR_MORPH_DURATION_MS = 300 as const
+export const BAR_MORPH_DURATION_MS = 200 as const

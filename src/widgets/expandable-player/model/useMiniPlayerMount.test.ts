@@ -64,14 +64,14 @@ describe('useMiniPlayerMount', () => {
     })
     await rerender({ hidden: true })
     await act(async () => {
-      jest.advanceTimersByTime(400)
+      jest.advanceTimersByTime(TUCK_TEARDOWN_MS - 1)
     })
 
     // The first hide's timer must not carry over into the second hide.
     expect(result.current).toBe(true)
 
     await act(async () => {
-      jest.advanceTimersByTime(TUCK_TEARDOWN_MS - 400)
+      jest.advanceTimersByTime(1)
     })
 
     expect(result.current).toBe(false)

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { BAR_MORPH_DURATION_MS } from 'shared/ui/layout'
 import { MINI_TUCK_FADE_MS } from './miniPillFade'
 
-// The slide lands at BAR_MORPH_DURATION_MS, the delayed fade 180 ms later.
+// The slide lands at BAR_MORPH_DURATION_MS, the delayed fade 120 ms later.
 const TUCK_TEARDOWN_MS = BAR_MORPH_DURATION_MS + MINI_TUCK_FADE_MS
 
 /**
