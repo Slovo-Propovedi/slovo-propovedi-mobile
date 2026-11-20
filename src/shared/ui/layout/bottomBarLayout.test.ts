@@ -20,6 +20,14 @@ describe('getBarBottomPadding', () => {
   test('real inset wins even below the floor', () => {
     expect(getBarBottomPadding(8)).toBe(8)
   })
+
+  test('browser clearance keeps the floor above a real inset', () => {
+    expect(getBarBottomPadding(34, true)).toBe(34 + BAR_BOTTOM_INSET_MIN)
+  })
+
+  test('browser clearance keeps the floor on inset-less screens', () => {
+    expect(getBarBottomPadding(0, true)).toBe(BAR_BOTTOM_INSET_MIN)
+  })
 })
 
 describe('getBarSideInset', () => {

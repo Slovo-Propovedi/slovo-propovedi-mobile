@@ -53,9 +53,16 @@ export const getBarSideInset = (oneLineProgress: number): number => {
 export const BAR_BOTTOM_INSET_MIN = 12 as const
 // Bottom padding of the floating chrome: with a real bottom inset the islands
 // sit exactly on the safe-area line (no extra distance); inset-less screens keep
-// the clearance floor.
-export const getBarBottomPadding = (bottomInset: number): number =>
-  bottomInset > 0 ? bottomInset : BAR_BOTTOM_INSET_MIN
+// the clearance floor. Web browsers pass browserClearance: their inset comes
+// from the unreliable env() probe, and there the safe-area line is the top edge
+// of the browser chrome (iOS Safari navbar) — flush against it reads as the
+// islands lying on the navbar, so the chrome keeps the clearance floor above
+// it. Installed PWAs are excluded: no dynamic chrome, flush stays the look.
+export const getBarBottomPadding = (bottomInset: number, browserClearance = false): number => {
+  if (bottomInset <= 0) return BAR_BOTTOM_INSET_MIN
+
+  return browserClearance ? bottomInset + BAR_BOTTOM_INSET_MIN : bottomInset
+}
 // Scroll offset past which the bar collapses to a single row.
 export const COLLAPSE_SCROLL_THRESHOLD = 80 as const
 // Scroll offset at or above which the collapsed bar expands back.
