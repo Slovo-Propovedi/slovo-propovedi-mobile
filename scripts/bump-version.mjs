@@ -138,7 +138,7 @@ if (/^\d+\.\d+\.\d+$/.test(versionArg)) {
     minor: `${major}.${minor + 1}.0`,
     patch: `${major}.${minor}.${patch + 1}`,
   }
-  newVersion = bumps[arg]
+  newVersion = bumps[versionArg]
 }
 
 // --- Derive versionCode from new semver ---
