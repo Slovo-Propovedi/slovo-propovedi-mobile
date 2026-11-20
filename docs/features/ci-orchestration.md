@@ -171,6 +171,8 @@ GitHub не получает keystore. Его сборка идёт с `signing:
 
 Guard прогона: только ветка `main` и непустые `bump`/`RELEASE_BUMP_TOKEN`. Ветка обязательна потому, что `ci.yml` ставит `CI / checks` только на push в `main`: bump-коммит на другой ветке не получил бы статуса и просто выжег бы 15-минутный бюджет ожидания в `create-release`.
 
+Идентичность: коммит и трейлер `Signed-off-by` подписываются пользователем, запустившим прогон (`github.actor`), — не ботом. Email берётся из `GET /api/v1/users/{actor}` встроенным токеном Actions, если пользователь его публикует; иначе используется `<actor>@noreply.<домен>`, который Forgejo резолвит обратно в аккаунт (скрытый email, 404 и отказ токена деградируют в тот же fallback). Guard проверяет actor по `^[A-Za-z0-9][A-Za-z0-9._-]*$`: значение попадает в shell и в local-part email.
+
 Порядок шагов:
 
 1. `bump` — коммит и тег создаются **локально**, на сервер пока ничего не уходит.
@@ -257,7 +259,7 @@ scripts/ci/setup-github-mirror.sh
 5. **Релиз:** prerelease-тег `v*` → `changes` → `build-remote` → `android-package` → (`web-package` после успешной подписи) → `publish-release`; проверить артефакты `release-assets` (zip + `SHA256SUMS.txt`); `publish-release` — на реальном теге (он создаёт релиз).
 6. **Fallback:** временно выставить `QUEUE_TIMEOUT_MIN=0` в dispatch-шаге (или использовать заведомо невалидный `GH_TOKEN`) — должен отработать `local`/локальная сборка, а gate — success.
 7. **Без сети:** `GH_DISPATCH_DRY_RUN=1 bash scripts/ci/github-dispatch.sh` и `bash scripts/ci/github-dispatch-selftest.sh`.
-8. **Ручной bump:** сначала заполнить релизные заметки (`CHANGELOG.md` `[Unreleased]` + оба `unreleased.txt`), затем запустить «Bump version (manual)» на `main` с input `patch`; убедиться, что поле `bump` отрисовалось (inputs `workflow_dispatch` требуют свежего Forgejo); дождаться цепочки `bump` → `push-main` → `wait-ci` → `push-tag`; проверить тег на сервере (`git ls-remote origin 'refs/tags/v*'`) и появление run'а `Release` для этого тега. Откат при неудачном релизе: удалить тег (`git push origin :refs/tags/vX.Y.Z`) и откатить bump-коммит в `main`.
+8. **Ручной bump:** сначала заполнить релизные заметки (`CHANGELOG.md` `[Unreleased]` + оба `unreleased.txt`), затем запустить «Bump version (manual)» на `main` с input `patch`; убедиться, что поле `bump` отрисовалось (inputs `workflow_dispatch` требуют свежего Forgejo); дождаться цепочки `bump` → `push-main` → `wait-ci` → `push-tag`; проверить тег на сервере (`git ls-remote origin 'refs/tags/v*'`) и появление run'а `Release` для этого тега; после bump убедиться, что авторство коммита — запускавший пользователь (`git log -1 --format='%an <%ae> %(trailers:key=Signed-off-by,valueonly)' vX.Y.Z`). Откат при неудачном релизе: удалить тег (`git push origin :refs/tags/vX.Y.Z`) и откатить bump-коммит в `main`.
 
 ## Ограничения и известные компромиссы
 

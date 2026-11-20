@@ -50,8 +50,11 @@ name: Bump version (manual)
 # passed leaves it to what it was designed for (the GitHub build queue)
 # instead of spending it on the whole check run.
 #
-# git identity: `slovo-ci <slovo-ci@slovo-propovedi.ru>` is the DCO signer of
-# the bump commit — `git commit -s` in the script needs a configured identity.
+# git identity: the bump commit and its DCO trailer are signed by the user who
+# dispatched the run (`github.actor`), not a bot. The email comes from the
+# Forgejo user API when the user publishes it; otherwise the instance-
+# resolvable `<actor>@noreply.<domain>` is used, which Forgejo attributes back
+# to the account.
 #
 # Recovery:
 #   * main push rejected (non-fast-forward: someone pushed meanwhile, stale
@@ -117,8 +120,9 @@ jobs:
       - name: Guard branch, input and token
         id: guard
         env:
-          # The input is user-supplied text: it reaches the scripts through the
-          # environment and is never interpolated into a run block.
+          # The input and the actor are user-controlled: both reach the scripts
+          # through the environment and are never interpolated into a run block.
+          ACTOR: ${{ github.actor }}
           BUMP_INPUT: ${{ inputs.bump }}
           REF_NAME: ${{ github.ref_name }}
           REF_TYPE: ${{ github.ref_type }}
@@ -159,15 +163,81 @@ jobs:
             exit 1
           fi
 
-          echo "Bumping '$BUMP_INPUT' on $REF_NAME"
-          summary_row "- Guard: ✅ on \`main\`, input \`$BUMP_INPUT\`, token present"
+          # The actor becomes the commit author name and the email local-part:
+          # sanitize it at the boundary instead of trusting a value that flows
+          # into the shell and into `git config user.email`. LC_ALL=C keeps the
+          # ranges ASCII-only — otherwise collation lets accented letters pass.
+          if [ -z "$ACTOR" ] || ! ( LC_ALL=C; [[ "$ACTOR" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] ); then
+            echo "::error::the run actor is empty or has unexpected characters ('$ACTOR') — cannot sign the bump commit with a valid identity"
+            summary_row "- Guard: ❌ blocked (unusable actor \`$ACTOR\`)"
+            exit 1
+          fi
 
-      # `git commit -s` inside the script needs an identity; the DCO trailer is
-      # signed by the service account documented in the header.
-      - name: Configure git identity
+          echo "Bumping '$BUMP_INPUT' on $REF_NAME as $ACTOR"
+          summary_row "- Guard: ✅ on \`main\`, input \`$BUMP_INPUT\`, actor \`$ACTOR\`, token present"
+
+      # The bump commit and its DCO trailer must carry the DISPATCHING user's
+      # identity, not a bot: `git commit -s` signs with the configured identity.
+      # The real email is used only when the user publishes it; otherwise the
+      # instance-resolvable noreply form is used, which Forgejo attributes back
+      # to the account. A hidden email, a 404 (private profile) and a token
+      # rejected on this non-repo endpoint all degrade to that same fallback, so
+      # the step never blocks the bump.
+      - name: Resolve identity and configure git
+        env:
+          ACTOR: ${{ github.actor }}
+          # Forgejo's automatic token: enough to READ a public user profile. It
+          # authenticates as the internal Actions user, not as the actor.
+          API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SERVER_URL: ${{ github.server_url }}
         run: |
-          git config user.name "slovo-ci"
-          git config user.email "slovo-ci@slovo-propovedi.ru"
+          set -e
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          # Fallback first, so every failure path already holds a correct value:
+          # Forgejo's NO_REPLY_ADDRESS default is `noreply.<domain>` (not
+          # `users.noreply.<domain>`), and the server resolves it back to the
+          # account on commit attribution.
+          LOWER_ACTOR=$(printf '%s' "$ACTOR" | tr '[:upper:]' '[:lower:]')
+          HOST="${SERVER_URL#*://}"
+          HOST="${HOST%%/*}"
+          FALLBACK_EMAIL="${LOWER_ACTOR}@noreply.${HOST}"
+
+          # Non-fatal by design: a hidden email answers with the noreply
+          # placeholder (valid as-is), a private profile 404s, and the automatic
+          # token may be refused here — all cases fall through to the fallback.
+          EMAIL=$(curl -sS -m 10 -H "Authorization: token $API_TOKEN" \
+            "$SERVER_URL/api/v1/users/$ACTOR" | jq -r '.email // empty' 2>/dev/null || true)
+
+          # Only a single plausible address token is accepted: empty, no '@',
+          # whitespace, quotes or newlines all mean "use the fallback".
+          VALID=0
+          case "$EMAIL" in
+            *@*) VALID=1 ;;
+          esac
+          case "$EMAIL" in
+            *[[:space:]]*|*'"'*|*"'"*) VALID=0 ;;
+          esac
+
+          USED_FALLBACK=0
+          if [ "$VALID" -ne 1 ]; then
+            EMAIL="$FALLBACK_EMAIL"
+            USED_FALLBACK=1
+            echo "::warning::could not resolve the real email via the user API — using the noreply fallback $FALLBACK_EMAIL"
+          fi
+          # The API's placeholder for a hidden email IS the fallback form.
+          if [ "$EMAIL" = "$FALLBACK_EMAIL" ]; then
+            USED_FALLBACK=1
+          fi
+
+          git config user.name "$ACTOR"
+          git config user.email "$EMAIL"
+
+          if [ "$USED_FALLBACK" -eq 1 ]; then
+            summary_row "- Identity: ✅ \`$ACTOR\` <\`$EMAIL\`> (noreply fallback — real email hidden or API unavailable)"
+          else
+            summary_row "- Identity: ✅ \`$ACTOR\` <\`$EMAIL\`>"
+          fi
 
       - name: Run bump-version
         id: bump
