@@ -29,6 +29,8 @@ stack: CodedError ← applyMetadata ← anonymous (setInterval retry callback)
 - `modules/audio-effects` подключается к тому же ExoPlayer через `project(':expo-audio')` (не maven-координату) и видит те же типы `expo.modules.audio.AudioPlayer`;
 - при апгрейде expo-audio патч может перестать применяться — `yarn check:patches` падает по дизайну (сверка версии из имени патча), это сигнал пересмотреть патч до сборки.
 
+**Обратная граница: нативные ошибки статуса (`AudioPlaylistStatus.error`).** У `AudioPlaylist` статус может нести опциональное поле `error: { message: string | null, code: number }` — оно присутствует только в ошибочных статусах и только на Android (iOS ключ не отдаёт), поэтому JS не должен опираться на его наличие. Потребитель — `src/entities/player/lib/PlayerService/native/playlistErrorReporter.ts` (подключён из `wirePlaylistStatus`): текст ошибки (`message`, при `null` — `PlaybackException <code>`) уходит в `reportPlaybackError` с дедупликацией «один репорт на инстанс плейлиста, индекс и вид ошибки», а `isStalledOfflineAtom` выставляется для reconnect-heal и снимается первым статусом `isLoaded && playing`. Машинно стабилен только `code`; `message` — диагностический текст, парсить его как контракт нельзя. Ошибочный статус при этом продолжает идти обычным обработчиком (мёртвый движок даёт ребро `playing:false` → штатные пауза/flush).
+
 ## expo-asset контракт
 
 `Asset.fromModule(...)` + `downloadAsync()` (`src/shared/lib/app-icon.ts`):

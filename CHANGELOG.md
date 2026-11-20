@@ -13,17 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Semibold slider section title
 - Raised mini-player gap above the islands row
 - Search opens as a separate page from the pill; the query clears when you leave
+- Web player auto-advances to the next sermon, honoring the repeat setting (repeat track, queue, off)
 
 ### Changed
 
 - Align bottom-bar islands and mini-player edges with the slider card line; the collapsed one-line bar uses a 1.5× wider inset
 - In the collapsed one-line bar the tab and search buttons shrink to the mini player height (48) instead of the mini player growing; the open search field always matches the tab bar's height
+- Bottom-bar islands morph faster (200 ms)
 
 ### Fixed
 
 - Web: the context switcher on the search screen casts a properly blurred shadow instead of a hard-edged shape
 - Web on iOS: removed the white gap at the bottom of the screen in Safari and in the installed PWA
-- Background auto-advance no longer stops playback a couple of seconds into the next track
+- Background auto-advance no longer stops playback a couple of seconds into the next track, including with the screen locked (Android)
+- Native playback errors now surface and trigger offline reconnect healing (Android)
 - Auto-advance no longer restarts the playlist from the first sermon in some cases
 - Restore the bottom clearance for the floating bar in mobile browsers
 - Keep the listened/progress indication for sermons evicted from the capped listening history (per-sermon progress store; also restored from backups and legacy installs)

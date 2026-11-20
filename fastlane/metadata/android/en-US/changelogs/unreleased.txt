@@ -1,9 +1,7 @@
-Search: leaving clears it; last tab stays (tap closes); details keep top bar.
-Listened marks survive eviction/backup.
-Auto-advance: no stalls/restarts.
-Web on iOS: no bottom gap.
-Share playlist rows match the QR.
-Copy toast over open dialogs.
-Bar morphs again on Android.
-Search: active tab icon centered; tap anywhere on the open pill focuses input.
-Web: search tabs get a blurred shadow.
+Search: clears on leave; last tab stays; details keep top bar; pill tap focuses.
+Listened marks survive eviction.
+Auto-advance: no stalls or lock-screen freeze (Android).
+Web: no iOS bottom gap; blurred tabs; player advances per repeat mode.
+Share rows match QR; copy toast above dialogs.
+Bar morphs again; islands morph faster on Android.
+Playback errors surface and heal on reconnect.
