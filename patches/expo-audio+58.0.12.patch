@@ -75,7 +75,7 @@ index bf3f9c5..056a132 100644
      )
      sendStatusUpdate()
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 53c36f7..aca1ee2 100644
+index 53c36f7..491b7b0 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 @@ -490,7 +490,9 @@ class AudioControlsService : MediaSessionService() {
@@ -129,9 +129,9 @@ index 53c36f7..aca1ee2 100644
 +        // and a rejected add leaves the working session untouched.
 +        try {
 +          addSession(session)
-+        } catch (e: IllegalArgumentException) {
++        } catch (e: RuntimeException) {
 +          appContext?.jsLogger?.warn(
-+            getPlaybackServiceErrorMessage("Failed to rebuild the expo-audio lock screen session"),
++            getPlaybackServiceErrorMessage("Failed to add the rebuilt expo-audio lock screen session"),
 +            e
 +          )
 +          session.release()
