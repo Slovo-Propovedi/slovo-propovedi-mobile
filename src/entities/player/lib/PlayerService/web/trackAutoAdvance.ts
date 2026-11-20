@@ -19,6 +19,7 @@ import { type LockScreenMetadata, type PlaybackStatus } from '../types'
 
 const ADVANCE_ERROR_MESSAGE = 'Ошибка при автоматическом переходе к следующей проповеди'
 const COMPLETION_ERROR_MESSAGE = 'Ошибка при завершении записи истории'
+const RESTART_ERROR_MESSAGE = 'Ошибка при повторном запуске проповеди'
 
 // Native parity: one completion per queue end, per player instance. A repeated
 // 'ended' for the same track stays silent; a different track ends a new window.
@@ -46,6 +47,8 @@ const completeEndedTrack = async (
   currentPlaylist: null | PlaylistData,
 ): Promise<void> => {
   if (completedTracks.get(service) === currentAudio.id) return
+  // Recorded before the await on purpose: a second 'ended' must not double-complete.
+  // Trade-off: a failed completion is never retried for this id (the error is reported).
   completedTracks.set(service, currentAudio.id)
 
   await markHistoryCompletedAction(
@@ -117,8 +120,9 @@ export const handleWebTrackEnd = async (service: WebTrackAutoAdvanceService): Pr
     await advanceToNextTrack(service, currentAudio, currentPlaylist)
   } catch (error) {
     console.error('[handleWebTrackEnd] auto-advance failed:', error)
-    const message = repeatMode === RepeatMode.Off ? COMPLETION_ERROR_MESSAGE : ADVANCE_ERROR_MESSAGE
-    reportError(error, message)
+    if (repeatMode === RepeatMode.Track) reportError(error, RESTART_ERROR_MESSAGE)
+    else if (repeatMode === RepeatMode.Off) reportError(error, COMPLETION_ERROR_MESSAGE)
+    else reportError(error, ADVANCE_ERROR_MESSAGE)
   } finally {
     isAdvancing = false
   }

@@ -1,12 +1,14 @@
 import { type PlaylistData } from 'entities/playlist/@x/player'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
+import { mockConsole } from 'shared/mocks'
 import { isOnlineAtom } from 'shared/model/network'
 import { currentAudioAtom, currentPlaylistAtom, RepeatMode, repeatModeAtom } from '../../../model'
 import { handleWebTrackEnd } from './trackAutoAdvance'
 
 const mockGuardOfflinePlayback = jest.fn()
 const mockMarkHistoryCompleted = jest.fn()
+const mockReportError = jest.fn()
 const mockSetCurrentAudio = jest.fn()
 const mockRecordSermonSwitch = jest.fn()
 const mockSavePlaybackProgress = jest.fn()
@@ -14,7 +16,9 @@ const mockGetResumePosition = jest.fn()
 
 jest.mock('shared/lib/reatom-ctx', () => ({ ctx: { get: jest.fn() } }))
 
-jest.mock('shared/model/error-dialog', () => ({ reportError: jest.fn() }))
+jest.mock('shared/model/error-dialog', () => ({
+  reportError: (...args: unknown[]) => mockReportError(...args),
+}))
 
 jest.mock('shared/model/network', () => ({ isOnlineAtom: 'IS_ONLINE_ATOM' }))
 
@@ -217,6 +221,21 @@ describe('handleWebTrackEnd', () => {
     await Promise.all([handleWebTrackEnd(service), handleWebTrackEnd(service)])
 
     expect(service.replaceAudio).toHaveBeenCalledTimes(1)
+  })
+
+  test('a failed advance resets the in-flight guard so the next ended retries', async () => {
+    mockConsole('error')
+    state.repeatMode = RepeatMode.Queue
+    service.replaceAudio.mockRejectedValueOnce(new Error('replace failed'))
+
+    await handleWebTrackEnd(service)
+
+    expect(mockReportError).toHaveBeenCalledTimes(1)
+
+    await handleWebTrackEnd(service)
+
+    expect(service.replaceAudio).toHaveBeenCalledTimes(2)
+    expect(mockReportError).toHaveBeenCalledTimes(1)
   })
 
   test('no current audio is a silent no-op', async () => {
