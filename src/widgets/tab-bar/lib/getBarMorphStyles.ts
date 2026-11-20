@@ -25,8 +25,9 @@ export const getIslandContentStyle = (progress: number) => {
 // always fills the island: 68 tall beside an open field even when the shape
 // collapses to a circle, 48 in the compact one-line row. Horizontal margins keep
 // following the shape axis (progress): they fade out so the circle's item fills
-// it width-wise.
-export const getTabItemStyle = (progress: number, oneLineProgress = progress) => {
+// it width-wise. Both axes are required so a caller cannot silently couple the
+// height to the shape progress.
+export const getTabItemStyle = (progress: number, oneLineProgress: number) => {
   'worklet'
   const horizontal = getTabItemHorizontalMargin(progress)
   const vertical = getTabItemVerticalMargin(progress)

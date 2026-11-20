@@ -1,5 +1,5 @@
 import { useAction } from '@reatom/npm-react'
-import { Pressable, View } from 'react-native'
+import { Platform, Pressable, View } from 'react-native'
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import { OnboardingTarget } from 'features/onboarding'
 import { focusSearchInput, SearchBar } from 'features/sermon-search'
@@ -8,7 +8,9 @@ import { styles } from './SearchIslandMorph.styles'
 
 const SEARCH_LABEL = 'Поиск'
 const SEARCH_TARGET_ID = 'listen.search-toggle'
-// Both layers are visibility-gated together, so they share the two a11y values.
+// Content and closed circle are visibility-gated together, so they share the
+// two a11y values. The focus surface differs: it is a bare hit target, so when
+// closed it stays 'auto' instead of claiming to be an important layer.
 const A11Y_IMPORTANT = 'yes'
 const A11Y_HIDDEN = 'no-hide-descendants'
 // The focus surface carries identity only for tests: it is not an accessible
@@ -52,7 +54,13 @@ export const SearchIslandContent = ({
         testID={SEARCH_FOCUS_SURFACE_TEST_ID}
         accessibilityElementsHidden={isVisible}
         pointerEvents={isVisible ? 'auto' : 'none'}
-        importantForAccessibility={isVisible ? A11Y_HIDDEN : A11Y_IMPORTANT}
+        importantForAccessibility={isVisible ? A11Y_HIDDEN : 'auto'}
+        // Web: a pointerdown on this layer would blur the focused input before
+        // the click lands, retracting the island for a frame. Cancelling the
+        // press keeps focus; the click still fires onPress (a no-op refocus).
+        onPointerDown={event => {
+          if (Platform.OS === 'web') event.preventDefault()
+        }}
       />
       <Animated.View
         style={[styles.content, contentStyle]}

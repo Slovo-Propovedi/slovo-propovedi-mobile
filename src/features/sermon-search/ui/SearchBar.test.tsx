@@ -199,6 +199,27 @@ describe('<SearchBar>', () => {
     expect(focusMock).not.toHaveBeenCalled()
   })
 
+  test('does not replay a stale focus request on remount', async () => {
+    const ctx = getSharedTestCtx()
+    isSearchOpenAtom(ctx, true)
+    // The atom keeps the last nonce after the request was handled; mounting the
+    // bar again must not focus from that stale value.
+    focusSearchInput(ctx)
+    const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus
+    focusMock.mockClear()
+
+    await renderWithProviders(<SearchBar />, { ctx })
+    await flushAnimationFrame()
+
+    expect(focusMock).not.toHaveBeenCalled()
+
+    await act(async () => {
+      focusSearchInput(ctx)
+    })
+
+    expect(focusMock).toHaveBeenCalledTimes(1)
+  })
+
   test('does not steal focus while search is closed', async () => {
     const ctx = getSharedTestCtx()
     const focusMock = (TextInput as unknown as { prototype: { focus: jest.Mock } }).prototype.focus

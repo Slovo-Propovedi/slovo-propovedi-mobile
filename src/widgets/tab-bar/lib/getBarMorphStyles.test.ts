@@ -21,7 +21,7 @@ describe('getIslandContentStyle', () => {
 
 describe('getTabItemStyle', () => {
   test('expanded item splits the neighbour gap on both sides with longhand margins', () => {
-    expect(getTabItemStyle(0)).toEqual({
+    expect(getTabItemStyle(0, 0)).toEqual({
       height: 60,
       marginBottom: 4,
       marginLeft: 4,
@@ -31,7 +31,7 @@ describe('getTabItemStyle', () => {
   })
 
   test('collapsed item fills the circle with no horizontal margin', () => {
-    expect(getTabItemStyle(1)).toEqual({
+    expect(getTabItemStyle(1, 1)).toEqual({
       height: TAB_BAR_ISLAND_HEIGHT - 4 * 2,
       marginBottom: 4,
       marginLeft: 0,
@@ -70,7 +70,7 @@ describe('getTabItemStyle', () => {
   })
 
   test('uses longhand margins so the morph reaches the web DOM', () => {
-    const style = getTabItemStyle(0.5)
+    const style = getTabItemStyle(0.5, 0.5)
 
     expect(style).not.toHaveProperty('marginHorizontal')
     expect(style).not.toHaveProperty('marginVertical')

@@ -1,5 +1,5 @@
 import { act, fireEvent } from '@testing-library/react-native'
-import { StyleSheet, TextInput } from 'react-native'
+import { Platform, StyleSheet, TextInput } from 'react-native'
 import { makeMutable } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
 import { isSearchOpenAtom } from 'features/sermon-search'
@@ -108,7 +108,7 @@ describe('<SearchIslandContent>', () => {
     expect(focus).toHaveBeenCalledTimes(1)
   })
 
-  test('does not take focus away from the mic button', async () => {
+  test('pressing the mic does not request focus', async () => {
     const ctx = getSharedTestCtx()
     await act(async () => {
       isSearchOpenAtom(ctx, true)
@@ -120,6 +120,30 @@ describe('<SearchIslandContent>', () => {
     await fireEvent.press(getByLabelText(MIC_LABEL))
 
     expect(focus).not.toHaveBeenCalled()
+  })
+
+  test('cancels the web pointer press so a tap on the surface keeps the input focused', async () => {
+    const ctx = getSharedTestCtx()
+    await act(async () => {
+      isSearchOpenAtom(ctx, true)
+    })
+    const { getByTestId } = await renderContent(true)
+    const surface = getByTestId(SEARCH_FOCUS_SURFACE_TEST_ID, { includeHiddenElements: true })
+    const originalPlatform = Platform.OS
+
+    try {
+      Platform.OS = 'web'
+      const webEvent = { preventDefault: jest.fn() }
+      surface.props.onPointerDown(webEvent)
+      expect(webEvent.preventDefault).toHaveBeenCalledTimes(1)
+
+      Platform.OS = 'ios'
+      const nativeEvent = { preventDefault: jest.fn() }
+      surface.props.onPointerDown(nativeEvent)
+      expect(nativeEvent.preventDefault).not.toHaveBeenCalled()
+    } finally {
+      Platform.OS = originalPlatform
+    }
   })
 
   test('lays the focus surface under the content and lets row gaps fall through', async () => {

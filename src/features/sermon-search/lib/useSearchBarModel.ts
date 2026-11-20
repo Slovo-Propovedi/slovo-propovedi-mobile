@@ -1,5 +1,5 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { isSearchOpenAtom, searchInputRequestAtom, searchQueryAtom } from '../model'
 import { isSearchFieldVisibleAtom, searchFocusRequestAtom } from '../model-searchField'
 import { useCloseSearch } from './useCloseSearch'
@@ -10,9 +10,8 @@ import { useSearchInputFocus } from './useSearchInputFocus'
 import { useVoiceInput } from './useVoiceInput'
 
 /**
- * Owns the search bar's input state and side effects: the local text that drives
- * the field, the external-typing channel, focus reporting, voice input and the
- * clear/close semantics shared by the inline ⊗ and Escape.
+ * Owns the input state and side effects: local text, external typing, focus
+ * reporting, voice input and the clear/close semantics (⊗ and Escape).
  * @param onFocusChange - Reports focus transitions to the island owner.
  * @returns Input state, focus state and the handlers the bar renders.
  */
@@ -20,10 +19,8 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
   const ctx = useCtx()
   const [, setQuery] = useAtom(searchQueryAtom)
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
-  // The pill is hidden while the collapsed bar keeps an empty query. A hidden
-  // field must release focus: a lingering keyboard covers the collapsed row and
-  // the first tap on the search circle is spent on the focus handoff instead of
-  // reopening the search.
+  // A hidden field must release focus: a lingering keyboard covers the collapsed
+  // row and spends the first tap on the search circle on the focus handoff.
   const [isSearchFieldVisible] = useAtom(isSearchFieldVisibleAtom)
   // Local state drives the input so async re-renders (spinner flips, results
   // landing) can never push a stale query back. Seeded from the atom at mount.
@@ -36,11 +33,14 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
   const closeSearch = useCloseSearch()
   useDistinctValuesOnOpen(isSearchOpen)
 
-  // Focus stays user-driven: a tap anywhere on the open pill's surface requests
-  // focus through the nonce atom, so nothing focuses on mount or open.
-  useEffect(() => {
-    if (focusRequest === 0) return
+  // Focus stays user-driven: the nonce seeds the last handled value so a stale
+  // request is not replayed when the bar remounts.
+  const lastHandledFocusRequest = useRef(focusRequest)
 
+  useEffect(() => {
+    if (focusRequest === lastHandledFocusRequest.current) return
+
+    lastHandledFocusRequest.current = focusRequest
     inputRef.current?.focus()
   }, [focusRequest, inputRef])
 

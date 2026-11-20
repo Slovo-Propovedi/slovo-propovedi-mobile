@@ -41,7 +41,7 @@ const renderTabButton = async (
   isActive = false,
   collapseProgress = progressValue(0),
   isBarVisuallyCollapsed = false,
-  oneLineProgress?: SharedValue<number>,
+  oneLineProgress = progressValue(0),
 ) =>
   await renderWithProviders(
     <TabButton
@@ -164,7 +164,14 @@ describe('<TabButton>', () => {
 
   test('disabled tab tints the label with the muted text color', async () => {
     await renderWithProviders(
-      <TabButton isDisabled onPress={noop} isActive={false} routeKey='listen' routeName='listen' />,
+      <TabButton
+        isDisabled
+        onPress={noop}
+        isActive={false}
+        routeKey='listen'
+        routeName='listen'
+        oneLineProgress={progressValue(0)}
+      />,
     )
 
     expect(screen.getByText('Слушать')).toHaveStyle({ color: '#666' })
