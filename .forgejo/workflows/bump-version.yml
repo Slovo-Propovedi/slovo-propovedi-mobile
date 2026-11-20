@@ -55,7 +55,10 @@ name: Bump version (manual)
 #
 # Recovery:
 #   * main push rejected (non-fast-forward: someone pushed meanwhile, stale
-#     checkout) — nothing was mutated on the remote; fetch main, re-dispatch.
+#     checkout) — most likely nothing was mutated on the remote, but that is
+#     not provable for a transport failure: verify with
+#     `git ls-remote origin main` against the runner's `git rev-parse HEAD`,
+#     then re-dispatch.
 #   * main pushed, CI red or timed out — the tag never left the runner: fix the
 #     failure on main, then create and push the tag from a maintainer clone
 #     (`git tag -a vX.Y.Z -m vX.Y.Z <bump-sha> && git push origin vX.Y.Z`).
@@ -196,12 +199,10 @@ jobs:
 
           if git -c credential.helper="$HELPER" push origin main; then
             echo "Pushed the bump commit to main"
-            echo "ok=true" >> "$GITHUB_OUTPUT"
             summary_row "- Push main: ✅ bump commit pushed, ci.yml triggered"
           else
-            echo "::error::could not push the bump commit to main (non-fast-forward?) — nothing was mutated on the remote; re-dispatch once main is current"
-            echo "ok=false" >> "$GITHUB_OUTPUT"
-            summary_row "- Push main: ❌ rejected — nothing mutated remotely, safe to re-dispatch"
+            echo "::error::could not push the bump commit to main (non-fast-forward?) — most likely nothing was mutated; verify with 'git ls-remote origin main' against the runner's 'git rev-parse HEAD' before re-dispatching"
+            summary_row "- Push main: ❌ rejected — most likely nothing mutated remotely; verify with \`git ls-remote origin main\` before re-dispatching"
             exit 1
           fi
 
@@ -239,6 +240,15 @@ jobs:
                 echo "::error::CI did not pass for $HEAD_SHA (status: $STATE) — refusing to tag this commit"
                 echo "result=failed" >> "$GITHUB_OUTPUT"
                 summary_row "- CI: ❌ $STATE on \`$SHORT_SHA\` — tag not pushed"
+                exit 1
+                ;;
+              warning)
+                # ci.yml posts `warning` for a superseded run (a newer push to
+                # main cancelled it) — the bump commit was never actually
+                # checked, so tag nothing; the newer run is the real verdict.
+                echo "::error::CI status for $HEAD_SHA is 'warning' — the run was superseded by a newer push to main; verify the newer run goes green, then tag manually (git push origin v<version>) or re-dispatch"
+                echo "result=warning" >> "$GITHUB_OUTPUT"
+                summary_row "- CI: ⚠️ superseded on \`$SHORT_SHA\` — tag not pushed"
                 exit 1
                 ;;
             esac
@@ -303,9 +313,9 @@ jobs:
           elif [ "$BUMP_OUTCOME" != 'success' ]; then
             VERDICT='❌ failed at bump — the version script errored; nothing left the runner, safe to re-dispatch'
           elif [ "$PUSH_MAIN_OUTCOME" != 'success' ]; then
-            VERDICT='❌ failed at push-main — nothing was mutated on the remote, safe to re-dispatch (check for a non-fast-forward first)'
-          elif [ "$WAIT_CI_RESULT" = 'failed' ]; then
-            VERDICT="❌ failed at wait-ci — CI is red on the bump commit; the tag for v$VERSION was NOT pushed (fix main, then tag manually)"
+            VERDICT='❌ failed at push-main — most likely nothing was mutated on the remote, but verify with `git ls-remote origin main` against the runner HEAD before re-dispatching'
+          elif [ "$WAIT_CI_RESULT" = 'failed' ] || [ "$WAIT_CI_RESULT" = 'warning' ]; then
+            VERDICT="❌ failed at wait-ci — CI is red or superseded on the bump commit (see the step log); the tag for v$VERSION was NOT pushed (fix main, then tag manually)"
           elif [ "$WAIT_CI_RESULT" = 'timeout' ]; then
             VERDICT="❌ failed at wait-ci — no CI status within 15 min; the tag for v$VERSION was NOT pushed (see the recovery notes in the header)"
           elif [ "$WAIT_CI_OUTCOME" != 'success' ]; then
