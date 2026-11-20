@@ -7,10 +7,11 @@ import {
   UpdateInfoType,
   type UseUpdatesReturnType,
 } from 'expo-updates'
+import { useColorScheme } from 'react-native'
 import { isPlayingAtom } from 'entities/player'
 import { renderHookWithProviders } from 'shared/mocks'
 import { updateDialogVisibleAtom, updateStateAtom } from 'shared/model'
-import { DarkTheme, LightTheme, themeModeAtom } from 'shared/ui/theme'
+import { DarkTheme, dynamicColorsEnabledAtom, LightTheme, themeModeAtom } from 'shared/ui/theme'
 import { useOtaAutoApply } from './index.native'
 
 // entities/player pulls native expo-audio, which throws at import in Jest.
@@ -60,6 +61,27 @@ jest.mock('expo-asset', () => {
   return { Asset: { fromModule }, mockReloadScreenAssets: { darkSplashAsset, lightSplashAsset } }
 })
 
+// Material You colors live in the native `Color.android.dynamic` proxy, unavailable
+// under Jest. Stub the palette source so a dynamic theme provably differs from the
+// static brand palette the reload screen must keep using.
+jest.mock('shared/ui/theme/constants', () => {
+  const actual = jest.requireActual('shared/ui/theme/constants')
+  return {
+    ...actual,
+    buildDynamicTheme: () => ({
+      ...actual.LightTheme,
+      background: '#1c1b1f',
+      primary: '#6750a4',
+    }),
+  }
+})
+
+// ThemeProvider reads its own internal Appearance module, so patch the hook itself.
+jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({
+  __esModule: true,
+  default: jest.fn(() => 'light'),
+}))
+
 const { darkSplashAsset, lightSplashAsset } = jest.requireMock<{
   mockReloadScreenAssets: {
     darkSplashAsset: ReloadScreenAssetMock
@@ -70,7 +92,13 @@ const { darkSplashAsset, lightSplashAsset } = jest.requireMock<{
 jest.useFakeTimers()
 
 const mockReloadAsync = jest.mocked(reloadAsync)
+const mockedUseColorScheme = useColorScheme as jest.MockedFunction<typeof useColorScheme>
 const UPDATE_ID = 'update-1'
+
+const DYNAMIC_COLOR_CASES = [
+  { expectedBackground: LightTheme.primary, scheme: 'light' as const },
+  { expectedBackground: DarkTheme.background, scheme: 'dark' as const },
+]
 
 const newUpdate = (updateId: string): UpdateInfoNew => ({
   createdAt: new Date(0),
@@ -121,6 +149,7 @@ const advance = async (ms: number): Promise<void> => {
 describe('useOtaAutoApply', () => {
   afterEach(() => {
     jest.restoreAllMocks()
+    mockedUseColorScheme.mockReturnValue('light')
   })
 
   test('does not reload before the 5s delay', async () => {
@@ -168,6 +197,24 @@ describe('useOtaAutoApply', () => {
       }),
     )
   })
+
+  test.each(DYNAMIC_COLOR_CASES)(
+    'keeps the static brand background in $scheme theme when dynamic colors are enabled',
+    async ({ expectedBackground, scheme }) => {
+      mockedUseColorScheme.mockReturnValue(scheme)
+      const { ctx } = await mount()
+      await act(async () => {
+        dynamicColorsEnabledAtom(ctx, true)
+      })
+      await advance(5000)
+
+      expect(mockReloadAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reloadScreenOptions: expect.objectContaining({ backgroundColor: expectedBackground }),
+        }),
+      )
+    },
+  )
 
   test('still reloads without an icon when the asset cannot be downloaded', async () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {})

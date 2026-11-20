@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bottom bar morphing works again on Android — islands, search pill and the mini player respond to taps and scrolls.
 - Search: the active tab icon is centered in its circle while the search field is open.
 - Search: tapping anywhere on the open pill focuses the input.
+- OTA reload screen in light theme always shows the branded orange background (#f16031), matching the cold-start splash even with Android dynamic colors
 
 ## [0.34.0] - 2026-11-12
 

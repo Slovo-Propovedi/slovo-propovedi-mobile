@@ -5,3 +5,4 @@ Web: no iOS bottom gap; blurred tabs; player advances per repeat mode.
 Share rows match QR; copy toast above dialogs.
 Bar morphs again; islands morph faster on Android.
 Playback errors surface and heal on reconnect.
+OTA reload keeps brand orange in light theme.

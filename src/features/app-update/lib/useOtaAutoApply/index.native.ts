@@ -9,7 +9,7 @@ import {
   updateDialogVisibleAtom,
   updateStateAtom,
 } from 'shared/model'
-import { useTheme } from 'shared/ui/theme'
+import { DarkTheme, LightTheme, useTheme } from 'shared/ui/theme'
 import darkSplashIcon from '../../../../../assets/dark-splash-icon.png'
 import lightSplashIcon from '../../../../../assets/light-splash-icon.png'
 
@@ -72,11 +72,11 @@ export const useOtaAutoApply = (): void => {
   const [isPlaying] = useAtom(isPlayingAtom)
   const [updateState] = useAtom(updateStateAtom)
   const [updateDialogVisible] = useAtom(updateDialogVisibleAtom)
-  const { currentTheme, isLight } = useTheme()
+  const { isLight } = useTheme()
   const appliedUpdateIdRef = useRef<null | string>(null)
-  // Mirror the web splash pair on the reload canvas: the scheme's contour mark
-  // on the cold-start background (orange in light, black in dark).
-  const reloadBackgroundColor = String(isLight ? currentTheme.primary : currentTheme.background)
+  // Native cold-start parity: the canvas is the fixed brand color (orange in light,
+  // black in dark), not a Material You dynamic color. The scheme's contour mark sits on it.
+  const reloadBackgroundColor = isLight ? LightTheme.primary : DarkTheme.background
 
   useEffect(() => {
     const pendingUpdateId =
