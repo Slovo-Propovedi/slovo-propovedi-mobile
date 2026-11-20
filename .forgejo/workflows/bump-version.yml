@@ -184,6 +184,7 @@ jobs:
       # rejected on this non-repo endpoint all degrade to that same fallback, so
       # the step never blocks the bump.
       - name: Resolve identity and configure git
+        id: identity
         env:
           ACTOR: ${{ github.actor }}
           # Forgejo's automatic token: enough to READ a public user profile. It
@@ -197,7 +198,9 @@ jobs:
           # Fallback first, so every failure path already holds a correct value:
           # Forgejo's NO_REPLY_ADDRESS default is `noreply.<domain>` (not
           # `users.noreply.<domain>`), and the server resolves it back to the
-          # account on commit attribution.
+          # account on commit attribution. A port in SERVER_URL would give
+          # `actor@noreply.host:3000` — git accepts it, Forgejo does not resolve
+          # it (attribution degrades); the fixed instance URL has no port.
           LOWER_ACTOR=$(printf '%s' "$ACTOR" | tr '[:upper:]' '[:lower:]')
           HOST="${SERVER_URL#*://}"
           HOST="${HOST%%/*}"
@@ -217,6 +220,9 @@ jobs:
           esac
           case "$EMAIL" in
             *[[:space:]]*|*'"'*|*"'"*) VALID=0 ;;
+            # Defense-in-depth: `$`, backtick, `;`, `|`, `<`, `>` and `\` never
+            # belong in an address — anything odd degrades to the fallback.
+            *[\\\$\`\;\|\<\>]*) VALID=0 ;;
           esac
 
           USED_FALLBACK=0
@@ -369,6 +375,8 @@ jobs:
         if: always()
         env:
           GUARD_OUTCOME: ${{ steps.guard.outcome }}
+          IDENTITY_OUTCOME: ${{ steps.identity.outcome }}
+          ACTOR: ${{ github.actor }}
           BUMP_OUTCOME: ${{ steps.bump.outcome }}
           VERSION: ${{ steps.bump.outputs.version }}
           PUSH_MAIN_OUTCOME: ${{ steps.push-main.outcome }}
@@ -380,6 +388,8 @@ jobs:
 
           if [ "$GUARD_OUTCOME" != 'success' ]; then
             VERDICT='⚠️ nothing done — the guard blocked the run (not on main, or a missing input/token; see the row above)'
+          elif [ "$IDENTITY_OUTCOME" = 'failure' ]; then
+            VERDICT="❌ failed at the identity step — could not configure git identity for $ACTOR (see the step log)"
           elif [ "$BUMP_OUTCOME" != 'success' ]; then
             VERDICT='❌ failed at bump — the version script errored; nothing left the runner, safe to re-dispatch'
           elif [ "$PUSH_MAIN_OUTCOME" != 'success' ]; then
