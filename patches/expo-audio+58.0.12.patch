@@ -75,7 +75,7 @@ index bf3f9c5..056a132 100644
      )
      sendStatusUpdate()
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 53c36f7..2539c6b 100644
+index 53c36f7..aca1ee2 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 @@ -490,7 +490,9 @@ class AudioControlsService : MediaSessionService() {
@@ -89,22 +89,74 @@ index 53c36f7..2539c6b 100644
    }
  
    private fun clearSessionInternal() {
-@@ -534,8 +536,12 @@ class AudioControlsService : MediaSessionService() {
-       sessionMetadataPlayer = null
+@@ -530,33 +532,81 @@ class AudioControlsService : MediaSessionService() {
+       currentOptions = options
+       updateArtwork(metadata, postUpdate = false)
+ 
+-      mediaSession?.release()
+-      sessionMetadataPlayer = null
++      // PATCH(patch-package): the whole swap runs inside the main-queue lambda, so
++      // onGetSession never observes a null session. The previous rebuild released the
++      // session on the calling thread before this async rebuild, and MediaSessionService
++      // drops its foreground state once it is left without a registered session - which
++      // is what froze playback a few seconds after every background auto-advance
++      // (issue #149 follow-up) while the notification still reported "playing".
        appContext?.mainQueue?.launch {
          val context = appContext?.reactContext ?: return@launch
 -        val sessionPlayer = MetadataInjectingPlayer(resolveSessionPlayer(playable, options)).apply {
 -          updateMetadata(metadata)
++        val previousServiceSession = mediaSession
++        val previousPlayableSession = playable.mediaSession
 +        // PATCH(patch-package): read the fields at rebuild time, not the captured
 +        // parameters — a JS updateLockScreenMetadata may have landed between the
-+        // release and this rebuild, and currentMetadata is then the fresh track
++        // request and this rebuild, and currentMetadata is then the fresh track
 +        // (issue #149 follow-up).
 +        val sessionPlayer = MetadataInjectingPlayer(resolveSessionPlayer(playable, currentOptions)).apply {
 +          updateMetadata(currentMetadata)
          }
++        // A fresh wrapper has a unique identity hash, so the rebuilt session id differs
++        // from the id still registered by the previous session - MediaSessionService
++        // rejects two registered sessions with the same id.
          val session = MediaSession.Builder(context, sessionPlayer)
-           .setId("ExpoAudioLockScreenSession_${playable.player.hashCode()}")
-@@ -557,6 +563,19 @@ class AudioControlsService : MediaSessionService() {
+-          .setId("ExpoAudioLockScreenSession_${playable.player.hashCode()}")
++          .setId("ExpoAudioLockScreenSession_${System.identityHashCode(sessionPlayer)}")
+           .setCallback(AudioMediaSessionCallback(this@AudioControlsService))
+           .build()
+ 
+-        playable.mediaSession.release()
+-        playable.mediaSession = session
++        // Register the replacement first: the service keeps a session at every moment,
++        // and a rejected add leaves the working session untouched.
++        try {
++          addSession(session)
++        } catch (e: IllegalArgumentException) {
++          appContext?.jsLogger?.warn(
++            getPlaybackServiceErrorMessage("Failed to rebuild the expo-audio lock screen session"),
++            e
++          )
++          session.release()
++          return@launch
++        }
+ 
+-        addSession(session)
+         mediaSession = session
++        playable.mediaSession = session
+         sessionMetadataPlayer = sessionPlayer
+ 
+         updateSessionCustomLayout(playable.player.isPlaying)
+         postOrStartForegroundNotification(startInForeground = false)
++
++        // Only now is the superseded session released (release() is idempotent, so the
++        // service and playable holding the same instance is harmless).
++        if (previousServiceSession != null && previousServiceSession !== session) {
++          previousServiceSession.release()
++        }
++        if (previousPlayableSession !== session && previousPlayableSession !== previousServiceSession) {
++          previousPlayableSession.release()
++        }
+       }
+     } else {
+       setActivePlayableInternal(playable, metadata, options)
      }
    }
  
@@ -115,6 +167,9 @@ index 53c36f7..2539c6b 100644
 +  // re-assert through setPlayableOptions) is the proven way to re-publish PlaybackState:
 +  // it is background-safe here because the service is already a foreground service and
 +  // this path posts with startInForeground = false (plain notify, no FGS start).
++  // The rebuild registers the new session before releasing the old one (see
++  // setPlayableOptions), so the foreground service survives the rebuild in the
++  // background instead of being stopped together with its only session.
 +  fun reassertSessionForPlayable(playable: LockScreenPlayable) {
 +    if (playable == currentPlayable) {
 +      setPlayableOptions(playable, currentMetadata, currentOptions)
@@ -139,10 +194,10 @@ index 2280c80..d32facf 100644
    return (resolved * 1000).toLong().coerceAtLeast(MIN_SEEK_INTERVAL_MS)
  }
 diff --git a/node_modules/expo-audio/build/Audio.types.d.ts b/node_modules/expo-audio/build/Audio.types.d.ts
-index 332b0c2..b657232 100644
+index 332b0c2..b5d21f6 100644
 --- a/node_modules/expo-audio/build/Audio.types.d.ts
 +++ b/node_modules/expo-audio/build/Audio.types.d.ts
-@@ -739,4 +739,9 @@ export type AudioPlaylistStatus = {
+@@ -739,4 +739,21 @@ export type AudioPlaylistStatus = {
      loop: AudioPlaylistLoopMode;
      /** Whether the current track just finished playing. */
      didJustFinish: boolean;
@@ -151,6 +206,18 @@ index 332b0c2..b657232 100644
 +     * PATCH(patch-package): absent on binaries built without the patch.
 +     */
 +    autoAdvanceCount?: number;
++    /**
++     * Playback failure attached to the status that carries the native error edge.
++     * The payload is the nested `{ message, code }` map emitted by the Android
++     * player listener; regular statuses do not carry the key at all.
++     * PATCH(patch-package): absent on binaries built without the patch.
++     */
++    error?: {
++        /** `PlaybackException.message`. */
++        message: null | string;
++        /** `PlaybackException.errorCode`. */
++        code: number;
++    } | null;
  };
 diff --git a/node_modules/expo-audio/build/AudioModule.types.d.ts b/node_modules/expo-audio/build/AudioModule.types.d.ts
 index 0d63c9b..8bcb380 100644
@@ -219,10 +286,10 @@ index 38e158f..d82cf56 100644
        }
      }
 diff --git a/node_modules/expo-audio/src/Audio.types.ts b/node_modules/expo-audio/src/Audio.types.ts
-index fe5f5c3..016d211 100644
+index fe5f5c3..d62af35 100644
 --- a/node_modules/expo-audio/src/Audio.types.ts
 +++ b/node_modules/expo-audio/src/Audio.types.ts
-@@ -791,4 +791,9 @@ export type AudioPlaylistStatus = {
+@@ -791,4 +791,21 @@ export type AudioPlaylistStatus = {
    loop: AudioPlaylistLoopMode;
    /** Whether the current track just finished playing. */
    didJustFinish: boolean;
@@ -231,6 +298,18 @@ index fe5f5c3..016d211 100644
 +   * PATCH(patch-package): absent on binaries built without the patch.
 +   */
 +  autoAdvanceCount?: number;
++  /**
++   * Playback failure attached to the status that carries the native error edge.
++   * The payload is the nested `{ message, code }` map emitted by the Android
++   * player listener; regular statuses do not carry the key at all.
++   * PATCH(patch-package): absent on binaries built without the patch.
++   */
++  error?: {
++    /** `PlaybackException.message`. */
++    message: null | string;
++    /** `PlaybackException.errorCode`. */
++    code: number;
++  } | null;
  };
 diff --git a/node_modules/expo-audio/src/AudioModule.types.ts b/node_modules/expo-audio/src/AudioModule.types.ts
 index 3194a8e..ba467a6 100644
