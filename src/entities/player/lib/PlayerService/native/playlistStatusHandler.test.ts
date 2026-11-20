@@ -1,10 +1,20 @@
 import { type AudioPlaylistStatus } from 'expo-audio'
-import { createPlaylistStatusHandler } from './playlistStatusHandler'
+import { ctx } from 'shared/lib/reatom-ctx'
+import { isStalledOfflineAtom } from '../../stalledOffline'
+import { playlistEngine } from './PlaylistEngine'
+import { createPlaylistStatusHandler, wirePlaylistStatus } from './playlistStatusHandler'
 
 const mockHandleQueueEnd = jest.fn().mockResolvedValue(undefined)
+const mockReportPlaylistStatus = jest.fn()
 const mockSyncPlaylistStatus = jest.fn()
 
 jest.mock('./PlaylistEngine', () => ({ playlistEngine: { setCallbacks: jest.fn() } }))
+
+jest.mock('./playlistErrorReporter', () => ({
+  createPlaylistErrorReporter: () => ({
+    reportStatus: (...args: unknown[]) => mockReportPlaylistStatus(...args),
+  }),
+}))
 
 jest.mock('./playlistStatusSync', () => ({
   syncPlaylistStatus: (...args: unknown[]) => mockSyncPlaylistStatus(...args),
@@ -15,6 +25,8 @@ jest.mock('./TrackAutoAdvanceService/TrackAutoAdvanceService', () => ({
     handleQueueEnd: (...args: unknown[]) => mockHandleQueueEnd(...args),
   },
 }))
+
+const SOURCE_ERROR = 'Source error'
 
 const statusWith = (overrides: Partial<AudioPlaylistStatus>): AudioPlaylistStatus =>
   ({
@@ -111,5 +123,61 @@ describe('createPlaylistStatusHandler interruption edges', () => {
     handleStatus(status)
 
     expect(mockSyncPlaylistStatus).toHaveBeenCalledWith(status)
+  })
+
+  test('clears the offline stall once a loaded status reports playing', () => {
+    isStalledOfflineAtom(ctx, true)
+    const { handleStatus } = createPlaylistStatusHandler(createCallbacks())
+
+    handleStatus(statusWith({ isLoaded: true, playing: false }))
+    expect(ctx.get(isStalledOfflineAtom)).toBe(true)
+
+    handleStatus(statusWith({ isLoaded: true, playing: true }))
+    expect(ctx.get(isStalledOfflineAtom)).toBe(false)
+  })
+})
+
+describe('wirePlaylistStatus error routing', () => {
+  const wire = (isMuted = () => false) => {
+    const callbacks = createCallbacks()
+    jest.mocked(playlistEngine.setCallbacks).mockClear()
+
+    wirePlaylistStatus(callbacks, isMuted)
+    const wired = jest.mocked(playlistEngine.setCallbacks).mock.calls[0][0]
+
+    return { callbacks, onStatus: wired.onStatus }
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  test('reports a native failure and still syncs the complete status', () => {
+    const { onStatus } = wire()
+    const status = statusWith({ error: { code: 2001, message: SOURCE_ERROR }, playing: false })
+
+    onStatus(status)
+
+    expect(mockReportPlaylistStatus).toHaveBeenCalledWith(status)
+    expect(mockSyncPlaylistStatus).toHaveBeenCalledWith(status)
+  })
+
+  test('raises at most one interruption edge for a failed status', () => {
+    const { callbacks, onStatus } = wire()
+
+    onStatus(statusWith({ playing: true }))
+    callbacks.onAudioInterruption.mockClear()
+    onStatus(statusWith({ error: { code: 2001, message: SOURCE_ERROR }, playing: false }))
+
+    expect(callbacks.onAudioInterruption.mock.calls).toEqual([[true]])
+  })
+
+  test('drops every status while the stream is muted', () => {
+    const { onStatus } = wire(() => true)
+
+    onStatus(statusWith({ error: { code: 2001, message: SOURCE_ERROR } }))
+
+    expect(mockReportPlaylistStatus).not.toHaveBeenCalled()
+    expect(mockSyncPlaylistStatus).not.toHaveBeenCalled()
   })
 })

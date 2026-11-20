@@ -1,7 +1,10 @@
 import { type AudioPlaylistStatus } from 'expo-audio'
+import { ctx } from 'shared/lib/reatom-ctx'
+import { setIsStalledOfflineAction } from '../../stalledOffline'
 import { type StatusCallbacks } from '../types'
 import { isGenuineTrackEnd } from './isGenuineTrackEnd'
 import { playlistEngine } from './PlaylistEngine'
+import { createPlaylistErrorReporter } from './playlistErrorReporter'
 import { syncPlaylistStatus } from './playlistStatusSync'
 import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdvanceService'
 
@@ -39,6 +42,9 @@ export const createPlaylistStatusHandler = (callbacks: StatusCallbacks) => {
     }
 
     syncPlaylistStatus(status)
+    // Native resume paths (plain play on the live queue) never clear the stall flag,
+    // so a loaded playing status is the playback-resumed edge that must release it.
+    if (status.isLoaded && status.playing) void setIsStalledOfflineAction(ctx, false)
 
     if (status.isLoaded && status.duration > 0 && !status.didJustFinish) armed = true
     if (status.didJustFinish && armed && !queueEndHandled) {
@@ -70,14 +76,21 @@ export const createPlaylistStatusHandler = (callbacks: StatusCallbacks) => {
 /**
  * Connects the playlist event stream to the service. Re-wiring on every
  * load/replace resets the per-source arming/dedupe state.
+ * A native failure arrives as a complete status carrying the extra `error` map
+ * (the native side merges it into `currentStatus()`), so it is reported and then
+ * still flows through the regular handler: the dead-engine playing edge must
+ * pause and flush like any other interruption.
  * @param callbacks - Service lifecycle callbacks.
  * @param isMuted - Suppresses status consumption while stopping/unloading.
  */
 export const wirePlaylistStatus = (callbacks: StatusCallbacks, isMuted: () => boolean): void => {
   const { handleStatus, markAutoAdvanceInFlight } = createPlaylistStatusHandler(callbacks)
+  const errorReporter = createPlaylistErrorReporter()
   playlistEngine.setCallbacks({
     onStatus: status => {
-      if (!isMuted()) handleStatus(status)
+      if (isMuted()) return
+      errorReporter.reportStatus(status)
+      handleStatus(status)
     },
     onTrackChanged: (previousIndex, currentIndex) => {
       markAutoAdvanceInFlight()
