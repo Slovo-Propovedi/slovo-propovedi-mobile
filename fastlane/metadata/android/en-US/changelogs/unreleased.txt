@@ -1,9 +1,9 @@
-Search page: leaving clears it; last tab stays; details keep the top bar.
+Search: leaving clears it; last tab stays (tap closes); details keep top bar.
 Listened marks survive eviction/backup.
 Auto-advance: no stalls/restarts.
 Web on iOS: no bottom gap.
 Share playlist rows match the QR.
-Copy toast above open dialogs.
+Copy toast over open dialogs.
 Bar morphs again on Android.
-Search: active tab icon centered; tapping the open pill focuses the input.
-Web: blurred shadow under the search tabs.
+Search: active tab icon centered; tap anywhere on the open pill focuses input.
+Web: search tabs get a blurred shadow.
