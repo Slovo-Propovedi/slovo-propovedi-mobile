@@ -161,6 +161,35 @@ GitHub не получает keystore. Его сборка идёт с `signing:
 
 Детали keystore-секретов и локальной сборки — в [`BUILD-LOCAL.md`](../BUILD-LOCAL.md); контракт подписи и релиза — в [`updates.md`](./updates.md) → «Подпись и контроль целостности релиза (CI)».
 
+## Ручной bump версии (`.forgejo/workflows/bump-version.yml`)
+
+Релиз начинается с bump-коммита, и workflow делает его на раннере тем же скриптом, что и локальный `yarn bump-version`: `scripts/bump-version.mjs` переписывает файлы версий (`package.json`, gradle `versionName`/`versionCode`, pbxproj, fdroid-метаданные, в native-режиме ещё `RUNTIME_VERSION` и его prebuild-зеркала), продвигает `CHANGELOG.md` `[Unreleased]` и fastlane `unreleased.txt`, коммитит с `-s` (DCO) и ставит аннотированный тег. Отличие одно: результат сразу публикуется, поэтому запускающему не нужны ни клон, ни права на push. Скрипту хватает node builtins и bash — `node_modules` на раннере не нужны.
+
+Запуск: Forgejo → Actions → «Bump version (manual)» → Run workflow; input `bump` — `major`, `minor`, `patch` или конкретная версия `vX.Y.Z` / `X.Y.Z` (префикс `v` скрипт срезает). Поле ввода рисует только достаточно свежий Forgejo (inputs под `workflow_dispatch`); на старом сервере поле пустое и guard падает — это повод обновить Forgejo, а не обходить guard.
+
+Предусловие — контракт релизных заметок из AGENTS.md: в `CHANGELOG.md` `[Unreleased]` есть заметки и оба файла `fastlane/metadata/android/{en-US,ru}/changelogs/unreleased.txt` заполнены. Скрипт падает на пустой секции, поэтому забытые заметки дают красный прогон до любых коммитов.
+
+Guard прогона: только ветка `main` и непустые `bump`/`RELEASE_BUMP_TOKEN`. Ветка обязательна потому, что `ci.yml` ставит `CI / checks` только на push в `main`: bump-коммит на другой ветке не получил бы статуса и просто выжег бы 15-минутный бюджет ожидания в `create-release`.
+
+Порядок шагов:
+
+1. `bump` — коммит и тег создаются **локально**, на сервер пока ничего не уходит.
+2. `push-main` — пуш bump-коммита с PAT. Только после него `ci.yml` вообще увидит коммит: у непушенного коммита статуса не бывает.
+3. `wait-ci` — поллинг commit-status API (механика и бюджет `60 × 15 с` те же, что у `create-release`): берётся статус с контекстом `CI / checks` (Forgejo дописывает событие — `CI / checks (push)` — поэтому сравнение по префиксу); `failure`/`error` — провал, таймаут — провал. Красный коммит не тегируется никогда.
+4. `push-tag` — только после зелёного CI: пуш `vX.Y.Z`, затем `git ls-remote --exit-code origin refs/tags/vX.Y.Z` как доказательство, что тег реально доехал до сервера. Тег запускает `release.yml`; режим (`native`/`js-only`) там определяет `scripts/ci/detect-native-changes.sh` — тот же скрипт, которым bump выбирал режим, поэтому решения всегда совпадают.
+
+Почему тег идёт после CI: бюджет ожидания статуса в `create-release` — 15 минут, и он стартует, когда тег приземлился. Он рассчитан на очередь GitHub-сборки, а не на весь прогон проверок; при пуше тега сразу ожидание съело бы его и упало на медленной очереди.
+
+Секрет `RELEASE_BUMP_TOKEN` (org-level PAT с правом записи в репозиторий) обязателен: в Forgejo события от внутреннего пользователя Actions, которым подписан пуш с `secrets.GITHUB_TOKEN`, отбрасываются notifier'ом, поэтому такой пуш **никогда** не запускает другой workflow — ни `ci.yml`, ни `release.yml`. Прогон без PAT был бы зелёным, но не выпустил бы ничего. Префикс `FORGEJO_` в имени секрета зарезервирован сервером, отсюда собственное имя.
+
+Восстановление после сбоя:
+
+- пуш в `main` отклонён (non-fast-forward: кто-то запушил параллельно, checkout устарел) — на сервере ничего не изменилось, безопасно перезапустить после обновления `main`;
+- `main` запушен, CI красный или таймаут — тег остался только на раннере: чиним поломку в `main`, затем создаём и пушим тег из мейнтейнерского клона (`git tag -a vX.Y.Z -m vX.Y.Z <bump-sha> && git push origin vX.Y.Z`);
+- `main` запушен, пуш тега не удался — **не** перезапускать тот же релиз (bump-коммит уже в `main`, получится второй bump-коммит, а тег отклонится как существующий): восстановление — ручной `git push origin vX.Y.Z` из клона, где тег есть.
+
+После успешного пуша тега дальше работает `release.yml` — см. «Релизный поток» выше.
+
 ## Секреты и переменные
 
 Композитные actions читают конфигурацию из обычного окружения: `secrets` им недоступны, а `vars` не попадают в env сами по себе — значения передаёт вызывающий workflow через `env:` шага. Поэтому на каждой стороне свой набор.
@@ -177,6 +206,7 @@ GitHub не получает keystore. Его сборка идёт с `signing:
 | Имя | Тип | Назначение |
 | --- | --- | --- |
 | `CI_GITHUB_TOKEN` | secret | PAT для dispatch и чтения run/артефактов (статусы не пишутся); classic-скоупов `repo` + `workflow` достаточно. Возможная замена на `MIRROR_GITHUB_TOKEN` — решается на живой проверке. |
+| `RELEASE_BUMP_TOKEN` | secret | org-level Forgejo PAT мейнтейнера с правом записи в репозиторий: им `bump-version.yml` пушит bump-коммит и тег. Пуш с `secrets.GITHUB_TOKEN` других workflow не запускает — отсюда PAT (см. «Ручной bump версии»). Имя не начинается с `FORGEJO_`: префикс зарезервирован сервером (см. ниже). |
 | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | secrets | release-keystore; используются только в `android-package` на Forgejo |
 | `APK_SIGNER_SHA256` | variable | пиннинг сертификата, жёсткий гейт `sign-android` |
 | хост/mirror-переменные и `PACKAGE_REGISTRY_TOKEN`, `VPS_*`, `XPREM_EOO_TOKEN` | как раньше | деплой web/OTA/публикация (см. [`updates.md`](./updates.md), [`web.md`](./web.md)) |
@@ -227,6 +257,7 @@ scripts/ci/setup-github-mirror.sh
 5. **Релиз:** prerelease-тег `v*` → `changes` → `build-remote` → `android-package` → (`web-package` после успешной подписи) → `publish-release`; проверить артефакты `release-assets` (zip + `SHA256SUMS.txt`); `publish-release` — на реальном теге (он создаёт релиз).
 6. **Fallback:** временно выставить `QUEUE_TIMEOUT_MIN=0` в dispatch-шаге (или использовать заведомо невалидный `GH_TOKEN`) — должен отработать `local`/локальная сборка, а gate — success.
 7. **Без сети:** `GH_DISPATCH_DRY_RUN=1 bash scripts/ci/github-dispatch.sh` и `bash scripts/ci/github-dispatch-selftest.sh`.
+8. **Ручной bump:** сначала заполнить релизные заметки (`CHANGELOG.md` `[Unreleased]` + оба `unreleased.txt`), затем запустить «Bump version (manual)» на `main` с input `patch`; убедиться, что поле `bump` отрисовалось (inputs `workflow_dispatch` требуют свежего Forgejo); дождаться цепочки `bump` → `push-main` → `wait-ci` → `push-tag`; проверить тег на сервере (`git ls-remote origin 'refs/tags/v*'`) и появление run'а `Release` для этого тега. Откат при неудачном релизе: удалить тег (`git push origin :refs/tags/vX.Y.Z`) и откатить bump-коммит в `main`.
 
 ## Ограничения и известные компромиссы
 
