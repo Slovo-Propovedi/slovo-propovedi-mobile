@@ -47,7 +47,6 @@ const SHADOW_OFFSET_Y = 18
 // The backdrop blur frame is larger than the body on every side, which is what
 // feathers the body's edges.
 const SHADOW_FEATHER = 20
-const SHADOW_BLUR_RADIUS = 10
 const SHADOW_FILL = 'rgba(0, 0, 0, 0.09)'
 // The row itself only keeps a small shape-breathing gap under the pill.
 const SMALL_GAP = INDENTS.low
@@ -61,8 +60,12 @@ const SELECTED_FILL = () => withAlpha(DarkTheme.text, 0.18)
 const TRACK_FILL = { dark: COLORS.black, light: COLORS.white } as const
 // Web cannot feather the native layers: react-native-web drops RN's array-form
 // `filter`, and expo-blur is only a thin `backdrop-filter` there. Safari renders
-// the same geometry (body shifted down + blur radius) as a CSS box-shadow.
-const WEB_SHADOW = `0px ${SHADOW_OFFSET_Y}px ${SHADOW_BLUR_RADIUS}px ${SHADOW_FILL}`
+// the same geometry (body shifted down) as a CSS box-shadow, but a box-shadow
+// spreads one low-alpha shape across the blur, so it needs a wider radius and a
+// denser fill to match the native feather's weight.
+const WEB_SHADOW_BLUR_RADIUS = 22
+const WEB_SHADOW_FILL = 'rgba(0, 0, 0, 0.13)'
+const WEB_SHADOW = `0px ${SHADOW_OFFSET_Y}px ${WEB_SHADOW_BLUR_RADIUS}px ${WEB_SHADOW_FILL}`
 
 const ORIGINAL_PLATFORM = Platform.OS
 
@@ -154,7 +157,7 @@ describe('<PillTabs>', () => {
       expect(screen.queryByTestId(SHADOW_BODY_ID)).toBeNull()
       expect(screen.queryByTestId(SHADOW_BLUR_ID)).toBeNull()
       // The track itself carries the same geometry: pill shifted down 18px,
-      // blurred 10px, upper part hidden behind the opaque track.
+      // blurred wider than on native, upper part hidden behind the opaque track.
       expect(trackStyle().boxShadow).toBe(WEB_SHADOW)
     } finally {
       Platform.OS = ORIGINAL_PLATFORM

@@ -17,6 +17,13 @@ const SHADOW_OFFSET_Y = 18
 const SHADOW_FEATHER = INDENTS.medium + INDENTS.lowest
 const SHADOW_FILL = 'rgba(0, 0, 0, 0.09)'
 const SHADOW_BLUR_RADIUS = 10
+// Web needs a stronger version of the same shadow. Native feathers an opaque
+// body with a Gaussian RenderEffect, which keeps its density; a CSS box-shadow
+// spreads one low-alpha shape out into the blur, so the same numbers read as a
+// barely visible smudge. A larger radius plus a denser fill restore the native
+// weight without turning the pill into a black halo.
+const WEB_SHADOW_BLUR_RADIUS = 22
+const WEB_SHADOW_FILL = 'rgba(0, 0, 0, 0.13)'
 
 // Pure themed track surface (not the off-white `card` token). Shared with the
 // unselected segments, which paint the surface they sit on.
@@ -101,9 +108,10 @@ export const styles = StyleSheet.create({
   // feather layers above: react-native-web cannot translate RN's array-form
   // `filter` into CSS (the style is dropped, leaving a crisp un-blurred shape)
   // and expo-blur on web is only a 1px backdrop-filter, too thin to feather the
-  // body. Safari renders this box-shadow correctly; the same offset + blur
-  // radius keeps the geometry identical to the native body → blur → track stack.
+  // body. Safari renders this box-shadow correctly; the same offset + a stronger
+  // blur radius and fill (see WEB_SHADOW_* above) keep the geometry identical to
+  // the native body → blur → track stack.
   trackWebShadow: {
-    boxShadow: `0px ${SHADOW_OFFSET_Y}px ${SHADOW_BLUR_RADIUS}px ${SHADOW_FILL}`,
+    boxShadow: `0px ${SHADOW_OFFSET_Y}px ${WEB_SHADOW_BLUR_RADIUS}px ${WEB_SHADOW_FILL}`,
   },
 })
