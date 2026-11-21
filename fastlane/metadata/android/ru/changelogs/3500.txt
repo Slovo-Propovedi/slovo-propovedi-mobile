@@ -8,3 +8,5 @@ QR; тост выше диалогов.
 Острова не липнут к навбару iOS Safari; 1 px от края карточек.
 После звонка проповедь продолжается.
 OTA: фирменный оранжевый в светлой теме.
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

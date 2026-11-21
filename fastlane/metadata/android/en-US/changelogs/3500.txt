@@ -8,3 +8,5 @@ Playback errors heal online.
 Islands clear the iOS Safari navbar; 1 px off edges.
 Playback auto-resumes after a call ends (Android).
 OTA keeps brand orange.
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
