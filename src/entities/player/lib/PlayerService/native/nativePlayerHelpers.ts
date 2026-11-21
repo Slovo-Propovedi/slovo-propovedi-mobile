@@ -12,9 +12,11 @@ export const createAudioInterruptionHandler = (callbacks: InterruptionCallbacks)
   let wasPlayingBeforeInterruption = false
 
   // Any playing→false edge is treated as an interruption: pause('auto') is idempotent
-  // (flush no-op guard, pause on a paused player is a no-op), so user-pause and
-  // natural-track-end also route through it harmlessly. User-pause discrimination is
-  // unnecessary — stop()/unload() pause outside the status stream.
+  // (flush no-op guard, pause on a paused player is a no-op), so a user pause also
+  // routes through it harmlessly; system interruption pauses arm the auto-resume
+  // intent. A natural track end never reaches this path — the status handler filters
+  // didJustFinish out. User-pause discrimination is unnecessary — stop()/unload()
+  // pause outside the status stream.
   return (isInterrupted: boolean): void => {
     if (isInterrupted) {
       wasPlayingBeforeInterruption = true
