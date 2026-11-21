@@ -36,11 +36,20 @@ name: Bump version (manual)
 # release.yml's create-release polls while other jobs run in the same way.
 #
 # Run: Forgejo → Actions → «Bump version (manual)» → Run workflow.
-#   bump — `major` | `minor` | `patch`, or a concrete `vX.Y.Z` / `X.Y.Z`
-#          (the script strips the leading `v`). Required.
-# The input field renders only on a recent Forgejo (one that exposes `inputs`
+#   bump  — `major` | `minor` | `patch`, or a concrete `vX.Y.Z` / `X.Y.Z`
+#           (the script strips the leading `v`). Required.
+#   email — OPTIONAL. Real email for the bump commit, its DCO trailer and the
+#           tag object. Leave empty to resolve it from your profile: the real
+#           address when you publish it, else `<actor>@noreply.<domain>`. The
+#           API CANNOT see an email hidden by profile privacy — a "hide email"
+#           profile always answers with the noreply placeholder — so this
+#           input is how you keep the address hidden AND sign with the real
+#           one. Precedence: input > profile-published email > noreply. A
+#           malformed input fails the run instead of degrading to noreply: an
+#           explicit identity must not be silently replaced.
+# The input fields render only on a recent Forgejo (one that exposes `inputs`
 # under workflow_dispatch). On an older server the dialog has no field, the
-# input stays empty and the guard fails — upgrade the server rather than
+# inputs stay empty and the guard fails — upgrade the server rather than
 # working around the guard.
 #
 # PREREQUISITE — the release-notes contract from AGENTS.md: `CHANGELOG.md`
@@ -66,11 +75,14 @@ name: Bump version (manual)
 # after CI passed leaves it to what it was designed for (the GitHub build
 # queue) instead of spending it on the whole check run.
 #
-# git identity: the bump commit and its DCO trailer are signed by the user who
-# dispatched the run (`github.actor`), not a bot. The email comes from the
-# Forgejo user API when the user publishes it; otherwise the instance-
-# resolvable `<actor>@noreply.<domain>` is used, which Forgejo attributes back
-# to the account.
+# git identity: the bump commit, its DCO trailer AND the annotated tag object
+# are signed by the user who dispatched the run (`github.actor`), not a bot —
+# BOTH jobs configure git from the identity resolved in job `bump` (the tag
+# job's fresh runner starts with an empty git config, and `git tag -a` needs a
+# tagger). The email comes from the optional `email` input, else from the
+# Forgejo user API when the user publishes it, else the instance-resolvable
+# `<actor>@noreply.<domain>` is used, which Forgejo attributes back to the
+# account.
 #
 # Recovery, per stage:
 #   * job `bump` failed — nothing was pushed; fix the cause and re-dispatch.
@@ -100,6 +112,11 @@ on:
         description: 'major | minor | patch, or a concrete vX.Y.Z (e.g. v1.2.3 — the script strips the v prefix)'
         required: true
         type: string
+      email:
+        description: 'Optional: your real email for the commit and DCO trailer. Leave empty to resolve from your profile (real if published, else noreply)'
+        required: false
+        default: ''
+        type: string
 
 # Applies to the whole run (both jobs): two manual bumps would otherwise race
 # the same CHANGELOG section and the same tag. Deliberately NOT
@@ -117,6 +134,8 @@ jobs:
     outputs:
       version: ${{ steps.bump.outputs.version }}
       sha: ${{ steps.push-main.outputs.sha }}
+      actor: ${{ steps.identity.outputs.actor }}
+      email: ${{ steps.identity.outputs.email }}
 
     steps:
       - name: Checkout repository
@@ -201,15 +220,19 @@ jobs:
 
       # The bump commit and its DCO trailer must carry the DISPATCHING user's
       # identity, not a bot: `git commit -s` signs with the configured identity.
-      # The real email is used only when the user publishes it; otherwise the
-      # instance-resolvable noreply form is used, which Forgejo attributes back
-      # to the account. A hidden email, a 404 (private profile) and a token
+      # The email comes from the optional `email` input first (the API cannot
+      # see a hidden profile email), then the user API when the user publishes
+      # it, then the instance-resolvable noreply form, which Forgejo attributes
+      # back to the account. A hidden email, a 404 (private profile) and a token
       # rejected on this non-repo endpoint all degrade to that same fallback, so
-      # the step never blocks the bump.
+      # resolution never blocks the bump — only an explicit, malformed `email`
+      # input fails it.
       - name: Resolve identity and configure git
         id: identity
         env:
           ACTOR: ${{ github.actor }}
+          # User-controlled, like `bump`: env-only, never inlined into the run.
+          INPUT_EMAIL: ${{ inputs.email }}
           # Forgejo's automatic token: enough to READ a public user profile. It
           # authenticates as the internal Actions user, not as the actor.
           API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -229,40 +252,63 @@ jobs:
           HOST="${HOST%%/*}"
           FALLBACK_EMAIL="${LOWER_ACTOR}@noreply.${HOST}"
 
-          # Non-fatal by design: a hidden email answers with the noreply
-          # placeholder (valid as-is), a private profile 404s, and the automatic
-          # token may be refused here — all cases fall through to the fallback.
-          EMAIL=$(curl -sS -m 10 -H "Authorization: token $API_TOKEN" \
-            "$SERVER_URL/api/v1/users/$ACTOR" | jq -r '.email // empty' 2>/dev/null || true)
+          # One shape rule for both sources: a single plausible address token —
+          # an '@', no whitespace/quotes/newlines, and none of `$`, backtick,
+          # `;`, `|`, `<`, `>` or `\`.
+          is_valid_email() {
+            case "$1" in
+              *@*) ;;
+              *) return 1 ;;
+            esac
+            case "$1" in
+              *[[:space:]]*|*'"'*|*"'"*) return 1 ;;
+              *[\\\$\`\;\|\<\>]*) return 1 ;;
+            esac
+            return 0
+          }
 
-          # Only a single plausible address token is accepted: empty, no '@',
-          # whitespace, quotes or newlines all mean "use the fallback".
-          VALID=0
-          case "$EMAIL" in
-            *@*) VALID=1 ;;
-          esac
-          case "$EMAIL" in
-            *[[:space:]]*|*'"'*|*"'"*) VALID=0 ;;
-            # Defense-in-depth: `$`, backtick, `;`, `|`, `<`, `>` and `\` never
-            # belong in an address — anything odd degrades to the fallback.
-            *[\\\$\`\;\|\<\>]*) VALID=0 ;;
-          esac
-
+          USED_INPUT=0
           USED_FALLBACK=0
-          if [ "$VALID" -ne 1 ]; then
-            EMAIL="$FALLBACK_EMAIL"
-            USED_FALLBACK=1
-            echo "::warning::could not resolve the real email via the user API — using the noreply fallback $FALLBACK_EMAIL"
-          fi
-          # The API's placeholder for a hidden email IS the fallback form.
-          if [ "$EMAIL" = "$FALLBACK_EMAIL" ]; then
-            USED_FALLBACK=1
+
+          if [ -n "$INPUT_EMAIL" ]; then
+            # An explicit value must not silently degrade: signing the release
+            # with an identity the dispatcher did not ask for is worse than a
+            # red run that names the bad input.
+            if ! is_valid_email "$INPUT_EMAIL"; then
+              echo "::error::the 'email' input is not a plausible address — clear it to fall back to the profile/noreply resolution"
+              summary_row "- Identity: ❌ blocked (malformed \`email\` input)"
+              exit 1
+            fi
+            EMAIL="$INPUT_EMAIL"
+            USED_INPUT=1
+          else
+            # Non-fatal by design: a hidden email answers with the noreply
+            # placeholder (valid as-is), a private profile 404s, and the
+            # automatic token may be refused here — all fall through below.
+            EMAIL=$(curl -sS -m 10 -H "Authorization: token $API_TOKEN" \
+              "$SERVER_URL/api/v1/users/$ACTOR" | jq -r '.email // empty' 2>/dev/null || true)
+
+            if ! is_valid_email "$EMAIL"; then
+              EMAIL="$FALLBACK_EMAIL"
+              USED_FALLBACK=1
+              echo "::warning::could not resolve the real email via the user API — using the noreply fallback $FALLBACK_EMAIL"
+            fi
+            # The API's placeholder for a hidden email IS the fallback form.
+            if [ "$EMAIL" = "$FALLBACK_EMAIL" ]; then
+              USED_FALLBACK=1
+            fi
           fi
 
           git config user.name "$ACTOR"
           git config user.email "$EMAIL"
+          # Job `tag` re-uses these: its fresh runner needs the same identity
+          # for the annotated tag object's tagger.
+          echo "actor=$ACTOR" >> "$GITHUB_OUTPUT"
+          echo "email=$EMAIL" >> "$GITHUB_OUTPUT"
 
-          if [ "$USED_FALLBACK" -eq 1 ]; then
+          if [ "$USED_INPUT" -eq 1 ]; then
+            summary_row "- Identity: ✅ \`$ACTOR\` <\`$EMAIL\`> (email from the workflow input)"
+          elif [ "$USED_FALLBACK" -eq 1 ]; then
             summary_row "- Identity: ✅ \`$ACTOR\` <\`$EMAIL\`> (noreply fallback — real email hidden or API unavailable)"
           else
             summary_row "- Identity: ✅ \`$ACTOR\` <\`$EMAIL\`>"
@@ -332,6 +378,56 @@ jobs:
           # PAT push below.
           persist-credentials: false
 
+      # `git tag -a` creates an annotated tag object that carries the TAGGER
+      # identity, so this job needs its own git config: a fresh runner starts
+      # with an empty one (the live run failed here with "Committer identity
+      # unknown"). The identity is the dispatcher's, resolved once in job
+      # `bump` — same person, no bot.
+      - name: Configure git identity
+        env:
+          ACTOR: ${{ needs.bump.outputs.actor }}
+          EMAIL: ${{ needs.bump.outputs.email }}
+          BUMP_SHA: ${{ needs.bump.outputs.sha }}
+        run: |
+          set -e
+          summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
+
+          {
+            echo "## Bump version — tag"
+            echo ''
+            echo "- Commit: \`${BUMP_SHA:0:7}\` · $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo ''
+          } | scripts/ci/step-summary.sh || true
+
+          # Should be impossible once job `bump` succeeded — treat a violation
+          # as an invariant break instead of guessing an identity.
+          if [ -z "$ACTOR" ] || [ -z "$EMAIL" ]; then
+            echo "::error::job 'bump' did not export a usable identity — cannot tag"
+            summary_row "- Identity: ❌ missing actor/email from job \`bump\`"
+            exit 1
+          fi
+
+          # Defense-in-depth: the value crossed a job boundary, so re-check the
+          # same shape rules. Kept inline on purpose — shell helpers do not
+          # travel between jobs, and this is the entire rule.
+          VALID=0
+          case "$EMAIL" in
+            *@*) VALID=1 ;;
+          esac
+          case "$EMAIL" in
+            *[[:space:]]*|*'"'*|*"'"*) VALID=0 ;;
+            *[\\\$\`\;\|\<\>]*) VALID=0 ;;
+          esac
+          if [ "$VALID" -ne 1 ]; then
+            echo "::error::the identity from job 'bump' is not a plausible address — refusing to tag"
+            summary_row "- Identity: ❌ malformed email from job \`bump\`"
+            exit 1
+          fi
+
+          git config user.name "$ACTOR"
+          git config user.email "$EMAIL"
+          summary_row "- Identity: ✅ \`$ACTOR\` <\`$EMAIL\`>"
+
       # Same mechanics and budget as release.yml's create-release: 60 x 15s.
       # Forgejo appends the triggering event to the context, e.g.
       # "CI / checks (push)", so match by prefix — the automatic contexts
@@ -351,13 +447,6 @@ jobs:
           HEAD_SHA="$BUMP_SHA"
           SHORT_SHA="${HEAD_SHA:0:7}"
           URL="${{ github.server_url }}/api/v1/repos/${{ github.repository }}/commits/$HEAD_SHA/status"
-
-          {
-            echo "## Bump version — tag"
-            echo ''
-            echo "- Commit: \`$SHORT_SHA\` · $(date -u '+%Y-%m-%d %H:%M UTC')"
-            echo ''
-          } | scripts/ci/step-summary.sh || true
 
           for i in $(seq 1 60); do
             # `[]?` + `|| true`: the first polls hit a commit that either has no
