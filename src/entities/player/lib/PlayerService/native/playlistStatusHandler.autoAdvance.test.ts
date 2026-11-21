@@ -97,15 +97,17 @@ describe('createPlaylistStatusHandler native auto-advance window', () => {
     expect(callbacks.onAudioInterruption.mock.calls).toEqual([[false], [true]])
   })
 
-  test('didJustFinish closes the window', () => {
+  test('a natural track end closes the window without an interruption edge', () => {
     const { callbacks, handleStatus, markAutoAdvanceInFlight } = setup()
 
     handleStatus(statusWith({ playing: true }))
     callbacks.onAudioInterruption.mockClear()
     markAutoAdvanceInFlight()
     handleStatus(statusWith({ currentTime: 120, didJustFinish: true, playing: false }))
+    handleStatus(statusWith({ currentIndex: 1, playing: true }))
+    handleStatus(statusWith({ currentIndex: 1, playing: false }))
 
-    expect(callbacks.onAudioInterruption).toHaveBeenCalledWith(true)
+    expect(callbacks.onAudioInterruption.mock.calls).toEqual([[false], [true]])
   })
 
   test('opens the window from the wired trackChanged event', () => {

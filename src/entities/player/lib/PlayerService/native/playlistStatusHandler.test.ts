@@ -8,7 +8,16 @@ const mockHandleQueueEnd = jest.fn().mockResolvedValue(undefined)
 const mockReportPlaylistStatus = jest.fn()
 const mockSyncPlaylistStatus = jest.fn()
 
-jest.mock('./PlaylistEngine', () => ({ playlistEngine: { setCallbacks: jest.fn() } }))
+jest.mock('./PlaylistEngine', () => ({
+  playlistEngine: {
+    getCurrentIndex: jest.fn(() => 0),
+    getLoop: jest.fn(() => 'none'),
+    getSnapshot: jest.fn(() => null),
+    getTrackAt: jest.fn(() => null),
+    getTrackCount: jest.fn(() => 2),
+    setCallbacks: jest.fn(),
+  },
+}))
 
 jest.mock('./playlistErrorReporter', () => ({
   createPlaylistErrorReporter: () => ({
@@ -149,6 +158,50 @@ describe('createPlaylistStatusHandler interruption edges', () => {
 
     handleStatus(statusWith({ isLoaded: true, playing: true }))
     expect(ctx.get(isStalledOfflineAtom)).toBe(false)
+  })
+})
+
+describe('createPlaylistStatusHandler natural track end', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  test('does not report the playing→false edge of a natural track end', () => {
+    const callbacks = createCallbacks()
+    const { handleStatus } = createPlaylistStatusHandler(callbacks)
+
+    handleStatus(statusWith({ currentIndex: 0, currentTime: 1, playing: true }))
+    callbacks.onAudioInterruption.mockClear()
+
+    handleStatus(
+      statusWith({ currentIndex: 0, currentTime: 120, didJustFinish: true, playing: false }),
+    )
+
+    expect(callbacks.onAudioInterruption).not.toHaveBeenCalledWith(true)
+    expect(mockHandleQueueEnd).toHaveBeenCalledTimes(1)
+  })
+
+  test('keeps tracking the playing edge after a natural track end', () => {
+    const callbacks = createCallbacks()
+    const { handleStatus } = createPlaylistStatusHandler(callbacks)
+
+    handleStatus(statusWith({ currentTime: 1, playing: true }))
+    callbacks.onAudioInterruption.mockClear()
+    handleStatus(statusWith({ currentTime: 120, didJustFinish: true, playing: false }))
+    handleStatus(statusWith({ currentIndex: 1, currentTime: 0, playing: true }))
+
+    expect(callbacks.onAudioInterruption.mock.calls).toEqual([[false]])
+  })
+
+  test('still reports a playing→false edge without didJustFinish', () => {
+    const callbacks = createCallbacks()
+    const { handleStatus } = createPlaylistStatusHandler(callbacks)
+
+    handleStatus(statusWith({ playing: true }))
+    callbacks.onAudioInterruption.mockClear()
+    handleStatus(statusWith({ playing: false }))
+
+    expect(callbacks.onAudioInterruption.mock.calls).toEqual([[true]])
   })
 })
 
