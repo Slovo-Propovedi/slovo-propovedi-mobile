@@ -463,8 +463,8 @@ jobs:
             VERDICT="❌ failed at wait-ci — CI is red or superseded on the bump commit (see the step log); the tag for v$VERSION was NOT pushed. Fix main, then tag manually (git push origin v$VERSION) once CI is green."
           elif [ "$WAIT_CI_RESULT" = 'timeout' ]; then
             VERDICT="❌ failed at wait-ci — no CI status within 15 min; the tag for v$VERSION was NOT pushed (see the recovery notes in the header)"
-          elif [ "$WAIT_CI_OUTCOME" != 'success' ]; then
-            VERDICT="❌ failed at wait-ci — the status poll errored (see the log); the tag for v$VERSION was NOT pushed"
+          elif [ "$WAIT_CI_OUTCOME" = 'failure' ]; then
+            VERDICT="❌ failed at wait-ci — the status poll errored (or an earlier step in this job failed — see the log above)"
           elif [ "$TAG_SKIPPED" = 'true' ]; then
             VERDICT="⏭️ nothing to push — tag v$VERSION was already on origin; release.yml was triggered by that earlier push"
           elif [ "$PUSH_TAG_OUTCOME" != 'success' ]; then
