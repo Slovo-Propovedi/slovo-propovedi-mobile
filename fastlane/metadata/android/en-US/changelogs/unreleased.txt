@@ -1,9 +1,10 @@
 Search: clears on exit; last tab; pill focuses.
 Listen marks survive eviction.
-Auto-advance: no stalls or lock freeze.
-Web: no iOS gap; blurred tabs; repeat advance.
+Auto-advance: no stalls or freezes.
+Web: no iOS gap; blurred tabs; repeat.
 Share rows match QR; toast over dialogs.
 Bar morphs; islands faster.
 Playback errors heal online.
-Islands no longer stick to the iOS Safari navbar; 1 px off slider edges when expanded.
-OTA reload keeps brand orange.
+Islands clear the iOS Safari navbar; 1 px off edges.
+Playback auto-resumes after a call ends (Android).
+OTA keeps brand orange.

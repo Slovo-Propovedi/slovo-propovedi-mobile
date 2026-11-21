@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A natural track end no longer re-arms the interruption auto-resume path (spurious source swaps on auto-advance)
+- Sermon playback automatically resumes after a phone call ends (Android)
 - Web (iOS Safari): the floating bottom chrome (tab bar, player) no longer sticks to the browser's bottom navbar — in browser mode it now has a gap above the safe-area line; installed-PWA behavior is unchanged.
 - Web: the context switcher on the search screen casts a properly blurred shadow instead of a hard-edged shape
 - Web on iOS: removed the white gap at the bottom of the screen in Safari and in the installed PWA
