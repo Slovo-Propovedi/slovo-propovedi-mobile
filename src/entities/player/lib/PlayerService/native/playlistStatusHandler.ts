@@ -18,7 +18,10 @@ import { trackAutoAdvanceService } from './TrackAutoAdvanceService/TrackAutoAdva
  * that the next stable `playing:true` closes. A natural end (`didJustFinish`)
  * is likewise not an interruption: the queue owns what happens next. A failure
  * of the freshly selected track closes the window too: the engine is dead, so
- * its pause edge must flush.
+ * its pause edge must flush. Since a natural end no longer produces an
+ * interruption edge, the corner where the native advance never started (no
+ * `trackChanged`) no longer flushes progress through that edge — flush
+ * ownership stays with `trackChanged`/history completion.
  * @param callbacks - Service lifecycle callbacks.
  */
 export const createPlaylistStatusHandler = (callbacks: StatusCallbacks) => {
