@@ -384,6 +384,7 @@ jobs:
       # unknown"). The identity is the dispatcher's, resolved once in job
       # `bump` — same person, no bot.
       - name: Configure git identity
+        id: identity
         env:
           ACTOR: ${{ needs.bump.outputs.actor }}
           EMAIL: ${{ needs.bump.outputs.email }}
@@ -541,6 +542,7 @@ jobs:
         if: always()
         env:
           VERSION: ${{ needs.bump.outputs.version }}
+          TAG_IDENTITY_OUTCOME: ${{ steps.identity.outcome }}
           WAIT_CI_RESULT: ${{ steps.wait-ci.outputs.result }}
           WAIT_CI_OUTCOME: ${{ steps.wait-ci.outcome }}
           TAG_SKIPPED: ${{ steps.push-tag.outputs.skipped }}
@@ -548,7 +550,9 @@ jobs:
         run: |
           summary_row() { printf '%s\n' "$1" | scripts/ci/step-summary.sh || true; }
 
-          if [ "$WAIT_CI_RESULT" = 'failed' ] || [ "$WAIT_CI_RESULT" = 'warning' ]; then
+          if [ "$TAG_IDENTITY_OUTCOME" = 'failure' ]; then
+            VERDICT="❌ failed at the tag-job identity step — git identity for tagging was not configured (see the log)"
+          elif [ "$WAIT_CI_RESULT" = 'failed' ] || [ "$WAIT_CI_RESULT" = 'warning' ]; then
             VERDICT="❌ failed at wait-ci — CI is red or superseded on the bump commit (see the step log); the tag for v$VERSION was NOT pushed. Fix main, then tag manually (git push origin v$VERSION) once CI is green."
           elif [ "$WAIT_CI_RESULT" = 'timeout' ]; then
             VERDICT="❌ failed at wait-ci — no CI status within 15 min; the tag for v$VERSION was NOT pushed (see the recovery notes in the header)"
