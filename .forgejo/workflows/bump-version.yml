@@ -557,11 +557,13 @@ jobs:
           elif [ "$WAIT_CI_RESULT" = 'timeout' ]; then
             VERDICT="❌ failed at wait-ci — no CI status within 15 min; the tag for v$VERSION was NOT pushed (see the recovery notes in the header)"
           elif [ "$WAIT_CI_OUTCOME" = 'failure' ]; then
-            VERDICT="❌ failed at wait-ci — the status poll errored (or an earlier step in this job failed — see the log above)"
+            VERDICT="❌ failed at wait-ci — the status poll errored (see the log); the tag for v$VERSION was NOT pushed"
           elif [ "$TAG_SKIPPED" = 'true' ]; then
             VERDICT="⏭️ nothing to push — tag v$VERSION was already on origin; release.yml was triggered by that earlier push"
-          elif [ "$PUSH_TAG_OUTCOME" != 'success' ]; then
+          elif [ "$PUSH_TAG_OUTCOME" = 'failure' ]; then
             VERDICT="❌ failed at push-tag — the tag for v$VERSION was not pushed; push it manually (see the header)"
+          elif [ -z "$PUSH_TAG_OUTCOME" ] || [ "$PUSH_TAG_OUTCOME" != 'success' ]; then
+            VERDICT="❌ failed before push-tag (e.g. checkout) — see the log above; the tag was NOT pushed"
           else
             VERDICT="🎉 bumped v$VERSION — bump on main, CI green, tag pushed; release.yml is running and its CI wait passes instantly"
           fi
