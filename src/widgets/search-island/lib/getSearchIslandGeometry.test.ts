@@ -16,7 +16,7 @@ const PHONE_WIDTH = 400
 const EXPANDED_ROW_WIDTH = PHONE_WIDTH - BAR_SIDE_INSET_EXPANDED * 2
 const COLLAPSED_ROW_WIDTH = PHONE_WIDTH - BAR_SIDE_INSET_COLLAPSED * 2
 const OPEN_TAB_SLOT = TAB_BAR_ISLAND_HEIGHT_EXPANDED + BAR_OUTER_GAP
-// The ✕ is the field's full height (68) while open, so the pill yields that
+// The ✕ is the field's full height (60) while open, so the pill yields that
 // diameter plus the constant outer gap.
 const CLOSE_SLOT = TAB_BAR_ISLAND_HEIGHT_EXPANDED + BAR_OUTER_GAP
 
@@ -62,7 +62,7 @@ describe('getSearchIslandGeometry', () => {
     expect(collapsed.closeRight).toBe(BAR_SIDE_INSET_COLLAPSED)
   })
 
-  test('openProgress 1 fills the slot right of the 68 active-tab circle', () => {
+  test('openProgress 1 fills the slot right of the 60 active-tab circle', () => {
     // An open field always sits on the expanded inset (the bar is expanded or
     // the mini pill is detached above the row).
     const open = geometry({ oneLineProgress: 0, openProgress: 1 })
@@ -93,7 +93,7 @@ describe('getSearchIslandGeometry', () => {
   test('collapsed pill matches the search chip diameter in either bar state', () => {
     const expandedBar = geometry({ oneLineProgress: 0, openProgress: 0 })
 
-    // The search chip is 68 while the bar is expanded; a 48-wide pill would
+    // The search chip is 60 while the bar is expanded; a 48-wide pill would
     // leave a visible oval "last frame" instead of a circle.
     expect(expandedBar.width).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
     expect(expandedBar.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
@@ -127,7 +127,7 @@ describe('getSearchIslandGeometry', () => {
     expect(oneLineBar.radius).toBe(TAB_BAR_ISLAND_HEIGHT / 2)
   })
 
-  test('opening from the one-line bar grows the field from 48 to 68', () => {
+  test('opening from the one-line bar grows the field from 48 to 60', () => {
     const closed = geometry({ oneLineProgress: 1, openProgress: 0 })
     const halfway = geometry({ oneLineProgress: 1, openProgress: 0.5 })
     const open = geometry({ oneLineProgress: 1, openProgress: 1 })
@@ -138,7 +138,7 @@ describe('getSearchIslandGeometry', () => {
     expect(open.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
   })
 
-  test('activation from the expanded bar never dips below 68', () => {
+  test('activation from the expanded bar never dips below 60', () => {
     // The height is bound to the one-line axis, not the island's shape axis:
     // opening search collapses the island shape but must not shrink the chip to
     // the compact size, or the unfold reads as starting from the small button.
@@ -148,7 +148,7 @@ describe('getSearchIslandGeometry', () => {
 
     for (const frame of frames) expect(frame.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
 
-    // The 68 circle still grows monotonically into the full slot.
+    // The 60 circle still grows monotonically into the full slot.
     for (let i = 1; i < frames.length; i++)
       expect(frames[i].width).toBeGreaterThan(frames[i - 1].width)
   })
@@ -184,7 +184,7 @@ describe('getSearchIslandGeometry', () => {
     })
     const closeCircleLeft = PHONE_WIDTH - BAR_SIDE_INSET_EXPANDED - focused.height
 
-    // The ✕ diameter is the open field height (68), and the pill yields the
+    // The ✕ diameter is the open field height (60), and the pill yields the
     // same circle + gap: 8px of clear space, never an overlap.
     expect(focused.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
     expect(focused.left + focused.width).toBe(closeCircleLeft - BAR_OUTER_GAP)

@@ -75,13 +75,13 @@ export const useKeyboardBottomInsetSync = () => {
 
       syncVisualViewportInset()
       const viewport = window.visualViewport
-      viewport.addEventListener('resize', syncVisualViewportInset)
-      viewport.addEventListener('scroll', syncVisualViewportInset)
-      window.addEventListener('resize', syncVisualViewportInset)
+      viewport.addEventListener?.('resize', syncVisualViewportInset)
+      viewport.addEventListener?.('scroll', syncVisualViewportInset)
+      window.addEventListener?.('resize', syncVisualViewportInset)
 
       return () => {
-        viewport.removeEventListener('resize', syncVisualViewportInset)
-        viewport.removeEventListener('scroll', syncVisualViewportInset)
+        viewport.removeEventListener?.('resize', syncVisualViewportInset)
+        viewport.removeEventListener?.('scroll', syncVisualViewportInset)
         window.removeEventListener?.('resize', syncVisualViewportInset)
       }
     }

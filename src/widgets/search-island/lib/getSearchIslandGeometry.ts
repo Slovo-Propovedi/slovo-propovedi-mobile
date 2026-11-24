@@ -27,9 +27,9 @@ const ICON_SIZE = 32
  * the circle, so both run off one frame-synced `BAR_MORPH_DURATION_MS` progress.
  *
  * `oneLineProgress` owns the closed pill's height/radius: the closed chip is the
- * compact circle (48) only when the bar is one-line, and stays 68 while the bar
+ * compact circle (48) only when the bar is one-line, and stays 60 while the bar
  * is expanded. `openProgress` lifts that height to the expanded bar height, so
- * an open field is always 68 — and a field opening from the expanded bar never
+ * an open field is always 60 — and a field opening from the expanded bar never
  * dips to the compact size on its first frames.
  *
  * `focusProgress` retracts the active-tab circle: at 1 the pill stretches to the
@@ -70,10 +70,10 @@ export const getSearchIslandGeometry = ({
   // Inner row width: the span the expanded island/search pill can occupy.
   const rowInnerWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - sideInset * 2
   // The closed pill is the bar state's search chip: the compact 48 circle only
-  // in the one-line row, the expanded 68 otherwise. It must follow the one-line
+  // in the one-line row, the expanded 60 otherwise. It must follow the one-line
   // axis rather than the island's shape axis, because opening the field also
   // collapses the island shape — binding the height to that shape would shrink
-  // the chip 68 -> 48 for the first frames of every unfold.
+  // the chip 60 -> 48 for the first frames of every unfold.
   const closedHeight =
     TAB_BAR_ISLAND_HEIGHT + (TAB_BAR_ISLAND_HEIGHT_EXPANDED - TAB_BAR_ISLAND_HEIGHT) * (1 - oneLine)
   const height = closedHeight + (TAB_BAR_ISLAND_HEIGHT_EXPANDED - closedHeight) * open
@@ -86,14 +86,14 @@ export const getSearchIslandGeometry = ({
   // The active-tab circle fades out of the layout as the field gains focus, so
   // the pill's left target travels all the way to the row's inner edge. While
   // the field is open, the island beside it is always the expanded-height circle
-  // (68), so the slot clears that circle and its outer gap.
+  // (60), so the slot clears that circle and its outer gap.
   const tabSlot = (TAB_BAR_ISLAND_HEIGHT_EXPANDED + BAR_OUTER_GAP) * (1 - focus)
   const slotLeft = rowInnerLeft + tabSlot
   const left = circleLeft + (slotLeft - circleLeft) * open
   // The close circle sits at the same right inner edge; the pill shrinks
   // leftwards by exactly circle + gap so the outer gap stays constant. Its
   // diameter is the open field's height, so it yields the expanded-height circle
-  // (68 + gap), never the compact constant. Weighted by `open` so a closing pill
+  // (60 + gap), never the compact constant. Weighted by `open` so a closing pill
   // never drifts away from the search chip.
   const closeSlot = (TAB_BAR_ISLAND_HEIGHT_EXPANDED + BAR_OUTER_GAP) * close * open
   const openWidth = rowInnerWidth - tabSlot - closeSlot

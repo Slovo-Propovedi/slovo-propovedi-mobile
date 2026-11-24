@@ -39,9 +39,8 @@ describe('getMiniPlayerGeometry', () => {
     const tabBarHeight = BAR_ROW_MIN_HEIGHT + paddingBottom
     const { bottom } = geometryAt(tabBarHeight)
 
-    expect(islandTopFromScreenBottom(paddingBottom)).toBe(
-      paddingBottom + TAB_BAR_ISLAND_HEIGHT_EXPANDED,
-    )
+    // 12 bottom padding (BAR_BOTTOM_INSET_MIN) + 60 expanded island height.
+    expect(islandTopFromScreenBottom(paddingBottom)).toBe(72)
     expect(bottom).toBe(tabBarHeight - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP)
     expect(bottom - islandTopFromScreenBottom(paddingBottom)).toBe(BAR_PILL_ROW_GAP)
   })

@@ -11,7 +11,8 @@ describe('getExpandedRestingBottom', () => {
     const tabBarHeight = BAR_ROW_MIN_HEIGHT + paddingBottom
     const islandTop = paddingBottom + TAB_BAR_ISLAND_HEIGHT_EXPANDED
 
-    expect(islandTop).toBe(paddingBottom + TAB_BAR_ISLAND_HEIGHT_EXPANDED)
+    // 34 bottom padding + 60 expanded island height (TAB_BAR_ISLAND_HEIGHT_EXPANDED).
+    expect(islandTop).toBe(94)
     expect(getExpandedRestingBottom(tabBarHeight) - islandTop).toBe(BAR_PILL_ROW_GAP)
   })
 })
