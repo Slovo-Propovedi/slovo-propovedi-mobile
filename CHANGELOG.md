@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Notification seekbar shows the correct position after background auto-advance (Android)
 - Background auto-advance no longer goes silent a few seconds into the next track (Android)
 - Web: auto-advance plays the next sermon again with repeat off and stops only at the last one
 

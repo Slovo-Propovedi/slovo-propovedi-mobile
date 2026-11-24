@@ -219,6 +219,30 @@ index 53c36f7..d806fba 100644
        }
      } else {
        setActivePlayableInternal(playable, metadata, options)
+diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
+index 18203a3..cdace91 100644
+--- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
++++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
+@@ -58,6 +58,19 @@ internal class MetadataInjectingPlayer(
+     injectedMetadata = metadata
+     val newMetadata = mediaMetadata
+ 
++    // PATCH(patch-package): re-publish the platform playback state alongside the
++    // metadata. After a seamless auto-advance Media3 does not re-dispatch
++    // PlaybackStateCompat (its metadata path never touches it), so the notification
++    // seekbar keeps extrapolating from the previous track's end. A synthetic
++    // onPlaybackStateChanged re-anchors it: MediaSessionLegacyStub re-reads the live
++    // player position unconditionally (no dedup). Must run on the application looper
++    // (guarded above), same trade-off as the metadata dispatch: registered listeners
++    // receive a callback with unchanged values.
++    val playbackState = getPlaybackState()
++    synchronized(listeners) { listeners.keys.toList() }.forEach {
++      it.onPlaybackStateChanged(playbackState)
++    }
++
+     if (previousMetadata == newMetadata) {
+       return
+     }
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt
 index 2280c80..d32facf 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt
