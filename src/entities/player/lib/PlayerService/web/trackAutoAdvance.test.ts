@@ -73,6 +73,15 @@ const playlist: PlaylistData = {
   title: 'Test Playlist',
 }
 
+// Repeat off completes only the queue boundary, so completion tests need a
+// playlist whose ended track is also its last one.
+const singleTrackPlaylist: PlaylistData = {
+  artwork: 'playlist.jpg',
+  id: 'playlist-single',
+  sermons: [sermons[0]],
+  title: 'Single Track Playlist',
+}
+
 interface AtomState {
   currentAudio: AudioPlayerData | null
   currentPlaylist: null | PlaylistData
@@ -175,25 +184,43 @@ describe('handleWebTrackEnd', () => {
     expect(mockMarkHistoryCompleted).not.toHaveBeenCalled()
   })
 
-  test('repeat off completes the ended track and pauses instead of advancing', async () => {
+  test('repeat off advances to the next track mid-queue', async () => {
     state.repeatMode = RepeatMode.Off
+
+    await handleWebTrackEnd(service)
+
+    expect(service.replaceAudio).toHaveBeenCalledWith(SECOND_AUDIO_URL, 0)
+    expect(service.play).toHaveBeenCalled()
+    expect(mockRecordSermonSwitch).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ markOldCompleted: true, oldSermonId: 'sermon-1' }),
+    )
+    expect(service.pause).not.toHaveBeenCalled()
+    expect(mockMarkHistoryCompleted).not.toHaveBeenCalled()
+  })
+
+  test('repeat off completes the last track and pauses instead of wrapping', async () => {
+    state.repeatMode = RepeatMode.Off
+    state.currentAudio = sermons[1]
 
     await handleWebTrackEnd(service)
 
     expect(mockMarkHistoryCompleted).toHaveBeenCalledWith(
       expect.anything(),
-      'sermon-1',
+      'sermon-2',
       DURATION_MS,
-      expect.objectContaining({ id: 'sermon-1' }),
+      expect.objectContaining({ id: 'sermon-2' }),
       playlist,
     )
     expect(service.pause).toHaveBeenCalled()
     expect(service.play).not.toHaveBeenCalled()
     expect(service.replaceAudio).not.toHaveBeenCalled()
+    expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
   })
 
-  test('repeat off marks the same ended track only once', async () => {
+  test('repeat off marks the same ended last track only once', async () => {
     state.repeatMode = RepeatMode.Off
+    state.currentPlaylist = singleTrackPlaylist
 
     await handleWebTrackEnd(service)
     await handleWebTrackEnd(service)
@@ -203,9 +230,11 @@ describe('handleWebTrackEnd', () => {
 
   test('repeat off completes again after a different track ends', async () => {
     state.repeatMode = RepeatMode.Off
+    state.currentPlaylist = singleTrackPlaylist
 
     await handleWebTrackEnd(service)
     state.currentAudio = sermons[1]
+    state.currentPlaylist = { ...singleTrackPlaylist, sermons: [sermons[1]] }
     await handleWebTrackEnd(service)
 
     expect(mockMarkHistoryCompleted).toHaveBeenCalledTimes(2)

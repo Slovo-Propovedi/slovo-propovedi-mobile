@@ -3,21 +3,12 @@ import { type PlaylistData } from 'entities/playlist/@x/player'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
-import { isOnlineAtom } from 'shared/model/network'
-import {
-  currentAudioAtom,
-  currentPlaylistAtom,
-  RepeatMode,
-  repeatModeAtom,
-  setCurrentAudioAction,
-} from '../../../model'
+import { currentAudioAtom, currentPlaylistAtom, RepeatMode, repeatModeAtom } from '../../../model'
 import { getIndexOfCurrentAudioInPlaylist } from '../../../ui/getIndexOfCurrentAudioInPlaylist'
-import { executeTrackSwitch } from '../../../ui/PlayerControls/executeTrackSwitch'
 import { resolveTrackToggle } from '../../../ui/PlayerControls/resolveTrackToggle'
-import { guardOfflinePlayback } from '../../playOfflineGuard'
 import { type LockScreenMetadata, type PlaybackStatus } from '../types'
+import { advanceToNextTrack } from './advanceToNextTrack'
 
-const ADVANCE_ERROR_MESSAGE = 'Ошибка при автоматическом переходе к следующей проповеди'
 const COMPLETION_ERROR_MESSAGE = 'Ошибка при завершении записи истории'
 const RESTART_ERROR_MESSAGE = 'Ошибка при повторном запуске проповеди'
 
@@ -37,8 +28,13 @@ interface WebTrackAutoAdvanceService {
 }
 
 const restartEndedTrack = async (service: WebTrackAutoAdvanceService): Promise<void> => {
-  await service.seekTo(0)
-  await service.play()
+  try {
+    await service.seekTo(0)
+    await service.play()
+  } catch (error) {
+    console.error('[handleWebTrackEnd] restart failed:', error)
+    reportError(error, RESTART_ERROR_MESSAGE)
+  }
 }
 
 const completeEndedTrack = async (
@@ -51,41 +47,55 @@ const completeEndedTrack = async (
   // Trade-off: a failed completion is never retried for this id (the error is reported).
   completedTracks.set(service, currentAudio.id)
 
-  await markHistoryCompletedAction(
-    ctx,
-    currentAudio.id,
-    service.getStatus().duration,
-    currentAudio,
-    currentPlaylist ?? undefined,
-  )
-  // Flushes the final position and drops isPlaying/status tracking. The element
-  // already ended, so pause() must not resurrect playback.
-  await service.pause()
+  try {
+    await markHistoryCompletedAction(
+      ctx,
+      currentAudio.id,
+      service.getStatus().duration,
+      currentAudio,
+      currentPlaylist ?? undefined,
+    )
+    // Flushes the final position and drops isPlaying/status tracking. The element
+    // already ended, so pause() must not resurrect playback.
+    await service.pause()
+  } catch (error) {
+    console.error('[handleWebTrackEnd] completion failed:', error)
+    reportError(error, COMPLETION_ERROR_MESSAGE)
+  }
 }
 
-const advanceToNextTrack = async (
+// Repeat-track is excluded: any other mode walks the queue, and only the queue
+// end (last track with repeat off) completes the ended track instead of advancing.
+const advanceOrCompleteQueue = async (
   service: WebTrackAutoAdvanceService,
   currentAudio: AudioPlayerData,
-  currentPlaylist: PlaylistData,
+  repeatMode: RepeatMode,
 ): Promise<void> => {
+  const currentPlaylist = ctx.get(currentPlaylistAtom)
+
+  // Without a queue there is nowhere to advance: repeat off still closes the
+  // lone track, mirroring the native queue end at loop 'none'.
+  if (!currentPlaylist) {
+    if (repeatMode === RepeatMode.Off) await completeEndedTrack(service, currentAudio, null)
+    return
+  }
+
   const index = getIndexOfCurrentAudioInPlaylist(currentAudio, currentPlaylist)
   if (index === undefined || index < 0) return
 
-  const target = resolveTrackToggle('next', index, currentPlaylist.sermons.length, RepeatMode.Queue)
+  const target = resolveTrackToggle('next', index, currentPlaylist.sermons.length, repeatMode)
+
+  if (target.kind === 'boundary') {
+    await completeEndedTrack(service, currentAudio, currentPlaylist)
+    return
+  }
   if (target.kind !== 'switch') return
 
-  const targetTrack = currentPlaylist.sermons[target.newIndex]
-  if (!targetTrack?.audioUrl) return
-  if (await guardOfflinePlayback(targetTrack.audioUrl, ctx.get(isOnlineAtom))) return
-
-  await executeTrackSwitch({
-    ctx,
+  await advanceToNextTrack({
     newIndex: target.newIndex,
-    options: { markOldCompleted: true },
     play: service.play,
     playlist: currentPlaylist,
     replaceAudio: service.replaceAudio,
-    setCurrentAudio: audio => setCurrentAudioAction(ctx, audio),
     setLockScreenMetadata: service.setLockScreenMetadata,
   })
 }
@@ -104,25 +114,8 @@ export const handleWebTrackEnd = async (service: WebTrackAutoAdvanceService): Pr
   const repeatMode = ctx.get(repeatModeAtom)
 
   try {
-    if (repeatMode === RepeatMode.Track) {
-      await restartEndedTrack(service)
-      return
-    }
-
-    const currentPlaylist = ctx.get(currentPlaylistAtom)
-
-    if (repeatMode === RepeatMode.Off) {
-      await completeEndedTrack(service, currentAudio, currentPlaylist)
-      return
-    }
-
-    if (!currentPlaylist) return
-    await advanceToNextTrack(service, currentAudio, currentPlaylist)
-  } catch (error) {
-    console.error('[handleWebTrackEnd] auto-advance failed:', error)
-    if (repeatMode === RepeatMode.Track) reportError(error, RESTART_ERROR_MESSAGE)
-    else if (repeatMode === RepeatMode.Off) reportError(error, COMPLETION_ERROR_MESSAGE)
-    else reportError(error, ADVANCE_ERROR_MESSAGE)
+    if (repeatMode === RepeatMode.Track) await restartEndedTrack(service)
+    else await advanceOrCompleteQueue(service, currentAudio, repeatMode)
   } finally {
     isAdvancing = false
   }

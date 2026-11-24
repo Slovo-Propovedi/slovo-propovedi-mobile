@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Web: auto-advance plays the next sermon again with repeat off and stops only at the last one
+
 ## [0.35.0] - 2026-11-21
 
 ### Added

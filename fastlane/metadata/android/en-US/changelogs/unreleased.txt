@@ -1,0 +1,1 @@
+Web: auto-advance plays the next sermon with repeat off; stops at the last one.

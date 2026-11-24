@@ -1,5 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { historyAtom, sermonProgressAtom } from 'entities/listening-history/@x/player'
+import {
+  historyAtom,
+  markHistoryCompletedAction,
+  sermonProgressAtom,
+} from 'entities/listening-history/@x/player'
 import { audioCacheService, sermonCachingEnabledAtom } from 'entities/offline-cache/@x/player'
 import { type PlaylistData } from 'entities/playlist/@x/player'
 import { CURRENT_SOUND_DURATION } from 'shared/config'
@@ -36,6 +40,7 @@ jest.mock('entities/offline-cache/@x/player', () => ({
 jest.mock('entities/listening-history/@x/player', () => ({
   getResumePosition: jest.fn(() => 0),
   historyAtom: jest.fn(),
+  markHistoryCompletedAction: jest.fn().mockResolvedValue(undefined),
   recordSermonSwitchAction: jest.fn().mockResolvedValue(undefined),
   sermonProgressAtom: jest.fn(),
 }))
@@ -111,11 +116,11 @@ const mockSermonContext = () => {
   })
 }
 
-const mockQueueContext = (currentIndex: number) => {
+const mockQueueContext = (currentIndex: number, repeatMode: RepeatMode = RepeatMode.Queue) => {
   ;(ctx.get as jest.Mock).mockImplementation(atom => {
     if (atom === currentAudioAtom) return queuePlaylist.sermons[currentIndex]
     if (atom === currentPlaylistAtom) return queuePlaylist
-    if (atom === repeatModeAtom) return RepeatMode.Queue
+    if (atom === repeatModeAtom) return repeatMode
     if (atom === isOnlineAtom) return true
     if (atom === historyAtom) return []
     if (atom === sermonProgressAtom) return {}
@@ -696,5 +701,42 @@ describe('WebPlayerService track auto-advance', () => {
       expect.anything(),
       expect.objectContaining({ id: 'sermon-2' }),
     )
+  })
+
+  test('a natural end mid-queue advances in repeat-off mode', async () => {
+    mockQueueContext(0, RepeatMode.Off)
+    await playerService.loadAudio(FIRST_AUDIO_URL)
+    await playerService.loadAudio(FIRST_AUDIO_URL)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+
+    audioStubs[1].fireEvent('ended')
+    await flushAutoCache()
+
+    expect(replaceSpy).toHaveBeenCalledWith(SECOND_AUDIO_URL, 0)
+    expect(setCurrentAudioAction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ id: 'sermon-2' }),
+    )
+  })
+
+  test('a natural end on the last track completes and pauses in repeat-off mode', async () => {
+    mockQueueContext(1, RepeatMode.Off)
+    await playerService.loadAudio(SECOND_AUDIO_URL)
+    await playerService.loadAudio(SECOND_AUDIO_URL)
+    const replaceSpy = jest.spyOn(playerService, 'replaceAudio').mockResolvedValue(null)
+    const pauseSpy = jest.spyOn(playerService, 'pause').mockResolvedValue(undefined)
+
+    audioStubs[1].fireEvent('ended')
+    await flushAutoCache()
+
+    expect(markHistoryCompletedAction).toHaveBeenCalledWith(
+      expect.anything(),
+      'sermon-2',
+      expect.any(Number),
+      expect.objectContaining({ id: 'sermon-2' }),
+      queuePlaylist,
+    )
+    expect(pauseSpy).toHaveBeenCalled()
+    expect(replaceSpy).not.toHaveBeenCalled()
   })
 })
