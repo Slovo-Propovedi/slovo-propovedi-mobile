@@ -3,3 +3,5 @@
 Android: фоновый автопереход больше не уходит в тишину.
 Прогрессбар уведомления верен после автоперехода.
 Громкая связь не включается обратно при смене аудиорежима.
+
+Полный список изменений: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md

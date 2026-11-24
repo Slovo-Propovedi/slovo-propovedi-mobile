@@ -3,3 +3,5 @@ Tab bar slimmer: tighter icon-label spacing, smaller mini-player gap, bottom cle
 Android: background auto-advance no longer goes silent.
 Notification seekbar correct after auto-advance.
 Speakerphone not re-asserted on audio mode changes.
+
+Full changelog: https://git.lightnode.ru/Slovo_Propovedi/slovo-propovedi-mobile/src/branch/main/CHANGELOG.md
