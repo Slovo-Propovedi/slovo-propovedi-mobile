@@ -1,3 +1,4 @@
 Web: auto-advance plays the next sermon with repeat off; stops at the last one.
 Background auto-advance no longer goes silent in the next track (Android).
 Notification seekbar shows the correct position after background auto-advance (Android).
+Speakerphone state is no longer re-asserted on every audio mode change (Android).

@@ -220,10 +220,10 @@ index 53c36f7..d806fba 100644
      } else {
        setActivePlayableInternal(playable, metadata, options)
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
-index 18203a3..cdace91 100644
+index 18203a3..31dfff8 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
-@@ -58,6 +58,19 @@ internal class MetadataInjectingPlayer(
+@@ -58,6 +58,29 @@ internal class MetadataInjectingPlayer(
      injectedMetadata = metadata
      val newMetadata = mediaMetadata
  
@@ -236,8 +236,18 @@ index 18203a3..cdace91 100644
 +    // (guarded above), same trade-off as the metadata dispatch: registered listeners
 +    // receive a callback with unchanged values.
 +    val playbackState = getPlaybackState()
-+    synchronized(listeners) { listeners.keys.toList() }.forEach {
++    val playbackStateEvents = Player.Events(
++      FlagSet.Builder()
++        .add(Player.EVENT_PLAYBACK_STATE_CHANGED)
++        .build()
++    )
++    val playbackStateListeners = synchronized(listeners) { listeners.keys.toList() }
++
++    playbackStateListeners.forEach {
 +      it.onPlaybackStateChanged(playbackState)
++    }
++    playbackStateListeners.forEach {
++      it.onEvents(this, playbackStateEvents)
 +    }
 +
      if (previousMetadata == newMetadata) {
