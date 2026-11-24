@@ -9,14 +9,6 @@ import { type LockScreenMetadata } from '../types'
 
 const ADVANCE_ERROR_MESSAGE = 'Ошибка при автоматическом переходе к следующей проповеди'
 
-interface AdvanceToNextTrackParams {
-  newIndex: number
-  play: () => Promise<void>
-  playlist: PlaylistData
-  replaceAudio: (audioUrl: string, initialPositionMs?: number) => Promise<unknown>
-  setLockScreenMetadata: (metadata: LockScreenMetadata) => void
-}
-
 // Switches the live web player to the playlist track at `newIndex` and marks
 // the finished sermon completed. The offline guard cancels the switch.
 export const advanceToNextTrack = async ({
@@ -25,7 +17,13 @@ export const advanceToNextTrack = async ({
   playlist,
   replaceAudio,
   setLockScreenMetadata,
-}: AdvanceToNextTrackParams): Promise<void> => {
+}: {
+  newIndex: number
+  play: () => Promise<void>
+  playlist: PlaylistData
+  replaceAudio: (audioUrl: string, initialPositionMs?: number) => Promise<unknown>
+  setLockScreenMetadata: (metadata: LockScreenMetadata) => void
+}): Promise<void> => {
   try {
     const targetTrack = playlist.sermons[newIndex]
     if (!targetTrack?.audioUrl) return
@@ -42,7 +40,7 @@ export const advanceToNextTrack = async ({
       setLockScreenMetadata,
     })
   } catch (error) {
-    console.error('[handleWebTrackEnd] auto-advance failed:', error)
+    console.error('[advanceToNextTrack] auto-advance failed:', error)
     reportError(error, ADVANCE_ERROR_MESSAGE)
   }
 }

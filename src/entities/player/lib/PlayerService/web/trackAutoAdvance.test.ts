@@ -52,6 +52,8 @@ jest.mock('../../playbackProgress', () => ({
 const FIRST_AUDIO_URL = 'https://example.com/first.mp3'
 const SECOND_AUDIO_URL = 'https://example.com/second.mp3'
 const DURATION_MS = 60000
+const COMPLETION_ERROR_MESSAGE = 'Ошибка при завершении записи истории'
+const RESTART_ERROR_MESSAGE = 'Ошибка при повторном запуске проповеди'
 
 const createSermon = (id: string, audioUrl: string): AudioPlayerData => ({
   artist: `Artist ${id}`,
@@ -218,7 +220,7 @@ describe('handleWebTrackEnd', () => {
     expect(mockRecordSermonSwitch).not.toHaveBeenCalled()
   })
 
-  test('repeat off marks the same ended last track only once', async () => {
+  test('repeat off marks the same ended last track once but pauses on every end', async () => {
     state.repeatMode = RepeatMode.Off
     state.currentPlaylist = singleTrackPlaylist
 
@@ -226,6 +228,26 @@ describe('handleWebTrackEnd', () => {
     await handleWebTrackEnd(service)
 
     expect(mockMarkHistoryCompleted).toHaveBeenCalledTimes(1)
+    // A manual replay of the finished sermon must still stop at its end.
+    expect(service.pause).toHaveBeenCalledTimes(2)
+  })
+
+  test('repeat off without a playlist completes the lone track and pauses', async () => {
+    state.repeatMode = RepeatMode.Off
+    state.currentPlaylist = null
+
+    await handleWebTrackEnd(service)
+
+    expect(mockMarkHistoryCompleted).toHaveBeenCalledWith(
+      expect.anything(),
+      'sermon-1',
+      DURATION_MS,
+      expect.objectContaining({ id: 'sermon-1' }),
+      undefined,
+    )
+    expect(service.pause).toHaveBeenCalled()
+    expect(service.replaceAudio).not.toHaveBeenCalled()
+    expect(service.play).not.toHaveBeenCalled()
   })
 
   test('repeat off completes again after a different track ends', async () => {
@@ -264,6 +286,40 @@ describe('handleWebTrackEnd', () => {
     await handleWebTrackEnd(service)
 
     expect(service.replaceAudio).toHaveBeenCalledTimes(2)
+    expect(mockReportError).toHaveBeenCalledTimes(1)
+  })
+
+  test('a failed repeat-track restart reports the error and releases the guard', async () => {
+    mockConsole('error')
+    state.repeatMode = RepeatMode.Track
+    service.seekTo.mockRejectedValueOnce(new Error('seek failed'))
+
+    await handleWebTrackEnd(service)
+
+    expect(mockReportError).toHaveBeenCalledWith(expect.any(Error), RESTART_ERROR_MESSAGE)
+    expect(service.play).not.toHaveBeenCalled()
+
+    await handleWebTrackEnd(service)
+
+    expect(service.seekTo).toHaveBeenCalledTimes(2)
+    expect(mockReportError).toHaveBeenCalledTimes(1)
+  })
+
+  test('a failed completion reports the error and releases the guard', async () => {
+    mockConsole('error')
+    state.repeatMode = RepeatMode.Off
+    state.currentPlaylist = singleTrackPlaylist
+    mockMarkHistoryCompleted.mockRejectedValueOnce(new Error('history failed'))
+
+    await handleWebTrackEnd(service)
+
+    expect(mockReportError).toHaveBeenCalledWith(expect.any(Error), COMPLETION_ERROR_MESSAGE)
+
+    await handleWebTrackEnd(service)
+
+    // The completion window skips the upsert, but the released pin still pauses.
+    expect(mockMarkHistoryCompleted).toHaveBeenCalledTimes(1)
+    expect(service.pause).toHaveBeenCalledTimes(1)
     expect(mockReportError).toHaveBeenCalledTimes(1)
   })
 

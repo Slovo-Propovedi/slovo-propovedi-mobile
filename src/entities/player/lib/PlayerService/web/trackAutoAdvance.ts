@@ -42,21 +42,23 @@ const completeEndedTrack = async (
   currentAudio: AudioPlayerData,
   currentPlaylist: null | PlaylistData,
 ): Promise<void> => {
-  if (completedTracks.get(service) === currentAudio.id) return
+  const alreadyCompleted = completedTracks.get(service) === currentAudio.id
   // Recorded before the await on purpose: a second 'ended' must not double-complete.
   // Trade-off: a failed completion is never retried for this id (the error is reported).
-  completedTracks.set(service, currentAudio.id)
+  if (!alreadyCompleted) completedTracks.set(service, currentAudio.id)
 
   try {
-    await markHistoryCompletedAction(
-      ctx,
-      currentAudio.id,
-      service.getStatus().duration,
-      currentAudio,
-      currentPlaylist ?? undefined,
-    )
+    if (!alreadyCompleted)
+      await markHistoryCompletedAction(
+        ctx,
+        currentAudio.id,
+        service.getStatus().duration,
+        currentAudio,
+        currentPlaylist ?? undefined,
+      )
     // Flushes the final position and drops isPlaying/status tracking. The element
-    // already ended, so pause() must not resurrect playback.
+    // already ended, so pause() must not resurrect playback. Deliberately outside the
+    // completion window: a manual replay of a finished sermon still stops at its end.
     await service.pause()
   } catch (error) {
     console.error('[handleWebTrackEnd] completion failed:', error)
@@ -111,9 +113,9 @@ export const handleWebTrackEnd = async (service: WebTrackAutoAdvanceService): Pr
   if (isAdvancing) return
 
   isAdvancing = true
-  const repeatMode = ctx.get(repeatModeAtom)
 
   try {
+    const repeatMode = ctx.get(repeatModeAtom)
     if (repeatMode === RepeatMode.Track) await restartEndedTrack(service)
     else await advanceOrCompleteQueue(service, currentAudio, repeatMode)
   } finally {
