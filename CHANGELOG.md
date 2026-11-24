@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Background auto-advance no longer goes silent a few seconds into the next track (Android)
 - Stop churning the system speakerphone state on every audio mode re-assert (Android)
 - Web: auto-advance plays the next sermon again with repeat off and stops only at the last one
+- Tab bar is slimmer with tighter icon-label spacing and a smaller mini-player gap; web builds now keep a bottom clearance equal to the side insets, so the bar no longer sticks to the screen edge in mobile browsers (Safari)
 
 ## [0.35.0] - 2026-11-21
 
