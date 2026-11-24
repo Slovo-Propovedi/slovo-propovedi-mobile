@@ -153,7 +153,7 @@ index 6c81fce..5725233 100644
  
    private fun retrieveStreamType(uri: Uri): Int = Util.inferContentType(uri)
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
-index bf3f9c5..a3974e8 100644
+index bf3f9c5..631b34a 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 @@ -39,6 +39,9 @@ class AudioPlaylist(
@@ -166,7 +166,7 @@ index bf3f9c5..a3974e8 100644
  
    override var isActiveForLockScreen = false
    override var metadata: Metadata? = null
-@@ -100,10 +103,25 @@ class AudioPlaylist(
+@@ -100,10 +103,20 @@ class AudioPlaylist(
    override fun onMediaItemChanged(mediaItem: MediaItem?, reason: Int) {
      val currentIndex = ref.currentMediaItemIndex
      if (currentIndex != previousMediaItemIndex) {
@@ -179,20 +179,15 @@ index bf3f9c5..a3974e8 100644
        previousMediaItemIndex = currentIndex
      }
      sendStatusUpdate()
-+    // PATCH(patch-package): rebuild the lock-screen session after a seamless AUTO
-+    // transition so PlaybackState (seekbar position) is re-published from the live
-+    // player; without it the notification seekbar continues from the previous
-+    // track's end (issue #149). Manual next/prev go through seekTo and are unaffected.
 +    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
 +      // PATCH(patch-package): temporary investigation logging for the Android 16/17
 +      // background auto-advance audio-loss bug; remove once the cause is confirmed.
 +      appContext?.jsLogger?.warn("[expo-audio][diag] autoAdvance index=$currentIndex")
-+      serviceConnection.playbackServiceBinder?.service?.reassertSessionForPlayable(this)
 +    }
    }
  
    override fun onPlayerError(error: PlaybackException) {
-@@ -232,7 +250,10 @@ class AudioPlaylist(
+@@ -232,7 +245,10 @@ class AudioPlaylist(
        "muted" to isMuted,
        "volume" to ref.volume,
        "loop" to loopMode.value,
@@ -204,7 +199,7 @@ index bf3f9c5..a3974e8 100644
      )
    }
  
-@@ -241,7 +262,8 @@ class AudioPlaylist(
+@@ -241,7 +257,8 @@ class AudioPlaylist(
        TRACK_CHANGED,
        mapOf(
          "previousIndex" to previousIndex,
@@ -215,7 +210,7 @@ index bf3f9c5..a3974e8 100644
      )
      sendStatusUpdate()
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 53c36f7..15c6727 100644
+index 53c36f7..c26dbd4 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 @@ -490,7 +490,9 @@ class AudioControlsService : MediaSessionService() {
@@ -229,7 +224,7 @@ index 53c36f7..15c6727 100644
    }
  
    private fun clearSessionInternal() {
-@@ -530,33 +532,87 @@ class AudioControlsService : MediaSessionService() {
+@@ -530,27 +532,61 @@ class AudioControlsService : MediaSessionService() {
        currentOptions = options
        updateArtwork(metadata, postUpdate = false)
  
@@ -299,32 +294,6 @@ index 53c36f7..15c6727 100644
        }
      } else {
        setActivePlayableInternal(playable, metadata, options)
-     }
-   }
- 
-+  // PATCH(patch-package): after a seamless AUTO media-item transition the session keeps
-+  // publishing the previous item's end PlaybackState, so SystemUI extrapolates the
-+  // notification seekbar into the new track (issue #149); metadata/timeline still
-+  // refresh, position does not. Rebuilding the session (same path as the foreground
-+  // re-assert through setPlayableOptions) is the proven way to re-publish PlaybackState:
-+  // it is background-safe here because the service is already a foreground service and
-+  // this path posts with startInForeground = false (plain notify, no FGS start).
-+  // The rebuild registers the new session before releasing the old one (see
-+  // setPlayableOptions), so the foreground service survives the rebuild in the
-+  // background instead of being stopped together with its only session.
-+  fun reassertSessionForPlayable(playable: LockScreenPlayable) {
-+    // PATCH(patch-package): temporary investigation logging for the Android 16/17
-+    // background auto-advance audio-loss bug; remove once the cause is confirmed.
-+    val isCurrent = playable == currentPlayable
-+    appContext?.jsLogger?.warn("[expo-audio][diag] sessionReassert isCurrent=$isCurrent")
-+    if (isCurrent) {
-+      setPlayableOptions(playable, currentMetadata, currentOptions)
-+    }
-+  }
-+
-   fun unregisterPlayable() {
-     clearSessionInternal()
-   }
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt
 index 2280c80..d32facf 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt
