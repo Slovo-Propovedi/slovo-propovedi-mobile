@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { type ViewStyle } from 'react-native'
-import { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
+import { type AnimatedStyle, type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import { GlassIsland } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
@@ -15,6 +15,7 @@ const PRESS_RESOLUTION_GRACE_MS = 150
 interface SearchIslandCloseSlotProps {
   closeProgress: SharedValue<number>
   isVisible: boolean
+  keyboardLiftStyle?: AnimatedStyle<ViewStyle>
   /** 0 = expanded bar inset, 1 = one-line bar inset. */
   oneLineProgress: SharedValue<number>
   onPress: () => void
@@ -34,6 +35,7 @@ interface SearchIslandCloseSlotProps {
  * @param root0 - Component props.
  * @param root0.closeProgress - 0 = hidden, 1 = fully shown.
  * @param root0.isVisible - Gates pointer events and accessibility only.
+ * @param root0.keyboardLiftStyle - Keyboard lift applied with the search morph frame.
  * @param root0.oneLineProgress - The bar's one-line morph progress (outer inset + height).
  * @param root0.onPress - Closes the search route.
  * @param root0.openProgress - The island's open/close progress.
@@ -44,6 +46,7 @@ interface SearchIslandCloseSlotProps {
 export const SearchIslandCloseSlot = ({
   closeProgress,
   isVisible,
+  keyboardLiftStyle,
   oneLineProgress,
   onPress,
   openProgress,
@@ -102,8 +105,8 @@ export const SearchIslandCloseSlot = ({
     <GlassIsland
       isLight={isLight}
       hostStyle={styles.closeCircle}
-      animatedStyle={[style, restingStyle]}
       accessibilityElementsHidden={!isVisible}
+      animatedStyle={[style, restingStyle, keyboardLiftStyle]}
       pointerEvents={isVisible || isPointerGraceActive ? 'auto' : 'none'}
       importantForAccessibility={isVisible ? 'yes' : 'no-hide-descendants'}
     >

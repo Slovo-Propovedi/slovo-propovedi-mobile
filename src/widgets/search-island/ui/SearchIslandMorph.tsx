@@ -6,7 +6,7 @@ import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { useCloseSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { GlassIsland } from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { tabBarHeightAtom, useKeyboardLiftStyle } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { getSearchIslandRestingStyles } from '../lib/getSearchIslandRestingStyles'
@@ -74,6 +74,7 @@ export const SearchIslandMorph = () => {
       }),
     [settledClose, settledFocused, settledOneLine, settledOpen, screenWidth, tabBarHeight],
   )
+  const keyboardLiftStyle = useKeyboardLiftStyle()
 
   return (
     <>
@@ -82,7 +83,7 @@ export const SearchIslandMorph = () => {
         isLight={isLight}
         pointerEvents='box-none'
         hostStyle={styles.container}
-        animatedStyle={[frameStyle, restingFrameStyle]}
+        animatedStyle={[frameStyle, restingFrameStyle, keyboardLiftStyle]}
       >
         <SearchIslandMagnifier />
         <SearchIslandContent
@@ -100,6 +101,7 @@ export const SearchIslandMorph = () => {
         closeProgress={closeProgress}
         oneLineProgress={oneLineProgress}
         restingStyle={closeSlotRestingStyle}
+        keyboardLiftStyle={keyboardLiftStyle}
         isVisible={isSearchFieldVisible && shouldShowClose}
       />
     </>
