@@ -125,23 +125,27 @@ describe('useKeyboardBottomInsetSync on web', () => {
     jest.replaceProperty(Platform, 'OS', 'web')
     viewport = createMockVisualViewport(800, 0)
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800, writable: true })
-    Object.defineProperty(window, 'addEventListener', {
-      configurable: true,
-      value: jest.fn(),
-      writable: true,
-    })
-    Object.defineProperty(window, 'removeEventListener', {
-      configurable: true,
-      value: jest.fn(),
-      writable: true,
-    })
+    if (typeof window.addEventListener !== 'function')
+      Object.defineProperty(window, 'addEventListener', {
+        configurable: true,
+        value: jest.fn(),
+        writable: true,
+      })
+
+    if (typeof window.removeEventListener !== 'function')
+      Object.defineProperty(window, 'removeEventListener', {
+        configurable: true,
+        value: jest.fn(),
+        writable: true,
+      })
+
+    jest.spyOn(window, 'addEventListener').mockImplementation(jest.fn())
+    jest.spyOn(window, 'removeEventListener').mockImplementation(jest.fn())
     setMockVisualViewport(viewport)
   })
 
   afterEach(() => {
     delete (window as { visualViewport?: unknown }).visualViewport
-    delete (window as { addEventListener?: unknown }).addEventListener
-    delete (window as { removeEventListener?: unknown }).removeEventListener
     jest.restoreAllMocks()
   })
 
@@ -174,5 +178,27 @@ describe('useKeyboardBottomInsetSync on web', () => {
 
     expect(viewport.removeEventListener).toHaveBeenCalledWith('resize', expect.any(Function))
     expect(viewport.removeEventListener).toHaveBeenCalledWith('scroll', expect.any(Function))
+  })
+
+  test('does not throw on unmount when window.removeEventListener is missing', async () => {
+    const removeEventListenerDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      'removeEventListener',
+    )
+
+    Object.defineProperty(window, 'removeEventListener', {
+      configurable: true,
+      value: undefined,
+      writable: true,
+    })
+
+    try {
+      const { unmount } = await renderHook(() => useKeyboardBottomInsetSync())
+
+      await expect(act(async () => unmount())).resolves.toBeUndefined()
+    } finally {
+      if (removeEventListenerDescriptor)
+        Object.defineProperty(window, 'removeEventListener', removeEventListenerDescriptor)
+    }
   })
 })

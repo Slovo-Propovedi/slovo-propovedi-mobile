@@ -10,6 +10,7 @@ import { renderWithProviders } from 'shared/mocks'
 import { advanceMorphFrames } from 'shared/mocks/morphFrames'
 import {
   isBarCollapsedAtom,
+  keyboardBottomInsetSv,
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
   tabBarHeightAtom,
@@ -514,6 +515,29 @@ describe('<SearchIslandMorph>', () => {
     expect(mockRouter.back).toHaveBeenCalledTimes(1)
   })
 
+  test('does not apply its own keyboard lift (the floating bar container lifts the row)', async () => {
+    keyboardBottomInsetSv.value = 280
+
+    try {
+      const { ctx } = await renderMorph()
+
+      const frame = StyleSheet.flatten(findMorphContainer().props.style)
+      expect(frame.transform).toBeUndefined()
+
+      await act(async () => {
+        isSearchOpenAtom(ctx, true)
+      })
+      await act(async () => {
+        advanceMorphFrames()
+      })
+
+      const openFrame = StyleSheet.flatten(findMorphContainer().props.style)
+      expect(openFrame.transform).toBeUndefined()
+    } finally {
+      keyboardBottomInsetSv.value = 0
+    }
+  })
+
   test('keeps the committed resting frame at the START geometry until the search morph settles', async () => {
     const { ctx } = await renderMorph()
 
@@ -537,7 +561,7 @@ describe('<SearchIslandMorph>', () => {
 
     const settledFrame = StyleSheet.flatten(findMorphContainer().props.style)
 
-    // The opened field is always the tab bar's full height: 68, even though
+    // The opened field is always the tab bar's full height: 60, even though
     // opening search forces the tab circle (48) collapsed in the same frame.
     expect(closedFrame.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
     expect(settledFrame.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
