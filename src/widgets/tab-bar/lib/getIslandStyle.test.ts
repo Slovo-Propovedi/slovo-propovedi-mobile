@@ -243,7 +243,7 @@ describe('getTabIconOffset', () => {
 
 describe('getTabItemHeight', () => {
   test('expanded item grows with the island so the label keeps a gap below the icon', () => {
-    expect(getTabItemHeight(0)).toBe(60)
+    expect(getTabItemHeight(0)).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED - 4 * 2)
   })
 
   test('collapsed item stays the circle item height', () => {
@@ -252,8 +252,10 @@ describe('getTabItemHeight', () => {
   })
 
   test('height interpolates with the morph and clamps out-of-range progress', () => {
-    expect(getTabItemHeight(0.5)).toBe((68 + TAB_BAR_ISLAND_HEIGHT) / 2 - 4 * 2)
-    expect(getTabItemHeight(-1)).toBe(60)
+    expect(getTabItemHeight(0.5)).toBe(
+      (TAB_BAR_ISLAND_HEIGHT_EXPANDED + TAB_BAR_ISLAND_HEIGHT) / 2 - 4 * 2,
+    )
+    expect(getTabItemHeight(-1)).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED - 4 * 2)
     expect(getTabItemHeight(2)).toBe(TAB_BAR_ISLAND_HEIGHT - 4 * 2)
   })
 })

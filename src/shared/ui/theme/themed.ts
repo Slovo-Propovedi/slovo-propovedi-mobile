@@ -31,7 +31,7 @@ export const PLAYER_SIZES = {
   miniPlayerHeight: 48,
   progressThumbSize: 12,
   // Approximation used only until the real height is measured (see shared/ui/layout)
-  tabBarHeight: 88,
+  tabBarHeight: 80,
 } as const
 
 export const RADIUSES = {

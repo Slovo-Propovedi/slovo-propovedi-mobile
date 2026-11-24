@@ -58,7 +58,7 @@ describe('useTabIslandMorph', () => {
     expect(result.current.settledOneLine).toBe(true)
   })
 
-  test('grows the circle 48 -> 68 when a visible field occupies the one-line row', async () => {
+  test('grows the circle 48 -> 60 when a visible field occupies the one-line row', async () => {
     const ctx = createCtx()
     const { result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT), { ctx })
 

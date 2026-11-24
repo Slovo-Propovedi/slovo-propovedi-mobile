@@ -19,7 +19,7 @@ export const TabSlot = ({
   isCollapsed: boolean
   /** Settled (lagged) shape state feeding the committed resting geometry. */
   isSettledCollapsed: boolean
-  /** Settled (lagged) one-line state: owns the circle's diameter (68 or 48). */
+  /** Settled (lagged) one-line state: owns the circle's diameter (60 or 48). */
   isSettledOneLine: boolean
   /** One-line axis: the collapsed slot width equals the island's current height. */
   oneLineProgress: SharedValue<number>

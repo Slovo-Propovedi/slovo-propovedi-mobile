@@ -21,7 +21,7 @@ export const MINI_PLAY_HIT_SLOP = (MIN_TOUCH_TARGET - MINI_PLAY_BOX_SIZE) / 2
 // The expanded pill spans the row content, so its right edge coincides with the
 // search circle's right edge. Centring the transport glyph on that circle's axis
 // means insetting it by the circle's half-width minus the transport's half-width:
-// 68 / 2 − 36 / 2 = 16dp.
+// 60 / 2 − 36 / 2 = 12dp.
 export const MINI_EXPANDED_TRANSPORT_RIGHT_INSET =
   BAR_CIRCLE_SIZE_EXPANDED / 2 - MINI_PLAY_BOX_SIZE / 2
 

@@ -1,4 +1,4 @@
-import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
+import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import { getIslandContentStyle, getTabItemStyle } from './getBarMorphStyles'
 
 describe('getIslandContentStyle', () => {
@@ -22,7 +22,7 @@ describe('getIslandContentStyle', () => {
 describe('getTabItemStyle', () => {
   test('expanded item splits the neighbour gap on both sides with longhand margins', () => {
     expect(getTabItemStyle(0, 0)).toEqual({
-      height: 60,
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED - 4 * 2,
       marginBottom: 4,
       marginLeft: 4,
       marginRight: 4,
@@ -42,10 +42,10 @@ describe('getTabItemStyle', () => {
 
   test('height follows the one-line axis while margins follow the shape axis', () => {
     // Search-open: the shape axis is collapsed (A = 1) but the visible field
-    // keeps the island at 68. Sizing the item from A leaves it 40 tall inside a
-    // 68 slot, resting above the circle centre; the height must read axis D.
+    // keeps the island at 60. Sizing the item from A leaves it 40 tall inside a
+    // 60 slot, resting above the circle centre; the height must read axis D.
     expect(getTabItemStyle(1, 0)).toEqual({
-      height: 60,
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED - 4 * 2,
       marginBottom: 4,
       marginLeft: 0,
       marginRight: 0,
@@ -61,7 +61,7 @@ describe('getTabItemStyle', () => {
     })
     // Expanded bar: unchanged.
     expect(getTabItemStyle(0, 0)).toEqual({
-      height: 60,
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED - 4 * 2,
       marginBottom: 4,
       marginLeft: 4,
       marginRight: 4,

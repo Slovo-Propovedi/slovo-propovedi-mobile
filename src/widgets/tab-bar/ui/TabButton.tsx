@@ -33,7 +33,7 @@ export const TabButton = ({
   isBarVisuallyCollapsed?: boolean
   isDisabled?: boolean
   // One-line (height) axis: owns the item height so it fills the island in every
-  // state, including the 68 search-open circle on a collapsed shape.
+  // state, including the 60 search-open circle on a collapsed shape.
   oneLineProgress: SharedValue<number>
   onPress: () => void
   routeKey: string

@@ -89,23 +89,23 @@ describe('<TabButton>', () => {
 
   test('sizes the item from the one-line axis so the icon centers in the search-open circle', async () => {
     // Search-open: shape collapsed (A = 1) but the visible field keeps the
-    // island at 68. The item must be 68 - 8 margins; sizing it from A leaves a
+    // island at 60. The item must be 60 - 8 margins; sizing it from A leaves a
     // 40-tall item resting above the circle centre.
     await renderTabButton('listen', true, progressValue(1), false, progressValue(0))
 
-    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 60 })
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 52 })
   })
 
   test('expanded item grows taller to leave a gap between icon and label', async () => {
     await renderTabButton('listen', true, progressValue(0))
 
-    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 60 })
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 52 })
   })
 
   test('leaves the item height to the morph instead of a static fallback', () => {
     // A static height in the item's style array shadows the animated one on
     // device, so the expanded item stayed short and the icon+label looked
-    // cramped inside the 68 island.
+    // cramped inside the 60 island.
     expect(styles.tabItem).not.toHaveProperty('height')
   })
 

@@ -260,7 +260,7 @@ describe('<CustomTabBar>', () => {
   test('leaves the island height to the animated morph instead of a static fallback', () => {
     // A static height in the island's style array shadows the animated one on
     // device: the expanded island stays pinned to the collapsed 48 and renders
-    // visibly shorter than the 68 search circle next to it.
+    // visibly shorter than the 60 search circle next to it.
     expect(styles.floatingIsland).not.toHaveProperty('height')
   })
 
@@ -584,7 +584,7 @@ describe('<CustomTabBar>', () => {
     expect(getByText('Слушать')).toHaveStyle({ color: '#f16031' })
     expect(findActiveCapsules()).toHaveLength(1)
     // Collapsed to the active circle, exactly that slot keeps its content visible
-    // (opacity 1); an unmarked tab would render an empty 68px circle.
+    // (opacity 1); an unmarked tab would render an empty 60px circle.
     const activeSlots = findTabSlots().filter(
       slot => StyleSheet.flatten(slot.props.style)?.opacity === 1,
     )
@@ -594,15 +594,15 @@ describe('<CustomTabBar>', () => {
 
   test('sizes the active item from the one-line axis so the icon centers in the search-open circle', async () => {
     // Search-open: the island collapses to a circle (shape axis A = 1) while the
-    // visible field keeps the height at 68 (one-line axis D = 0). Sizing the
-    // item from A leaves it 40 tall inside the 68 slot, resting above centre.
+    // visible field keeps the height at 60 (one-line axis D = 0). Sizing the
+    // item from A leaves it 40 tall inside the 60 slot, resting above centre.
     const ctx = createCtx()
     isSearchOpenAtom(ctx, true)
     await renderWithProviders(<CustomTabBar state={createMockState(0)} {...createBarProps()} />, {
       ctx,
     })
 
-    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 60 })
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 52 })
   })
 
   test('remembered active tab follows the last real tab switch', async () => {

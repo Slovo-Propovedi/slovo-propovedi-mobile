@@ -28,8 +28,8 @@ interface TabIslandMorphInput {
 // Drives the island's morph on two axes: the shape axis (expanded ⇄ circle) from
 // the tab-island atom, and the height axis from the one-line atom. Both atoms
 // cover a visible search field differently on purpose: the field forces the
-// SHAPE to a circle (the row reads [circle][field]) but keeps the HEIGHT at 68,
-// so the open-field row is a 68x68 circle next to the 68 field. The compact 48
+// SHAPE to a circle (the row reads [circle][field]) but keeps the HEIGHT at 60,
+// so the open-field row is a 60x60 circle next to the 60 field. The compact 48
 // applies only when the field is hidden AND the bar is one-line. Focus is a
 // stronger state: it retracts the island so the pill owns the row.
 export const useTabIslandMorph = ({

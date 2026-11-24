@@ -34,12 +34,14 @@ const islandTopFromScreenBottom = (paddingBottom: number) =>
 const islandBottomFromScreenBottom = (paddingBottom: number) => paddingBottom
 
 describe('getMiniPlayerGeometry', () => {
-  test('measured 88dp row with 12dp bottom padding: pill rests one pill-row gap above the 80dp island top', () => {
+  test('measured 80dp row with 12dp bottom padding: pill rests one pill-row gap above the 72dp island top', () => {
     const paddingBottom = BAR_BOTTOM_INSET_MIN
     const tabBarHeight = BAR_ROW_MIN_HEIGHT + paddingBottom
     const { bottom } = geometryAt(tabBarHeight)
 
-    expect(islandTopFromScreenBottom(paddingBottom)).toBe(80)
+    expect(islandTopFromScreenBottom(paddingBottom)).toBe(
+      paddingBottom + TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+    )
     expect(bottom).toBe(tabBarHeight - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP)
     expect(bottom - islandTopFromScreenBottom(paddingBottom)).toBe(BAR_PILL_ROW_GAP)
   })

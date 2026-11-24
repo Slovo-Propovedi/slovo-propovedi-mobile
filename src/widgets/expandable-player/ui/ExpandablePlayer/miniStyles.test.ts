@@ -23,8 +23,9 @@ describe('mini player horizontal alignment', () => {
     // also the pill's right edge; its centre is therefore half its diameter
     // inside that edge. The transport box is artwork-sized, so its glyph centre
     // sits half that width inside the pill: 34 − 18 = 16dp.
-    expect(BAR_CIRCLE_SIZE_EXPANDED / 2 - MINI_ARTWORK_SIZE / 2).toBe(16)
-    expect(MINI_EXPANDED_TRANSPORT_RIGHT_INSET).toBe(16)
+    const expectedInset = BAR_CIRCLE_SIZE_EXPANDED / 2 - MINI_ARTWORK_SIZE / 2
+    expect(expectedInset).toBe(12)
+    expect(MINI_EXPANDED_TRANSPORT_RIGHT_INSET).toBe(expectedInset)
     expect(styles.miniContainer.paddingRight).toBe(MINI_EXPANDED_TRANSPORT_RIGHT_INSET)
   })
 

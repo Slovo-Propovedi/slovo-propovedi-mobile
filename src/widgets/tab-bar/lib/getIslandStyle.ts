@@ -21,13 +21,13 @@ export const CAPSULE_HORIZONTAL_OVERHANG = 10
 // Width and height of the tab island.
 //
 // The height belongs to the one-line axis (oneLineProgress): the expanded bar is
-// always 68 tall, the compact one-line bar 48. A visible search field pins the
+// always 60 tall, the compact one-line bar 48. A visible search field pins the
 // bar to the expanded height even when the shape collapses to a circle, so the
 // open-field row shares one height between the island and the pill.
 //
 // The width belongs to the shape axis (progress): full row when expanded, a
 // circle when collapsed. The circle's diameter IS the current height, never a
-// fixed constant — 68x68 beside an open field, 48x48 in the compact row. Focus
+// fixed constant — 60x60 beside an open field, 48x48 in the compact row. Focus
 // is a stronger state than collapse: the whole island fades out and its width
 // reaches zero, handing the row to the focused search pill.
 export const getIslandStyle = (
@@ -53,9 +53,9 @@ export const getIslandStyle = (
 // the same height-derived width as the island, so it never paints outside it.
 //
 // The slot height always matches the island height (one-line axis), never the
-// shape axis: beside an open search field the island is a 68 circle on a
+// shape axis: beside an open search field the island is a 60 circle on a
 // collapsed shape, and a slot sized from the 48 one-line row would centre its
-// item 10dp above the circle centre.
+// item 6dp above the circle centre.
 export const getTabSlotStyle = (progress: number, layout: TabSlotLayout, oneLineProgress = 0) => {
   'worklet'
   const clamped = clampProgress(progress)
