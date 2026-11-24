@@ -21,7 +21,9 @@ export const BAR_EXPANDED_ISLAND_TOP_MARGIN = BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAN
  * one-line height, so its diameter deliberately mirrors the island height.
  */
 export const BAR_CIRCLE_SIZE = ONE_LINE_ROW_SIZE
-export const BAR_CIRCLE_SIZE_EXPANDED = TAB_BAR_ISLAND_HEIGHT_EXPANDED
+// Deliberately mirrors TAB_BAR_ISLAND_HEIGHT_EXPANDED (60) — the circle diameter IS the
+// expanded island height; keep in sync.
+export const BAR_CIRCLE_SIZE_EXPANDED = 60 as const
 export const BAR_OUTER_GAP = 8 as const
 // Vertical gap between the floating mini-player pill and the expanded island's
 // top edge. Apple Music keeps the pill visibly detached (Issue #153), so the pill
@@ -57,9 +59,9 @@ export const getBarSideInset = (oneLineProgress: number): number => {
 // (desktop web, mobile browsers, and the early native frames before insets are
 // measured). A real inset places the islands flush on the safe-area line instead.
 export const BAR_BOTTOM_INSET_MIN = 12 as const
-// On web the visible bottom gap mirrors the expanded chrome's side insets
-// (uniform frame around the floating chrome, issue #154).
-export const BAR_BOTTOM_INSET_WEB = BAR_SIDE_INSET_EXPANDED
+// Equals BAR_SIDE_INSET_EXPANDED (25) — the web bottom gap mirrors the expanded chrome
+// side insets; keep in sync.
+const BAR_BOTTOM_INSET_WEB = 25 as const
 // Bottom padding of the floating chrome: on web the visible bottom gap mirrors
 // the expanded chrome's side insets (uniform frame around the floating chrome,
 // issue #154); max() lets a larger real inset (installed PWA safe-area line)

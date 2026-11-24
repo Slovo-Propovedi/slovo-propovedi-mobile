@@ -1,7 +1,6 @@
 import { SLIDER_REST_INSET } from '../slider/slider-layout.lib'
 import {
   BAR_BOTTOM_INSET_MIN,
-  BAR_BOTTOM_INSET_WEB,
   BAR_CIRCLE_SIZE_EXPANDED,
   BAR_PILL_ROW_GAP,
   BAR_ROW_MIN_HEIGHT,
@@ -22,9 +21,9 @@ describe('bottom bar geometry', () => {
   })
 
   test('the web bottom gap mirrors the expanded chrome side insets', () => {
-    expect(BAR_BOTTOM_INSET_WEB).toBe(25)
-    expect(BAR_BOTTOM_INSET_WEB).toBe(BAR_SIDE_INSET_EXPANDED)
-    expect(BAR_BOTTOM_INSET_WEB).toBe(SLIDER_REST_INSET + 1)
+    expect(getBarBottomPadding(0, true)).toBe(25)
+    expect(getBarBottomPadding(0, true)).toBe(BAR_SIDE_INSET_EXPANDED)
+    expect(getBarBottomPadding(0, true)).toBe(SLIDER_REST_INSET + 1)
   })
 })
 
