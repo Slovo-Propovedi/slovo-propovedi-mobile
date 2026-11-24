@@ -457,6 +457,16 @@ export default Plugin.define({
             await applyProfileToSession(sessionID, name)
           },
         })
+
+        // Underscore alias: "/profile_<name>" — profile names themselves use
+        // underscores, so this form reads without the hyphen/underscore mix.
+        editor.add({
+          name: `profile_${name}`,
+          description: profileDescriptions.get(name) ?? `Switch to profile "${name}".`,
+          async execute({ sessionID }) {
+            await applyProfileToSession(sessionID, name)
+          },
+        })
       }
     })
 
