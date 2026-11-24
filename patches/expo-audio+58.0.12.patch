@@ -1,8 +1,19 @@
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
-index 6c81fce..25e94cc 100644
+index 6c81fce..5725233 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
-@@ -97,9 +97,18 @@ class AudioModule : Module() {
+@@ -92,14 +92,29 @@ class AudioModule : Module() {
+   private val audioSessionActivityKeepers = mutableSetOf<String>()
+   private val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+     appContext.mainQueue.launch {
++      // PATCH(patch-package): temporary investigation logging for the Android 16/17
++      // background auto-advance audio-loss bug; remove once the cause is confirmed.
++      appContext.jsLogger?.warn(
++        "[expo-audio][diag] focusEvent=$focusChange registered=$focusRequestRegistered acquired=$focusAcquired"
++      )
+       if (!focusRequestRegistered) {
++        appContext.jsLogger?.warn("[expo-audio][diag] focusEvent ignored: listener not registered")
+         return@launch
        }
        when (focusChange) {
          AudioManager.AUDIOFOCUS_LOSS -> {
@@ -23,7 +34,71 @@ index 6c81fce..25e94cc 100644
              playable.pause()
            }
          }
-@@ -1013,8 +1022,11 @@ class AudioModule : Module() {
+@@ -194,6 +209,11 @@ class AudioModule : Module() {
+     } else {
+       allPlayables.any { it.shouldResumeAfterFocus() }
+     }
++    // PATCH(patch-package): temporary investigation logging for the Android 16/17
++    // background auto-advance audio-loss bug; remove once the cause is confirmed.
++    appContext.jsLogger?.warn(
++      "[expo-audio][diag] releaseIfUnused needed=$focusIsStillNeeded acquired=$focusAcquired registered=$focusRequestRegistered"
++    )
+     if (!focusIsStillNeeded) {
+       releaseAudioFocus()
+     }
+@@ -221,14 +241,21 @@ class AudioModule : Module() {
+   }
+ 
+   private fun requestAudioFocus(): AudioFocusResult {
++    // PATCH(patch-package): temporary investigation logging for the Android 16/17
++    // background auto-advance audio-loss bug; remove once the cause is confirmed.
+     if (focusAcquired) {
++      appContext.jsLogger?.warn("[expo-audio][diag] requestFocus result=GRANTED (already held)")
+       return AudioFocusResult.GRANTED
+     }
+     if (!audioEnabled) {
++      appContext.jsLogger?.warn("[expo-audio][diag] requestFocus result=NOT_REQUESTED (audio disabled)")
+       return AudioFocusResult.NOT_REQUESTED
+     }
+ 
+-    val requestType = audioFocusGainForMode(interruptionMode) ?: return AudioFocusResult.NOT_REQUESTED
++    val requestType = audioFocusGainForMode(interruptionMode) ?: run {
++      appContext.jsLogger?.warn("[expo-audio][diag] requestFocus result=NOT_REQUESTED (no focus gain for mode)")
++      return AudioFocusResult.NOT_REQUESTED
++    }
+ 
+     val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+       audioFocusRequest = AudioFocusRequest.Builder(requestType).run {
+@@ -249,7 +276,7 @@ class AudioModule : Module() {
+       audioManager.requestAudioFocus(audioFocusChangeListener, AudioManager.STREAM_MUSIC, requestType)
+     }
+ 
+-    return when (result) {
++    val resolved = when (result) {
+       AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> {
+         shouldRefreshFocusOnGain = false
+         focusRequestRegistered = true
+@@ -274,6 +301,8 @@ class AudioModule : Module() {
+         AudioFocusResult.FAILED
+       }
+     }
++    appContext.jsLogger?.warn("[expo-audio][diag] requestFocus result=$resolved mode=$interruptionMode")
++    return resolved
+   }
+ 
+   private fun releaseAudioFocus() {
+@@ -401,6 +430,10 @@ class AudioModule : Module() {
+       interruptionMode = mode.interruptionMode ?: previousInterruptionMode
+       playsInSilentMode = mode.playsInSilentMode
+       updatePlaySoundThroughEarpiece(mode.shouldRouteThroughEarpiece ?: false)
++      // PATCH(patch-package): upstream never assigned this field, so the restore branch in
++      // updatePlaySoundThroughEarpiece could not see the previous routing state. Track it
++      // AFTER the call - the function needs the PREVIOUS value to restore normal routing.
++      shouldRouteThroughEarpiece = mode.shouldRouteThroughEarpiece ?: false
+       allowsBackgroundRecording = mode.allowsBackgroundRecording
+ 
+       recorders.values.forEach { recorder ->
+@@ -1013,8 +1046,11 @@ class AudioModule : Module() {
          }
        }
  
@@ -36,7 +111,7 @@ index 6c81fce..25e94cc 100644
        }.set { playlist, mode: LoopMode ->
          runOnMain {
            playlist.loopMode = mode
-@@ -1035,7 +1047,11 @@ class AudioModule : Module() {
+@@ -1035,7 +1071,11 @@ class AudioModule : Module() {
  
        Function("pause") { playlist: AudioPlaylist ->
          runOnMain {
@@ -49,8 +124,36 @@ index 6c81fce..25e94cc 100644
            playlist.ref.pause()
            releaseAudioFocusIfUnused()
          }
+@@ -1179,12 +1219,22 @@ class AudioModule : Module() {
+ 
+   @Suppress("DEPRECATION")
+   private fun updatePlaySoundThroughEarpiece(playThroughEarpiece: Boolean) {
+-    audioManager.mode = if (playThroughEarpiece) {
+-      AudioManager.MODE_IN_COMMUNICATION
+-    } else {
+-      AudioManager.MODE_NORMAL
++    // PATCH(patch-package): no-op re-asserts and stop forcing the global speakerphone
++    // on for plain media playback. Upstream ran this on every setAudioModeAsync and
++    // with earpiece routing disabled it still called setSpeakerphoneOn(true),
++    // churning the system communication route on every foreground re-assert
++    // (observed: setCommunicationRouteForClient + speaker/earpiece flapping right
++    // after each requestAudioFocus). Touch the call-audio bus only when earpiece
++    // routing is actually enabled, and restore normal mode when leaving it.
++    if (!playThroughEarpiece) {
++      if (shouldRouteThroughEarpiece) {
++        audioManager.mode = AudioManager.MODE_NORMAL
++        audioManager.setSpeakerphoneOn(false)
++      }
++      return
+     }
+-    audioManager.setSpeakerphoneOn(!playThroughEarpiece)
++    audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
++    audioManager.setSpeakerphoneOn(false)
+   }
+ 
+   private fun retrieveStreamType(uri: Uri): Int = Util.inferContentType(uri)
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
-index bf3f9c5..056a132 100644
+index bf3f9c5..a3974e8 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 @@ -39,6 +39,9 @@ class AudioPlaylist(
@@ -63,7 +166,7 @@ index bf3f9c5..056a132 100644
  
    override var isActiveForLockScreen = false
    override var metadata: Metadata? = null
-@@ -100,10 +103,22 @@ class AudioPlaylist(
+@@ -100,10 +103,25 @@ class AudioPlaylist(
    override fun onMediaItemChanged(mediaItem: MediaItem?, reason: Int) {
      val currentIndex = ref.currentMediaItemIndex
      if (currentIndex != previousMediaItemIndex) {
@@ -81,12 +184,15 @@ index bf3f9c5..056a132 100644
 +    // player; without it the notification seekbar continues from the previous
 +    // track's end (issue #149). Manual next/prev go through seekTo and are unaffected.
 +    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
++      // PATCH(patch-package): temporary investigation logging for the Android 16/17
++      // background auto-advance audio-loss bug; remove once the cause is confirmed.
++      appContext?.jsLogger?.warn("[expo-audio][diag] autoAdvance index=$currentIndex")
 +      serviceConnection.playbackServiceBinder?.service?.reassertSessionForPlayable(this)
 +    }
    }
  
    override fun onPlayerError(error: PlaybackException) {
-@@ -232,7 +247,10 @@ class AudioPlaylist(
+@@ -232,7 +250,10 @@ class AudioPlaylist(
        "muted" to isMuted,
        "volume" to ref.volume,
        "loop" to loopMode.value,
@@ -98,7 +204,7 @@ index bf3f9c5..056a132 100644
      )
    }
  
-@@ -241,7 +259,8 @@ class AudioPlaylist(
+@@ -241,7 +262,8 @@ class AudioPlaylist(
        TRACK_CHANGED,
        mapOf(
          "previousIndex" to previousIndex,
@@ -109,7 +215,7 @@ index bf3f9c5..056a132 100644
      )
      sendStatusUpdate()
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 53c36f7..491b7b0 100644
+index 53c36f7..15c6727 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 @@ -490,7 +490,9 @@ class AudioControlsService : MediaSessionService() {
@@ -123,7 +229,7 @@ index 53c36f7..491b7b0 100644
    }
  
    private fun clearSessionInternal() {
-@@ -530,33 +532,81 @@ class AudioControlsService : MediaSessionService() {
+@@ -530,33 +532,87 @@ class AudioControlsService : MediaSessionService() {
        currentOptions = options
        updateArtwork(metadata, postUpdate = false)
  
@@ -163,7 +269,9 @@ index 53c36f7..491b7b0 100644
 +        // and a rejected add leaves the working session untouched.
 +        try {
 +          addSession(session)
++          appContext?.jsLogger?.warn("[expo-audio][diag] sessionRebuilt ok")
 +        } catch (e: RuntimeException) {
++          appContext?.jsLogger?.warn("[expo-audio][diag] sessionRebuilt rejected")
 +          appContext?.jsLogger?.warn(
 +            getPlaybackServiceErrorMessage("Failed to add the rebuilt expo-audio lock screen session"),
 +            e
@@ -205,7 +313,11 @@ index 53c36f7..491b7b0 100644
 +  // setPlayableOptions), so the foreground service survives the rebuild in the
 +  // background instead of being stopped together with its only session.
 +  fun reassertSessionForPlayable(playable: LockScreenPlayable) {
-+    if (playable == currentPlayable) {
++    // PATCH(patch-package): temporary investigation logging for the Android 16/17
++    // background auto-advance audio-loss bug; remove once the cause is confirmed.
++    val isCurrent = playable == currentPlayable
++    appContext?.jsLogger?.warn("[expo-audio][diag] sessionReassert isCurrent=$isCurrent")
++    if (isCurrent) {
 +      setPlayableOptions(playable, currentMetadata, currentOptions)
 +    }
 +  }

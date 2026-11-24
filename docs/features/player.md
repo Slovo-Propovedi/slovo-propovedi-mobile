@@ -35,6 +35,8 @@
 1. если фокус забрал другой плеер, проповедь возобновится, когда он фокус освободит, — зеркало желаемого поведения после звонка;
 2. любая пауза **во время** звонка — и через уведомление (Media3-пауза по умолчанию не трогает `isPaused`), и в приложении (патченный `Function("pause")` больше не сбрасывает `isPaused`) — авто-resume не отменяет; а пауза **до** звонка намерение не взводит — resume не будет.
 
+**Earpiece-маршрут не трогает call-audio шину на медиа-режиме.** `updatePlaySoundThroughEarpiece` вызывался на каждом `setAudioModeAsync` (приложение повторяет re-assert на каждом foreground/load), и даже при выключенном earpiece-маршруте апстрим выполнял `setSpeakerphoneOn(true)` — глобальный побочный эффект на communication-шине: система перестраивала маршрут (`setCommunicationRouteForClient`, мигание speaker↔earpiece) сразу после каждого `requestAudioFocus`. Патч в том же `patches/expo-audio+58.0.12.patch` (`AudioModule.kt`) делает вызов no-op для медиа-режима: call-audio шину трогает только при реально включённом earpiece-маршруте, а при выходе из него возвращает `MODE_NORMAL` и `setSpeakerphoneOn(false)`. Чтобы ветка восстановления видела предыдущее состояние, `setAudioModeAsync` теперь присваивает `shouldRouteThroughEarpiece` (апстрим это поле объявлял, но никогда не обновлял).
+
 Верификация при апгрейде пакета — `yarn check:patches` (generic-гвард сверяет версии в именах патчей с установленными).
 
 ## Архитектура PlayerService
