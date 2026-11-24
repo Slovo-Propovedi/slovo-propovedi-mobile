@@ -362,7 +362,7 @@ export default Plugin.define({
       return lines.join('\n')
     }
 
-    /** Shared by "/profile <name>" and each per-profile "/profile-<name>" command. */
+    /** Shared by "/profile <name>" and each per-profile "/profile_<name>" command. */
     const applyProfileToSession = async (sessionID: string, name: string): Promise<void> => {
       let profile: ProfileData
       try {
@@ -396,7 +396,7 @@ export default Plugin.define({
     // Snapshot at startup (not re-read per keystroke): command.transform's
     // callback must be synchronous, so the profile list/descriptions used for
     // the per-profile commands below are resolved once, here. A profile file
-    // added after this plugin started won't get its own /profile-<name>
+    // added after this plugin started won't get its own /profile_<name>
     // command until the next restart or hot-reload of this file — /profile
     // <name> (typed) still picks it up immediately since it reads disk fresh.
     const profileNames = await listProfiles(profilesDir).catch(error => {
@@ -443,23 +443,13 @@ export default Plugin.define({
         },
       })
 
-      // One command per profile file, e.g. "profile-zai_and_free" — typing
+      // One command per profile file, e.g. "profile_zai_and_free" — typing
       // "/profile" and pausing shows all of these (with descriptions) via
       // opencode's native by-name slash completion, giving a discoverable
       // list of profiles without remembering exact names. This is the only
       // "suggestions" mechanism the plugin API actually supports (see the
       // "No TUI dialog" note above) — no picker, no keymap involved.
       for (const name of profileNames) {
-        editor.add({
-          name: `profile-${name}`,
-          description: profileDescriptions.get(name) ?? `Switch to profile "${name}".`,
-          async execute({ sessionID }) {
-            await applyProfileToSession(sessionID, name)
-          },
-        })
-
-        // Underscore alias: "/profile_<name>" — profile names themselves use
-        // underscores, so this form reads without the hyphen/underscore mix.
         editor.add({
           name: `profile_${name}`,
           description: profileDescriptions.get(name) ?? `Switch to profile "${name}".`,
