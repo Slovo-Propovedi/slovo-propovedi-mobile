@@ -3,13 +3,13 @@
 import { SLIDER_REST_INSET } from '../slider/slider-layout.lib'
 import { PLAYER_SIZES } from '../theme/themed'
 
-export const BAR_ROW_MIN_HEIGHT = 76 as const
+export const BAR_ROW_MIN_HEIGHT = 68 as const
 // The one-line row is uniform: the collapsed island and the circle both equal
-// the mini player height (48). The expanded sizes (68) stay taller and morph
+// the mini player height (48). The expanded sizes (60) stay taller and morph
 // down to them.
 const ONE_LINE_ROW_SIZE = PLAYER_SIZES.miniPlayerHeight
 export const TAB_BAR_ISLAND_HEIGHT = ONE_LINE_ROW_SIZE
-export const TAB_BAR_ISLAND_HEIGHT_EXPANDED = 68 as const
+export const TAB_BAR_ISLAND_HEIGHT_EXPANDED = 60 as const
 // The expanded island's top edge sits this far below the row's top edge: the
 // islands are anchored to the row's bottom edge (the safe-area line), so the
 // gap is the unused space above the expanded island. The row's measured height
@@ -21,13 +21,13 @@ export const BAR_EXPANDED_ISLAND_TOP_MARGIN = BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAN
  * one-line height, so its diameter deliberately mirrors the island height.
  */
 export const BAR_CIRCLE_SIZE = ONE_LINE_ROW_SIZE
-export const BAR_CIRCLE_SIZE_EXPANDED = 68 as const
+export const BAR_CIRCLE_SIZE_EXPANDED = TAB_BAR_ISLAND_HEIGHT_EXPANDED
 export const BAR_OUTER_GAP = 8 as const
 // Vertical gap between the floating mini-player pill and the expanded island's
 // top edge. Apple Music keeps the pill visibly detached (Issue #153), so the pill
 // floats higher above the islands row than the horizontal BAR_OUTER_GAP between
 // the islands themselves.
-export const BAR_PILL_ROW_GAP = 12 as const
+export const BAR_PILL_ROW_GAP = 8 as const
 // The expanded chrome sits 1 px off the sliders' rest line: an edge that
 // coincides exactly with the slider cards' edge reads as one merged card (user
 // report 2026-11-20). The collapsed one-line state keeps its original width.
@@ -57,17 +57,18 @@ export const getBarSideInset = (oneLineProgress: number): number => {
 // (desktop web, mobile browsers, and the early native frames before insets are
 // measured). A real inset places the islands flush on the safe-area line instead.
 export const BAR_BOTTOM_INSET_MIN = 12 as const
-// Bottom padding of the floating chrome: with a real bottom inset the islands
-// sit exactly on the safe-area line (no extra distance); inset-less screens keep
-// the clearance floor. Web browsers pass browserClearance: their inset comes
-// from the unreliable env() probe, and there the safe-area line is the top edge
-// of the browser chrome (iOS Safari navbar) — flush against it reads as the
-// islands lying on the navbar, so the chrome keeps the clearance floor above
-// it. Installed PWAs are excluded: no dynamic chrome, flush stays the look.
-export const getBarBottomPadding = (bottomInset: number, browserClearance = false): number => {
-  if (bottomInset <= 0) return BAR_BOTTOM_INSET_MIN
+// On web the visible bottom gap mirrors the expanded chrome's side insets
+// (uniform frame around the floating chrome, issue #154).
+export const BAR_BOTTOM_INSET_WEB = BAR_SIDE_INSET_EXPANDED
+// Bottom padding of the floating chrome: on web the visible bottom gap mirrors
+// the expanded chrome's side insets (uniform frame around the floating chrome,
+// issue #154); max() lets a larger real inset (installed PWA safe-area line)
+// win; native keeps flush-on-inset and the 12 floor only for inset-less early
+// frames.
+export const getBarBottomPadding = (bottomInset: number, isWeb = false): number => {
+  if (!isWeb) return bottomInset > 0 ? bottomInset : BAR_BOTTOM_INSET_MIN
 
-  return browserClearance ? bottomInset + BAR_BOTTOM_INSET_MIN : bottomInset
+  return Math.max(bottomInset, BAR_BOTTOM_INSET_WEB)
 }
 // Scroll offset past which the bar collapses to a single row.
 export const COLLAPSE_SCROLL_THRESHOLD = 80 as const

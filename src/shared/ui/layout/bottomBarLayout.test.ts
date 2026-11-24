@@ -1,32 +1,45 @@
 import { SLIDER_REST_INSET } from '../slider/slider-layout.lib'
 import {
   BAR_BOTTOM_INSET_MIN,
+  BAR_BOTTOM_INSET_WEB,
+  BAR_CIRCLE_SIZE_EXPANDED,
+  BAR_PILL_ROW_GAP,
+  BAR_ROW_MIN_HEIGHT,
   BAR_SIDE_INSET_COLLAPSED,
   BAR_SIDE_INSET_EXPANDED,
   getBarBottomPadding,
   getBarSideInset,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from './bottomBarLayout'
 
+describe('bottom bar geometry', () => {
+  test('the row and the expanded chrome share the slimmer 60dp silhouette', () => {
+    expect(BAR_ROW_MIN_HEIGHT).toBe(68)
+    expect(TAB_BAR_ISLAND_HEIGHT_EXPANDED).toBe(60)
+    expect(BAR_CIRCLE_SIZE_EXPANDED).toBe(60)
+    expect(BAR_CIRCLE_SIZE_EXPANDED).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
+    expect(BAR_PILL_ROW_GAP).toBe(8)
+  })
+
+  test('the web bottom gap mirrors the expanded chrome side insets', () => {
+    expect(BAR_BOTTOM_INSET_WEB).toBe(25)
+    expect(BAR_BOTTOM_INSET_WEB).toBe(BAR_SIDE_INSET_EXPANDED)
+    expect(BAR_BOTTOM_INSET_WEB).toBe(SLIDER_REST_INSET + 1)
+  })
+})
+
 describe('getBarBottomPadding', () => {
-  test('real inset wins: the islands sit flush on the safe-area line', () => {
-    expect(getBarBottomPadding(34)).toBe(34)
-    expect(getBarBottomPadding(8)).toBe(8)
+  test('native: a real inset wins and the inset-less floor stays 12', () => {
+    expect(BAR_BOTTOM_INSET_MIN).toBe(12)
+    expect(getBarBottomPadding(0, false)).toBe(12)
+    expect(getBarBottomPadding(8, false)).toBe(8)
+    expect(getBarBottomPadding(34, false)).toBe(34)
   })
 
-  test('inset-less screen keeps the desktop/web clearance floor', () => {
-    expect(getBarBottomPadding(0)).toBe(BAR_BOTTOM_INSET_MIN)
-  })
-
-  test('real inset wins even below the floor', () => {
-    expect(getBarBottomPadding(8)).toBe(8)
-  })
-
-  test('browser clearance keeps the floor above a real inset', () => {
-    expect(getBarBottomPadding(34, true)).toBe(34 + BAR_BOTTOM_INSET_MIN)
-  })
-
-  test('browser clearance keeps the floor on inset-less screens', () => {
-    expect(getBarBottomPadding(0, true)).toBe(BAR_BOTTOM_INSET_MIN)
+  test('web: the visible gap cannot be smaller than the side insets', () => {
+    expect(getBarBottomPadding(0, true)).toBe(25)
+    expect(getBarBottomPadding(10, true)).toBe(25)
+    expect(getBarBottomPadding(34, true)).toBe(34)
   })
 })
 
