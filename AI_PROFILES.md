@@ -1,6 +1,6 @@
 # AI Profiles — профили моделей OpenCode и Crush
 
-В проекте настроены 4 набора моделей («профили») для локальной оркестрации
+В проекте настроены 5 наборов моделей («профили») для локальной оркестрации
 `opencode`: оркестратор (agent `plan`/`build`/`researcher` и модель текущей
 сессии), исполнители (агенты `coder`, `explore`, `scribe`) и ревьюер (агент
 `reviewer`). Система полностью самодостаточна внутри `.opencode/`: глобальные
@@ -13,12 +13,13 @@
 
 ## Профили
 
-| Профиль               | Orchestrator (primary, `plan`, `build`, `researcher`) | Worker (`coder`, `explore`, `scribe`) | Reviewer (`reviewer`)     |
-| --------------------- | ----------------------------------------------------- | ------------------------------------- | ------------------------- |
-| `zai_and_free`        | `zai-coding-plan/glm-5.3-flash`                       | `opencode/big-pickle`                 | `zai-coding-plan/glm-5.3` |
-| `go_glm_and_free`     | `opencode-go/glm-5.3-flash`                           | `opencode/big-pickle`                 | `opencode-go/glm-5.3`     |
-| `go_glm_and_deepseek` | `opencode-go/glm-5.3-flash`                           | `opencode-go/deepseek-v4.1-flash`     | `opencode-go/glm-5.3`     |
-| `zai_and_go_deepseek` | `zai-coding-plan/glm-5.3-flash`                       | `opencode-go/deepseek-v4.1-flash`     | `zai-coding-plan/glm-5.3` |
+| Профиль               | Orchestrator (primary, `plan`, `build`, `researcher`) | Worker (`coder`, `explore`, `scribe`) | Reviewer (`reviewer`)           |
+| --------------------- | ----------------------------------------------------- | ------------------------------------- | ------------------------------- |
+| `zai_and_free`        | `zai-coding-plan/glm-5.3-flash`                       | `opencode/big-pickle`                 | `zai-coding-plan/glm-5.3-flash` |
+| `go_glm_and_free`     | `opencode-go/glm-5.3-flash`                           | `opencode/big-pickle`                 | `opencode-go/glm-5.3-flash`     |
+| `go_glm_and_deepseek` | `opencode-go/glm-5.3-flash`                           | `opencode-go/deepseek-v4.1-flash`     | `opencode-go/glm-5.3-flash`     |
+| `zai_and_go_deepseek` | `zai-coding-plan/glm-5.3-flash`                       | `opencode-go/deepseek-v4.1-flash`     | `zai-coding-plan/glm-5.3-flash` |
+| `go_glm_and_mimo`     | `opencode-go/glm-5.3-flash`                           | `opencode-go/mimo-v2.6-flash`         | `opencode-go/glm-5.3-flash`     |
 
 ## Быстрый старт
 
@@ -27,13 +28,14 @@ opencode                        # просто работает; примени�
 /profile                        # внутри OpenCode: список профилей + активный
 /profile go_glm_and_deepseek    # внутри OpenCode: переключить профиль
 /profile-go_glm_and_deepseek    # то же самое — но со стандартным автодополнением по имени
+/profile-go_glm_and_deepseek, /profile_go_glm_and_deepseek   # обе формы: с дефисом и с подчёркиванием
 ```
 
 Переключение мгновенное: модель текущей сессии меняется сразу, модели
 субагентов применяются при следующем спавне. Выбор сохраняется между
 запусками.
 
-Чтобы не вспоминать точные имена — начни набирать `/profile-` и остановись:
+Чтобы не вспоминать точные имена — начни набирать `/profile` (сработают обе формы: `/profile-<имя>` и `/profile_<имя>`) и остановись:
 opencode покажет список всех `.opencode/profiles/*.json` с описанием
 (`primary`-модель) через штатное автодополнение по имени команды. Это
 единственный вид подсказок, который плагин API реально поддерживает — без
@@ -42,10 +44,11 @@ opencode покажет список всех `.opencode/profiles/*.json` с о�
 ## Как это работает
 
 - Плагин `.opencode/plugins/profile/index.ts` регистрирует команду `/profile`,
-  по одной команде `/profile-<имя>` на каждый файл в `.opencode/profiles/`
-  (снимок при старте плагина — новый файл профиля подхватится под своим
-  именем после рестарта/hot-reload) и преобразование агентов
-  (`ctx.agent.transform`). Источник данных — `.opencode/profiles/<имя>.json`
+  по паре команд `/profile-<имя>` и `/profile_<имя>` (underscore-алиас —
+  имена профилей сами используют подчёркивания) на каждый файл в
+  `.opencode/profiles/` (снимок при старте плагина — новый файл профиля
+  подхватится под своим именем после рестарта/hot-reload) и преобразование
+  агентов (`ctx.agent.transform`). Источник данных — `.opencode/profiles/<имя>.json`
   (простые JSON-файлы, без комментариев).
 - Диалог выбора (как `/models`) не реализован: TUI-плагин с
   `context.ui.dialog.select` был опробован и отброшен —
@@ -117,7 +120,7 @@ overlay. Подробности — в `.opencode/README.md` → «Фейлов�
 - `.opencode/opencode.jsonc` — **тонкая база** в V2-формате: `agents`
   (permissions встроенных агентов), `permissions`, `mcp`, `instructions`;
   без model-wiring, не мутирует никогда.
-- `.opencode/profiles/` — 4 JSON-файла профилей (модели) — **единственный
+- `.opencode/profiles/` — 5 JSON-файлов профилей (модели) — **единственный
   источник данных** для плагина.
 - `.opencode/plugins/profile/index.ts` — плагин `/profile`.
 - `.opencode/agents/` — md-агенты (`build`, `coder`, `researcher`, `reviewer`,
