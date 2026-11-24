@@ -14,6 +14,14 @@ jest.mock('react-native-safe-area-context', () => {
 })
 
 const ORIGINAL_PLATFORM = Platform.OS
+const originalNavigator = globalThis.navigator
+
+const setNavigator = (userAgent: string, platform: string, maxTouchPoints = 0) => {
+  Object.defineProperty(globalThis, 'navigator', {
+    configurable: true,
+    value: { maxTouchPoints, platform, userAgent },
+  })
+}
 
 beforeEach(() => {
   mockBottomInset = 0
@@ -21,11 +29,17 @@ beforeEach(() => {
 
 afterEach(() => {
   Platform.OS = ORIGINAL_PLATFORM
+  Object.defineProperty(globalThis, 'navigator', {
+    configurable: true,
+    value: originalNavigator,
+  })
 })
 
 describe('useBarBottomPadding', () => {
-  test('web: inset 0 -> 25, 10 -> 25, 34 -> 34', async () => {
+  test('web: desktop/android UA uses the 25px floor', async () => {
     Platform.OS = 'web'
+    setNavigator('Mozilla/5.0 (Linux; Android 14)', 'Linux armv8l')
+
     mockBottomInset = 0
     const noInset = await renderHookWithProviders(() => useBarBottomPadding())
     expect(noInset.result.current).toBe(25)
@@ -39,8 +53,36 @@ describe('useBarBottomPadding', () => {
     expect(largeInset.result.current).toBe(34)
   })
 
-  test('native android: inset 0 -> 12, 34 -> 34', async () => {
+  test('web: iPhone UA uses the 34px home-indicator floor', async () => {
+    Platform.OS = 'web'
+    setNavigator('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)', 'iPhone')
+
+    mockBottomInset = 0
+    const noInset = await renderHookWithProviders(() => useBarBottomPadding())
+    expect(noInset.result.current).toBe(34)
+
+    mockBottomInset = 25
+    const smallInset = await renderHookWithProviders(() => useBarBottomPadding())
+    expect(smallInset.result.current).toBe(34)
+
+    mockBottomInset = 40
+    const largeInset = await renderHookWithProviders(() => useBarBottomPadding())
+    expect(largeInset.result.current).toBe(40)
+  })
+
+  test('web: iPadOS (MacIntel + touch) uses the 34px home-indicator floor', async () => {
+    Platform.OS = 'web'
+    setNavigator('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)', 'MacIntel', 5)
+
+    mockBottomInset = 0
+    const noInset = await renderHookWithProviders(() => useBarBottomPadding())
+    expect(noInset.result.current).toBe(34)
+  })
+
+  test('native android: inset 0 -> 12, 34 -> 34, independent of UA', async () => {
     Platform.OS = 'android'
+    setNavigator('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)', 'iPhone')
+
     mockBottomInset = 0
     const noInset = await renderHookWithProviders(() => useBarBottomPadding())
     expect(noInset.result.current).toBe(12)

@@ -61,16 +61,25 @@ export const getBarSideInset = (oneLineProgress: number): number => {
 export const BAR_BOTTOM_INSET_MIN = 12 as const
 // Equals BAR_SIDE_INSET_EXPANDED (25) — the web bottom gap mirrors the expanded chrome
 // side insets; keep in sync.
-const BAR_BOTTOM_INSET_WEB = 25 as const
-// Bottom padding of the floating chrome: on web the visible bottom gap mirrors
-// the expanded chrome's side insets (uniform frame around the floating chrome,
-// issue #154); max() lets a larger real inset (installed PWA safe-area line)
-// win; native keeps flush-on-inset and the 12 floor only for inset-less early
-// frames.
-export const getBarBottomPadding = (bottomInset: number, isWeb = false): number => {
+export const BAR_BOTTOM_INSET_WEB = 25 as const
+// The iPhone home-indicator / safe-area inset; iOS browsers and PWAs report
+// env(safe-area-inset-bottom) = 0 through the probe, so the static floor must clear
+// the gesture band exposed when the toolbar hides or in standalone; deliberately
+// above BAR_BOTTOM_INSET_WEB (25).
+export const IOS_HOME_INDICATOR_INSET = 34 as const
+// Bottom padding of the floating chrome: on web the visible bottom gap is at
+// least webFloor (the expanded chrome's side insets on desktop/Android, or the
+// iOS home-indicator inset where the safe-area probe is unreliable); max()
+// lets a larger real inset (installed PWA safe-area line) win; native keeps
+// flush-on-inset and the 12 floor only for inset-less early frames.
+export const getBarBottomPadding = (
+  bottomInset: number,
+  isWeb = false,
+  webFloor: number = BAR_BOTTOM_INSET_WEB,
+): number => {
   if (!isWeb) return bottomInset > 0 ? bottomInset : BAR_BOTTOM_INSET_MIN
 
-  return Math.max(bottomInset, BAR_BOTTOM_INSET_WEB)
+  return Math.max(bottomInset, webFloor)
 }
 // Scroll offset past which the bar collapses to a single row.
 export const COLLAPSE_SCROLL_THRESHOLD = 80 as const

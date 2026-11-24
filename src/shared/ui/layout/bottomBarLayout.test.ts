@@ -40,6 +40,13 @@ describe('getBarBottomPadding', () => {
     expect(getBarBottomPadding(10, true)).toBe(25)
     expect(getBarBottomPadding(34, true)).toBe(34)
   })
+
+  test('web: a custom floor clears the iOS home-indicator band', () => {
+    expect(getBarBottomPadding(0, true, 34)).toBe(34)
+    expect(getBarBottomPadding(10, true, 34)).toBe(34)
+    expect(getBarBottomPadding(34, true, 34)).toBe(34)
+    expect(getBarBottomPadding(40, true, 34)).toBe(40)
+  })
 })
 
 describe('getBarSideInset', () => {
