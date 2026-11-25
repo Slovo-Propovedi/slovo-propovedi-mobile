@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Web (iOS): the floating bottom chrome keeps a guaranteed gap above the home indicator even when the safe-area probe reports zero — in the browser and the installed PWA alike
+- Web (iOS): the bottom chrome rides above the auto-hiding Safari toolbar and the keyboard via live visual-viewport tracking
+
 ## [0.35.1] - 2026-11-24
 
 ### Fixed

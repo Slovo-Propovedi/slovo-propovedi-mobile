@@ -1,5 +1,2 @@
-Web: auto-advance works with repeat off and stops at the last track.
-Tab bar slimmer: tighter icon-label spacing, smaller mini-player gap, bottom clearance matches side insets in mobile browsers.
-Android: background auto-advance no longer goes silent.
-Notification seekbar correct after auto-advance.
-Speakerphone not re-asserted on audio mode changes.
+iOS web: the bottom bar now keeps a guaranteed gap above the home indicator, in the browser and installed PWA alike.
+iOS web: the bottom bar rides above the auto-hiding Safari toolbar and the keyboard via live viewport tracking.
