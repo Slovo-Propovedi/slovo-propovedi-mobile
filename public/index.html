@@ -50,17 +50,16 @@
 
          iOS WebKit does not resolve `height: 100%` against the dynamic viewport:
          in Safari it points at the static viewport, so the page ends above the
-         physical bottom and the html/body background shows through; in the
-         standalone PWA (`viewport-fit=cover`) it excludes the bottom safe-area
-         band, so the app's own `insets.bottom` padding lands on an already
-         shortened shell. `100dvh` tracks the toolbar in both, so it is the base
-         height. The env() extension is scoped to the standalone display mode: it
-         puts the shell's bottom edge exactly on the PWA safe-area line, while
-         in-browser Safari reports env() unreliably under `viewport-fit=cover`
-         with dynamic toolbars (≈34px while collapsed) — the extension would
-         overflow the visible viewport and `overflow: hidden` would clip the tab
-         bar's inset padding. In the browser plain `100dvh` already tracks the
-         toolbar viewport. */
+         physical bottom and the html/body background shows through. `100dvh`
+         tracks the dynamic viewport in browser and installed PWA alike, so the
+         shell is `100dvh` on every web surface.
+
+         The iOS home-indicator band is cleared by the app-side floor
+         (`IOS_HOME_INDICATOR_INSET = 34` via getBarBottomPadding), not by an
+         env(safe-area-inset-bottom) extension at shell level. env()-based shell
+         sizing double-counted the band when env() was reported and missed it
+         when the probe returned 0 on real devices, so no standalone special-case
+         is kept here. */
       html,
       body {
         height: 100%;
@@ -74,12 +73,6 @@
         background-color: #f16031;
         overflow: hidden;
         overscroll-behavior: none;
-      }
-      @media (display-mode: standalone) {
-        html,
-        body {
-          height: calc(100dvh + env(safe-area-inset-bottom));
-        }
       }
       /* These styles make the root element full-height */
       #root {
