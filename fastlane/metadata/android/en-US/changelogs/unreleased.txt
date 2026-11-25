@@ -1,0 +1,5 @@
+Web: auto-advance works with repeat off and stops at the last track.
+Tab bar slimmer: tighter icon-label spacing, smaller mini-player gap, bottom clearance matches side insets in mobile browsers.
+Android: background auto-advance no longer goes silent.
+Notification seekbar correct after auto-advance.
+Speakerphone not re-asserted on audio mode changes.
