@@ -1,5 +1,7 @@
 import { fireEvent } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
+import { COLORS } from 'shared/ui/theme'
 import { PlayerControls } from './PlayerControls'
 
 const PREVIEW_URL = 'https://test.com/preview1.mp3'
@@ -182,5 +184,36 @@ describe('<PlayerControls>', () => {
     const { getByRole } = await renderWithProviders(<PlayerControls {...mockPlayerControlsProps} />)
     fireEvent.press(getByRole('button', { name: NEXT_LABEL }))
     expect(mockPlayerControlsProps.setCurrentAudio).not.toHaveBeenCalled()
+  })
+
+  test('colors the default transport icons with the provided color', async () => {
+    mockEntypoSpy.mockClear()
+
+    await renderWithProviders(<PlayerControls {...mockPlayerControlsProps} color='#fff' />)
+
+    const colors = mockEntypoSpy.mock.calls.map(([props]) => StyleSheet.flatten(props.style).color)
+    expect(colors.length).toBeGreaterThan(0)
+    expect(colors.every(color => color === '#fff')).toBe(true)
+  })
+
+  test('keeps the black icon default when no color is provided', async () => {
+    mockEntypoSpy.mockClear()
+
+    await renderWithProviders(<PlayerControls {...mockPlayerControlsProps} />)
+
+    const colors = mockEntypoSpy.mock.calls.map(([props]) => StyleSheet.flatten(props.style).color)
+    expect(colors.every(color => color === COLORS.black)).toBe(true)
+  })
+
+  test('fullscreen transport stays white regardless of the color prop', async () => {
+    mockEntypoSpy.mockClear()
+
+    await renderWithProviders(
+      <PlayerControls {...mockPlayerControlsProps} color='#f00' variant='fullscreen' />,
+    )
+
+    const colors = mockEntypoSpy.mock.calls.map(([props]) => StyleSheet.flatten(props.style).color)
+    expect(colors.length).toBeGreaterThan(0)
+    expect(colors.every(color => color === COLORS.white)).toBe(true)
   })
 })

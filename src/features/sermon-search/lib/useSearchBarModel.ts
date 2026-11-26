@@ -34,7 +34,7 @@ export const useSearchBarModel = (
   const inputRef = useSearchInputFocus(isSearchFieldVisible)
   const closeSearch = useCloseSearch()
   useDistinctValuesOnOpen(isSearchOpen)
-  useExternalFocusRequest(focusRequest, inputRef)
+  useExternalFocusRequest(focusRequest, inputRef, isSearchFieldVisible)
 
   const handleChangeText = (text: string) => {
     setInputValue(text)

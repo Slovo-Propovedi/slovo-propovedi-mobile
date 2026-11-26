@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useAction } from '@reatom/npm-react'
+import { usePathname } from 'expo-router'
 import { useCallback } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { SearchBar } from 'features/sermon-search'
+import { isSearchRoutePath } from 'features/sermon-search/@x/barMorph'
 import { setBarCollapsed } from 'shared/ui/layout'
 import { INDENTS, MIN_TOUCH_TARGET, RADIUSES, useTheme } from 'shared/ui/theme'
 
@@ -17,6 +19,7 @@ const MAGNIFIER_SIZE = 20
  */
 export const SearchPageField = () => {
   const { currentTheme } = useTheme()
+  const pathname = usePathname()
   const applyBarCollapsed = useAction(setBarCollapsed)
   const handleFocusChange = useCallback(
     (isFocused: boolean) => {
@@ -30,7 +33,12 @@ export const SearchPageField = () => {
   return (
     <View style={[styles.field, { backgroundColor: currentTheme.card }]}>
       <Ionicons name='search' size={MAGNIFIER_SIZE} color={currentTheme.textMuted} />
-      <SearchBar isOpen isVisible suggestionsPlacement='below' onFocusChange={handleFocusChange} />
+      <SearchBar
+        isVisible
+        suggestionsPlacement='below'
+        onFocusChange={handleFocusChange}
+        isOpen={isSearchRoutePath(pathname)}
+      />
     </View>
   )
 }
@@ -45,5 +53,8 @@ const styles = StyleSheet.create({
     marginBottom: INDENTS.low,
     marginHorizontal: INDENTS.medium,
     paddingLeft: INDENTS.middle,
+    // Its absolutely-positioned suggestions paint inside this node (zIndex 1),
+    // so the field itself must outrank the sections rendered after it on web.
+    zIndex: 1,
   },
 })

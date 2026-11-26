@@ -11,14 +11,22 @@ interface FieldRef {
  * redundant bump on an already-focused field stays a no-op.
  * @param focusRequest - Monotonic request counter from `searchFocusRequestAtom`.
  * @param fieldRef - Ref to the field the request targets.
+ * @param isEnabled - Whether this field may take focus; a disabled field still consumes the request.
  */
-export const useExternalFocusRequest = (focusRequest: number, fieldRef: FieldRef) => {
+export const useExternalFocusRequest = (
+  focusRequest: number,
+  fieldRef: FieldRef,
+  isEnabled: boolean,
+) => {
   const lastHandledRef = useRef(focusRequest)
 
   useEffect(() => {
     if (focusRequest === lastHandledRef.current) return
 
     lastHandledRef.current = focusRequest
+
+    if (!isEnabled) return
+
     fieldRef.current?.focus()
-  }, [focusRequest, fieldRef])
+  }, [focusRequest, fieldRef, isEnabled])
 }
