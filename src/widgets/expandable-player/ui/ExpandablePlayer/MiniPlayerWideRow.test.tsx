@@ -6,7 +6,7 @@ import { isPlayerExpandedAtom } from 'entities/player'
 import { type AudioPlayerData } from 'entities/sermon'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { DarkTheme, LightTheme, useTheme } from 'shared/ui/theme'
+import { DarkTheme, FONT_SIZES, LightTheme, useTheme } from 'shared/ui/theme'
 import { showDetailsAtom } from '../../model/showDetailsAtom'
 import { showPlaylistAtom } from '../../model/showPlaylistAtom'
 import { showSoundSettingsAtom } from '../../model/showSoundSettingsAtom'
@@ -27,6 +27,12 @@ const PLAY_LABEL = 'Воспроизвести'
 const DROPDOWN_TEST_ID = 'anchored-dropdown'
 const TRANSPORT_CLUSTER_TEST_ID = 'mini-transport-cluster'
 const ARTWORK_URL = 'https://example.com/artwork.jpg'
+// Icon mock surface: family:name:size. The menu and the text placeholder must use
+// the same size as the queue burger, so the cluster reads as one control row.
+const MENU_ICON = `MaterialCommunityIcons:dots-horizontal:${FONT_SIZES.xl}`
+const VERTICAL_MENU_ICON = `Entypo:dots-three-vertical:${FONT_SIZES.xl}`
+const TEXT_ICON = `Ionicons:document-text-outline:${FONT_SIZES.xl}`
+const QUEUE_ICON = `Entypo:list:${FONT_SIZES.xl}`
 const RECT = { height: 36, width: 36, x: 100, y: 200 }
 // Widths exercised below follow MINI_WIDE_CONTROL_HIDE_WIDTHS (text 960,
 // menu 920, queue 880, repeat 856, favorite 832, previous 808, next 784).
@@ -43,6 +49,25 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
   default: () => ({ fontScale: 1, height: 800, width: mockWindowWidth }),
 }))
+
+// Icon surface for order/size assertions: renders the family, glyph name and the
+// size the component passed, so tests can prove horizontal dots and equal sizing.
+jest.mock('@expo/vector-icons', () => {
+  const { Text } = jest.requireActual('react-native')
+  const createIcon = (family: string) => {
+    const MockIcon = ({ name, size }: { name: string; size?: number }) => (
+      <Text>{`${family}:${name}:${String(size)}`}</Text>
+    )
+    MockIcon.displayName = `Mock${family}`
+    return MockIcon
+  }
+
+  return {
+    Entypo: createIcon('Entypo'),
+    Ionicons: createIcon('Ionicons'),
+    MaterialCommunityIcons: createIcon('MaterialCommunityIcons'),
+  }
+})
 
 const AUDIO: AudioPlayerData = {
   artist: 'Автор',
@@ -426,10 +451,32 @@ describe('<MiniPlayerWideRow>', () => {
       findIndexByLabel(ADD_TO_FAVORITES_LABEL),
       findIndexByArtwork(ARTWORK_URL),
       findIndexByText(AUDIO.title),
-      findIndexByLabel(TEXT_SERMON_LABEL),
       findIndexByLabel(MENU_LABEL),
+      findIndexByLabel(TEXT_SERMON_LABEL),
       findIndexByLabel(OPEN_PLAYLIST_LABEL),
     ])
+  })
+
+  test('draws the wide right cluster as menu, text icon and burger, in that order', async () => {
+    await renderRow()
+
+    expectAscending([
+      findIndexByArtwork(ARTWORK_URL),
+      findIndexByText(AUDIO.title),
+      findIndexByText(MENU_ICON),
+      findIndexByText(TEXT_ICON),
+      findIndexByText(QUEUE_ICON),
+    ])
+  })
+
+  test('uses horizontal menu dots and a document-text glyph sized like their neighbours', async () => {
+    const { getByText, queryByText } = await renderRow()
+
+    expect(getByText(MENU_ICON)).toBeTruthy()
+    expect(queryByText(VERTICAL_MENU_ICON)).toBeNull()
+    expect(getByText(TEXT_ICON)).toBeTruthy()
+    // The same FONT_SIZES.xl size appears in all three icon strings above.
+    expect(getByText(QUEUE_ICON)).toBeTruthy()
   })
 
   test('keeps the transport cluster after the title once the menu cluster is gone', async () => {

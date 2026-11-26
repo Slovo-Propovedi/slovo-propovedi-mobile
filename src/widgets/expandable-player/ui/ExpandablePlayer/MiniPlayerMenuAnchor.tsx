@@ -1,4 +1,4 @@
-import { Entypo } from '@expo/vector-icons'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useRef, useState } from 'react'
 import { type ViewInstance } from 'react-native'
@@ -6,14 +6,13 @@ import { openPlayerSheetAction } from 'entities/player'
 import { type AudioPlayerData } from 'entities/sermon'
 import { IconButton } from 'shared/ui/icon-button'
 import { AnchoredDropdown, type AnchorRect } from 'shared/ui/menu'
-import { FONT_SIZES } from 'shared/ui/theme'
 import { showDetailsAtom } from '../../model/showDetailsAtom'
 import { showSoundSettingsAtom } from '../../model/showSoundSettingsAtom'
 import { useAudioCacheState } from '../FullscreenContent/useAudioCacheState'
 import { usePlaylistRemoval } from '../FullscreenContent/usePlaylistRemoval'
 import { PlayerMenu } from '../PlayerMenu/PlayerMenu'
 import { MINI_PLAY_HIT_SLOP } from './miniStyles'
-import { type createWideMiniStyles } from './miniWideStyles'
+import { type createWideMiniStyles, MINI_WIDE_ICON_SIZE } from './miniWideStyles'
 
 const MENU_LABEL = 'Меню плеера'
 
@@ -71,7 +70,13 @@ export const MiniPlayerMenuAnchor = ({
         style={styles.iconButton}
         hitSlop={MINI_PLAY_HIT_SLOP}
         accessibilityLabel={MENU_LABEL}
-        Icon={<Entypo style={styles.icon} size={FONT_SIZES.xl} name='dots-three-vertical' />}
+        Icon={
+          <MaterialCommunityIcons
+            style={styles.icon}
+            name='dots-horizontal'
+            size={MINI_WIDE_ICON_SIZE}
+          />
+        }
       />
       <AnchoredDropdown
         anchor={anchor}

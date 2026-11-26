@@ -1,6 +1,10 @@
 import { StyleSheet } from 'react-native'
-import { FONT_SIZES, INDENTS, type ThemeColors } from 'shared/ui/theme'
+import { FONT_SIZES, type ThemeColors } from 'shared/ui/theme'
 import { MINI_ARTWORK_SIZE, MINI_WIDE_CONTROL_GAP } from './miniStyles'
+
+// Shared glyph size of the right cluster (menu, text, burger) and the transport
+// icons: one size keeps the toolbar visually even.
+export const MINI_WIDE_ICON_SIZE = FONT_SIZES.xl
 
 // The wide pill's toolbar. Icons keep the compact 36dp visual box like the
 // artwork/play button; hitSlop restores their 48dp touch target.
@@ -30,12 +34,10 @@ export const createWideMiniStyles = (theme: ThemeColors) =>
       alignItems: 'center',
       height: MINI_ARTWORK_SIZE,
       justifyContent: 'center',
+      minHeight: MINI_ARTWORK_SIZE,
+      minWidth: MINI_ARTWORK_SIZE,
       opacity: 0.5,
-      paddingHorizontal: INDENTS.low,
-    },
-    textButtonLabel: {
-      color: theme.text,
-      fontSize: FONT_SIZES.sm,
+      width: MINI_ARTWORK_SIZE,
     },
     transportCluster: {
       alignItems: 'center',
