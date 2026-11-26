@@ -24,7 +24,7 @@ export const PlaylistTrackList = ({
   renderItem: ListRenderItem<TracksListData[number]>
   style: StyleProp<ViewStyle>
 }) => {
-  const { bottomChromeHeight } = useScreenChromePadding()
+  const { bottomChromeHeight, topChromeHeight } = useScreenChromePadding()
 
   return (
     <Animated.FlatList
@@ -39,6 +39,9 @@ export const PlaylistTrackList = ({
       ListEmptyComponent={<Text style={{ marginHorizontal: 'auto' }}>{emptyMessage}</Text>}
       contentContainerStyle={{
         paddingBottom: bottomChromeHeight + INDENTS.low,
+        // The header is transparent, so the wide layout's floating top island
+        // would cover the top of the artwork header; compact reserves nothing.
+        paddingTop: topChromeHeight,
       }}
     />
   )

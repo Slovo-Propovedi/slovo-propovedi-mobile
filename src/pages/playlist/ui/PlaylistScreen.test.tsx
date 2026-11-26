@@ -13,9 +13,17 @@ import { type AudioPlayerData, toAudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { isOnlineAtom } from 'shared/model'
+import { BAR_OUTER_GAP, BAR_ROW_MIN_HEIGHT, BAR_TOP_ISLAND_MARGIN } from 'shared/ui/layout'
 import { PlaylistScreen } from './PlaylistScreen'
 
 /* ── Mocks ─────────────────────────────────────────────────────────── */
+
+let mockWindowWidth = 390
+
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ fontScale: 1, height: 844, width: mockWindowWidth }),
+}))
 
 const mockParams: {
   custom?: string
@@ -348,10 +356,28 @@ beforeEach(() => {
 describe('<PlaylistScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockWindowWidth = 390
     mockParams.playlist = PLAYLIST_ID
     delete mockParams.custom
     delete mockParams.sermons
     delete mockParams.title
+  })
+
+  test('wide layout: reserves the floating top island above the track list', async () => {
+    mockWindowWidth = 1024
+    const ctx = createCtx()
+    dynamicSectionsAtom(ctx, [makeSection()])
+
+    const { container } = await renderScreen(ctx)
+
+    const lists = container.queryAll(
+      node => node.props?.contentContainerStyle?.paddingTop !== undefined,
+    )
+    expect(lists).toHaveLength(1)
+    // Test insets are zero, so the top chrome is the island row plus its gaps.
+    expect(lists[0].props.contentContainerStyle.paddingTop).toBe(
+      BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+    )
   })
 
   test('renders the playlist title and its tracks', async () => {

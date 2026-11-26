@@ -8,6 +8,7 @@ import {
   sectionSettingsAtom,
 } from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks'
+import { BAR_OUTER_GAP, BAR_ROW_MIN_HEIGHT, BAR_TOP_ISLAND_MARGIN } from 'shared/ui/layout'
 import { INDENTS } from 'shared/ui/theme'
 import { MyPlaylistsScreen } from './MyPlaylistsScreen'
 
@@ -83,6 +84,13 @@ jest.mock('shared/ui/collapsing-navbar-driver', () => ({
   useCollapsingNavbarDriver: jest.fn(() => ({ headerBgOpacity: 0 })),
 }))
 
+let mockWindowWidth = 390
+
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ fontScale: 1, height: 844, width: mockWindowWidth }),
+}))
+
 jest.mock('widgets/playlist-list/lib/useCollapsingHeader', () => ({
   TITLE_TOP_GAP: 80,
   useCollapsingHeader: () => ({
@@ -133,6 +141,7 @@ describe('<MyPlaylistsScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockCapturedOnDragEnd = null
+    mockWindowWidth = 390
   })
 
   test('renders favorites first and the local playlists', async () => {
@@ -318,6 +327,26 @@ describe('<MyPlaylistsScreen>', () => {
         node.props?.style?.paddingTop === INDENTS.medium,
     )
     expect(doubleIndented).toHaveLength(0)
+  })
+
+  test('reserves the floating top island above the drag list in the wide layout', async () => {
+    mockWindowWidth = 1024
+    const ctx = createCtx()
+    seedPlaylists(ctx)
+
+    const { container, getByLabelText } = await renderWithProviders(<MyPlaylistsScreen />, { ctx })
+    const user = userEvent.setup()
+
+    await user.press(getByLabelText(EDIT_LABEL))
+
+    const lists = container.queryAll(
+      node => node.props?.contentContainerStyle?.paddingHorizontal === INDENTS.medium,
+    )
+    expect(lists).toHaveLength(1)
+    // Test insets are zero, so the top chrome is the island row plus its gaps.
+    expect(lists[0].props.contentContainerStyle).toMatchObject({
+      paddingTop: BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+    })
   })
 
   test('renders a create row and opens the create form on tap', async () => {

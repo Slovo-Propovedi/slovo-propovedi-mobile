@@ -38,7 +38,7 @@ export const MyPlaylistsDragList = ({
   onDragEnd: (orderedIds: string[]) => void
   onPressItem: (playlist: LocalPlaylistData) => void
 }) => {
-  const { bottomChromeHeight } = useScreenChromePadding()
+  const { bottomChromeHeight, topChromeHeight } = useScreenChromePadding()
   const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
   const applyBarCollapsed = useAction(setBarCollapsed)
@@ -75,6 +75,9 @@ export const MyPlaylistsDragList = ({
       contentContainerStyle={{
         paddingBottom: bottomChromeHeight + INDENTS.low,
         paddingHorizontal: INDENTS.medium,
+        // The nav header is transparent, so the wide layout's floating top
+        // island would cover the first rows; compact reserves nothing.
+        paddingTop: topChromeHeight,
       }}
       renderItem={({ drag, isActive, item }: RenderItemParams<LocalPlaylistData>) => (
         <MyPlaylistsRow

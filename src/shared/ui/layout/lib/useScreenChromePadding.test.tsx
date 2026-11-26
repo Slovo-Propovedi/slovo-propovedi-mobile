@@ -1,7 +1,13 @@
 import { Platform } from 'react-native'
-import { renderHookWithProviders } from '../../../mocks/renderWithProviders'
+import { getSharedTestCtx, renderHookWithProviders } from '../../../mocks/renderWithProviders'
 import { PLAYER_SIZES } from '../../theme/themed'
-import { BAR_BOTTOM_INSET_MIN, BAR_OUTER_GAP, BAR_TOP_ISLAND_MARGIN } from '../bottomBarLayout'
+import {
+  BAR_BOTTOM_INSET_MIN,
+  BAR_OUTER_GAP,
+  BAR_ROW_MIN_HEIGHT,
+  BAR_TOP_ISLAND_MARGIN,
+} from '../bottomBarLayout'
+import { setTabBarHeight } from '../model'
 import { useScreenChromePadding } from './useScreenChromePadding'
 
 // Mirrors BAR_BOTTOM_INSET_WEB, which stays module-private in bottomBarLayout.
@@ -37,6 +43,7 @@ afterEach(() => {
   mockWindowWidth = 1024
   mockTopInset = 20
   mockBottomInset = 0
+  setTabBarHeight(getSharedTestCtx(), PLAYER_SIZES.tabBarHeight)
 })
 
 describe('useScreenChromePadding', () => {
@@ -60,9 +67,22 @@ describe('useScreenChromePadding', () => {
 
     expect(result.current).toEqual({
       bottomChromeHeight: PLAYER_SIZES.miniPlayerHeight + 20 + BAR_OUTER_GAP,
-      topChromeHeight:
-        mockTopInset + BAR_TOP_ISLAND_MARGIN + PLAYER_SIZES.tabBarHeight + BAR_OUTER_GAP,
+      topChromeHeight: mockTopInset + BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
     })
+  })
+
+  test('wide: the measured row height (with its bottom padding) does not inflate the top', async () => {
+    Platform.OS = 'android'
+    mockWindowWidth = 768
+    mockBottomInset = 20
+    // A measured row on a home-indicator tablet: 68 content box + 20 padding.
+    setTabBarHeight(getSharedTestCtx(), BAR_ROW_MIN_HEIGHT + mockBottomInset)
+
+    const { result } = await renderHookWithProviders(() => useScreenChromePadding())
+
+    expect(result.current.topChromeHeight).toBe(
+      mockTopInset + BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+    )
   })
 
   test('wide native: inset-less frames keep the chrome clearance floor', async () => {
