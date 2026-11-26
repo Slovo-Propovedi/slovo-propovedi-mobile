@@ -42,6 +42,7 @@
 - [ ] **Функционал чтения книг частично готов, но не подключён.** `src/pages/book-reader/` (парсинг FB2, стилизация элементов) и `src/pages/books-list/` существуют, но маршруты не зарегистрированы — рендерится тестовая FB2 (`src/pages/book-reader/testFiles/`). Вернуться при подключении таба «Читать».
 - [ ] **Таб «Читать» гейтится фича-флагом `read`** — `src/widgets/tab-bar/ui/useTabPress.ts`, `src/pages/read/ui/ReadScreen.tsx` — при выключенном/незагруженном флаге `CustomTabBar` показывает диалог «Скоро будет доступно», а `ReadScreen` рендерит `null`. Включить флаг `read` для пользователя при готовности FB2-ридера (см. [features/feature-flags.md](./features/feature-flags.md)).
 - [ ] Перевести читалку на книги в формате Markdown (рендер проще, вес меньше; удалить FB2-путь и зависимость xml-js) — src/pages/book-reader/ — при реработке читалки (решение продукта, 2026-10-23)
+- [ ] **Заглушка «Текст проповеди» в широкой пилюле мини-плеера — заготовка под вкладку «Читать».** `src/widgets/expandable-player/ui/ExpandablePlayer/MiniPlayerMenuCluster.tsx` — кнопка с иконкой `document-text-outline` отключена (`disabled`, `accessibilityState={{ disabled: true }}`, затемнение 0.5), обработчика нет. Вернуться при реализации «Читать»: подключить переход к тексту проповеди и снять заглушку.
 
 ## Tab bar
 
