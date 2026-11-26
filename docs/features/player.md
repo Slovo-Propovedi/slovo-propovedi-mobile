@@ -37,6 +37,24 @@
 
 **Earpiece-маршрут не трогает call-audio шину на медиа-режиме.** `updatePlaySoundThroughEarpiece` вызывался на каждом `setAudioModeAsync` (приложение повторяет re-assert на каждом foreground/load), и даже при выключенном earpiece-маршруте апстрим выполнял `setSpeakerphoneOn(true)` — глобальный побочный эффект на communication-шине: система перестраивала маршрут (`setCommunicationRouteForClient`, мигание speaker↔earpiece) сразу после каждого `requestAudioFocus`. Патч в том же `patches/expo-audio+58.0.12.patch` (`AudioModule.kt`) делает вызов no-op для медиа-режима: call-audio шину трогает только при реально включённом earpiece-маршруте, а при выходе из него возвращает `MODE_NORMAL` и `setSpeakerphoneOn(false)`. Чтобы ветка восстановления видела предыдущее состояние, `setAudioModeAsync` теперь присваивает `shouldRouteThroughEarpiece` (апстрим это поле объявлял, но никогда не обновлял).
 
+**Пауза при записи голосового сообщения в другом приложении (issue #157).** Запись в чужом приложении (`AudioRecord`/`MediaRecorder`) вообще не затрагивает audio-focus стек: если приложение-рекордер не вызывает `requestAudioFocus` (большинство мессенджеров не вызывает), до плеера не доходит ни один LOSS — и проповедь играла параллельно с записью. Фикс — в том же `patches/expo-audio+58.0.12.patch` (`AudioModule.kt`): модуль регистрирует device-global `AudioManager.AudioRecordingCallback` (API 24+, разрешение не нужно, работает и для **чужих** приложений — конфигурации система анонимизирует, но `clientAudioSource` остаётся видимым) в `OnCreate` (со стартовым снапшотом через `getActiveRecordingConfigurations()`) и снимает в `OnDestroy`.
+
+Семантика зеркалит patched-ветку `AUDIOFOCUS_LOSS`:
+
+- **запись началась** — взводится `isPaused = true` для playables по правилу `isPlaying || hasActivePlaybackIntent()` (буферизующийся трек не может «взлететь» поверх записи), затем пауза;
+- **запись закончилась** — resume взведённых playables только при `focusAcquired && audioEnabled && shouldPlayInSilentMode()`. Ветка `AUDIOFOCUS_GAIN` получила guard: пока внешняя запись активна, посторонний возврат фокуса держит resume-намерения взведёнными, а не возобновляет воспроизведение поверх записи.
+
+Фильтр источников — только пользовательский захват контента: `MIC`, `VOICE_COMMUNICATION`, `CAMCORDER`; voice-recognition/assistant-источники исключены.
+
+Путь идемпотентен focus-пути: если рекордер всё же запрашивает фокус (текущие версии WhatsApp/Telegram), `LOSS_TRANSIENT`/`GAIN` и recording-колбэк сходятся на одном флаге `isPaused` — двойной паузы/resume нет. Для рекордеров без фокуса `releaseAudioFocusIfUnused` теперь учитывает взведённые resume-интенты (`isPaused`) и в ветке `focusAcquired` — иначе пауза при старте записи освобождала бы фокус и resume после окончания записи не срабатывал.
+
+Принятые trade-off'ы:
+
+- пауза пользователя **во время** записи не отменяет авто-resume после её окончания (зеркало trade-off №2 про звонок);
+- запуск воспроизведения **во время** активной чужой записи — осознанно вне скоупа (инициатива пользователя);
+- автотеста нет (патченный сторонний модуль) — верификация на устройстве, запись в [debt.md](../debt.md);
+- нативное (patch-package Kotlin) изменение попадает только в следующий полный APK-релиз, не через OTA.
+
 Верификация при апгрейде пакета — `yarn check:patches` (generic-гвард сверяет версии в именах патчей с установленными).
 
 ## Архитектура PlayerService

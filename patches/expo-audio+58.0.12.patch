@@ -1,8 +1,21 @@
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
-index 6c81fce..82162a3 100644
+index 6c81fce..7693bf8 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt
-@@ -97,9 +97,18 @@ class AudioModule : Module() {
+@@ -8,8 +8,12 @@ import android.content.pm.PackageManager
+ import android.media.AudioAttributes
+ import android.media.AudioFocusRequest
+ import android.media.AudioManager
++import android.media.AudioRecordingConfiguration
++import android.media.MediaRecorder
+ import android.net.Uri
+ import android.os.Build
++import android.os.Handler
++import android.os.Looper
+ import android.util.Log
+ import androidx.core.content.ContextCompat
+ import androidx.core.net.toUri
+@@ -97,9 +101,18 @@ class AudioModule : Module() {
        }
        when (focusChange) {
          AudioManager.AUDIOFOCUS_LOSS -> {
@@ -23,7 +36,94 @@ index 6c81fce..82162a3 100644
              playable.pause()
            }
          }
-@@ -401,6 +410,10 @@ class AudioModule : Module() {
+@@ -133,6 +146,13 @@ class AudioModule : Module() {
+         AudioManager.AUDIOFOCUS_GAIN -> {
+           focusAcquired = true
+ 
++          if (externalRecordingActive) {
++            // PATCH(patch-package): issue #157 - an unrelated focus regain while another app is
++            // recording must not resume playback over it; keep the resume intents armed, the
++            // recording-stop path (or a later GAIN) resumes them.
++            return@launch
++          }
++
+           if (shouldRefreshFocusOnGain) {
+             val playablesToResume = allPlayables.filter { it.shouldResumeAfterFocus() }.toList()
+             shouldRefreshFocusOnGain = false
+@@ -184,13 +204,57 @@ class AudioModule : Module() {
+     }
+   }
+ 
++  // PATCH(patch-package): issue #157 - starting a recording in another app never touches the
++  // focus stack, so no LOSS event pauses playback. Detect device-global mic capture and mirror
++  // the LOSS_TRANSIENT pause / GAIN resume semantics. Sources filtered to user content capture;
++  // voice recognition / assistant sources are excluded. Anonymized configs carry clientAudioSource.
++  private var externalRecordingActive = false
++  private val audioRecordingCallback = object : AudioManager.AudioRecordingCallback() {
++    override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>) {
++      appContext.mainQueue.launch { handleExternalRecordingChange(isAnyExternalCaptureActive(configs)) }
++    }
++  }
++
++  private fun isAnyExternalCaptureActive(configs: List<AudioRecordingConfiguration>): Boolean =
++    configs.any {
++      it.clientAudioSource == MediaRecorder.AudioSource.MIC ||
++        it.clientAudioSource == MediaRecorder.AudioSource.VOICE_COMMUNICATION ||
++        it.clientAudioSource == MediaRecorder.AudioSource.CAMCORDER
++    }
++
++  private fun handleExternalRecordingChange(recordingStarted: Boolean) {
++    if (recordingStarted == externalRecordingActive) return
++    externalRecordingActive = recordingStarted
++    if (recordingStarted) {
++      // Mirror the AUDIOFOCUS_LOSS arm rule: a buffering playable (isPlaying == false,
++      // playWhenReady == true) must also arm its resume intent, or it bursts into the
++      // recording the moment buffering completes.
++      allPlayables.forEach { playable ->
++        if (playable.isPlaying || playable.hasActivePlaybackIntent()) {
++          playable.isPaused = true
++        }
++        playable.pause()
++      }
++    } else if (focusAcquired && audioEnabled && shouldPlayInSilentMode()) {
++      // If focus is held elsewhere (e.g. a call started during recording), keep the resume
++      // intent armed - the existing AUDIOFOCUS_GAIN branch resumes it later.
++      allPlayables.forEach { playable ->
++        if (playable.isPaused) {
++          playable.isPaused = false
++          playable.play()
++        }
++      }
++    }
++  }
++
+   private fun releaseAudioFocusIfUnused() {
+     if (!focusRequestRegistered || audioSessionActivityKeepers.isNotEmpty()) {
+       return
+     }
+ 
+     val focusIsStillNeeded = if (focusAcquired) {
+-      allPlayables.any { it.isPlaying || it.hasActivePlaybackIntent() }
++      // PATCH(patch-package): issue #157 - resume intents armed by the external-recording pause must hold the focus request registered, or the recording-stop resume loses its focusAcquired precondition and no GAIN ever arrives (no-focus recorders).
++      allPlayables.any { it.isPlaying || it.hasActivePlaybackIntent() || it.isPaused }
+     } else {
+       allPlayables.any { it.shouldResumeAfterFocus() }
+     }
+@@ -393,6 +457,13 @@ class AudioModule : Module() {
+     OnCreate {
+       audioManager = appContext.reactContext?.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+       context.registerReceiver(ringerModeReceiver, IntentFilter(AudioManager.RINGER_MODE_CHANGED_ACTION))
++      // PATCH(patch-package): issue #157 - register the device-global recording callback
++      // (see audioRecordingCallback above). Handler on the main looper per API contract;
++      // the callback itself re-dispatches through appContext.mainQueue.
++      audioManager.registerAudioRecordingCallback(audioRecordingCallback, Handler(Looper.getMainLooper()))
++      // Initial sync: a recording may already be active before registration (snapshot only,
++      // no pause action - nothing is playing at module init).
++      externalRecordingActive = isAnyExternalCaptureActive(audioManager.activeRecordingConfigurations)
+     }
+ 
+     AsyncFunction("setAudioModeAsync") { mode: AudioMode ->
+@@ -401,6 +472,10 @@ class AudioModule : Module() {
        interruptionMode = mode.interruptionMode ?: previousInterruptionMode
        playsInSilentMode = mode.playsInSilentMode
        updatePlaySoundThroughEarpiece(mode.shouldRouteThroughEarpiece ?: false)
@@ -34,7 +134,15 @@ index 6c81fce..82162a3 100644
        allowsBackgroundRecording = mode.allowsBackgroundRecording
  
        recorders.values.forEach { recorder ->
-@@ -1013,8 +1026,11 @@ class AudioModule : Module() {
+@@ -522,6 +597,7 @@ class AudioModule : Module() {
+ 
+     OnDestroy {
+       context.unregisterReceiver(ringerModeReceiver)
++      audioManager.unregisterAudioRecordingCallback(audioRecordingCallback)
+       GlobalScope.launch(Dispatchers.Main) {
+         audioSessionActivityKeepers.clear()
+         releaseAudioFocus()
+@@ -1013,8 +1089,11 @@ class AudioModule : Module() {
          }
        }
  
@@ -47,7 +155,7 @@ index 6c81fce..82162a3 100644
        }.set { playlist, mode: LoopMode ->
          runOnMain {
            playlist.loopMode = mode
-@@ -1035,7 +1051,11 @@ class AudioModule : Module() {
+@@ -1035,7 +1114,11 @@ class AudioModule : Module() {
  
        Function("pause") { playlist: AudioPlaylist ->
          runOnMain {
@@ -60,7 +168,7 @@ index 6c81fce..82162a3 100644
            playlist.ref.pause()
            releaseAudioFocusIfUnused()
          }
-@@ -1179,12 +1199,22 @@ class AudioModule : Module() {
+@@ -1179,12 +1262,22 @@ class AudioModule : Module() {
  
    @Suppress("DEPRECATION")
    private fun updatePlaySoundThroughEarpiece(playThroughEarpiece: Boolean) {
