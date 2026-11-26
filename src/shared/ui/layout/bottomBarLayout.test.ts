@@ -8,6 +8,7 @@ import {
   BAR_SIDE_INSET_EXPANDED,
   getBarBottomPadding,
   getBarSideInset,
+  getWideChromeWidth,
   IOS_WEB_ISLANDS_GAP,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from './bottomBarLayout'
@@ -44,6 +45,19 @@ describe('getBarBottomPadding', () => {
     expect(getBarBottomPadding(0, true)).toBe(25)
     expect(getBarBottomPadding(10, true)).toBe(25)
     expect(getBarBottomPadding(34, true)).toBe(34)
+  })
+})
+
+describe('getWideChromeWidth', () => {
+  test('caps to the content column: a constant 550pt from a 600pt window up', () => {
+    expect(getWideChromeWidth(600)).toBe(550)
+    expect(getWideChromeWidth(1024)).toBe(550)
+    expect(getWideChromeWidth(1440)).toBe(550)
+  })
+
+  test('a narrower window keeps the column minus the expanded side insets', () => {
+    expect(getWideChromeWidth(500)).toBe(450)
+    expect(getWideChromeWidth(400)).toBe(350)
   })
 })
 

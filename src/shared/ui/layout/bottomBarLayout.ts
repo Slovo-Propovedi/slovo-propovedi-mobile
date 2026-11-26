@@ -2,6 +2,7 @@
 // a rounded island above the tab-bar island, and both collapse into one row.
 import { SLIDER_REST_INSET } from '../slider/slider-layout.lib'
 import { PLAYER_SIZES } from '../theme/themed'
+import { CONTENT_COLUMN_WIDTH } from './appMaxWidth'
 
 export const BAR_ROW_MIN_HEIGHT = 68 as const
 // The one-line row is uniform: the collapsed island and the circle both equal
@@ -47,6 +48,18 @@ export const BAR_SIDE_INSET_EXPANDED = SLIDER_REST_INSET + BAR_SIDE_INSET_OFFSET
 // sliders' rest inset — unchanged by the 1 px expanded-state offset, so the
 // collapsed row keeps its original width.
 export const BAR_SIDE_INSET_COLLAPSED = (SLIDER_REST_INSET * 3) / 2
+/**
+ * Inner width of the wide-layout chrome (mini pill and top island): the content
+ * column capped to the viewport, minus the expanded side insets. From a 600pt
+ * window up it is a constant 550pt, so the wide chrome never grows or shrinks
+ * with the window — control visibility is measured against it, not the window.
+ * Worklet-safe: geometry and visibility both read it.
+ * @param screenWidth - Current window width in pt.
+ */
+export const getWideChromeWidth = (screenWidth: number): number => {
+  'worklet'
+  return Math.min(CONTENT_COLUMN_WIDTH, screenWidth) - BAR_SIDE_INSET_EXPANDED * 2
+}
 /**
  * Outer side inset of the bottom chrome at a given one-line morph progress.
  * Worklet-safe: called from the animated styles of the tab row, the search

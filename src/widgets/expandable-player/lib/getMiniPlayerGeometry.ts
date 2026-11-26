@@ -8,6 +8,7 @@ import {
   CONTENT_COLUMN_WIDTH,
   getBarSideInset,
   getColumnSideInset,
+  getWideChromeWidth,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 
@@ -90,7 +91,7 @@ export const getMiniPlayerGeometry = ({
       left: rowLeft + BAR_SIDE_INSET_EXPANDED,
       radius: height / 2,
       top: fullScreenHeight - bottom - height,
-      width: rowContentWidth - BAR_SIDE_INSET_EXPANDED * 2,
+      width: getWideChromeWidth(screenWidth),
     }
   }
 

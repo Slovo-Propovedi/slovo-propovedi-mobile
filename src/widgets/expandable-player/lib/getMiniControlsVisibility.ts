@@ -1,19 +1,21 @@
 /**
- * Screen widths (pt) at which each wide-pill control disappears: a control
- * renders only at or above its threshold. The right cluster goes first, one
- * button at a time, then the transport cluster thins out until only play is
- * left just above the 768 phone breakpoint. Order stays monotonic — every
- * threshold is lower than the previous one — so the row never re-adds a button
- * while the window narrows.
+ * Chrome widths (pt) at which each wide-pill control disappears: a control
+ * renders only at or above its threshold. Thresholds are measured on the CHROME
+ * (`getWideChromeWidth`), not the window, so a wide window cannot hide a button
+ * while the chrome still has free side space. The wide chrome is a constant
+ * 550pt today, so nothing hides in the current wide range; the cascade only
+ * fires for a future narrower chrome. Order stays monotonic — every threshold
+ * is lower than the previous one — so the row never re-adds a button while the
+ * chrome narrows.
  */
 export const MINI_WIDE_CONTROL_HIDE_WIDTHS = {
-  favorite: 832,
-  menu: 920,
-  next: 784,
-  previous: 808,
-  queue: 880,
-  repeat: 856,
-  text: 960,
+  favorite: 476,
+  menu: 524,
+  next: 444,
+  previous: 460,
+  queue: 508,
+  repeat: 492,
+  text: 540,
 } as const
 
 export interface MiniControlsVisibility {
@@ -29,25 +31,25 @@ export interface MiniControlsVisibility {
 }
 
 /**
- * Derives which wide-pill controls fit the current screen width. Plain
+ * Derives which wide-pill controls fit the current chrome width. Plain
  * render-time math (not a worklet): the row uses it only for conditional
  * rendering.
- * @param screenWidth - Current window width in pt.
+ * @param chromeWidth - Inner width of the wide chrome (`getWideChromeWidth`).
  */
-export const getMiniControlsVisibility = (screenWidth: number): MiniControlsVisibility => {
-  const text = screenWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.text
-  const menu = screenWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.menu
-  const queue = screenWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.queue
+export const getMiniControlsVisibility = (chromeWidth: number): MiniControlsVisibility => {
+  const text = chromeWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.text
+  const menu = chromeWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.menu
+  const queue = chromeWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.queue
   const hasRightCluster = text || menu || queue
 
   return {
     clusterSide: hasRightCluster ? 'left' : 'right',
-    favorite: screenWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.favorite,
+    favorite: chromeWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.favorite,
     menu,
-    next: screenWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.next,
-    previous: screenWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.previous,
+    next: chromeWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.next,
+    previous: chromeWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.previous,
     queue,
-    repeat: screenWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.repeat,
+    repeat: chromeWidth >= MINI_WIDE_CONTROL_HIDE_WIDTHS.repeat,
     text,
   }
 }

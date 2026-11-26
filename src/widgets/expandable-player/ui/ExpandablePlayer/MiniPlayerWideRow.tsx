@@ -1,6 +1,7 @@
 import { useWindowDimensions, View } from 'react-native'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
+import { getWideChromeWidth } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getMiniControlsVisibility } from '../../lib/getMiniControlsVisibility'
 import { MiniPlayerMenuCluster } from './MiniPlayerMenuCluster'
@@ -30,7 +31,7 @@ export const MiniPlayerWideRow = ({
   const { width } = useWindowDimensions()
   const { currentTheme } = useTheme()
   const styles = createWideMiniStyles(currentTheme)
-  const visibility = getMiniControlsVisibility(width)
+  const visibility = getMiniControlsVisibility(getWideChromeWidth(width))
   const transport = (
     <MiniPlayerTransportCluster audio={audio} styles={styles} visibility={visibility} />
   )

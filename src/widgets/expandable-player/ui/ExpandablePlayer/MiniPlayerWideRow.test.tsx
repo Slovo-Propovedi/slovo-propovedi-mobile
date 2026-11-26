@@ -34,14 +34,14 @@ const VERTICAL_MENU_ICON = `Entypo:dots-three-vertical:${FONT_SIZES.xl}`
 const TEXT_ICON = `Ionicons:document-text-outline:${FONT_SIZES.xl}`
 const QUEUE_ICON = `Entypo:list:${FONT_SIZES.xl}`
 const RECT = { height: 36, width: 36, x: 100, y: 200 }
-// Widths exercised below follow MINI_WIDE_CONTROL_HIDE_WIDTHS (text 960,
-// menu 920, queue 880, repeat 856, favorite 832, previous 808, next 784).
+// Visibility follows the CHROME width (getWideChromeWidth): every window at or
+// above the 600pt content column yields the same 550pt chrome, so the full
+// toolbar must render across the whole wide range.
 const WIDEST = 1024
-const TEXT_HIDDEN = 930
-const MENU_HIDDEN = 900
-const CLUSTER_RIGHT = 860
-const NEXT_ONLY = 790
-const PLAY_ONLY = 780
+const WIDE_WINDOW_WIDTHS = [768, 900, 1024, 1440]
+// The only way this row reaches the hiding cascade is a window narrower than the
+// content column: 557 − 50 = a 507pt chrome, just under the queue threshold.
+const NARROW_CHROME_WINDOW = 557
 
 let mockWindowWidth = WIDEST
 
@@ -493,8 +493,8 @@ describe('<MiniPlayerWideRow>', () => {
     expect(getByText(QUEUE_ICON)).toBeTruthy()
   })
 
-  test('keeps the transport cluster after the title once the menu cluster is gone', async () => {
-    mockWindowWidth = CLUSTER_RIGHT
+  test('moves the transport after the title only when the chrome cannot fit the right cluster', async () => {
+    mockWindowWidth = NARROW_CHROME_WINDOW
     const { getByTestId, queryByLabelText } = await renderRow()
 
     expectAscending([
@@ -512,62 +512,20 @@ describe('<MiniPlayerWideRow>', () => {
     expect(getByTestId(TRANSPORT_CLUSTER_TEST_ID)).toHaveStyle({ marginLeft: 'auto' })
   })
 
-  describe('progressive hiding on narrower wide layouts', () => {
-    test('drops only the text-sermon placeholder below its threshold', async () => {
-      mockWindowWidth = TEXT_HIDDEN
-      const { getByLabelText, getByTestId, queryByLabelText } = await renderRow()
+  describe('full toolbar across the wide range', () => {
+    test.each(WIDE_WINDOW_WIDTHS)('keeps every control at a %ipt window', async windowWidth => {
+      mockWindowWidth = windowWidth
+      const { getByLabelText, getByTestId } = await renderRow()
 
-      expect(queryByLabelText(TEXT_SERMON_LABEL)).toBeNull()
+      expect(getByLabelText(TEXT_SERMON_LABEL)).toBeTruthy()
       expect(getByLabelText(MENU_LABEL)).toBeTruthy()
       expect(getByLabelText(OPEN_PLAYLIST_LABEL)).toBeTruthy()
-      expect(getByTestId(TRANSPORT_CLUSTER_TEST_ID)).not.toHaveStyle({ marginLeft: 'auto' })
-    })
-
-    test('drops the ⋮ menu next, keeping the cluster on the left', async () => {
-      mockWindowWidth = MENU_HIDDEN
-      const { getByLabelText, queryByLabelText } = await renderRow()
-
-      expect(queryByLabelText(TEXT_SERMON_LABEL)).toBeNull()
-      expect(queryByLabelText(MENU_LABEL)).toBeNull()
-      expect(getByLabelText(OPEN_PLAYLIST_LABEL)).toBeTruthy()
       expect(getByLabelText(REPEAT_OFF_LABEL)).toBeTruthy()
-    })
-
-    test('drops the whole right cluster and right-aligns the transport', async () => {
-      mockWindowWidth = CLUSTER_RIGHT
-      const { getByLabelText, getByTestId, queryByLabelText } = await renderRow()
-
-      expect(queryByLabelText(TEXT_SERMON_LABEL)).toBeNull()
-      expect(queryByLabelText(MENU_LABEL)).toBeNull()
-      expect(queryByLabelText(OPEN_PLAYLIST_LABEL)).toBeNull()
-      expect(getByLabelText(REPEAT_OFF_LABEL)).toBeTruthy()
+      expect(getByLabelText(ADD_TO_FAVORITES_LABEL)).toBeTruthy()
       expect(getByLabelText(PREV_LABEL)).toBeTruthy()
       expect(getByLabelText(PLAY_LABEL)).toBeTruthy()
       expect(getByLabelText(NEXT_LABEL)).toBeTruthy()
-      expect(getByLabelText(ADD_TO_FAVORITES_LABEL)).toBeTruthy()
-      expect(getByTestId(TRANSPORT_CLUSTER_TEST_ID)).toHaveStyle({ marginLeft: 'auto' })
-    })
-
-    test('keeps only next and play once repeat, favorite and prev are gone', async () => {
-      mockWindowWidth = NEXT_ONLY
-      const { getByLabelText, queryByLabelText } = await renderRow()
-
-      expect(queryByLabelText(REPEAT_OFF_LABEL)).toBeNull()
-      expect(queryByLabelText(ADD_TO_FAVORITES_LABEL)).toBeNull()
-      expect(queryByLabelText(PREV_LABEL)).toBeNull()
-      expect(getByLabelText(NEXT_LABEL)).toBeTruthy()
-      expect(getByLabelText(PLAY_LABEL)).toBeTruthy()
-    })
-
-    test('leaves the bare artwork/title/play row above the phone breakpoint', async () => {
-      mockWindowWidth = PLAY_ONLY
-      const { getByLabelText, queryByLabelText } = await renderRow()
-
-      expect(queryByLabelText(REPEAT_OFF_LABEL)).toBeNull()
-      expect(queryByLabelText(ADD_TO_FAVORITES_LABEL)).toBeNull()
-      expect(queryByLabelText(PREV_LABEL)).toBeNull()
-      expect(queryByLabelText(NEXT_LABEL)).toBeNull()
-      expect(getByLabelText(PLAY_LABEL)).toBeTruthy()
+      expect(getByTestId(TRANSPORT_CLUSTER_TEST_ID)).not.toHaveStyle({ marginLeft: 'auto' })
     })
   })
 })
