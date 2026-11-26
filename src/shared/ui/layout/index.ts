@@ -22,6 +22,7 @@ export {
 } from './lib/keyboardInset'
 export { useBarBottomPadding } from './lib/useBarBottomPadding'
 export { useBarCollapseOnScroll } from './lib/useBarCollapseOnScroll'
+export { useIsWideLayout } from './lib/useIsWideLayout'
 export {
   isBarCollapsedAtom,
   isTabBarMeasuredAtom,
