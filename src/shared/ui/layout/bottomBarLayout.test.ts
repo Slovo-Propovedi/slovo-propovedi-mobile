@@ -8,6 +8,7 @@ import {
   BAR_SIDE_INSET_EXPANDED,
   getBarBottomPadding,
   getBarSideInset,
+  IOS_WEB_ISLANDS_GAP,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from './bottomBarLayout'
 
@@ -25,6 +26,10 @@ describe('bottom bar geometry', () => {
     expect(getBarBottomPadding(0, true)).toBe(BAR_SIDE_INSET_EXPANDED)
     expect(getBarBottomPadding(0, true)).toBe(SLIDER_REST_INSET + 1)
   })
+
+  test('iOS web keeps a 16dp breathing gap above the OS band', () => {
+    expect(IOS_WEB_ISLANDS_GAP).toBe(16)
+  })
 })
 
 describe('getBarBottomPadding', () => {
@@ -41,7 +46,7 @@ describe('getBarBottomPadding', () => {
     expect(getBarBottomPadding(34, true)).toBe(34)
   })
 
-  test('web: a custom floor clears the iOS home-indicator band', () => {
+  test('web: a custom floor overrides a smaller inset', () => {
     expect(getBarBottomPadding(0, true, 34)).toBe(34)
     expect(getBarBottomPadding(10, true, 34)).toBe(34)
     expect(getBarBottomPadding(34, true, 34)).toBe(34)

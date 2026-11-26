@@ -62,14 +62,13 @@ export const BAR_BOTTOM_INSET_MIN = 12 as const
 // Equals BAR_SIDE_INSET_EXPANDED (25) — the web bottom gap mirrors the expanded chrome
 // side insets; keep in sync.
 export const BAR_BOTTOM_INSET_WEB = 25 as const
-// The iPhone home-indicator / safe-area inset; iOS browsers and PWAs report
-// env(safe-area-inset-bottom) = 0 through the probe, so the static floor must clear
-// the gesture band exposed when the toolbar hides or in standalone; deliberately
-// above BAR_BOTTOM_INSET_WEB (25).
-export const IOS_HOME_INDICATOR_INSET = 34 as const
+// Breathing gap between the islands and the OS-drawn band below the page on
+// iOS web. The dvh shell already ends at the safe-area line, so the OS owns the
+// home-indicator clearance there; the env() probe is deliberately ignored
+// because it double-counts that band whenever it reports a value.
+export const IOS_WEB_ISLANDS_GAP = 16 as const
 // Bottom padding of the floating chrome: on web the visible bottom gap is at
-// least webFloor (the expanded chrome's side insets on desktop/Android, or the
-// iOS home-indicator inset where the safe-area probe is unreliable); max()
+// least webFloor (the expanded chrome's side insets on desktop/Android); max()
 // lets a larger real inset (installed PWA safe-area line) win; native keeps
 // flush-on-inset and the 12 floor only for inset-less early frames.
 export const getBarBottomPadding = (

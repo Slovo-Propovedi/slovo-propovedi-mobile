@@ -53,30 +53,26 @@ describe('useBarBottomPadding', () => {
     expect(largeInset.result.current).toBe(34)
   })
 
-  test('web: iPhone UA uses the 34px home-indicator floor', async () => {
+  test('web: iPhone UA ignores the probe and keeps the 16px islands gap', async () => {
     Platform.OS = 'web'
     setNavigator('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)', 'iPhone')
 
     mockBottomInset = 0
     const noInset = await renderHookWithProviders(() => useBarBottomPadding())
-    expect(noInset.result.current).toBe(34)
+    expect(noInset.result.current).toBe(16)
 
-    mockBottomInset = 25
-    const smallInset = await renderHookWithProviders(() => useBarBottomPadding())
-    expect(smallInset.result.current).toBe(34)
-
-    mockBottomInset = 40
-    const largeInset = await renderHookWithProviders(() => useBarBottomPadding())
-    expect(largeInset.result.current).toBe(40)
+    mockBottomInset = 34
+    const reportedInset = await renderHookWithProviders(() => useBarBottomPadding())
+    expect(reportedInset.result.current).toBe(16)
   })
 
-  test('web: iPadOS (MacIntel + touch) uses the 34px home-indicator floor', async () => {
+  test('web: iPadOS (MacIntel + touch) ignores the probe and keeps the 16px gap', async () => {
     Platform.OS = 'web'
     setNavigator('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)', 'MacIntel', 5)
 
-    mockBottomInset = 0
-    const noInset = await renderHookWithProviders(() => useBarBottomPadding())
-    expect(noInset.result.current).toBe(34)
+    mockBottomInset = 34
+    const reportedInset = await renderHookWithProviders(() => useBarBottomPadding())
+    expect(reportedInset.result.current).toBe(16)
   })
 
   test('native android: inset 0 -> 12, 34 -> 34, independent of UA', async () => {
