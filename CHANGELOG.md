@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Wide layout: on tablets and desktop the tab bar floats at the top of the screen
+- Wide layout on tablets and desktop (screens from 768 pt): the tabs and search button share one island at the top, and the mini-player becomes a bottom island with the full control set — repeat, previous/play/next, favorites, sermon menu and the current playlist (a «Sermon text» button is reserved and inactive for now)
+- Search page: the field moved to the top, under the Listen/Read toggle and above the results, and takes focus when the page opens; the bar stays expanded while searching and collapses again as you scroll, so only the tab island and the search circle remain at the bottom
 
 ### Changed
 
-- Search field sits at the top of the search page; it focuses when the page opens, the tab bar stays expanded on focus, and scrolling results collapses it again
+- Wide layout: as the window narrows, the mini-player hides its buttons progressively from right to left and shifts the control cluster right; phones keep the usual look
 
 ### Fixed
 
