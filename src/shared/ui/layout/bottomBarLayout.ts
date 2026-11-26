@@ -62,12 +62,15 @@ export const BAR_BOTTOM_INSET_MIN = 12 as const
 // Equals BAR_SIDE_INSET_EXPANDED (25) — the web bottom gap mirrors the expanded chrome
 // side insets; keep in sync.
 export const BAR_BOTTOM_INSET_WEB = 25 as const
-// Breathing gap between the islands and the physical screen bottom on iOS web.
-// The shell is `100lvh` — the full physical screen — via the `ios-web` class set
-// by ensureIosWebShellClass; the earlier dvh shortfall is what letterboxed the
-// page. The home indicator lives inside this gap, so the env() probe is
-// deliberately ignored: it double-counts the OS band whenever it reports one.
-export const IOS_WEB_ISLANDS_GAP = 16 as const
+// Gap between the islands and the physical screen bottom on iOS web. Apple's
+// home-indicator bar (5 px tall) occupies [8, 13] px above the screen bottom; a
+// 21 dp gap leaves 8 px below the indicator and 8 px above it, so the indicator
+// is vertically centered in this gap. The shell is `100lvh` — the full physical
+// screen — via the `ios-web` class set by ensureIosWebShellClass; the earlier
+// dvh shortfall is what letterboxed the page. The home indicator lives inside
+// this gap, so the env() probe is deliberately ignored: it double-counts the OS
+// band whenever it reports one.
+export const IOS_WEB_ISLANDS_GAP = 21 as const
 // Bottom padding of the floating chrome: on web the visible bottom gap is at
 // least webFloor (the expanded chrome's side insets on desktop/Android); max()
 // lets a larger real inset (installed PWA safe-area line) win; native keeps

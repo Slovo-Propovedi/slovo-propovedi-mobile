@@ -27,8 +27,8 @@ describe('bottom bar geometry', () => {
     expect(getBarBottomPadding(0, true)).toBe(SLIDER_REST_INSET + 1)
   })
 
-  test('iOS web keeps a 16dp breathing gap above the OS band', () => {
-    expect(IOS_WEB_ISLANDS_GAP).toBe(16)
+  test('iOS web centers the home indicator in a 21dp gap above the screen bottom', () => {
+    expect(IOS_WEB_ISLANDS_GAP).toBe(21)
   })
 })
 
