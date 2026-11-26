@@ -13,8 +13,8 @@ LABEL org.opencontainers.image.title="slovo-propovedi-web" \
 # OCI source label: links the image in the Forgejo container registry back to
 # the mobile repository's Packages tab (belt-and-suspenders alongside the
 # registry-path naming convention). It points at the REPO ROOT — the nested
-# /web image still belongs to that repo. No hardcoded value: both web-image
-# build steps (release.yml + ota-publish.yml) inject it via
+# /web image still belongs to that repo. No hardcoded value: every web-image
+# build step (release.yml + ota-publish.yml + web-publish.yml) injects it via
 # --build-arg OCI_IMAGE_SOURCE="${REPOSITORY_URL}/${GITHUB_REPOSITORY}".
 # The ARG (no default) is declared in this stage scope, next to the LABEL it
 # feeds (Dockerfile limitation: one variable per LABEL instruction).
