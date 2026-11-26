@@ -53,13 +53,11 @@ export const MiniPlayerMenuAnchor = ({
   const handleCloseMenu = () => setMenuOpen(false)
 
   const handleShowDetails = () => {
-    void openPlayerSheet()
-    setShowDetails(true)
+    void openPlayerSheet().then(() => setShowDetails(true))
   }
 
   const handleShowSoundSettings = () => {
-    void openPlayerSheet()
-    setShowSoundSettings(true)
+    void openPlayerSheet().then(() => setShowSoundSettings(true))
   }
 
   return (
@@ -82,6 +80,7 @@ export const MiniPlayerMenuAnchor = ({
         anchor={anchor}
         placement='above'
         visible={isMenuOpen}
+        anchorRef={menuButtonRef}
         onClose={handleCloseMenu}
       >
         <PlayerMenu

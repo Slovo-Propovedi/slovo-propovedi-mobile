@@ -35,7 +35,7 @@ export const MiniPlayerMenuCluster = ({
 }) => {
   const [, setShowPlaylist] = useAtom(showPlaylistAtom)
 
-  if (!visibility.text && !visibility.menu && !visibility.queue) return null
+  if (visibility.clusterSide === 'right') return null
 
   return (
     <View style={styles.rightCluster}>

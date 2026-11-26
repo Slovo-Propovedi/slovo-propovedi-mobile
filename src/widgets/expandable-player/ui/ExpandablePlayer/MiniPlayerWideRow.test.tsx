@@ -111,9 +111,8 @@ jest.mock('entities/player', () => {
   const { PlayerControlButtonType } = jest.requireActual(
     'entities/player/ui/control-button/control-button.types',
   )
-  // The open action is the observable "expand first" event: it flips the sheet
-  // atom synchronously, so the details/sound-settings atoms can be checked to
-  // arrive after it.
+  // The open action mirrors the real one: the sheet atom flips a microtask after
+  // the call, so a handler that fire-and-forgets it would show the overlay first.
   const mockIsPlayerExpandedAtom = atom(false, 'mockIsPlayerExpandedAtom')
 
   return {
@@ -122,10 +121,10 @@ jest.mock('entities/player', () => {
       'mockClosePlayerSheet',
     ),
     isPlayerExpandedAtom: mockIsPlayerExpandedAtom,
-    openPlayerSheetAction: action(
-      (ctx: Ctx) => mockIsPlayerExpandedAtom(ctx, true),
-      'mockOpenPlayerSheet',
-    ),
+    openPlayerSheetAction: action(async (ctx: Ctx) => {
+      await Promise.resolve()
+      mockIsPlayerExpandedAtom(ctx, true)
+    }, 'mockOpenPlayerSheet'),
     PlayerControlButtonType,
     PlayerControlsSize: { Small: 20 },
     PlayerRepeatToggle: (props: { inactiveColor?: string }) => {
@@ -362,6 +361,21 @@ describe('<MiniPlayerWideRow>', () => {
       expect.objectContaining({ variant: 'anchored' }),
     )
     expect(getByText(DETAILS_LABEL)).toBeTruthy()
+  })
+
+  test('hands the ⋯ button ref to the portal so the popover re-measures on resize', async () => {
+    mockMeasureInWindow(RECT)
+    const { getByLabelText } = await renderRow()
+
+    await act(async () => {
+      fireEvent.press(getByLabelText(MENU_LABEL))
+    })
+
+    expect(mockDropdownProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        anchorRef: expect.objectContaining({ current: expect.anything() }),
+      }),
+    )
   })
 
   test('renders the text button disabled and inert', async () => {
