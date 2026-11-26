@@ -35,10 +35,10 @@ jest.mock('shared/ui/layout', () => {
 
 const WIDE_ROW_TEXT = 'wide controls row'
 
-jest.mock('./MiniPlayerControlsRow', () => {
+jest.mock('./MiniPlayerWideRow', () => {
   const { Text } = jest.requireActual('react-native')
 
-  return { MiniPlayerControlsRow: () => <Text>{WIDE_ROW_TEXT}</Text> }
+  return { MiniPlayerWideRow: () => <Text>{WIDE_ROW_TEXT}</Text> }
 })
 
 // The mini player wires the title/subtitle marquee contract through MovingText;
@@ -455,7 +455,7 @@ describe('<MiniPlayer>', () => {
     measureSpy.mockRestore()
   })
 
-  test('wide layout swaps the compact transport for the controls row', async () => {
+  test('wide layout swaps the compact transport for the wide row', async () => {
     mockIsWideLayout.value = true
 
     const { getByText, queryByRole } = await renderMiniPlayer()

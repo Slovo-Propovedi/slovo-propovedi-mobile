@@ -1,14 +1,16 @@
 import { forwardRef } from 'react'
-import { Platform, View, type ViewInstance, type ViewStyle } from 'react-native'
+import { Platform, type ViewInstance, type ViewStyle } from 'react-native'
 import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
 import { type AnimatedStyle } from 'react-native-reanimated'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
-import { CoverImage, GlassIsland, MovingText, useMarqueeCycle, usePageBlurTarget } from 'shared/ui'
+import { GlassIsland, usePageBlurTarget } from 'shared/ui'
+import { useIsWideLayout } from 'shared/ui/layout'
 import { type ThemeColors } from 'shared/ui/theme'
-import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
-import { MiniPlayerControlsSlot } from './MiniPlayerControlsSlot'
+import { MiniPlayerTrackInfo } from './MiniPlayerTrackInfo'
+import { MiniPlayerTransport } from './MiniPlayerTransport'
+import { MiniPlayerWideRow } from './MiniPlayerWideRow'
 import { type createMiniStyles } from './miniStyles'
 
 // Web: the row renders as <div role="link" tabindex=0> (RNW maps 'link' to the
@@ -62,13 +64,12 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
     },
     ref,
   ) => {
-    const subtitle = getPlayerSubtitle(audio, playlist)
     // The pill floats over the page (search overlay included), never under it,
     // so it frosts the page target instead of the chrome's.
     const pageBlurTarget = usePageBlurTarget()
-    // The title owns the marquee cycle; the subtitle only follows it, so both
-    // lines restart together and neither overruns the other's rhythm.
-    const marqueeCycle = useMarqueeCycle()
+    // Wide windows move the transport cluster left of the artwork (Apple Music
+    // order); phones keep the compact artwork/title/single-play row.
+    const isWideLayout = useIsWideLayout()
 
     return (
       <GestureDetector gesture={miniPan}>
@@ -92,30 +93,20 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
             tuckStyle,
           ]}
         >
-          <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />
-          <View style={miniStyles.miniTextContainer}>
-            <MovingText
-              fadeEdge
-              autoStart
-              text={audio.title || ''}
-              publishCycle={marqueeCycle}
-              style={miniStyles.miniTrackTitle}
-            />
-            <MovingText
-              fadeEdge
-              text={subtitle}
-              followCycle={marqueeCycle}
-              style={miniStyles.miniPlaylistName}
-            />
-          </View>
-          <MiniPlayerControlsSlot
-            audio={audio}
-            playing={playing}
-            miniStyles={miniStyles}
-            onPlayPause={onPlayPause}
-            showSpinner={showSpinner}
-            currentTheme={currentTheme}
-          />
+          {isWideLayout ? (
+            <MiniPlayerWideRow audio={audio} playlist={playlist} miniStyles={miniStyles} />
+          ) : (
+            <>
+              <MiniPlayerTrackInfo audio={audio} playlist={playlist} miniStyles={miniStyles} />
+              <MiniPlayerTransport
+                playing={playing}
+                miniStyles={miniStyles}
+                onPlayPause={onPlayPause}
+                showSpinner={showSpinner}
+                currentTheme={currentTheme}
+              />
+            </>
+          )}
           <MiniDownloadProgress miniStyles={miniStyles} audioUrl={audio.audioUrl} />
         </GlassIsland>
       </GestureDetector>

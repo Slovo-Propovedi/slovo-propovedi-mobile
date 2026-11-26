@@ -1,14 +1,17 @@
 import { createCtx, type Ctx } from '@reatom/framework'
-import { act, fireEvent } from '@testing-library/react-native'
+import { act, fireEvent, screen } from '@testing-library/react-native'
 import { type ReactNode } from 'react'
+import { type TestInstance } from 'test-renderer'
 import { isPlayerExpandedAtom } from 'entities/player'
 import { type AudioPlayerData } from 'entities/sermon'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { LightTheme } from 'shared/ui/theme'
 import { showDetailsAtom } from '../../model/showDetailsAtom'
 import { showPlaylistAtom } from '../../model/showPlaylistAtom'
 import { showSoundSettingsAtom } from '../../model/showSoundSettingsAtom'
-import { MiniPlayerControlsRow } from './MiniPlayerControlsRow'
+import { MiniPlayerWideRow } from './MiniPlayerWideRow'
+import { createMiniStyles } from './miniStyles'
 
 const ADD_TO_FAVORITES_LABEL = 'Добавить в избранное'
 const REMOVE_FROM_FAVORITES_LABEL = 'Убрать из избранного'
@@ -22,14 +25,15 @@ const PREV_LABEL = 'Предыдущая проповедь'
 const NEXT_LABEL = 'Следующая проповедь'
 const PLAY_LABEL = 'Воспроизвести'
 const DROPDOWN_TEST_ID = 'anchored-dropdown'
-const ROW_TEST_ID = 'mini-controls-row'
+const TRANSPORT_CLUSTER_TEST_ID = 'mini-transport-cluster'
+const ARTWORK_URL = 'https://example.com/artwork.jpg'
 const RECT = { height: 36, width: 36, x: 100, y: 200 }
 // Widths exercised below follow MINI_WIDE_CONTROL_HIDE_WIDTHS (text 960,
 // menu 920, queue 880, repeat 856, favorite 832, previous 808, next 784).
 const WIDEST = 1024
 const TEXT_HIDDEN = 930
 const MENU_HIDDEN = 900
-const CLUSTER_RIGHT = 870
+const CLUSTER_RIGHT = 860
 const NEXT_ONLY = 790
 const PLAY_ONLY = 780
 
@@ -42,7 +46,7 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 
 const AUDIO: AudioPlayerData = {
   artist: 'Автор',
-  artwork: null,
+  artwork: ARTWORK_URL,
   audioUrl: 'https://example.com/audio.mp3',
   id: 'sermon-1',
   title: 'Проповедь',
@@ -182,10 +186,41 @@ jest.mock('shared/ui/menu', () => {
   }
 })
 
-const renderRow = (ctx = createCtx()) =>
-  renderWithProviders(<MiniPlayerControlsRow audio={AUDIO} />, { ctx })
+// The track block draws the marquee through MovingText; a plain Text keeps the
+// emitted tree readable so render order can be asserted positionally.
+jest.mock('shared/ui', () => {
+  const actual = jest.requireActual('shared/ui')
+  const { Text } = jest.requireActual('react-native')
 
-describe('<MiniPlayerControlsRow>', () => {
+  return {
+    ...actual,
+    MovingText: (props: { text?: string }) => <Text>{props.text}</Text>,
+  }
+})
+
+const renderRow = (ctx = createCtx()) =>
+  renderWithProviders(
+    <MiniPlayerWideRow audio={AUDIO} playlist={null} miniStyles={createMiniStyles(LightTheme)} />,
+    { ctx },
+  )
+
+// Depth-first render order: the row must read in the visual order the user sees.
+const findNodeIndex = (predicate: (node: TestInstance) => boolean) =>
+  (screen.root?.queryAll(() => true) ?? []).findIndex(predicate)
+
+const findIndexByLabel = (label: string) =>
+  findNodeIndex(node => node.props.accessibilityLabel === label)
+
+const findIndexByText = (text: string) => findNodeIndex(node => node.props.children === text)
+
+const findIndexByArtwork = (uri: string) => findNodeIndex(node => node.props.source?.uri === uri)
+
+const expectAscending = (positions: number[]) => {
+  expect(positions).not.toContain(-1)
+  expect(positions).toEqual([...positions].sort((left, right) => left - right))
+}
+
+describe('<MiniPlayerWideRow>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockWindowWidth = WIDEST
@@ -326,6 +361,42 @@ describe('<MiniPlayerControlsRow>', () => {
     expect(ctx.get(isPlayerExpandedAtom)).toBe(false)
   })
 
+  test('places the transport cluster before the artwork and title on the widest windows', async () => {
+    await renderRow()
+
+    expectAscending([
+      findIndexByLabel(REPEAT_OFF_LABEL),
+      findIndexByLabel(PREV_LABEL),
+      findIndexByLabel(PLAY_LABEL),
+      findIndexByLabel(NEXT_LABEL),
+      findIndexByLabel(ADD_TO_FAVORITES_LABEL),
+      findIndexByArtwork(ARTWORK_URL),
+      findIndexByText(AUDIO.title),
+      findIndexByLabel(TEXT_SERMON_LABEL),
+      findIndexByLabel(MENU_LABEL),
+      findIndexByLabel(OPEN_PLAYLIST_LABEL),
+    ])
+  })
+
+  test('keeps the transport cluster after the title once the menu cluster is gone', async () => {
+    mockWindowWidth = CLUSTER_RIGHT
+    const { getByTestId, queryByLabelText } = await renderRow()
+
+    expectAscending([
+      findIndexByArtwork(ARTWORK_URL),
+      findIndexByText(AUDIO.title),
+      findIndexByLabel(REPEAT_OFF_LABEL),
+      findIndexByLabel(PREV_LABEL),
+      findIndexByLabel(PLAY_LABEL),
+      findIndexByLabel(NEXT_LABEL),
+      findIndexByLabel(ADD_TO_FAVORITES_LABEL),
+    ])
+    expect(queryByLabelText(TEXT_SERMON_LABEL)).toBeNull()
+    expect(queryByLabelText(MENU_LABEL)).toBeNull()
+    expect(queryByLabelText(OPEN_PLAYLIST_LABEL)).toBeNull()
+    expect(getByTestId(TRANSPORT_CLUSTER_TEST_ID)).toHaveStyle({ marginLeft: 'auto' })
+  })
+
   describe('progressive hiding on narrower wide layouts', () => {
     test('drops only the text-sermon placeholder below its threshold', async () => {
       mockWindowWidth = TEXT_HIDDEN
@@ -334,7 +405,7 @@ describe('<MiniPlayerControlsRow>', () => {
       expect(queryByLabelText(TEXT_SERMON_LABEL)).toBeNull()
       expect(getByLabelText(MENU_LABEL)).toBeTruthy()
       expect(getByLabelText(OPEN_PLAYLIST_LABEL)).toBeTruthy()
-      expect(getByTestId(ROW_TEST_ID)).not.toHaveStyle({ marginLeft: 'auto' })
+      expect(getByTestId(TRANSPORT_CLUSTER_TEST_ID)).not.toHaveStyle({ marginLeft: 'auto' })
     })
 
     test('drops the ⋮ menu next, keeping the cluster on the left', async () => {
@@ -359,7 +430,7 @@ describe('<MiniPlayerControlsRow>', () => {
       expect(getByLabelText(PLAY_LABEL)).toBeTruthy()
       expect(getByLabelText(NEXT_LABEL)).toBeTruthy()
       expect(getByLabelText(ADD_TO_FAVORITES_LABEL)).toBeTruthy()
-      expect(getByTestId(ROW_TEST_ID)).toHaveStyle({ marginLeft: 'auto' })
+      expect(getByTestId(TRANSPORT_CLUSTER_TEST_ID)).toHaveStyle({ marginLeft: 'auto' })
     })
 
     test('keeps only next and play once repeat, favorite and prev are gone', async () => {

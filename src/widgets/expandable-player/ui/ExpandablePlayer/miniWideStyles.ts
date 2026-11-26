@@ -8,14 +8,9 @@ export const createWideMiniStyles = (theme: ThemeColors) =>
   StyleSheet.create({
     controlsRow: {
       alignItems: 'center',
+      flex: 1,
       flexDirection: 'row',
       gap: MINI_WIDE_CONTROL_GAP,
-    },
-    // With the right cluster gone the transport cluster is the last content of
-    // the pill: the auto margin keeps it pinned to the right edge even if the
-    // title box stops absorbing the free space.
-    controlsRowRight: {
-      marginLeft: 'auto',
     },
     icon: {
       color: theme.text,
@@ -41,5 +36,15 @@ export const createWideMiniStyles = (theme: ThemeColors) =>
     textButtonLabel: {
       color: theme.text,
       fontSize: FONT_SIZES.sm,
+    },
+    transportCluster: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: MINI_WIDE_CONTROL_GAP,
+    },
+    // With the right cluster gone the transport cluster is the pill's last
+    // content: the auto margin pins it to the right edge.
+    transportClusterRight: {
+      marginLeft: 'auto',
     },
   })

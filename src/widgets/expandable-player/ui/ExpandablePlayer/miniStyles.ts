@@ -104,6 +104,13 @@ export const createMiniStyles = (theme: ThemeColors) =>
       marginRight: INDENTS.low,
       overflow: 'hidden',
     },
+    // Artwork + two-line text block. The wide row interleaves the transport
+    // around it, so both layouts share one flexible wrapper.
+    miniTrackInfo: {
+      alignItems: 'center',
+      flex: 1,
+      flexDirection: 'row',
+    },
     miniTrackTitle: {
       color: theme.text,
       fontSize: FONT_SIZES.lg,

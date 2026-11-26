@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
-import { useWindowDimensions, View } from 'react-native'
+import { View } from 'react-native'
 import {
   PlayerControlButtonType,
   PlayerControlsSize,
@@ -10,33 +10,37 @@ import { useFavoriteSermon } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { IconButton } from 'shared/ui/icon-button'
 import { FONT_SIZES, useTheme } from 'shared/ui/theme'
-import { getMiniControlsVisibility } from '../../lib/getMiniControlsVisibility'
-import { MiniPlayerMenuCluster } from './MiniPlayerMenuCluster'
+import { type MiniControlsVisibility } from '../../lib/getMiniControlsVisibility'
 import { MINI_PLAY_HIT_SLOP, MINI_WIDE_TRANSPORT_BUTTON_WIDTH } from './miniStyles'
-import { createWideMiniStyles } from './miniWideStyles'
+import { type createWideMiniStyles } from './miniWideStyles'
 
 const ADD_TO_FAVORITES_LABEL = 'Добавить в избранное'
 const REMOVE_FROM_FAVORITES_LABEL = 'Убрать из избранного'
-const ROW_TEST_ID = 'mini-controls-row'
+const TRANSPORT_CLUSTER_TEST_ID = 'mini-transport-cluster'
 
-// Only the transport's side buttons ever leave the row; play always stays.
+// Only the transport's side buttons ever leave the cluster; play always stays.
 type ExcludedTransportButton = PlayerControlButtonType.Next | PlayerControlButtonType.Prev
 
 /**
- * Wide-layout control row of the mini pill. On the widest windows it reads
- * repeat + transport + favorite + the menu cluster; as the window narrows it
- * sheds the right cluster button by button and then thins the transport cluster
- * (repeat, heart, prev, next), ending in the bare artwork/title/play row of the
- * phone layout. Compact phones keep the single play/pause transport.
- * @param root0 - Row props.
- * @param root0.audio - Current sermon (favorite target and menu source).
+ * Transport cluster of the wide pill: repeat, the prev/play/next slot and the
+ * favorite heart. On the widest windows it leads the row (left of the artwork),
+ * and once the menu cluster is gone it hugs the right edge after the title.
+ * @param root0 - Cluster props.
+ * @param root0.audio - Current sermon (favorite target).
+ * @param root0.styles - Wide-pill styles built for the active theme.
+ * @param root0.visibility - Which controls fit the current window width.
  */
-export const MiniPlayerControlsRow = ({ audio }: { audio: AudioPlayerData }) => {
-  const { width } = useWindowDimensions()
+export const MiniPlayerTransportCluster = ({
+  audio,
+  styles,
+  visibility,
+}: {
+  audio: AudioPlayerData
+  styles: ReturnType<typeof createWideMiniStyles>
+  visibility: MiniControlsVisibility
+}) => {
   const { currentTheme } = useTheme()
-  const styles = createWideMiniStyles(currentTheme)
   const { isFavorite, toggleFavorite } = useFavoriteSermon(audio)
-  const visibility = getMiniControlsVisibility(width)
   // The transport always keeps play; prev/next hide through its own exclusion
   // contract, so the three-button slot narrows with them.
   const excludeButtons: ExcludedTransportButton[] = []
@@ -51,8 +55,11 @@ export const MiniPlayerControlsRow = ({ audio }: { audio: AudioPlayerData }) => 
 
   return (
     <View
-      testID={ROW_TEST_ID}
-      style={[styles.controlsRow, visibility.clusterSide === 'right' && styles.controlsRowRight]}
+      testID={TRANSPORT_CLUSTER_TEST_ID}
+      style={[
+        styles.transportCluster,
+        visibility.clusterSide === 'right' && styles.transportClusterRight,
+      ]}
     >
       {visibility.repeat && <PlayerRepeatToggle />}
       <SermonPlayerControls
@@ -75,7 +82,6 @@ export const MiniPlayerControlsRow = ({ audio }: { audio: AudioPlayerData }) => 
           }
         />
       )}
-      <MiniPlayerMenuCluster audio={audio} styles={styles} visibility={visibility} />
     </View>
   )
 }
