@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Web (iOS): the page fills the full physical screen height, removing the background band left below the app
 - Web (iOS): the floating bottom chrome keeps a guaranteed gap above the home indicator even when the safe-area probe reports zero — in the browser and the installed PWA alike
 - Web (iOS): the bottom chrome rides above the auto-hiding Safari toolbar and the keyboard via live visual-viewport tracking
 

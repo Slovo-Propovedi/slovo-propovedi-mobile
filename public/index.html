@@ -74,6 +74,18 @@
         overflow: hidden;
         overscroll-behavior: none;
       }
+      /* iOS web only (class set by the app on mount): 100dvh on iOS excludes the
+         home-indicator band, so the shell ends ~34px above the physical screen and
+         the OS letterboxes the page with a background-colored band. 100lvh is the
+         largest viewport = the full physical screen, so the page paints edge to
+         edge and the bottom-chrome floor (IOS_WEB_ISLANDS_GAP) is the only gap.
+         Android/desktop keep 100dvh — their browsers resize the layout viewport
+         for their own chrome, and the live visual-viewport lift already covers
+         the toolbar/keyboard overlay there. */
+      html.ios-web,
+      html.ios-web body {
+        height: 100lvh;
+      }
       /* These styles make the root element full-height */
       #root {
         display: flex;

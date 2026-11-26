@@ -1,6 +1,6 @@
 import { reatomContext } from '@reatom/npm-react'
 import { type SuspenseFallbackProps } from 'expo-router'
-import { type ReactNode } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import { ActivityIndicator, Platform, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context'
@@ -17,6 +17,7 @@ import {
 import { initializePlayer, scheduleStartupGuardReset } from 'entities/player'
 import { loadSearchHistoryAction } from 'entities/search-history'
 import { hydrateCachedSections } from 'entities/section'
+import { ensureIosWebShellClass } from 'shared/lib/hooks/ensureIosWebShellClass'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { initServerUrlAction, loadHapticsEnabled, loadToursDisabled } from 'shared/model'
 import { reportError } from 'shared/model/error-dialog'
@@ -58,6 +59,7 @@ const SafeAreaBoundary = ({ children }: { children: ReactNode }) =>
 
 const RootLayoutWithProvider = () => {
   useKeyboardBottomInsetSync()
+  useEffect(ensureIosWebShellClass, [])
 
   return (
     <reatomContext.Provider value={ctx}>

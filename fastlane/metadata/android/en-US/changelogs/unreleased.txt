@@ -1,2 +1,3 @@
 iOS web: the bottom bar now keeps a guaranteed gap above the home indicator, in the browser and installed PWA alike.
 iOS web: the bottom bar rides above the auto-hiding Safari toolbar and the keyboard via live viewport tracking.
+iOS web: the page fills the full screen height, removing the background band below the app.
