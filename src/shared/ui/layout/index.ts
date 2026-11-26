@@ -12,6 +12,7 @@ export {
   BAR_SIDE_INSET_EXPANDED,
   BAR_TOP_ISLAND_MARGIN,
   getBarSideInset,
+  getWideMiniPlayerBottomInset,
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from './bottomBarLayout'

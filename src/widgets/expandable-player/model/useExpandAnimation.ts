@@ -1,13 +1,12 @@
 import { useCallback } from 'react'
 import { Dimensions, useWindowDimensions } from 'react-native'
-import { type SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
+import { type SharedValue, type useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
-import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
-import { getContainerOpacity } from '../lib/getContainerOpacity'
-import { getMiniBarStyle } from '../lib/getMiniBarStyle'
+import { type getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { type getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 import { useAppStateSnap } from './useAppStateSnap'
+import { useGeometryAnimatedStyles } from './useGeometryAnimatedStyles'
 import { useGeometrySharedValues } from './useGeometrySharedValues'
 import { useOpacityStyles } from './useOpacityStyles'
 import { useProgressAnimation } from './useProgressAnimation'
@@ -61,37 +60,14 @@ export const useExpandAnimation = (
       screenWidth,
       tabBarHeight,
     })
-
-  const containerStyle = useAnimatedStyle(() => {
-    // Register dependency: any write to geometryReapplyTick re-runs this worklet,
-    // re-applying all returned props natively — the heal channel for Issue #63.
-    // Alternating sign (±0.01dp) defeats no-diff skip while keeping the offset
-    // permanently bounded — no monotonic accumulation.
-    const reapply = geometryReapplyTick.value % 2 === 1 ? 0.01 : -0.01
-    // Interpolates from the CURRENT mini geometry (expanded or collapsed pill),
-    // so expanding out of the collapsed bottom line stays continuous.
-    const style = getContainerGeometryStyle({
-      barProgress: barProgress.value,
-      fullScreenHeight: fullScreenHeightShared.value,
-      progress: progress.value,
-      screenWidth: screenWidthShared.value,
-      tabBarHeight: tabBarHeightShared.value,
-    })
-
-    // At rest the container is invisible: its solid `surface` would sit exactly
-    // under the translucent mini pill and make the glass read as opaque (the
-    // pill's BlurView would only see a solid rectangle). Any animation frame
-    // keeps it visible for the morph.
-    return { ...style, opacity: getContainerOpacity(progress.value), top: style.top + reapply }
+  const { containerStyle, miniBarStyle } = useGeometryAnimatedStyles({
+    barProgress,
+    fullScreenHeightShared,
+    geometryReapplyTick,
+    progress,
+    screenWidthShared,
+    tabBarHeightShared,
   })
-  const miniBarStyle = useAnimatedStyle(() =>
-    getMiniBarStyle({
-      barProgress: barProgress.value,
-      fullScreenHeight: fullScreenHeightShared.value,
-      screenWidth: screenWidthShared.value,
-      tabBarHeight: tabBarHeightShared.value,
-    }),
-  )
   const { backdropStyle, backgroundImageStyle, fullStyle, miniStyle } = useOpacityStyles(progress)
 
   /**

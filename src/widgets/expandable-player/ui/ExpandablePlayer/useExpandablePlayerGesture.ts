@@ -1,7 +1,9 @@
 import { useAction } from '@reatom/npm-react'
 import { useCallback } from 'react'
+import { Platform } from 'react-native'
 import { type SharedValue } from 'react-native-reanimated'
 import { closePlayerSheetAction, openPlayerSheetAction } from 'entities/player'
+import { useIsWideLayout } from 'shared/ui/layout'
 import { useFullscreenPanGesture } from '../../model/useFullscreenPanGesture'
 import { useMiniPanGesture } from '../../model/useMiniPanGesture'
 
@@ -31,6 +33,9 @@ export const useExpandablePlayerGesture = ({
   // them instead of threading two callbacks through every caller.
   const open = useAction(openPlayerSheetAction)
   const close = useAction(closePlayerSheetAction)
+  // The mini pill's resting edge lives at the screen bottom in the wide layout.
+  const isWideLayout = useIsWideLayout()
+  const isWeb = Platform.OS === 'web'
 
   const handleMiniTap = useCallback(() => {
     if (!expanded) void open()
@@ -40,7 +45,7 @@ export const useExpandablePlayerGesture = ({
     if (expanded) void close()
   }, [close, expanded])
 
-  const miniPan = useMiniPanGesture({ onOpen: open, progress, tabBarHeight })
+  const miniPan = useMiniPanGesture({ isWeb, isWideLayout, onOpen: open, progress, tabBarHeight })
   const panGesture = useFullscreenPanGesture({
     close,
     disabled,

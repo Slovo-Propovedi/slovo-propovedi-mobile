@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+import { Platform } from 'react-native'
+import { useIsWideLayout } from 'shared/ui/layout'
 import { getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 
@@ -14,13 +16,17 @@ interface UseRestingStylesInput {
 const getMiniRestingTop = ({
   barCollapsed,
   fullScreenHeight,
+  isWeb,
+  isWideLayout,
   screenWidth,
   tabBarHeight,
-}: Omit<UseRestingStylesInput, 'expanded'>) =>
+}: { isWeb: boolean; isWideLayout: boolean } & Omit<UseRestingStylesInput, 'expanded'>) =>
   getRestingContainerStyle({
     barCollapsed,
     expanded: false,
     fullScreenHeight,
+    isWeb,
+    isWideLayout,
     screenWidth,
     tabBarHeight,
   }).top
@@ -37,6 +43,9 @@ const getMiniRestingTop = ({
  * the settled state: the geometry guard derives its expectation from the live
  * morph progress (0 → expanded top, 1 → collapsed top), never from a separately
  * tracked settle flag.
+ *
+ * In the wide layout the bar-collapse axis is forced to the expanded pose: the
+ * tab island is anchored to the top, so the pill never folds into a bottom row.
  * @param input - Player state and screen geometry.
  * @param input.barCollapsed - Bar state whose morph has already completed (the start state mid-morph).
  * @param input.expanded - Whether the player is expanded to fullscreen.
@@ -51,46 +60,66 @@ export const useRestingStyles = ({
   screenWidth,
   tabBarHeight,
 }: UseRestingStylesInput) => {
+  const isWideLayout = useIsWideLayout()
+  const isWeb = Platform.OS === 'web'
+  // Wide has no bottom row to fold into: the expanded pose is the only pose.
+  const restingBarCollapsed = isWideLayout ? false : barCollapsed
   const restingContainerStyle = useMemo(
     () =>
       getRestingContainerStyle({
-        barCollapsed,
+        barCollapsed: restingBarCollapsed,
         expanded,
         fullScreenHeight,
+        isWeb,
+        isWideLayout,
         screenWidth,
         tabBarHeight,
       }),
-    [barCollapsed, expanded, fullScreenHeight, screenWidth, tabBarHeight],
+    [
+      expanded,
+      fullScreenHeight,
+      isWeb,
+      isWideLayout,
+      screenWidth,
+      restingBarCollapsed,
+      tabBarHeight,
+    ],
   )
   const barExpandedTop = useMemo(
     () =>
       getMiniRestingTop({
         barCollapsed: false,
         fullScreenHeight,
+        isWeb,
+        isWideLayout,
         screenWidth,
         tabBarHeight,
       }),
-    [fullScreenHeight, screenWidth, tabBarHeight],
+    [fullScreenHeight, isWeb, isWideLayout, screenWidth, tabBarHeight],
   )
   const barCollapsedTop = useMemo(
     () =>
       getMiniRestingTop({
         barCollapsed: true,
         fullScreenHeight,
+        isWeb,
+        isWideLayout,
         screenWidth,
         tabBarHeight,
       }),
-    [fullScreenHeight, screenWidth, tabBarHeight],
+    [fullScreenHeight, isWeb, isWideLayout, screenWidth, tabBarHeight],
   )
   const miniBarRestingStyle = useMemo(
     () =>
       getMiniBarStyle({
-        barProgress: barCollapsed ? 1 : 0,
+        barProgress: restingBarCollapsed ? 1 : 0,
         fullScreenHeight,
+        isWeb,
+        isWideLayout,
         screenWidth,
         tabBarHeight,
       }),
-    [barCollapsed, fullScreenHeight, screenWidth, tabBarHeight],
+    [fullScreenHeight, isWeb, isWideLayout, screenWidth, restingBarCollapsed, tabBarHeight],
   )
 
   return { barCollapsedTop, barExpandedTop, miniBarRestingStyle, restingContainerStyle }

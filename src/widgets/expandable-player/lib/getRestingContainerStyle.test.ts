@@ -1,4 +1,5 @@
 import {
+  BAR_BOTTOM_INSET_MIN,
   BAR_CIRCLE_SIZE,
   BAR_EXPANDED_ISLAND_TOP_MARGIN,
   BAR_OUTER_GAP,
@@ -131,4 +132,39 @@ describe('getRestingContainerStyle', () => {
       width: 400,
     })
   })
+})
+
+describe('getRestingContainerStyle wide layout', () => {
+  test.each([
+    { expectedBottom: BAR_BOTTOM_INSET_MIN, isWeb: false },
+    { expectedBottom: 25, isWeb: true },
+  ])(
+    'rests in the centered column on the screen bottom (web: $isWeb)',
+    ({ expectedBottom, isWeb }) => {
+      const screenWidth = 1194
+      const columnInset = (screenWidth - CONTENT_COLUMN_WIDTH) / 2
+      const style = getRestingContainerStyle({
+        // The one-line driver may have collapsed the bottom row while scrolling;
+        // the wide pill must still rest in its expanded top-island pose.
+        barCollapsed: true,
+        expanded: false,
+        fullScreenHeight: 800,
+        isWeb,
+        isWideLayout: true,
+        screenWidth,
+        tabBarHeight: 98,
+      })
+
+      expect(style).toEqual({
+        borderBottomLeftRadius: PILL_RADIUS,
+        borderBottomRightRadius: PILL_RADIUS,
+        borderTopLeftRadius: PILL_RADIUS,
+        borderTopRightRadius: PILL_RADIUS,
+        bottom: expectedBottom,
+        left: columnInset + BAR_SIDE_INSET_EXPANDED,
+        top: 800 - expectedBottom - PLAYER_SIZES.miniPlayerHeight,
+        width: CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2,
+      })
+    },
+  )
 })

@@ -3,6 +3,8 @@ import { getMiniPlayerGeometry } from './getMiniPlayerGeometry'
 interface MiniBarStyleInput {
   barProgress: number
   fullScreenHeight: number
+  isWeb?: boolean
+  isWideLayout?: boolean
   screenWidth: number
   tabBarHeight: number
 }

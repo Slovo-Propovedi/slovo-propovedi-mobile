@@ -118,3 +118,70 @@ describe('getMiniPlayerGeometry', () => {
     expect(geometryAt(tabBarHeight, 1).radius).toBe(PLAYER_SIZES.miniPlayerHeight / 2)
   })
 })
+
+describe('getMiniPlayerGeometry wide layout', () => {
+  // Desktop/Android web keeps the chrome frame gap; native rests on the
+  // safe-area line (BAR_BOTTOM_INSET_MIN) for inset-less frames.
+  const WIDE_WEB_BOTTOM = 25
+
+  const wideGeometryAt = ({
+    barProgress = 0,
+    isWeb = false,
+    screenWidth,
+    tabBarHeight,
+  }: {
+    barProgress?: number
+    isWeb?: boolean
+    screenWidth: number
+    tabBarHeight: number
+  }) =>
+    getMiniPlayerGeometry({
+      barProgress,
+      fullScreenHeight: SCREEN_HEIGHT,
+      isWeb,
+      isWideLayout: true,
+      screenWidth,
+      tabBarHeight,
+    })
+
+  const columnLeft = (screenWidth: number) =>
+    getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH) + BAR_SIDE_INSET_EXPANDED
+  const columnWidth = (screenWidth: number) =>
+    Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
+
+  test.each([768, 1194])('spans the content column at %ipx', screenWidth => {
+    const { left, width } = wideGeometryAt({ screenWidth, tabBarHeight: 98 })
+
+    expect(left).toBe(columnLeft(screenWidth))
+    expect(width).toBe(columnWidth(screenWidth))
+  })
+
+  test('ignores the tab row height: the pill rests on the screen bottom edge', () => {
+    // The tab island lives at the TOP in the wide layout, so any measured row
+    // height is irrelevant — even an absurd one.
+    const { bottom } = wideGeometryAt({ screenWidth: 768, tabBarHeight: 5000 })
+
+    expect(bottom).toBe(BAR_BOTTOM_INSET_MIN)
+  })
+
+  test('web wide keeps the chrome frame gap above the screen bottom', () => {
+    const { bottom } = wideGeometryAt({ isWeb: true, screenWidth: 768, tabBarHeight: 98 })
+
+    expect(bottom).toBe(WIDE_WEB_BOTTOM)
+  })
+
+  test('forces the expanded pose: the one-line progress cannot fold the pill', () => {
+    const expanded = wideGeometryAt({ screenWidth: 1194, tabBarHeight: 98 })
+    const folded = wideGeometryAt({ barProgress: 1, screenWidth: 1194, tabBarHeight: 98 })
+
+    expect(folded).toEqual(expanded)
+  })
+
+  test('keeps the mini height and the pill radius', () => {
+    const { height, radius, top } = wideGeometryAt({ screenWidth: 768, tabBarHeight: 98 })
+
+    expect(height).toBe(PLAYER_SIZES.miniPlayerHeight)
+    expect(radius).toBe(PLAYER_SIZES.miniPlayerHeight / 2)
+    expect(top).toBe(SCREEN_HEIGHT - BAR_BOTTOM_INSET_MIN - PLAYER_SIZES.miniPlayerHeight)
+  })
+})
