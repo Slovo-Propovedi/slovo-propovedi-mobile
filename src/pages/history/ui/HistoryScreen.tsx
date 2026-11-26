@@ -15,8 +15,8 @@ import {
 } from 'entities/listening-history'
 import { currentAudioAtom, isPlayingAtom } from 'entities/player'
 import { createTracksListStyles, TracksListSkeleton } from 'entities/track-list'
-import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { useBarCollapseOnScroll, useScreenChromePadding } from 'shared/ui/layout'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 import { resolveEntryFallbackPlaylist } from '../lib/resolveEntryFallbackPlaylist'
 import { HistoryEmptyState } from './HistoryEmptyState'
 import { HistoryHeaderMenu } from './HistoryHeaderMenu'
@@ -42,7 +42,7 @@ export const HistoryScreen = () => {
   const [isHistoryLoaded] = useAtom(isHistoryLoadedAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
   const [isPlaying] = useAtom(isPlayingAtom)
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { bottomChromeHeight } = useScreenChromePadding()
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const { onScroll } = useBarCollapseOnScroll({
     isSuspended: isBarCollapseSuspended,
@@ -104,7 +104,7 @@ export const HistoryScreen = () => {
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: entries.length === 0 ? 'center' : undefined,
-            paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
+            paddingBottom: bottomChromeHeight + INDENTS.low,
           }}
           renderItem={({ item }) => {
             const sermonId = getEntrySermon(item)?.id

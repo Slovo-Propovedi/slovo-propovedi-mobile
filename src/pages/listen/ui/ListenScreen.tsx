@@ -6,8 +6,8 @@ import { useTourScrollable } from 'features/onboarding'
 import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { BLUR_TARGET_ROUTES, BlurBackdrop, createRefreshControl, PullToRefresh } from 'shared/ui'
-import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
-import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { useBarCollapseOnScroll, useScreenChromePadding } from 'shared/ui/layout'
+import { useTheme } from 'shared/ui/theme'
 import { usePullToRefresh } from '../lib/usePullToRefresh'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 import { styles } from './ListenScreen.styles'
@@ -18,7 +18,7 @@ export const ListenScreen = () => {
   const insets = useSafeAreaInsets()
   const { currentTheme } = useTheme()
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { bottomChromeHeight, topChromeHeight } = useScreenChromePadding()
   const { onContentSizeChange, onScroll } = useBarCollapseOnScroll({
     isSuspended: isBarCollapseSuspended,
   })
@@ -42,7 +42,10 @@ export const ListenScreen = () => {
         edges={['left', 'right']}
         style={[
           styles.safeArea,
-          { backgroundColor: currentTheme.background, paddingTop: insets.top },
+          {
+            backgroundColor: currentTheme.background,
+            paddingTop: Math.max(insets.top, topChromeHeight),
+          },
         ]}
       >
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
@@ -53,11 +56,9 @@ export const ListenScreen = () => {
             keyboardDismissMode='on-drag'
             keyboardShouldPersistTaps='handled'
             onContentSizeChange={onContentSizeChange}
+            contentContainerStyle={[{ paddingBottom: bottomChromeHeight }]}
             style={[styles.scroll, { backgroundColor: currentTheme.background }]}
             refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
-            contentContainerStyle={[
-              { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
-            ]}
           >
             <ListenTopRow showAdminButton={canOpenAdminPanel} />
             <DynamicSectionsSlider onboardingTargetId='listen.sections' />

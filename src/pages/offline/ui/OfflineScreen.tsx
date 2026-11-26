@@ -11,8 +11,8 @@ import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { sermonCachingEnabledAtom } from 'entities/offline-cache'
 import { isPlayingAtom } from 'entities/player'
 import { createTracksListStyles, TracksListSkeleton } from 'entities/track-list'
-import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { useBarCollapseOnScroll, useScreenChromePadding } from 'shared/ui/layout'
+import { INDENTS, useTheme } from 'shared/ui/theme'
 import { buildOfflinePlaylist } from '../lib/offlinePlaylist'
 import { OFFLINE_PLAYBACK_ERROR_MESSAGE, usePlayAllOffline } from '../lib/usePlayAllOffline'
 import { OfflineEmptyState } from './OfflineEmptyState'
@@ -43,7 +43,7 @@ export const OfflineScreen = () => {
   const { isLoading, items } = useOfflineSermons()
   const [isPlaying] = useAtom(isPlayingAtom)
   const [isCachingEnabled] = useAtom(sermonCachingEnabledAtom)
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { bottomChromeHeight } = useScreenChromePadding()
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const { onScroll } = useBarCollapseOnScroll({
     isSuspended: isBarCollapseSuspended,
@@ -104,7 +104,7 @@ export const OfflineScreen = () => {
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: items.length === 0 ? 'center' : undefined,
-            paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
+            paddingBottom: bottomChromeHeight + INDENTS.low,
           }}
           renderItem={({ item }) => (
             <OfflineRow

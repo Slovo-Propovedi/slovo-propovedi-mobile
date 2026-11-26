@@ -1,4 +1,3 @@
-import { useAtom } from '@reatom/npm-react'
 import { type ReactElement } from 'react'
 import { ActivityIndicator } from 'react-native'
 import Animated from 'react-native-reanimated'
@@ -13,8 +12,8 @@ import { useHistoryProgressMap, useHistorySermonIds } from 'entities/listening-h
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { EmptyState } from 'shared/ui'
-import { tabBarHeightAtom, useBarCollapseOnScroll } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
+import { useBarCollapseOnScroll, useScreenChromePadding } from 'shared/ui/layout'
+import { INDENTS } from 'shared/ui/theme'
 import { type PagedSearch } from '../lib/pagedGroup'
 import { type SearchGroup } from '../lib/searchGroup'
 import { MIN_RESULTS_VIEW_LENGTH } from '../lib/searchThresholds'
@@ -48,7 +47,7 @@ export const SearchResultsList = ({
 }) => {
   const progressMap = useHistoryProgressMap()
   const historySermonIds = useHistorySermonIds()
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { bottomChromeHeight } = useScreenChromePadding()
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const { onScroll } = useBarCollapseOnScroll({ isSuspended: isBarCollapseSuspended })
   const showEmptyState = query.trim().length >= MIN_RESULTS_VIEW_LENGTH
@@ -57,10 +56,7 @@ export const SearchResultsList = ({
     group === 'sermons' ? paged.sermons : group === 'playlists' ? paged.playlists : paged.preachers
 
   const listProps = {
-    contentContainerStyle: [
-      { flexGrow: 1 },
-      { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
-    ],
+    contentContainerStyle: [{ flexGrow: 1 }, { paddingBottom: bottomChromeHeight }],
     ItemSeparatorComponent: SearchRowSeparator,
     // Safe now that neither page pose depends on focus: dragging the list hides
     // the keyboard and keeps scrolling instead of leaving a dead chrome strip.

@@ -7,6 +7,7 @@ import { HelpHeaderButton, OnboardingTarget, useTourScrollable } from 'features/
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { APP_NAME, APP_VERSION } from 'shared/config'
 import { BLUR_TARGET_ROUTES, BlurBackdrop, ScreenTitleRow } from 'shared/ui'
+import { useScreenChromePadding } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { AdminPanelButton } from './AdminPanelButton'
 import { MoreMenuSettingsItem } from './MoreMenuSettingsItem'
@@ -14,6 +15,7 @@ import { styles } from './styles'
 
 export const MoreScreen = () => {
   const insets = useSafeAreaInsets()
+  const { topChromeHeight } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const restore = useAction(restoreSession)
@@ -35,7 +37,10 @@ export const MoreScreen = () => {
         edges={['left', 'right']}
         style={[
           styles.container,
-          { backgroundColor: currentTheme.background, paddingTop: insets.top },
+          {
+            backgroundColor: currentTheme.background,
+            paddingTop: Math.max(insets.top, topChromeHeight),
+          },
         ]}
       >
         <ScrollView ref={tourScrollableRef}>

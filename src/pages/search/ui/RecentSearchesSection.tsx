@@ -9,9 +9,9 @@ import {
 } from 'entities/search-history'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { ConfirmDialog } from 'shared/ui/confirm-dialog'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { useScreenChromePadding } from 'shared/ui/layout'
 import { PressableButton } from 'shared/ui/pressable-button'
-import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 
 const SECTION_TITLE = 'Недавние поиски'
 const CLEAR_LABEL = 'Очистить'
@@ -29,7 +29,7 @@ export const RecentSearchesSection = ({
   const { currentTheme } = useTheme()
   const ctx = useCtx()
   const [history] = useAtom(searchHistoryAtom)
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { bottomChromeHeight } = useScreenChromePadding()
   const [isDialogVisible, setDialogVisible] = useState(false)
 
   const handleRemove = useCallback(
@@ -72,10 +72,7 @@ export const RecentSearchesSection = ({
       <ScrollView
         keyboardDismissMode='on-drag'
         keyboardShouldPersistTaps='handled'
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
-        ]}
+        contentContainerStyle={[styles.content, { paddingBottom: bottomChromeHeight }]}
       >
         <View style={styles.header}>
           <Text style={[styles.title, { color: currentTheme.text }]}>{SECTION_TITLE}</Text>

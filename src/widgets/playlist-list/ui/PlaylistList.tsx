@@ -1,11 +1,10 @@
-import { useAtom } from '@reatom/npm-react'
 import { StatusBar, type StatusBarStyle } from 'expo-status-bar'
 import { type ReactElement } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useCollapsingNavbarDriver } from 'shared/ui/collapsing-navbar-driver'
-import { tabBarHeightAtom } from 'shared/ui/layout'
-import { FONT_SIZES, INDENTS, PLAYER_SIZES, useTheme } from 'shared/ui/theme'
+import { useScreenChromePadding } from 'shared/ui/layout'
+import { FONT_SIZES, INDENTS, useTheme } from 'shared/ui/theme'
 import { TITLE_TOP_GAP, useCollapsingHeader } from '../lib/useCollapsingHeader'
 import { type PlaylistListItemData } from '../model'
 import { PlaylistListItem } from './PlaylistListItem'
@@ -31,7 +30,7 @@ export const PlaylistList = ({
   title: string
 }) => {
   const { currentTheme, isLight } = useTheme()
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { bottomChromeHeight } = useScreenChromePadding()
   const { darkenStart, headerHeight, onTitleLayout, scrollHandler, scrollY, titleAppearThreshold } =
     useCollapsingHeader()
 
@@ -56,18 +55,18 @@ export const PlaylistList = ({
         ListEmptyComponent={
           <Text style={[styles.emptyText, { color: currentTheme.textMuted }]}>{EMPTY_TEXT}</Text>
         }
+        contentContainerStyle={[
+          styles.listContent,
+          {
+            paddingBottom: bottomChromeHeight + INDENTS.low,
+            paddingTop: headerHeight + TITLE_TOP_GAP,
+          },
+        ]}
         ListHeaderComponent={
           <View onLayout={onTitleLayout} style={styles.titleContainer}>
             <Text style={[styles.title, { color: currentTheme.text }]}>{title}</Text>
           </View>
         }
-        contentContainerStyle={[
-          styles.listContent,
-          {
-            paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
-            paddingTop: headerHeight + TITLE_TOP_GAP,
-          },
-        ]}
       />
     </View>
   )

@@ -10,7 +10,7 @@ import {
   EmptyState,
   PullToRefresh,
 } from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { tabBarHeightAtom, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { type AdminSectionListItem } from '../lib/sectionListItem'
 import { useAdminSections } from '../lib/useAdminSections'
@@ -31,6 +31,7 @@ const SectionSkeletonList = () => (
 
 export const AdminSectionsScreen = () => {
   const insets = useSafeAreaInsets()
+  const { topChromeHeight } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -54,7 +55,10 @@ export const AdminSectionsScreen = () => {
       <View
         style={[
           styles.container,
-          { backgroundColor: currentTheme.background, paddingTop: insets.top },
+          {
+            backgroundColor: currentTheme.background,
+            paddingTop: Math.max(insets.top, topChromeHeight),
+          },
         ]}
       >
         <PullToRefresh onRefresh={reload} refreshing={isRefreshing}>

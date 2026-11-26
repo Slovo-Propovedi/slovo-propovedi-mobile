@@ -1,9 +1,8 @@
-import { useAtom } from '@reatom/npm-react'
 import { type ReactElement } from 'react'
 import { type ListRenderItem, type StyleProp, Text, type ViewStyle } from 'react-native'
 import Animated, { type useAnimatedScrollHandler } from 'react-native-reanimated'
-import { tabBarHeightAtom } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
+import { useScreenChromePadding } from 'shared/ui/layout'
+import { INDENTS } from 'shared/ui/theme'
 import { type TracksListData } from './usePlaylistNavigationOptions'
 
 const DEFAULT_EMPTY_MESSAGE = 'Этот плейлист пустой'
@@ -25,7 +24,7 @@ export const PlaylistTrackList = ({
   renderItem: ListRenderItem<TracksListData[number]>
   style: StyleProp<ViewStyle>
 }) => {
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { bottomChromeHeight } = useScreenChromePadding()
 
   return (
     <Animated.FlatList
@@ -39,7 +38,7 @@ export const PlaylistTrackList = ({
       ItemSeparatorComponent={ItemSeparatorComponent}
       ListEmptyComponent={<Text style={{ marginHorizontal: 'auto' }}>{emptyMessage}</Text>}
       contentContainerStyle={{
-        paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
+        paddingBottom: bottomChromeHeight + INDENTS.low,
       }}
     />
   )

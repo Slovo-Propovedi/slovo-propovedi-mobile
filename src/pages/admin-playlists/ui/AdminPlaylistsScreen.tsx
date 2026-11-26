@@ -9,7 +9,7 @@ import {
   EmptyState,
   PullToRefresh,
 } from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { tabBarHeightAtom, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { type AdminPlaylistsListItem } from '../lib/playlistListItem'
@@ -32,6 +32,7 @@ const PlaylistSkeletonList = () => (
 
 export const AdminPlaylistsScreen = () => {
   const insets = useSafeAreaInsets()
+  const { topChromeHeight } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -61,7 +62,10 @@ export const AdminPlaylistsScreen = () => {
       <View
         style={[
           styles.container,
-          { backgroundColor: currentTheme.background, paddingTop: insets.top },
+          {
+            backgroundColor: currentTheme.background,
+            paddingTop: Math.max(insets.top, topChromeHeight),
+          },
         ]}
       >
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>

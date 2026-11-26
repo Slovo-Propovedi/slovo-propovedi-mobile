@@ -4,8 +4,8 @@ import { StyleSheet } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { type LocalPlaylistData } from 'entities/playlist'
-import { nextBarCollapsedState, setBarCollapsed, tabBarHeightAtom } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
+import { nextBarCollapsedState, setBarCollapsed, useScreenChromePadding } from 'shared/ui/layout'
+import { INDENTS } from 'shared/ui/theme'
 import { MyPlaylistsRow } from './MyPlaylistsRow'
 
 // Вертикальный список локальных плейлистов с drag-to-reorder. Вне режима
@@ -38,7 +38,7 @@ export const MyPlaylistsDragList = ({
   onDragEnd: (orderedIds: string[]) => void
   onPressItem: (playlist: LocalPlaylistData) => void
 }) => {
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { bottomChromeHeight } = useScreenChromePadding()
   const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
   const applyBarCollapsed = useAction(setBarCollapsed)
@@ -73,7 +73,7 @@ export const MyPlaylistsDragList = ({
       onScrollOffsetChange={handleScrollOffsetChange}
       onDragEnd={({ data }) => onDragEnd(data.map(playlist => playlist.id))}
       contentContainerStyle={{
-        paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight + INDENTS.low,
+        paddingBottom: bottomChromeHeight + INDENTS.low,
         paddingHorizontal: INDENTS.medium,
       }}
       renderItem={({ drag, isActive, item }: RenderItemParams<LocalPlaylistData>) => (

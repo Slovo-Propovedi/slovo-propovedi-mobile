@@ -10,7 +10,7 @@ import {
   EmptyState,
   PullToRefresh,
 } from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { tabBarHeightAtom, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { TouchableItem } from 'shared/ui/touchable-item'
 import { useAdminSermons } from '../lib/useAdminSermons'
@@ -27,9 +27,11 @@ const LIST_TEST_ID = 'admin-sermons-list'
 
 export const AdminSermonsScreen = () => {
   const insets = useSafeAreaInsets()
+  const { topChromeHeight } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const topInset = Math.max(insets.top, topChromeHeight)
   const {
     isError,
     isLoading,
@@ -64,7 +66,7 @@ export const AdminSermonsScreen = () => {
       <View
         style={[
           styles.container,
-          { backgroundColor: currentTheme.background, paddingTop: insets.top },
+          { backgroundColor: currentTheme.background, paddingTop: topInset },
         ]}
       >
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>

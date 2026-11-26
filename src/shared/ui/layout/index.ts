@@ -24,6 +24,7 @@ export {
 export { useBarBottomPadding } from './lib/useBarBottomPadding'
 export { useBarCollapseOnScroll } from './lib/useBarCollapseOnScroll'
 export { useIsWideLayout } from './lib/useIsWideLayout'
+export { useScreenChromePadding } from './lib/useScreenChromePadding'
 export {
   isBarCollapsedAtom,
   isTabBarMeasuredAtom,

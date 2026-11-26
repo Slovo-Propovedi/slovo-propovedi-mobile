@@ -4,7 +4,7 @@ import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { authUserAtom } from 'entities/auth'
 import { BLUR_TARGET_ROUTES, BlurBackdrop, createRefreshControl, PullToRefresh } from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { tabBarHeightAtom, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminStats } from '../lib/useAdminStats'
 import { AdminHomeHeader } from './AdminHomeHeader'
@@ -15,6 +15,7 @@ import { styles } from './styles'
 
 export const AdminHomeScreen = () => {
   const insets = useSafeAreaInsets()
+  const { topChromeHeight } = useScreenChromePadding()
   const router = useRouter()
   const [user] = useAtom(authUserAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -26,7 +27,10 @@ export const AdminHomeScreen = () => {
       <View
         style={[
           styles.container,
-          { backgroundColor: currentTheme.background, paddingTop: insets.top },
+          {
+            backgroundColor: currentTheme.background,
+            paddingTop: Math.max(insets.top, topChromeHeight),
+          },
         ]}
       >
         <PullToRefresh onRefresh={stats.reload} refreshing={stats.isRefreshing}>

@@ -1,11 +1,10 @@
-import { useAtom } from '@reatom/npm-react'
 import { useCallback } from 'react'
 import { ActivityIndicator, FlatList, StyleSheet } from 'react-native'
 import { SearchResultsRow, SearchRowSeparator, useSermonPlayback } from 'features/sermon-search'
 import { type SermonData } from 'entities/sermon'
 import { EmptyState } from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
-import { INDENTS, PLAYER_SIZES } from 'shared/ui/theme'
+import { useScreenChromePadding } from 'shared/ui/layout'
+import { INDENTS } from 'shared/ui/theme'
 import { PreacherListActionRow } from './PreacherListActionRow'
 import { PreacherSermonsSkeleton } from './PreacherSermonsSkeleton'
 
@@ -29,7 +28,7 @@ export const PreacherSermonsList = ({
   loadMore: () => Promise<void>
   loadMoreFailed: boolean
 }) => {
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
+  const { bottomChromeHeight } = useScreenChromePadding()
   const { modal, onSermonPress } = useSermonPlayback()
   // An exhausted auto-continue run can end with hasMore but no rows; an empty
   // list cannot scroll, so onEndReached would never reach the remaining pages.
@@ -50,13 +49,10 @@ export const PreacherSermonsList = ({
         onEndReachedThreshold={0.4}
         keyExtractor={item => item.id}
         ItemSeparatorComponent={SearchRowSeparator}
+        contentContainerStyle={[styles.content, { paddingBottom: bottomChromeHeight }]}
         onEndReached={() => {
           if (hasMore && !isLoadingMore) void loadMore()
         }}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: tabBarHeight + PLAYER_SIZES.miniPlayerHeight },
-        ]}
         ListFooterComponent={
           isLoadingMore ? (
             <ActivityIndicator style={FOOTER_STYLE} />

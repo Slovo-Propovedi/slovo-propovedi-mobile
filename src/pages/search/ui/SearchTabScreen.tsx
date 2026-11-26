@@ -7,6 +7,7 @@ import { useTourActionRegistrar } from 'features/onboarding'
 import { useSearchUrlSync, useSermonPlayback } from 'features/sermon-search'
 import { type SermonData } from 'entities/sermon'
 import { BLUR_TARGET_ROUTES, BlurBackdrop } from 'shared/ui'
+import { useScreenChromePadding } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { useClearSearchOnLeave } from '../lib/useClearSearchOnLeave'
 import { useSearchNavigation } from '../lib/useSearchNavigation'
@@ -26,6 +27,7 @@ const CLOSE_SERMON_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
  */
 export const SearchTabScreen = () => {
   const insets = useSafeAreaInsets()
+  const { topChromeHeight } = useScreenChromePadding()
   const { currentTheme } = useTheme()
   const pathname = usePathname()
   useClearSearchOnLeave(pathname)
@@ -54,7 +56,10 @@ export const SearchTabScreen = () => {
         edges={['left', 'right']}
         style={[
           styles.safeArea,
-          { backgroundColor: currentTheme.background, paddingTop: insets.top },
+          {
+            backgroundColor: currentTheme.background,
+            paddingTop: Math.max(insets.top, topChromeHeight),
+          },
         ]}
       >
         <SearchScreen
