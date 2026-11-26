@@ -2,8 +2,8 @@ import { type OnboardingScenario } from '../scenarios'
 
 // The steps themselves are the content version of «Что нового»: the auto-show gate
 // compares their fingerprint, and a release without user-visible novelties ships none.
-// Features of the same release accumulate here: append a card instead of replacing
-// the previous ones — old steps are dropped only when the release is cut.
+// A notable release swaps these cards for its own novelties — old steps are dropped,
+// not accumulated; several features of one release simply add another card.
 // Pure announcement cards, so they carry no route or target and start on any screen.
 export const whatsNewScenario: OnboardingScenario = {
   description: 'Новинки этого релиза',
@@ -11,20 +11,12 @@ export const whatsNewScenario: OnboardingScenario = {
   id: 'whatsNew',
   steps: [
     {
-      text: 'Поиск теперь открывается отдельной страницей — экран «Слушать» уступает её место. Недавние запросы хранятся на устройстве и управляются прямо на странице: «⋯» убирает запрос из истории, «Очистить» очищает всё.',
-      title: 'Новый поиск',
+      text: 'На экранах от 768 точек интерфейс перестраивается: вкладки и поиск собраны одним островом сверху, а мини-плеер закреплён снизу. У плеера появляются повтор, избранное, меню и очередь; при сужении окна кнопки убираются по одной — остаются обложка, название и воспроизведение.',
+      title: 'Планшетный вид',
     },
     {
-      text: 'Результаты разложены по вкладкам «Проповеди», «Плейлисты» и «Проповедники»: полный список с бесконечной прокруткой, а иконки лупы, микрофона и крестиков стали крупнее.',
-      title: 'Результаты по вкладкам',
-    },
-    {
-      text: 'Поиск открывается пилюлей с лупой справа от панели вкладок — это отдельная страница, а не вкладка, поэтому в нижней панели остаются три таба. Когда вы уходите со страницы поиска, запрос очищается.',
-      title: 'Поиск в нижней панели',
-    },
-    {
-      text: 'Прогресс и отметки «прослушано» теперь хранятся по каждой проповеди: они не пропадают, когда запись вытесняется из истории прослушивания (лимит 100), и восстанавливаются из резервной копии.',
-      title: 'Отметки прослушивания',
+      text: 'Поле поиска теперь в верхней части страницы: под переключателем «Слушать/Читать» на главной и над результатами в выдаче. Подсказки открываются под полем, а при входе на страницу поле сразу получает фокус.',
+      title: 'Поле поиска наверху',
     },
   ],
   title: 'Что нового',

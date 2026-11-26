@@ -51,17 +51,15 @@ describe('onboarding scenario data', () => {
     expect(Object.keys(whatsNewScenarioData)).toEqual(['whatsNewScenario'])
   })
 
-  test('whats-new accumulates the release cards instead of replacing them', () => {
+  test('whats-new ships the current release cards', () => {
     const whatsNew = scenariosById.whatsNew
 
-    // Features of one release add cards; the committed search cards stay until
-    // the release is cut, and the new ones are appended after them.
-    expect(whatsNew.steps).toHaveLength(4)
+    // A notable release replaces the cards with its own novelties; old steps are
+    // dropped instead of accumulated.
+    expect(whatsNew.steps).toHaveLength(2)
     expect(whatsNew.steps.map(step => step.title)).toEqual([
-      'Новый поиск',
-      'Результаты по вкладкам',
-      'Поиск в нижней панели',
-      'Отметки прослушивания',
+      'Планшетный вид',
+      'Поле поиска наверху',
     ])
 
     // Pure announcement cards: no route/target, so the tour starts on the first
@@ -72,10 +70,10 @@ describe('onboarding scenario data', () => {
       expect(step.tapTargetId).toBeUndefined()
       expect(step.tapActionId).toBeUndefined()
     })
-    expect(whatsNew.steps[2].text).toContain('пилюлей')
-    expect(whatsNew.steps[2].text).toContain('три таба')
-    expect(whatsNew.steps[2].text).toContain('очищается')
-    expect(whatsNew.steps[3].text).toContain('«прослушано»')
+    expect(whatsNew.steps[0].text).toContain('768')
+    expect(whatsNew.steps[0].text).toContain('мини-плеер')
+    expect(whatsNew.steps[1].text).toContain('Поле поиска')
+    expect(whatsNew.steps[1].text).toContain('под полем')
   })
 
   test('share scenario falls back globally and leads from «Ещё» into the QR code, copy button and link contents', () => {
@@ -122,8 +120,8 @@ describe('onboarding scenario data', () => {
     const whatsNew = scenariosById.whatsNew
     const whatsNewDeck = buildTourDeck(whatsNew.steps)
 
-    expect(whatsNewDeck).toHaveLength(4)
-    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1, 2, 3])
+    expect(whatsNewDeck).toHaveLength(2)
+    expect(whatsNewDeck.map(entry => entry.cardIndex)).toEqual([0, 1])
     expect(whatsNewDeck.every(entry => entry.entryStepIndexes.length === 0)).toBe(true)
     expect(whatsNewDeck.every(entry => entry.exitStepIndexes.length === 0)).toBe(true)
   })
