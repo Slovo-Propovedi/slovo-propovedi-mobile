@@ -119,6 +119,7 @@ describe('useKeyboardBottomInsetSync', () => {
 
 describe('useKeyboardBottomInsetSync on web', () => {
   let viewport: MockVisualViewport
+  const originalInnerHeight = Object.getOwnPropertyDescriptor(window, 'innerHeight')
 
   beforeEach(() => {
     keyboardBottomInsetSv.value = 0
@@ -146,6 +147,8 @@ describe('useKeyboardBottomInsetSync on web', () => {
 
   afterEach(() => {
     delete (window as { visualViewport?: unknown }).visualViewport
+    if (originalInnerHeight) Object.defineProperty(window, 'innerHeight', originalInnerHeight)
+    else Reflect.deleteProperty(window, 'innerHeight')
     jest.restoreAllMocks()
   })
 
@@ -189,6 +192,7 @@ describe('useKeyboardBottomInsetSync on web', () => {
 
     expect(viewport.removeEventListener).toHaveBeenCalledWith('resize', expect.any(Function))
     expect(viewport.removeEventListener).toHaveBeenCalledWith('scroll', expect.any(Function))
+    expect(window.removeEventListener).toHaveBeenCalledWith('resize', expect.any(Function))
   })
 
   test('does not throw on unmount when window.removeEventListener is missing', async () => {

@@ -1,7 +1,7 @@
 import { Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { isIOSUserAgent } from '../../../lib/hooks/isIOSUserAgent'
-import { BAR_BOTTOM_INSET_WEB, getBarBottomPadding, IOS_WEB_ISLANDS_GAP } from '../bottomBarLayout'
+import { getBarBottomPadding, IOS_WEB_ISLANDS_GAP } from '../bottomBarLayout'
 
 /**
  * Bottom padding of the floating chrome (islands row, search pill, fullscreen
@@ -21,5 +21,5 @@ export const useBarBottomPadding = (): number => {
 
   if (isWeb && isIOSUserAgent()) return IOS_WEB_ISLANDS_GAP
 
-  return getBarBottomPadding(bottom, isWeb, BAR_BOTTOM_INSET_WEB)
+  return getBarBottomPadding(bottom, isWeb)
 }

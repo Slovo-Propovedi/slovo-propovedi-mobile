@@ -50,16 +50,12 @@
 
          iOS WebKit does not resolve `height: 100%` against the dynamic viewport:
          in Safari it points at the static viewport, so the page ends above the
-         physical bottom and the html/body background shows through. `100dvh`
-         tracks the dynamic viewport in browser and installed PWA alike, so the
-         shell is `100dvh` on every web surface.
-
-         The iOS home-indicator band is cleared by the app-side floor
-         (`IOS_HOME_INDICATOR_INSET = 34` via getBarBottomPadding), not by an
-         env(safe-area-inset-bottom) extension at shell level. env()-based shell
-         sizing double-counted the band when env() was reported and missed it
-         when the probe returned 0 on real devices, so no standalone special-case
-         is kept here. */
+         physical bottom and the html/body background shows through. The shell is
+         `100dvh` on Android/desktop and `100lvh` on iOS web (see the
+         `html.ios-web` rule below). No bottom band is reserved for the OS: the
+         chrome keeps the 21dp `IOS_WEB_ISLANDS_GAP`. There is no env()-based
+         shell sizing — when the env() probe is reported it double-counts the OS
+         band on iOS. */
       html,
       body {
         height: 100%;

@@ -2,12 +2,14 @@ import { useEffect } from 'react'
 import { Keyboard, type KeyboardEvent, Platform } from 'react-native'
 import { makeMutable, useAnimatedStyle } from 'react-native-reanimated'
 
-// WebKit on iOS may exclude the home-indicator band (~34 px) from
+// WebKit on iOS may exclude the home-indicator band from
 // visualViewport.height, so `innerHeight - (height + offsetTop)` reads as a
-// permanent phantom band that would lift the chrome twice (the 34 dp floor plus
-// this band). A real re-expanded Safari toolbar band is ~80-100 px and the
-// keyboard is at least 200 px, so anything below 40 px is noise or that phantom
-// and must not lift.
+// permanent phantom band that would lift the chrome twice (the 21 dp
+// `IOS_WEB_ISLANDS_GAP` plus this band). A real re-expanded Safari toolbar band
+// is ~80-100 px and the keyboard is at least 200 px, so anything below 40 px is
+// noise or that phantom and must not lift. Dead-zone caveat: a band crossing
+// 40 px mid-animation jumps 0 -> >=40 in one frame; accepted because real
+// toolbar bands are ~80-100 px, so the jump lands above the chrome anyway.
 const MIN_LIFT_BAND = 40
 
 /**

@@ -27,8 +27,8 @@ describe('bottom bar geometry', () => {
     expect(getBarBottomPadding(0, true)).toBe(SLIDER_REST_INSET + 1)
   })
 
-  test('iOS web centers the home indicator in a 21dp gap above the screen bottom', () => {
-    expect(IOS_WEB_ISLANDS_GAP).toBe(21)
+  test('pins the 21dp islands gap: 8px below the indicator + 8px above + the 5px bar', () => {
+    expect(IOS_WEB_ISLANDS_GAP).toBe(8 + 5 + 8)
   })
 })
 
@@ -44,13 +44,6 @@ describe('getBarBottomPadding', () => {
     expect(getBarBottomPadding(0, true)).toBe(25)
     expect(getBarBottomPadding(10, true)).toBe(25)
     expect(getBarBottomPadding(34, true)).toBe(34)
-  })
-
-  test('web: a custom floor overrides a smaller inset', () => {
-    expect(getBarBottomPadding(0, true, 34)).toBe(34)
-    expect(getBarBottomPadding(10, true, 34)).toBe(34)
-    expect(getBarBottomPadding(34, true, 34)).toBe(34)
-    expect(getBarBottomPadding(40, true, 34)).toBe(40)
   })
 })
 
