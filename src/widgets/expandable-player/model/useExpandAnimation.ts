@@ -3,6 +3,7 @@ import { Dimensions, useWindowDimensions } from 'react-native'
 import { type SharedValue, type useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
+import { useBarBottomPadding } from 'shared/ui/layout'
 import { type getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { type getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 import { useAppStateSnap } from './useAppStateSnap'
@@ -51,6 +52,9 @@ export const useExpandAnimation = (
   )
   const { settledExpanded, settleOnSnap } = useProgressAnimation(expanded, progress)
   useAppStateSnap(expanded, progress, settleOnSnap)
+  // One authority for the wide pill's rest line: the same chrome bottom padding
+  // the islands row uses, threaded to the pure geometry as a plain number.
+  const wideBottomInset = useBarBottomPadding()
   // Resting geometry follows the SETTLED expand state (like `settledCollapsed`).
   const { barCollapsedTop, barExpandedTop, miniBarRestingStyle, restingContainerStyle } =
     useRestingStyles({
@@ -59,6 +63,7 @@ export const useExpandAnimation = (
       fullScreenHeight,
       screenWidth,
       tabBarHeight,
+      wideBottomInset,
     })
   const { containerStyle, miniBarStyle } = useGeometryAnimatedStyles({
     barProgress,
@@ -67,6 +72,7 @@ export const useExpandAnimation = (
     progress,
     screenWidthShared,
     tabBarHeightShared,
+    wideBottomInset,
   })
   const { backdropStyle, backgroundImageStyle, fullStyle, miniStyle } = useOpacityStyles(progress)
 

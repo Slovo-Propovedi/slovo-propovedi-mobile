@@ -1,4 +1,3 @@
-import { Platform } from 'react-native'
 import { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import { useIsWideLayout } from 'shared/ui/layout'
 import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
@@ -13,6 +12,8 @@ interface GeometryAnimatedStylesInput {
   progress: SharedValue<number>
   screenWidthShared: SharedValue<number>
   tabBarHeightShared: SharedValue<number>
+  /** The chrome's bottom padding, the wide pill's rest line. */
+  wideBottomInset: number
 }
 
 /**
@@ -30,6 +31,7 @@ interface GeometryAnimatedStylesInput {
  * @param input.progress - Expand/collapse progress (0 = mini pill, 1 = fullscreen).
  * @param input.screenWidthShared - Current window width.
  * @param input.tabBarHeightShared - Measured height of the floating tab row.
+ * @param input.wideBottomInset - The chrome's bottom padding, the wide pill's rest line.
  */
 export const useGeometryAnimatedStyles = ({
   barProgress,
@@ -38,9 +40,9 @@ export const useGeometryAnimatedStyles = ({
   progress,
   screenWidthShared,
   tabBarHeightShared,
+  wideBottomInset,
 }: GeometryAnimatedStylesInput) => {
   const isWideLayout = useIsWideLayout()
-  const isWeb = Platform.OS === 'web'
 
   const containerStyle = useAnimatedStyle(() => {
     // Register dependency: any write to geometryReapplyTick re-runs this worklet,
@@ -53,11 +55,11 @@ export const useGeometryAnimatedStyles = ({
     const style = getContainerGeometryStyle({
       barProgress: isWideLayout ? 0 : barProgress.value,
       fullScreenHeight: fullScreenHeightShared.value,
-      isWeb,
       isWideLayout,
       progress: progress.value,
       screenWidth: screenWidthShared.value,
       tabBarHeight: tabBarHeightShared.value,
+      wideBottomInset,
     })
 
     // At rest the container is invisible: its solid `surface` would sit exactly
@@ -70,10 +72,10 @@ export const useGeometryAnimatedStyles = ({
     getMiniBarStyle({
       barProgress: isWideLayout ? 0 : barProgress.value,
       fullScreenHeight: fullScreenHeightShared.value,
-      isWeb,
       isWideLayout,
       screenWidth: screenWidthShared.value,
       tabBarHeight: tabBarHeightShared.value,
+      wideBottomInset,
     }),
   )
 

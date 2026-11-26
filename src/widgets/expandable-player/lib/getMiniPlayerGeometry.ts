@@ -8,7 +8,6 @@ import {
   CONTENT_COLUMN_WIDTH,
   getBarSideInset,
   getColumnSideInset,
-  getWideMiniPlayerBottomInset,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 
@@ -31,16 +30,16 @@ interface MiniPlayerGeometryInput {
   /** 0 = detached pill above the tab row, 1 = pill in the collapsed bottom line. */
   barProgress: number
   fullScreenHeight: number
-  /** Whether the platform is web (wide bottom gap mirrors the chrome frame). */
-  isWeb?: boolean
   /**
-   * Wide layout (>= 768). The tab island lives at the top, so the pill is the
-   * only bottom chrome: it rests on the screen bottom edge, spans the content
-   * column and is always in the expanded pose.
+   * Wide layout (>= 768 wide and >= 600 shortest side). The tab island lives at
+   * the top, so the pill is the only bottom chrome: it rests on the chrome's
+   * bottom padding below the content column and is always in the expanded pose.
    */
   isWideLayout?: boolean
   screenWidth: number
   tabBarHeight: number
+  /** The chrome's bottom padding (`useBarBottomPadding`) — the wide pill's rest line. */
+  wideBottomInset: number
 }
 
 /**
@@ -54,26 +53,26 @@ interface MiniPlayerGeometryInput {
  * one-line row is uniform at the mini player height.
  *
  * Wide — no tab row at the bottom (the island is anchored to the top), so the
- * pill rests on the screen bottom edge and spans the top island's content
- * column. The one-line morph does not exist there: the expanded pose is forced
- * and `tabBarHeight` is ignored.
+ * pill rests on the chrome's bottom padding (`wideBottomInset`) and spans the top
+ * island's content column. The one-line morph does not exist there: the expanded
+ * pose is forced and `tabBarHeight` is ignored.
  *
  * Worklet-safe: called from React resting styles and Reanimated animated styles.
  * @param input - Geometry inputs and morph progress.
  * @param input.barProgress - 0 = detached pill, 1 = pill in the collapsed row.
  * @param input.fullScreenHeight - Full device screen height.
- * @param input.isWeb - Whether the platform is web.
- * @param input.isWideLayout - Whether the wide (>= 768) layout applies.
+ * @param input.isWideLayout - Whether the wide layout applies.
  * @param input.screenWidth - Current window width.
  * @param input.tabBarHeight - Measured height of the floating tab row.
+ * @param input.wideBottomInset - The chrome's bottom padding, the wide pill's rest line.
  */
 export const getMiniPlayerGeometry = ({
   barProgress,
   fullScreenHeight,
-  isWeb = false,
   isWideLayout = false,
   screenWidth,
   tabBarHeight,
+  wideBottomInset,
 }: MiniPlayerGeometryInput): MiniPlayerGeometry => {
   'worklet'
   const height = PLAYER_SIZES.miniPlayerHeight
@@ -81,9 +80,9 @@ export const getMiniPlayerGeometry = ({
   const rowContentWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH)
 
   if (isWideLayout) {
-    // The pill is the only bottom chrome: it sits on the screen's bottom edge
-    // with the chrome frame gap and lines up with the top island's column.
-    const bottom = getWideMiniPlayerBottomInset(isWeb)
+    // The pill is the only bottom chrome: it sits on the same bottom padding as
+    // the chrome and lines up with the top island's column.
+    const bottom = wideBottomInset
 
     return {
       bottom,

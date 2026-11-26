@@ -85,14 +85,6 @@ export const getBarBottomPadding = (bottomInset: number, isWeb = false): number 
 
   return Math.max(bottomInset, BAR_BOTTOM_INSET_WEB)
 }
-// Bottom inset of the wide mini-player island: desktop web keeps the chrome's
-// frame gap, native sits on the safe-area line with a floor for the early
-// inset-less frames. Worklet-safe: the mini-player geometry reuses it.
-export const getWideMiniPlayerBottomInset = (isWeb: boolean): number => {
-  'worklet'
-
-  return isWeb ? BAR_BOTTOM_INSET_WEB : BAR_BOTTOM_INSET_MIN
-}
 // Scroll offset past which the bar collapses to a single row.
 export const COLLAPSE_SCROLL_THRESHOLD = 80 as const
 // Scroll offset at or above which the collapsed bar expands back.

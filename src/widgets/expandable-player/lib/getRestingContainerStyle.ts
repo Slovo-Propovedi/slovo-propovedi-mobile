@@ -5,10 +5,10 @@ interface RestingContainerStyleInput {
   barCollapsed: boolean
   expanded: boolean
   fullScreenHeight: number
-  isWeb?: boolean
   isWideLayout?: boolean
   screenWidth: number
   tabBarHeight: number
+  wideBottomInset: number
 }
 
 /**
@@ -22,19 +22,19 @@ interface RestingContainerStyleInput {
  * @param root0.barCollapsed - Whether the bottom bar is collapsed to one row.
  * @param root0.expanded - Whether the player is expanded to fullscreen.
  * @param root0.fullScreenHeight - Full device screen height.
- * @param root0.isWeb - Whether the platform is web.
- * @param root0.isWideLayout - Whether the wide (>= 768) layout applies.
+ * @param root0.isWideLayout - Whether the wide layout applies.
  * @param root0.screenWidth - Current window width.
  * @param root0.tabBarHeight - Measured height of the floating tab row.
+ * @param root0.wideBottomInset - The chrome's bottom padding, the wide pill's rest line.
  */
 export const getRestingContainerStyle = ({
   barCollapsed,
   expanded,
   fullScreenHeight,
-  isWeb = false,
   isWideLayout = false,
   screenWidth,
   tabBarHeight,
+  wideBottomInset,
 }: RestingContainerStyleInput) => {
   if (expanded)
     return {
@@ -51,10 +51,10 @@ export const getRestingContainerStyle = ({
   const geometry = getMiniPlayerGeometry({
     barProgress: barCollapsed ? 1 : 0,
     fullScreenHeight,
-    isWeb,
     isWideLayout,
     screenWidth,
     tabBarHeight,
+    wideBottomInset,
   })
 
   return {

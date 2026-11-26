@@ -24,6 +24,7 @@ const geometryAt = (tabBarHeight: number, barProgress = 0) =>
     fullScreenHeight: SCREEN_HEIGHT,
     screenWidth: SCREEN_WIDTH,
     tabBarHeight,
+    wideBottomInset: BAR_BOTTOM_INSET_MIN,
   })
 
 // Independent model of the real islands row: a fixed content box whose bottom
@@ -120,28 +121,30 @@ describe('getMiniPlayerGeometry', () => {
 })
 
 describe('getMiniPlayerGeometry wide layout', () => {
-  // Desktop/Android web keeps the chrome frame gap; native rests on the
-  // safe-area line (BAR_BOTTOM_INSET_MIN) for inset-less frames.
-  const WIDE_WEB_BOTTOM = 25
+  // The wide pill's bottom inset comes from the chrome's bottom padding
+  // (`useBarBottomPadding`): the real safe-area line on a tablet, the desktop-web
+  // floor or the iOS-web islands gap — never a platform switch.
+  const IPAD_BOTTOM_INSET = 20
+  const DESKTOP_WEB_FLOOR = 25
 
   const wideGeometryAt = ({
     barProgress = 0,
-    isWeb = false,
     screenWidth,
     tabBarHeight,
+    wideBottomInset = IPAD_BOTTOM_INSET,
   }: {
     barProgress?: number
-    isWeb?: boolean
     screenWidth: number
     tabBarHeight: number
+    wideBottomInset?: number
   }) =>
     getMiniPlayerGeometry({
       barProgress,
       fullScreenHeight: SCREEN_HEIGHT,
-      isWeb,
       isWideLayout: true,
       screenWidth,
       tabBarHeight,
+      wideBottomInset,
     })
 
   const columnLeft = (screenWidth: number) =>
@@ -156,18 +159,26 @@ describe('getMiniPlayerGeometry wide layout', () => {
     expect(width).toBe(columnWidth(screenWidth))
   })
 
-  test('ignores the tab row height: the pill rests on the screen bottom edge', () => {
+  test.each([IPAD_BOTTOM_INSET, DESKTOP_WEB_FLOOR])(
+    'rests exactly on the bottom inset the chrome supplies (%i)',
+    wideBottomInset => {
+      const { bottom, top } = wideGeometryAt({
+        screenWidth: 768,
+        tabBarHeight: 98,
+        wideBottomInset,
+      })
+
+      expect(bottom).toBe(wideBottomInset)
+      expect(top).toBe(SCREEN_HEIGHT - wideBottomInset - PLAYER_SIZES.miniPlayerHeight)
+    },
+  )
+
+  test('ignores the tab row height: the pill rests on the chrome bottom inset', () => {
     // The tab island lives at the TOP in the wide layout, so any measured row
     // height is irrelevant — even an absurd one.
     const { bottom } = wideGeometryAt({ screenWidth: 768, tabBarHeight: 5000 })
 
-    expect(bottom).toBe(BAR_BOTTOM_INSET_MIN)
-  })
-
-  test('web wide keeps the chrome frame gap above the screen bottom', () => {
-    const { bottom } = wideGeometryAt({ isWeb: true, screenWidth: 768, tabBarHeight: 98 })
-
-    expect(bottom).toBe(WIDE_WEB_BOTTOM)
+    expect(bottom).toBe(IPAD_BOTTOM_INSET)
   })
 
   test('forces the expanded pose: the one-line progress cannot fold the pill', () => {
@@ -178,10 +189,9 @@ describe('getMiniPlayerGeometry wide layout', () => {
   })
 
   test('keeps the mini height and the pill radius', () => {
-    const { height, radius, top } = wideGeometryAt({ screenWidth: 768, tabBarHeight: 98 })
+    const { height, radius } = wideGeometryAt({ screenWidth: 768, tabBarHeight: 98 })
 
     expect(height).toBe(PLAYER_SIZES.miniPlayerHeight)
     expect(radius).toBe(PLAYER_SIZES.miniPlayerHeight / 2)
-    expect(top).toBe(SCREEN_HEIGHT - BAR_BOTTOM_INSET_MIN - PLAYER_SIZES.miniPlayerHeight)
   })
 })

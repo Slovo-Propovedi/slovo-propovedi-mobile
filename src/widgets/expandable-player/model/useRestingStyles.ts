@@ -1,8 +1,11 @@
 import { useMemo } from 'react'
-import { Platform } from 'react-native'
 import { useIsWideLayout } from 'shared/ui/layout'
 import { getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { getRestingContainerStyle } from '../lib/getRestingContainerStyle'
+
+interface MiniRestingTopsInput extends Omit<UseRestingStylesInput, 'barCollapsed' | 'expanded'> {
+  isWideLayout: boolean
+}
 
 interface UseRestingStylesInput {
   /** Bar state the morph has settled into (see `useAtomMorphDriver(oneLineBarMorphDriver)`). */
@@ -11,25 +14,30 @@ interface UseRestingStylesInput {
   fullScreenHeight: number
   screenWidth: number
   tabBarHeight: number
+  /** The chrome's bottom padding, the wide pill's rest line. */
+  wideBottomInset: number
 }
 
-const getMiniRestingTop = ({
-  barCollapsed,
+const getMiniRestingTops = ({
   fullScreenHeight,
-  isWeb,
   isWideLayout,
   screenWidth,
   tabBarHeight,
-}: { isWeb: boolean; isWideLayout: boolean } & Omit<UseRestingStylesInput, 'expanded'>) =>
-  getRestingContainerStyle({
-    barCollapsed,
-    expanded: false,
-    fullScreenHeight,
-    isWeb,
-    isWideLayout,
-    screenWidth,
-    tabBarHeight,
-  }).top
+  wideBottomInset,
+}: MiniRestingTopsInput) => {
+  const restingTop = (barCollapsed: boolean) =>
+    getRestingContainerStyle({
+      barCollapsed,
+      expanded: false,
+      fullScreenHeight,
+      isWideLayout,
+      screenWidth,
+      tabBarHeight,
+      wideBottomInset,
+    }).top
+
+  return { collapsed: restingTop(true), expanded: restingTop(false) }
+}
 
 /**
  * React-committed (shadow-tree) resting geometry for the container and the mini
@@ -52,6 +60,7 @@ const getMiniRestingTop = ({
  * @param input.fullScreenHeight - Full device screen height.
  * @param input.screenWidth - Current window width.
  * @param input.tabBarHeight - Measured height of the floating tab row.
+ * @param input.wideBottomInset - The chrome's bottom padding, the wide pill's rest line.
  */
 export const useRestingStyles = ({
   barCollapsed,
@@ -59,9 +68,9 @@ export const useRestingStyles = ({
   fullScreenHeight,
   screenWidth,
   tabBarHeight,
+  wideBottomInset,
 }: UseRestingStylesInput) => {
   const isWideLayout = useIsWideLayout()
-  const isWeb = Platform.OS === 'web'
   // Wide has no bottom row to fold into: the expanded pose is the only pose.
   const restingBarCollapsed = isWideLayout ? false : barCollapsed
   const restingContainerStyle = useMemo(
@@ -70,56 +79,50 @@ export const useRestingStyles = ({
         barCollapsed: restingBarCollapsed,
         expanded,
         fullScreenHeight,
-        isWeb,
         isWideLayout,
         screenWidth,
         tabBarHeight,
+        wideBottomInset,
       }),
     [
       expanded,
       fullScreenHeight,
-      isWeb,
       isWideLayout,
       screenWidth,
       restingBarCollapsed,
       tabBarHeight,
+      wideBottomInset,
     ],
   )
-  const barExpandedTop = useMemo(
+  const { collapsed: barCollapsedTop, expanded: barExpandedTop } = useMemo(
     () =>
-      getMiniRestingTop({
-        barCollapsed: false,
+      getMiniRestingTops({
         fullScreenHeight,
-        isWeb,
         isWideLayout,
         screenWidth,
         tabBarHeight,
+        wideBottomInset,
       }),
-    [fullScreenHeight, isWeb, isWideLayout, screenWidth, tabBarHeight],
-  )
-  const barCollapsedTop = useMemo(
-    () =>
-      getMiniRestingTop({
-        barCollapsed: true,
-        fullScreenHeight,
-        isWeb,
-        isWideLayout,
-        screenWidth,
-        tabBarHeight,
-      }),
-    [fullScreenHeight, isWeb, isWideLayout, screenWidth, tabBarHeight],
+    [fullScreenHeight, isWideLayout, screenWidth, tabBarHeight, wideBottomInset],
   )
   const miniBarRestingStyle = useMemo(
     () =>
       getMiniBarStyle({
         barProgress: restingBarCollapsed ? 1 : 0,
         fullScreenHeight,
-        isWeb,
         isWideLayout,
         screenWidth,
         tabBarHeight,
+        wideBottomInset,
       }),
-    [fullScreenHeight, isWeb, isWideLayout, screenWidth, restingBarCollapsed, tabBarHeight],
+    [
+      fullScreenHeight,
+      isWideLayout,
+      screenWidth,
+      restingBarCollapsed,
+      tabBarHeight,
+      wideBottomInset,
+    ],
   )
 
   return { barCollapsedTop, barExpandedTop, miniBarRestingStyle, restingContainerStyle }

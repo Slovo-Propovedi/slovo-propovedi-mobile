@@ -462,6 +462,7 @@ describe('getContainerGeometryStyle (expand interpolation)', () => {
       progress,
       screenWidth: 400,
       tabBarHeight: TAB_BAR_HEIGHT,
+      wideBottomInset: 0,
     })
 
   test('starts from the expanded resting pill', () => {

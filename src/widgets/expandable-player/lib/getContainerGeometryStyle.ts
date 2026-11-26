@@ -3,12 +3,13 @@ import { getMiniPlayerGeometry } from './getMiniPlayerGeometry'
 interface ContainerGeometryInput {
   barProgress: number
   fullScreenHeight: number
-  isWeb?: boolean
   isWideLayout?: boolean
   /** Expand/collapse progress: 0 = mini pill, 1 = fullscreen. */
   progress: number
   screenWidth: number
   tabBarHeight: number
+  /** The chrome's bottom padding, the wide pill's rest line. */
+  wideBottomInset: number
 }
 
 /**
@@ -20,30 +21,30 @@ interface ContainerGeometryInput {
  * @param input - Morph progress, expand progress and screen geometry.
  * @param input.barProgress - Bottom-bar morph progress (0 = expanded pill, 1 = collapsed row).
  * @param input.fullScreenHeight - Full device screen height.
- * @param input.isWeb - Whether the platform is web.
- * @param input.isWideLayout - Whether the wide (>= 768) layout applies.
+ * @param input.isWideLayout - Whether the wide layout applies.
  * @param input.progress - Expand/collapse progress (0 = mini pill, 1 = fullscreen).
  * @param input.screenWidth - Current window width.
  * @param input.tabBarHeight - Measured height of the floating tab row.
+ * @param input.wideBottomInset - The chrome's bottom padding, the wide pill's rest line.
  */
 export const getContainerGeometryStyle = ({
   barProgress,
   fullScreenHeight,
-  isWeb = false,
   isWideLayout = false,
   progress,
   screenWidth,
   tabBarHeight,
+  wideBottomInset,
 }: ContainerGeometryInput) => {
   'worklet'
   const expand = Math.min(Math.max(progress, 0), 1)
   const rest = getMiniPlayerGeometry({
     barProgress,
     fullScreenHeight,
-    isWeb,
     isWideLayout,
     screenWidth,
     tabBarHeight,
+    wideBottomInset,
   })
 
   return {

@@ -22,7 +22,13 @@ const COLLAPSED_BOTTOM = 98 - BAR_ROW_MIN_HEIGHT
 const COLLAPSED_SIDE_INSET = BAR_SIDE_INSET_COLLAPSED + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
 
 describe('getRestingContainerStyle', () => {
-  const common = { barCollapsed: false, fullScreenHeight: 800, screenWidth: 400, tabBarHeight: 98 }
+  const common = {
+    barCollapsed: false,
+    fullScreenHeight: 800,
+    screenWidth: 400,
+    tabBarHeight: 98,
+    wideBottomInset: 0,
+  }
 
   test('expanded bar: returns the detached pill above the tab row', () => {
     const style = getRestingContainerStyle({ expanded: false, ...common })
@@ -47,6 +53,7 @@ describe('getRestingContainerStyle', () => {
       fullScreenHeight: 800,
       screenWidth: 800,
       tabBarHeight: 98,
+      wideBottomInset: 0,
     })
 
     expect(style).toEqual({
@@ -74,6 +81,7 @@ describe('getRestingContainerStyle', () => {
         fullScreenHeight: 800,
         screenWidth,
         tabBarHeight: 98,
+        wideBottomInset: 0,
       })
 
       expect(style.left).toBe(rowContentLeft)
@@ -104,6 +112,7 @@ describe('getRestingContainerStyle', () => {
       fullScreenHeight: 800,
       screenWidth: 800,
       tabBarHeight: 98,
+      wideBottomInset: 0,
     })
 
     expect(style).toEqual({
@@ -135,12 +144,9 @@ describe('getRestingContainerStyle', () => {
 })
 
 describe('getRestingContainerStyle wide layout', () => {
-  test.each([
-    { expectedBottom: BAR_BOTTOM_INSET_MIN, isWeb: false },
-    { expectedBottom: 25, isWeb: true },
-  ])(
-    'rests in the centered column on the screen bottom (web: $isWeb)',
-    ({ expectedBottom, isWeb }) => {
+  test.each([{ bottom: BAR_BOTTOM_INSET_MIN }, { bottom: 20 }, { bottom: 25 }])(
+    'rests in the centered column on the chrome bottom inset ($bottom)',
+    ({ bottom }) => {
       const screenWidth = 1194
       const columnInset = (screenWidth - CONTENT_COLUMN_WIDTH) / 2
       const style = getRestingContainerStyle({
@@ -149,10 +155,10 @@ describe('getRestingContainerStyle wide layout', () => {
         barCollapsed: true,
         expanded: false,
         fullScreenHeight: 800,
-        isWeb,
         isWideLayout: true,
         screenWidth,
         tabBarHeight: 98,
+        wideBottomInset: bottom,
       })
 
       expect(style).toEqual({
@@ -160,9 +166,9 @@ describe('getRestingContainerStyle wide layout', () => {
         borderBottomRightRadius: PILL_RADIUS,
         borderTopLeftRadius: PILL_RADIUS,
         borderTopRightRadius: PILL_RADIUS,
-        bottom: expectedBottom,
+        bottom,
         left: columnInset + BAR_SIDE_INSET_EXPANDED,
-        top: 800 - expectedBottom - PLAYER_SIZES.miniPlayerHeight,
+        top: 800 - bottom - PLAYER_SIZES.miniPlayerHeight,
         width: CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2,
       })
     },
