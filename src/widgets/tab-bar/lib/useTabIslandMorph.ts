@@ -5,7 +5,6 @@ import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import {
   BAR_CIRCLE_SIZE_EXPANDED,
-  BAR_OUTER_GAP,
   BAR_SIDE_INSET_EXPANDED,
   CONTENT_COLUMN_WIDTH,
 } from 'shared/ui/layout'
@@ -63,15 +62,12 @@ export const useTabIslandMorph = ({
   // takes its diameter from the island height and the row's padding.
   const rowContentWidth =
     Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
-  // Wide folds the search button into the island (full column); compact still
-  // yields the separate circle's diameter plus its outer gap.
-  const hasInIslandSearch = isForceExpanded && !hideSearch
-  const expandedIslandWidth = Math.max(
-    BAR_CIRCLE_SIZE_EXPANDED,
-    hideSearch || hasInIslandSearch
-      ? rowContentWidth
-      : rowContentWidth - BAR_CIRCLE_SIZE_EXPANDED - BAR_OUTER_GAP,
-  )
+  // Every layout folds the search button into the island: wide always, compact
+  // while expanded. Compact's separate circle only fades in as the island
+  // collapses, so the expanded row reads as one island and takes the whole
+  // content column.
+  const hasInIslandSearch = !hideSearch
+  const expandedIslandWidth = Math.max(BAR_CIRCLE_SIZE_EXPANDED, rowContentWidth)
   const inIslandSearchWidth = hasInIslandSearch ? TAB_ISLAND_SEARCH_SLOT_WIDTH : 0
 
   const islandStyle = useAnimatedStyle(() =>

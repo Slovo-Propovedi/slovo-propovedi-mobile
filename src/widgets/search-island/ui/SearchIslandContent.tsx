@@ -22,17 +22,20 @@ export const SEARCH_FOCUS_SURFACE_TEST_ID = 'search-focus-surface'
  * hit target. Both stay mounted; only their content opacity and pointer gates
  * follow the morph progress, so the frame never unmounts or hands off.
  * @param root0 - Component props.
+ * @param root0.isOnboardingTargetEnabled - Whether the circle carries the onboarding target.
  * @param root0.isVisible - Whether the search field is visible.
  * @param root0.onFocusChange - Called when the input gains/loses focus.
  * @param root0.onOpenSearch - Opens the search route from the closed circle.
  * @param root0.openProgress - Search morph progress (0 = circle, 1 = pill).
  */
 export const SearchIslandContent = ({
+  isOnboardingTargetEnabled = true,
   isVisible,
   onFocusChange,
   onOpenSearch,
   openProgress,
 }: {
+  isOnboardingTargetEnabled?: boolean
   isVisible: boolean
   onFocusChange: (isFocused: boolean) => void
   onOpenSearch: () => void
@@ -76,7 +79,10 @@ export const SearchIslandContent = ({
         pointerEvents={isVisible ? 'none' : 'auto'}
         importantForAccessibility={isVisible ? A11Y_HIDDEN : A11Y_IMPORTANT}
       >
-        <OnboardingTarget id={SEARCH_TARGET_ID} style={styles.tapTargetFill}>
+        <OnboardingTarget
+          style={styles.tapTargetFill}
+          id={isOnboardingTargetEnabled ? SEARCH_TARGET_ID : undefined}
+        >
           <TouchableButton
             onPress={onOpenSearch}
             style={styles.tapTargetFill}

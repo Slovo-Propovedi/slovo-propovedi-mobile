@@ -4,6 +4,8 @@ interface SearchIslandRestingStylesInput {
   screenWidth: number
   settledClose: boolean
   settledFocused: boolean
+  /** Compact row only: hides the circle while the tab island is expanded. */
+  settledIslandCollapsed?: boolean
   settledOneLine: boolean
   settledOpen: boolean
   tabBarHeight: number
@@ -19,6 +21,7 @@ export const getSearchIslandRestingStyles = ({
   screenWidth,
   settledClose,
   settledFocused,
+  settledIslandCollapsed,
   settledOneLine,
   settledOpen,
   tabBarHeight,
@@ -44,6 +47,14 @@ export const getSearchIslandRestingStyles = ({
       transform: [{ scale: 0.8 + 0.2 * settledCloseProgress }],
       width: geometry.height,
     },
-    restingFrameStyle: { ...geometry, borderRadius: radius, paddingLeft: iconInset },
+    restingFrameStyle: {
+      ...geometry,
+      borderRadius: radius,
+      paddingLeft: iconInset,
+      // The compact circle is folded away while the tab island is expanded.
+      // Carried here like the geometry so a glass theme remount cannot restore
+      // the launch-time animated opacity.
+      ...(settledIslandCollapsed === undefined ? {} : { opacity: settledIslandCollapsed ? 1 : 0 }),
+    },
   }
 }

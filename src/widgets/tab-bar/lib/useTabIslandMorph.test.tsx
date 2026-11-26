@@ -9,8 +9,6 @@ import {
 import { advanceMorphFrames, countActiveMorphFrames } from 'shared/mocks/morphFrames'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import {
-  BAR_CIRCLE_SIZE_EXPANDED,
-  BAR_OUTER_GAP,
   BAR_SIDE_INSET_EXPANDED,
   CONTENT_COLUMN_WIDTH,
   setBarCollapsed,
@@ -168,17 +166,30 @@ describe('useTabIslandMorph', () => {
     )
   })
 
-  test('keeps the separate search circle gap in the compact layout', async () => {
-    const { result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT), {
-      ctx: createCtx(),
-    })
+  test('reserves the in-island search slot in the compact layout', async () => {
+    const ctx = createCtx()
+    const { result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT), { ctx })
     const rowContentWidth =
       Math.min(MORPH_INPUT.rowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
 
-    // Compact still hands the separate search circle its diameter plus gap.
-    expect(result.current.restingIslandStyle.width).toBe(
-      rowContentWidth - BAR_CIRCLE_SIZE_EXPANDED - BAR_OUTER_GAP,
+    // Compact folds the search button into the island exactly like the wide
+    // layout: the island takes the whole column and the tabs share what the
+    // row padding and the trailing search slot leave.
+    expect(result.current.restingIslandStyle.width).toBe(rowContentWidth)
+    expect(result.current.expandedTabWidth).toBe(
+      (rowContentWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2 - MIN_TOUCH_TARGET) / 3,
     )
+
+    // The collapsed target still shrinks to the active-tab circle.
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    expect(result.current.settledCollapsed).toBe(true)
+    expect(result.current.restingIslandStyle.width).toBe(TAB_BAR_ISLAND_HEIGHT)
   })
 
   test('seeds the resting shape from a collapsed bar at mount without animating', async () => {

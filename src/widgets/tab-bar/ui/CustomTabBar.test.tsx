@@ -8,6 +8,7 @@ import {
 } from 'widgets/search-island/@x/morphDrivers'
 import { tabIslandMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { isSearchFieldFocusedAtom, isSearchOpenAtom } from 'features/sermon-search/@x/barMorph'
+import { advanceMorphFrames } from 'shared/mocks/morphFrames'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { showInfo } from 'shared/model/info-dialog'
 import { getGlassBorder, getGlassFill, GLASS } from 'shared/ui'
@@ -213,6 +214,32 @@ describe('<CustomTabBar>', () => {
 
       return flat?.borderRadius === RADIUSES.round && flat?.maxWidth === 600
     })[0]
+
+  // The morph frame is the only absolutely positioned row layer; its trailing
+  // ✕ sibling shares zIndex 20 but never the row direction.
+  const findSearchMorphFrame = () =>
+    screen.root?.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
+
+      return flat?.flexDirection === 'row' && flat?.position === 'absolute' && flat?.zIndex === 20
+    })[0]
+
+  // The in-island search slot is the morphed TabSlot wrapping the «Поиск»
+  // button; walk up to the Animated.View that carries the slot geometry.
+  const findInIslandSearchSlot = () => {
+    const island = findTabIsland()
+
+    if (!island) throw new Error('tab island not found')
+
+    let node = within(island).getByLabelText('Поиск', { includeHiddenElements: true }).parent
+
+    while (node !== null && StyleSheet.flatten(node.props.style)?.minWidth === undefined)
+      node = node.parent
+
+    if (node === null) throw new Error('in-island search slot not found')
+
+    return node
+  }
 
   test('ignores a zero-height layout report', async () => {
     const { ctx } = await renderTabBar()
@@ -454,10 +481,37 @@ describe('<CustomTabBar>', () => {
     expect(getByText('Ещё')).not.toHaveStyle({ color: '#f16031' })
   })
 
-  test('renders the circular search button to the right of the island', async () => {
+  test('folds the search button into the expanded compact island', async () => {
     const { getByRole } = await renderTabBar()
+    const island = findTabIsland()
 
+    if (!island) throw new Error('tab island not found')
+
+    // The expanded row reads as one island: the search button sits in the same
+    // glass subtree as the tabs.
+    expect(within(island).getByRole('button', { name: 'Поиск' })).toBeTruthy()
+    // The separate circle still exists (geometry is shared with the field morph)
+    // but is faded out and touch-inert while the bar is expanded.
+    expect(StyleSheet.flatten(findSearchMorphFrame()?.props.style)?.opacity).toBe(0)
+    expect(findSearchMorphFrame()?.props.pointerEvents).toBe('none')
     expect(getByRole('button', { name: 'Поиск' })).toBeTruthy()
+  })
+
+  test('restores the separate search circle once the bar folds to one line', async () => {
+    const { ctx } = await renderTabBar()
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    // Folded: the circle is the row's search affordance again and the in-island
+    // slot has faded to zero width/opacity.
+    expect(StyleSheet.flatten(findSearchMorphFrame()?.props.style)?.opacity).toBe(1)
+    expect(findSearchMorphFrame()?.props.pointerEvents).toBe('box-none')
+    expect(StyleSheet.flatten(findInIslandSearchSlot().props.style)?.opacity).toBe(0)
   })
 
   test('hides the search button on the admin tab layout', async () => {
@@ -468,13 +522,14 @@ describe('<CustomTabBar>', () => {
 
   test('keeps the search morph mounted while the search field is visible', async () => {
     mockIsSearchFieldVisible = true
-    await renderTabBar()
+    await renderTabBar(0, { isCollapsed: true })
+    const frame = findSearchMorphFrame()
+
+    if (!frame) throw new Error('search morph frame not found')
 
     // The circle is the same always-mounted morph container, not a handoff
     // button: it leaves the accessibility tree but is never unmounted.
-    expect(
-      screen.root?.queryAll(instance => instance.props.accessibilityLabel === 'Поиск'),
-    ).toHaveLength(1)
+    expect(within(frame).getByLabelText('Поиск', { includeHiddenElements: true })).toBeTruthy()
   })
 
   test('does not paint its own search-morph shadow', async () => {
@@ -486,7 +541,7 @@ describe('<CustomTabBar>', () => {
 
   test('hides the search button from assistive tech while the search field is visible', async () => {
     mockIsSearchFieldVisible = true
-    const { queryByRole } = await renderTabBar()
+    const { queryByRole } = await renderTabBar(0, { isCollapsed: true })
 
     expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
   })

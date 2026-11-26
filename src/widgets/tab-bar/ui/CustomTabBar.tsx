@@ -1,6 +1,5 @@
 import { useWindowDimensions } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { SearchIslandMorph } from 'widgets/search-island/@x/morph'
 import { OnboardingTarget } from 'features/onboarding'
 import { GlassIsland } from 'shared/ui'
 import { useBarBottomPadding, useIsWideLayout, useKeyboardLiftStyle } from 'shared/ui/layout'
@@ -13,6 +12,7 @@ import { useTabBarMeasurement } from '../lib/useTabBarMeasurement'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { getFloatingContainerStyle, getIslandsRowStyle } from './getFloatingContainerStyle'
 import { styles } from './styles'
+import { TabBarSearchCircle } from './TabBarSearchCircle'
 import { TabButton } from './TabButton'
 import { TabIslandSearchSlot } from './TabIslandSearchSlot'
 import { TabSlot } from './TabSlot'
@@ -110,11 +110,19 @@ export const CustomTabBar = ({
                 </TabSlot>
               )
             })}
-            {isWide && !hideSearch && <TabIslandSearchSlot />}
+            {!hideSearch && (
+              <TabIslandSearchSlot
+                progress={progress}
+                isCollapsed={isCollapsed}
+                isSettledOneLine={settledOneLine}
+                oneLineProgress={oneLineProgress}
+                isSettledCollapsed={settledCollapsed}
+              />
+            )}
           </Animated.View>
         </GlassIsland>
       </Animated.View>
-      {!hideSearch && !isWide && <SearchIslandMorph />}
+      {!hideSearch && !isWide && <TabBarSearchCircle />}
     </Animated.View>
   )
 }
