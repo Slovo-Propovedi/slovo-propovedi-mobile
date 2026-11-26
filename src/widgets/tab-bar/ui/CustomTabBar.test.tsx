@@ -594,6 +594,25 @@ describe('<CustomTabBar>', () => {
     expect(StyleSheet.flatten(container?.props.style)?.bottom).toBeUndefined()
   })
 
+  test('floats the wide chrome on plain glass without a full-row backing', async () => {
+    mockWindowWidth = 1024
+    mockTopInset = 20
+    await renderTabBar()
+
+    const container = findTopAnchoredFloatingContainer()
+    const row = findIslandsRow()
+    const island = findTabIsland()
+
+    // The top wrapper only positions the island: any fill/tint here would paint
+    // a full-width backing under the glass instead of a floating pill.
+    expect(StyleSheet.flatten(container?.props.style)?.backgroundColor).toBeUndefined()
+    expect(StyleSheet.flatten(container?.props.style)?.alignItems).toBe('center')
+    // The raised shadow belongs to the pill, never to the full-width row: a
+    // row-level elevation projected a flat band beneath the island on Android.
+    expect(StyleSheet.flatten(row?.props.style)?.elevation).toBeUndefined()
+    expect(StyleSheet.flatten(island?.props.style)?.elevation).toBe(12)
+  })
+
   test('keeps the island expanded while the bar is collapsed in the wide layout', async () => {
     mockWindowWidth = 1024
     await renderTabBar(0, { isCollapsed: true })

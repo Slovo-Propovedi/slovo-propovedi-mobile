@@ -58,6 +58,10 @@ export const styles = {
     // clipped by islandContent below. A host-level clip is the Safari-fragile
     // pattern (Issue #152) and is unnecessary.
   },
+  // Wide: raise only the floating pill, not the full-width row (user feedback 2026-11-27).
+  floatingIslandElevated: {
+    elevation: 12,
+  },
   islandContent: {
     alignItems: 'center' as const,
     // The clip lives on the content wrapper, not the island host (Issue #152):
@@ -82,14 +86,18 @@ export const styles = {
   // later subtree (zIndex 300) stay above.
   islandsRow: {
     alignItems: 'flex-end' as const,
-    // Поднятый ряд рисует острова над контентом экранов.
-    elevation: 12,
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
     maxWidth: CONTENT_COLUMN_WIDTH,
     position: 'relative' as const,
     width: '100%' as const,
     zIndex: 1,
+  },
+  // Compact layout: the raised row draws the tab island AND the separate search
+  // circle above the screen content in one layer. Wide uses floatingIslandElevated
+  // instead — see the comment there.
+  islandsRowElevated: {
+    elevation: 12,
   },
   tabButton: {
     flex: 1,

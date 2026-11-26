@@ -3,12 +3,7 @@ import Animated from 'react-native-reanimated'
 import { SearchIslandMorph } from 'widgets/search-island/@x/morph'
 import { OnboardingTarget } from 'features/onboarding'
 import { GlassIsland } from 'shared/ui'
-import {
-  BAR_ROW_MIN_HEIGHT,
-  useBarBottomPadding,
-  useIsWideLayout,
-  useKeyboardLiftStyle,
-} from 'shared/ui/layout'
+import { useBarBottomPadding, useIsWideLayout, useKeyboardLiftStyle } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getVisibleTabRoutes, SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
 import { type TabBarProps } from '../lib/tabBarTypes'
@@ -16,7 +11,7 @@ import { useActiveTabRouteKey } from '../lib/useActiveTabRouteKey'
 import { useRowInsetStyle } from '../lib/useRowInsetStyle'
 import { useTabBarMeasurement } from '../lib/useTabBarMeasurement'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
-import { getFloatingContainerStyle } from './getFloatingContainerStyle'
+import { getFloatingContainerStyle, getIslandsRowStyle } from './getFloatingContainerStyle'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
 import { TabIslandSearchSlot } from './TabIslandSearchSlot'
@@ -76,19 +71,14 @@ export const CustomTabBar = ({
       <Animated.View
         onLayout={onLayout}
         pointerEvents='box-none'
-        style={[
-          styles.islandsRow,
-          { height: BAR_ROW_MIN_HEIGHT + bottomPadding, paddingBottom: bottomPadding },
-          insetStyle,
-          restingInsetStyle,
-        ]}
+        style={getIslandsRowStyle(isWide, bottomPadding, { insetStyle, restingInsetStyle })}
       >
         {/* Pass-through host: drags on its padding/gaps reach the list; inert while focused. */}
         <GlassIsland
           isLight={isLight}
-          hostStyle={styles.floatingIsland}
           pointerEvents={isFocused ? 'none' : 'box-none'}
           animatedStyle={[islandStyle, restingIslandStyle]}
+          hostStyle={[styles.floatingIsland, isWide && styles.floatingIslandElevated]}
         >
           <Animated.View style={[styles.islandContent, contentStyle, restingContentStyle]}>
             {visibleRoutes.map(route => {
