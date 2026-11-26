@@ -149,7 +149,7 @@ describe('useKeyboardBottomInsetSync on web', () => {
     jest.restoreAllMocks()
   })
 
-  test('syncs the toolbar band from visualViewport and ignores noise', async () => {
+  test('syncs the toolbar band from visualViewport and clamps phantom bands', async () => {
     await renderHook(() => useKeyboardBottomInsetSync())
 
     expect(keyboardBottomInsetSv.value).toBe(0)
@@ -158,10 +158,21 @@ describe('useKeyboardBottomInsetSync on web', () => {
     await emitViewport(viewport, 'resize')
     expect(keyboardBottomInsetSv.value).toBe(80)
 
-    // Noise: 1px band is ignored (threshold < 2).
-    viewport.height = 799
+    // WebKit on iOS can leave the ~34px home-indicator band out of
+    // visualViewport.height: that permanent band is a phantom, not a toolbar.
+    viewport.height = 766
     await emitViewport(viewport, 'resize')
     expect(keyboardBottomInsetSv.value).toBe(0)
+
+    // 39px is still below the lift threshold.
+    viewport.height = 761
+    await emitViewport(viewport, 'resize')
+    expect(keyboardBottomInsetSv.value).toBe(0)
+
+    // Exactly at the threshold the band is real and lifts.
+    viewport.height = 760
+    await emitViewport(viewport, 'resize')
+    expect(keyboardBottomInsetSv.value).toBe(40)
   })
 
   test('handles keyboard case where visualViewport shrinks while innerHeight stays', async () => {

@@ -2,7 +2,13 @@ import { useEffect } from 'react'
 import { Keyboard, type KeyboardEvent, Platform } from 'react-native'
 import { makeMutable, useAnimatedStyle } from 'react-native-reanimated'
 
-const VISUAL_VIEWPORT_NOISE_PX = 2
+// WebKit on iOS may exclude the home-indicator band (~34 px) from
+// visualViewport.height, so `innerHeight - (height + offsetTop)` reads as a
+// permanent phantom band that would lift the chrome twice (the 34 dp floor plus
+// this band). A real re-expanded Safari toolbar band is ~80-100 px and the
+// keyboard is at least 200 px, so anything below 40 px is noise or that phantom
+// and must not lift.
+const MIN_LIFT_BAND = 40
 
 /**
  * Height of the on-screen keyboard/bottom occlusion in dp, shared by every
@@ -42,7 +48,7 @@ const getVisualViewportBottomBand = (): number => {
 
   const band = Math.max(0, window.innerHeight - (viewport.height + viewport.offsetTop))
 
-  return band < VISUAL_VIEWPORT_NOISE_PX ? 0 : band
+  return band < MIN_LIFT_BAND ? 0 : band
 }
 
 const syncVisualViewportInset = () => {
