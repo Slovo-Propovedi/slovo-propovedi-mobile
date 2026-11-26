@@ -22,7 +22,23 @@ const PREV_LABEL = 'Предыдущая проповедь'
 const NEXT_LABEL = 'Следующая проповедь'
 const PLAY_LABEL = 'Воспроизвести'
 const DROPDOWN_TEST_ID = 'anchored-dropdown'
+const ROW_TEST_ID = 'mini-controls-row'
 const RECT = { height: 36, width: 36, x: 100, y: 200 }
+// Widths exercised below follow MINI_WIDE_CONTROL_HIDE_WIDTHS (text 960,
+// menu 920, queue 880, repeat 856, favorite 832, previous 808, next 784).
+const WIDEST = 1024
+const TEXT_HIDDEN = 930
+const MENU_HIDDEN = 900
+const CLUSTER_RIGHT = 870
+const NEXT_ONLY = 790
+const PLAY_ONLY = 780
+
+let mockWindowWidth = WIDEST
+
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ fontScale: 1, height: 800, width: mockWindowWidth }),
+}))
 
 const AUDIO: AudioPlayerData = {
   artist: 'Автор',
@@ -66,17 +82,22 @@ jest.mock('entities/player', () => {
       (ctx: Ctx) => mockIsPlayerExpandedAtom(ctx, true),
       'mockOpenPlayerSheet',
     ),
+    PlayerControlButtonType,
     PlayerControlsSize: { Small: 20 },
     PlayerRepeatToggle: () => (
       <Pressable accessibilityRole='button' accessibilityLabel='Повтор: выключен'>
         <Text>repeat</Text>
       </Pressable>
     ),
-    SermonPlayerControls: () => (
+    SermonPlayerControls: ({ excludeButtons = [] }: { excludeButtons?: string[] }) => (
       <>
-        <PlayerControlButton type={PlayerControlButtonType.Prev} />
+        {!excludeButtons.includes(PlayerControlButtonType.Prev) && (
+          <PlayerControlButton type={PlayerControlButtonType.Prev} />
+        )}
         <PlayerControlButton type={PlayerControlButtonType.Play} />
-        <PlayerControlButton type={PlayerControlButtonType.Next} />
+        {!excludeButtons.includes(PlayerControlButtonType.Next) && (
+          <PlayerControlButton type={PlayerControlButtonType.Next} />
+        )}
       </>
     ),
   }
@@ -167,6 +188,7 @@ const renderRow = (ctx = createCtx()) =>
 describe('<MiniPlayerControlsRow>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockWindowWidth = WIDEST
     mockUseFavoriteSermon.mockReturnValue({
       isFavorite: false,
       toggleFavorite: mockToggleFavorite,
@@ -302,5 +324,64 @@ describe('<MiniPlayerControlsRow>', () => {
 
     expect(ctx.get(showPlaylistAtom)).toBe(true)
     expect(ctx.get(isPlayerExpandedAtom)).toBe(false)
+  })
+
+  describe('progressive hiding on narrower wide layouts', () => {
+    test('drops only the text-sermon placeholder below its threshold', async () => {
+      mockWindowWidth = TEXT_HIDDEN
+      const { getByLabelText, getByTestId, queryByLabelText } = await renderRow()
+
+      expect(queryByLabelText(TEXT_SERMON_LABEL)).toBeNull()
+      expect(getByLabelText(MENU_LABEL)).toBeTruthy()
+      expect(getByLabelText(OPEN_PLAYLIST_LABEL)).toBeTruthy()
+      expect(getByTestId(ROW_TEST_ID)).not.toHaveStyle({ marginLeft: 'auto' })
+    })
+
+    test('drops the ⋮ menu next, keeping the cluster on the left', async () => {
+      mockWindowWidth = MENU_HIDDEN
+      const { getByLabelText, queryByLabelText } = await renderRow()
+
+      expect(queryByLabelText(TEXT_SERMON_LABEL)).toBeNull()
+      expect(queryByLabelText(MENU_LABEL)).toBeNull()
+      expect(getByLabelText(OPEN_PLAYLIST_LABEL)).toBeTruthy()
+      expect(getByLabelText(REPEAT_OFF_LABEL)).toBeTruthy()
+    })
+
+    test('drops the whole right cluster and right-aligns the transport', async () => {
+      mockWindowWidth = CLUSTER_RIGHT
+      const { getByLabelText, getByTestId, queryByLabelText } = await renderRow()
+
+      expect(queryByLabelText(TEXT_SERMON_LABEL)).toBeNull()
+      expect(queryByLabelText(MENU_LABEL)).toBeNull()
+      expect(queryByLabelText(OPEN_PLAYLIST_LABEL)).toBeNull()
+      expect(getByLabelText(REPEAT_OFF_LABEL)).toBeTruthy()
+      expect(getByLabelText(PREV_LABEL)).toBeTruthy()
+      expect(getByLabelText(PLAY_LABEL)).toBeTruthy()
+      expect(getByLabelText(NEXT_LABEL)).toBeTruthy()
+      expect(getByLabelText(ADD_TO_FAVORITES_LABEL)).toBeTruthy()
+      expect(getByTestId(ROW_TEST_ID)).toHaveStyle({ marginLeft: 'auto' })
+    })
+
+    test('keeps only next and play once repeat, favorite and prev are gone', async () => {
+      mockWindowWidth = NEXT_ONLY
+      const { getByLabelText, queryByLabelText } = await renderRow()
+
+      expect(queryByLabelText(REPEAT_OFF_LABEL)).toBeNull()
+      expect(queryByLabelText(ADD_TO_FAVORITES_LABEL)).toBeNull()
+      expect(queryByLabelText(PREV_LABEL)).toBeNull()
+      expect(getByLabelText(NEXT_LABEL)).toBeTruthy()
+      expect(getByLabelText(PLAY_LABEL)).toBeTruthy()
+    })
+
+    test('leaves the bare artwork/title/play row above the phone breakpoint', async () => {
+      mockWindowWidth = PLAY_ONLY
+      const { getByLabelText, queryByLabelText } = await renderRow()
+
+      expect(queryByLabelText(REPEAT_OFF_LABEL)).toBeNull()
+      expect(queryByLabelText(ADD_TO_FAVORITES_LABEL)).toBeNull()
+      expect(queryByLabelText(PREV_LABEL)).toBeNull()
+      expect(queryByLabelText(NEXT_LABEL)).toBeNull()
+      expect(getByLabelText(PLAY_LABEL)).toBeTruthy()
+    })
   })
 })

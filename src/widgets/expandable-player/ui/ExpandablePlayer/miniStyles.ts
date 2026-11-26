@@ -27,9 +27,10 @@ export const MINI_EXPANDED_TRANSPORT_RIGHT_INSET =
 // Gap between the wide row's control clusters: tight enough that the row reads
 // as one toolbar, wide enough to keep the 36dp visual boxes distinct.
 export const MINI_WIDE_CONTROL_GAP = INDENTS.lowest
-// prev/play/next keep their 48dp touch boxes; the slot mirrors that width so the
-// transport distributes the three buttons exactly (space-evenly, no dead air).
-export const MINI_WIDE_TRANSPORT_WIDTH = MIN_TOUCH_TARGET * 3
+// prev/play/next each keep a 48dp touch box; the wide row multiplies this by the
+// buttons still visible, so hiding a side button narrows the slot instead of
+// leaving dead air before the right-aligned cluster.
+export const MINI_WIDE_TRANSPORT_BUTTON_WIDTH = MIN_TOUCH_TARGET
 
 export const createMiniStyles = (theme: ThemeColors) =>
   StyleSheet.create({
