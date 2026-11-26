@@ -45,10 +45,11 @@ jest.mock('expo-router', () => ({
 let mockBottomInset = 0
 let mockTopInset = 0
 let mockWindowWidth = 400
+let mockWindowHeight = 800
 
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
-  default: () => ({ fontScale: 1, height: 800, width: mockWindowWidth }),
+  default: () => ({ fontScale: 1, height: mockWindowHeight, width: mockWindowWidth }),
 }))
 
 jest.mock('react-native-safe-area-context', () => {
@@ -132,6 +133,7 @@ describe('<CustomTabBar>', () => {
     mockBottomInset = 0
     mockTopInset = 0
     mockWindowWidth = 400
+    mockWindowHeight = 800
     mockIsSearchFieldVisible = false
     tabIslandMorphDriver.reset()
     oneLineBarMorphDriver.reset()
@@ -645,16 +647,26 @@ describe('<CustomTabBar>', () => {
     }
   })
 
-  test('keeps the bottom anchor and collapse morph just below the wide breakpoint', async () => {
-    mockWindowWidth = 767
-    await renderTabBar(0, { isCollapsed: true })
+  // Wide needs a tablet-class shortest side (600) AND a tablet-class longest
+  // side (768), so compact windows include both a narrow portrait frame and a
+  // phone in landscape (844×390) whose long side crosses 768 on its own.
+  test.each([
+    { height: 599, label: 'narrow window just below the breakpoint', width: 767 },
+    { height: 390, label: 'phone in landscape', width: 844 },
+  ])(
+    'keeps the bottom anchor and collapse morph on a compact window — $label',
+    async ({ height, width }) => {
+      mockWindowWidth = width
+      mockWindowHeight = height
+      await renderTabBar(0, { isCollapsed: true })
 
-    expect(findFloatingContainer()).toBeDefined()
-    expect(StyleSheet.flatten(findFloatingContainer()?.props.style)?.top).toBeUndefined()
-    expect(StyleSheet.flatten(findTabIsland()?.props.style)).toMatchObject({
-      height: TAB_BAR_ISLAND_HEIGHT,
-    })
-  })
+      expect(findFloatingContainer()).toBeDefined()
+      expect(StyleSheet.flatten(findFloatingContainer()?.props.style)?.top).toBeUndefined()
+      expect(StyleSheet.flatten(findTabIsland()?.props.style)).toMatchObject({
+        height: TAB_BAR_ISLAND_HEIGHT,
+      })
+    },
+  )
 
   test('renders the wide search button inside the tab island, not as a separate circle', async () => {
     mockWindowWidth = 1024
