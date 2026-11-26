@@ -38,6 +38,12 @@ export const styles = StyleSheet.create({
     transform: [{ translateY: 20 }],
     zIndex: 1,
   },
+  // Portal-hosted variant: the `AnchoredDropdown` Modal owns placement and the
+  // backdrop, so the wrapper only clips the reveal height.
+  menuWrapperAnchored: {
+    minWidth: 200,
+    overflow: 'hidden',
+  },
   speedCheckIcon: {
     marginLeft: INDENTS.low,
   },

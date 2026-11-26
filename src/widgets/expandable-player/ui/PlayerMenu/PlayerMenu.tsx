@@ -13,6 +13,9 @@ import { PlayerMenuItems } from './PlayerMenuItems'
 import { PlayerSpeedMenu } from './PlayerSpeedMenu'
 import { useMenuRevealAnimation } from './useMenuRevealAnimation'
 
+const BACKDROP_TEST_ID = 'player-menu-backdrop'
+const WRAPPER_TEST_ID = 'player-menu-wrapper'
+
 export const PlayerMenu = ({
   canRemoveFromPlaylist,
   isCached,
@@ -21,6 +24,7 @@ export const PlayerMenu = ({
   onRequestRemoveFromPlaylist,
   onShowDetails,
   onToggleCache,
+  variant = 'sheet',
   visualState,
 }: {
   canRemoveFromPlaylist: boolean
@@ -30,6 +34,8 @@ export const PlayerMenu = ({
   onRequestRemoveFromPlaylist?: () => void
   onShowDetails: () => void
   onToggleCache: () => void
+  /** `sheet` — fullscreen popover with its own backdrop; `anchored` — content for an `AnchoredDropdown` portal. */
+  variant?: 'anchored' | 'sheet'
   visualState: TrackCacheVisualState
 }) => {
   const { currentTheme } = useTheme()
@@ -71,17 +77,21 @@ export const PlayerMenu = ({
     onClose()
   }
 
+  const wrapperBaseStyle = variant === 'sheet' ? styles.menuWrapper : styles.menuWrapperAnchored
+
   return (
     <>
-      <Animated.View style={[styles.backdrop, backdropStyle]}>
-        <Pressable
-          tabIndex={-1}
-          onPress={onClose}
-          onPressIn={hapticLight}
-          style={styles.backdropPressable}
-        />
-      </Animated.View>
-      <Animated.View style={[styles.menuWrapper, wrapperStyle]}>
+      {variant === 'sheet' && (
+        <Animated.View testID={BACKDROP_TEST_ID} style={[styles.backdrop, backdropStyle]}>
+          <Pressable
+            tabIndex={-1}
+            onPress={onClose}
+            onPressIn={hapticLight}
+            style={styles.backdropPressable}
+          />
+        </Animated.View>
+      )}
+      <Animated.View testID={WRAPPER_TEST_ID} style={[wrapperBaseStyle, wrapperStyle]}>
         <View
           onLayout={handleLayout}
           style={[styles.menuContainer, { backgroundColor: currentTheme.surface }]}

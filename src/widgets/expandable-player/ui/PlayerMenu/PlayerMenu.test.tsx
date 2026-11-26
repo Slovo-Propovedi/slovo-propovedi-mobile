@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import {
   onboardingExitStepIndexAtom,
@@ -163,6 +164,52 @@ describe('<PlayerMenu>', () => {
     const openOrder = mockOnOpenSoundSettings.mock.invocationCallOrder[0]
     const onCloseOrder = mockOnClose.mock.invocationCallOrder[0]
     expect(openOrder).toBeLessThan(onCloseOrder)
+  })
+})
+
+describe('<PlayerMenu> anchored variant', () => {
+  const BACKDROP_TEST_ID = 'player-menu-backdrop'
+  const WRAPPER_TEST_ID = 'player-menu-wrapper'
+
+  const renderAnchoredMenu = () =>
+    renderWithProviders(
+      <PlayerMenu
+        variant='anchored'
+        onClose={mockOnClose}
+        visualState={CLOUD_STATE}
+        canRemoveFromPlaylist={false}
+        onShowDetails={mockOnShowDetails}
+        onToggleCache={mockOnToggleCache}
+        onOpenSoundSettings={mockOnOpenSoundSettings}
+      />,
+    )
+
+  test('suppresses its own backdrop — the portal provides one', async () => {
+    const { queryByTestId } = await renderAnchoredMenu()
+
+    expect(queryByTestId(BACKDROP_TEST_ID)).toBeNull()
+  })
+
+  test('keeps the backdrop in the default sheet variant', async () => {
+    const { getByTestId } = await renderMenu()
+
+    expect(getByTestId(BACKDROP_TEST_ID)).toBeTruthy()
+  })
+
+  test('drops the fullscreen absolute wrapper positioning', async () => {
+    const { getByTestId } = await renderAnchoredMenu()
+    const wrapperStyle = StyleSheet.flatten(getByTestId(WRAPPER_TEST_ID).props.style)
+
+    expect(wrapperStyle.position).toBeUndefined()
+    expect(wrapperStyle.bottom).toBeUndefined()
+    expect(wrapperStyle.overflow).toBe('hidden')
+  })
+
+  test('keeps the reveal-animation wrapper in the sheet variant', async () => {
+    const { getByTestId } = await renderMenu()
+    const wrapperStyle = StyleSheet.flatten(getByTestId(WRAPPER_TEST_ID).props.style)
+
+    expect(wrapperStyle.position).toBe('absolute')
   })
 })
 
