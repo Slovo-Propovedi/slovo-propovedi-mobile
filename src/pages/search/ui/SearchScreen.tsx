@@ -12,6 +12,7 @@ import { MIN_RESULTS_VIEW_LENGTH } from '../lib/searchThresholds'
 import { usePagedSearch } from '../lib/usePagedSearch'
 import { useSearchResultActions } from '../lib/useSearchResultActions'
 import { RecentSearchesSection } from './RecentSearchesSection'
+import { SearchPageField } from './SearchPageField'
 import { SearchResultsView } from './SearchResultsView'
 import { type SearchScope, SearchScopeTabs } from './SearchScopeTabs'
 
@@ -65,10 +66,12 @@ export const SearchScreen = ({
   }, [])
 
   // Ruling: the results pose has no «Поиск» title — the group select takes its
-  // place, and only the results list changes with focus.
+  // place, and only the results list changes with focus. The field stays above
+  // the results content until the query is cleared.
   if (showResults)
     return (
       <View style={styles.container}>
+        <SearchPageField />
         {scope === 'read' ? (
           <EmptyState message={READ_PLACEHOLDER} />
         ) : (
@@ -87,12 +90,13 @@ export const SearchScreen = ({
       </View>
     )
 
-  // One main page for every short query, focused or not: title, scope select
-  // and recents never unmount on focus changes.
+  // One main page for every short query, focused or not: title, scope select,
+  // page field and recents never unmount on focus changes.
   return (
     <View style={styles.container}>
       <ScreenTitleRow title='Поиск' />
       <SearchScopeTabs value={scope} onChange={handleScopeChange} />
+      <SearchPageField />
       {scope === 'read' ? (
         <EmptyState message={READ_PLACEHOLDER} />
       ) : (

@@ -6,8 +6,11 @@ import { isSearchOpenAtom, MIN_QUERY_LENGTH, searchQueryAtom } from './model'
 // whitespace-only input keeps the sections mode and never pins the field.
 export const isSearchQueryActive = (query: string) => query.trim().length >= MIN_QUERY_LENGTH
 
-// The search field pill lives in the bottom chrome only while the search route
-// is open, and only while the bar is expanded or the query is active.
+// The bottom field pill lives in the bottom chrome only while the search route
+// is open, and only while the bar is expanded or the query is active. The route
+// no longer writes its session flag: the input moved to the page, so in the app
+// this is always false. The bottom-island morph suite still exercises the pill
+// through it until that dead mode is removed.
 export const isSearchFieldVisibleAtom = atom(ctx => {
   if (!ctx.spy(isSearchOpenAtom)) return false
 
@@ -19,14 +22,6 @@ export const isSearchFieldVisibleAtom = atom(ctx => {
 // The bar is a full-width search surface only while the keyboard owns the
 // field; the morph reads this flag to retract the tab island.
 export const isSearchFieldFocusedAtom = atom(false, 'isSearchFieldFocusedAtom')
-
-// While the search route owns the screen the bottom chrome must never collapse
-// under its lists — including the nested `/search/*` detail routes, where the
-// field (and its keyboard state) stays alive underneath.
-export const isSearchBarCollapseSuspendedAtom = atom(
-  ctx => ctx.spy(isSearchOpenAtom),
-  'isSearchBarCollapseSuspendedAtom',
-)
 
 // External request to focus the visible search input: a tap anywhere on the
 // open pill's surface bumps the nonce, and `SearchBar` focuses the field once

@@ -9,16 +9,15 @@ import { distinctValuesAtom } from '../model-distinctValues'
 const MAX_SUGGESTIONS = 8
 const ARTIST_LABEL = 'проповедник'
 const BOOK_LABEL = 'книга'
-// The field pill lives in the bottom bar, so the dropdown opens UPWARD: its
-// bottom edge sits one gap above the pill's top edge. The open field is always
-// the expanded bar height, so the dropdown clears it in every bar state.
-const SUGGESTIONS_BOTTOM = TAB_BAR_ISLAND_HEIGHT_EXPANDED + INDENTS.low
 
 export const SearchSuggestions = ({
+  isBelow = false,
   isFocused,
   onSelect,
   query,
 }: {
+  /** Open downward under the page field instead of upward above the bottom pill. */
+  isBelow?: boolean
   isFocused: boolean
   onSelect: (value: string) => void
   query: string
@@ -39,7 +38,11 @@ export const SearchSuggestions = ({
   return (
     <ScrollView
       keyboardShouldPersistTaps='handled'
-      style={[styles.dropdown, { backgroundColor: currentTheme.surface }]}
+      style={[
+        styles.dropdown,
+        isBelow ? styles.dropdownBelow : styles.dropdownAbove,
+        { backgroundColor: currentTheme.surface },
+      ]}
     >
       {suggestions.map(suggestion => (
         <SuggestionRow
@@ -86,7 +89,6 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     borderRadius: RADIUSES.middle,
-    bottom: SUGGESTIONS_BOTTOM,
     boxShadow: '0px 4px 8px rgba(0,0,0,0.3)',
     elevation: 8,
     left: 0,
@@ -94,6 +96,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     zIndex: 1,
+  },
+  // The bottom pill hosts the field, so there the dropdown opens UPWARD: its
+  // bottom edge sits one gap above the pill's top edge. The open field is always
+  // the expanded bar height, so the dropdown clears it in every bar state.
+  dropdownAbove: {
+    bottom: TAB_BAR_ISLAND_HEIGHT_EXPANDED + INDENTS.low,
+  },
+  // The page field sits at the top of the screen, so there the dropdown opens
+  // DOWNWARD from the field's bottom edge instead of covering the title above it.
+  dropdownBelow: {
+    marginTop: INDENTS.low,
+    top: '100%',
   },
   row: {
     alignItems: 'center',

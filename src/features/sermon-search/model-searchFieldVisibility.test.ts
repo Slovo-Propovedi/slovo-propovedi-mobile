@@ -1,11 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { isBarCollapsedAtom } from 'shared/ui/layout'
 import { isSearchOpenAtom, searchQueryAtom } from './model'
-import {
-  isSearchBarCollapseSuspendedAtom,
-  isSearchFieldFocusedAtom,
-  isSearchFieldVisibleAtom,
-} from './model-searchField'
+import { isSearchFieldFocusedAtom, isSearchFieldVisibleAtom } from './model-searchField'
 import { openSearch, resetSearchSession } from './model-session'
 
 const renderVisibility = ({
@@ -60,27 +56,17 @@ describe('search field visibility', () => {
 })
 
 describe('openSearch', () => {
-  test('expands the bar and reveals the field in one transaction', () => {
+  test('expands the bar without opening the retired bottom field', () => {
     const ctx = createCtx()
     isBarCollapsedAtom(ctx, true)
-    const fieldVisibility: boolean[] = []
-    ctx.subscribe(isSearchFieldVisibleAtom, isVisible => fieldVisibility.push(isVisible))
-    // The open flag must already be true when the bar reports expanded: separate
-    // writes would first target the island's morph driver to expand and only then
-    // re-target it to collapse in the same tick (a stranded, animation-less morph).
-    const openWhenExpanded: boolean[] = []
-    ctx.subscribe(isBarCollapsedAtom, isCollapsed => {
-      if (!isCollapsed) openWhenExpanded.push(ctx.get(isSearchOpenAtom))
-    })
 
     openSearch(ctx)
 
     expect(ctx.get(isBarCollapsedAtom)).toBe(false)
-    expect(ctx.get(isSearchOpenAtom)).toBe(true)
-    expect(ctx.get(isSearchFieldVisibleAtom)).toBe(true)
-    expect(openWhenExpanded).toEqual([true])
-    // The field appears once: no intermediate frame where the bar expands empty.
-    expect(fieldVisibility).toEqual([false, true])
+    // The input lives on the page: opening search expands the bar only, so the
+    // bottom island stays in its closed circle pose.
+    expect(ctx.get(isSearchOpenAtom)).toBe(false)
+    expect(ctx.get(isSearchFieldVisibleAtom)).toBe(false)
   })
 })
 
@@ -97,19 +83,5 @@ describe('resetSearchSession', () => {
     expect(ctx.get(searchQueryAtom)).toBe('')
     expect(ctx.get(isSearchFieldFocusedAtom)).toBe(false)
     expect(ctx.get(isSearchOpenAtom)).toBe(true)
-  })
-})
-
-describe('search bar collapse suspension', () => {
-  test('suspends the scroll driver while the search route is open', () => {
-    const ctx = renderVisibility({ isCollapsed: false, isOpen: true, query: '' })
-
-    expect(ctx.get(isSearchBarCollapseSuspendedAtom)).toBe(true)
-  })
-
-  test('does not suspend the scroll driver on other routes', () => {
-    const ctx = renderVisibility({ isCollapsed: false, isOpen: false, query: '' })
-
-    expect(ctx.get(isSearchBarCollapseSuspendedAtom)).toBe(false)
   })
 })

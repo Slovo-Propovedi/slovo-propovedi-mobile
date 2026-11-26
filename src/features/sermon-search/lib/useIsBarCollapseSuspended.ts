@@ -1,15 +1,14 @@
 import { useAtom } from '@reatom/npm-react'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
-import { useIsSearchBarCollapseSuspended } from './useIsSearchBarCollapseSuspended'
 
 // Scrolling may collapse the floating bottom bar only while the mini player
 // is on screen: with no active sermon the collapsed circles leave a dead gap
-// where the player used to sit. Also suspended while the expanded player or
-// the search route owns the screen.
+// where the player used to sit. Also suspended while the expanded player owns
+// the screen. Search no longer suspends it: the field lives on the page, so
+// scrolling its results collapses the bar like any other list.
 export const useIsBarCollapseSuspended = () => {
   const [isPlayerExpanded] = useAtom(isPlayerExpandedAtom)
   const [currentAudio] = useAtom(currentAudioAtom)
-  const isSearchBarCollapseSuspended = useIsSearchBarCollapseSuspended()
 
-  return isPlayerExpanded || currentAudio === null || isSearchBarCollapseSuspended
+  return isPlayerExpanded || currentAudio === null
 }

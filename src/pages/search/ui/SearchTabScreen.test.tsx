@@ -1,7 +1,10 @@
 import { createCtx } from '@reatom/framework'
 import { useTourActionRegistrar } from 'features/onboarding'
 import { isSearchOpenAtom, searchQueryAtom, useSermonPlayback } from 'features/sermon-search'
-import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
+import {
+  isSearchFieldFocusedAtom,
+  searchFocusRequestAtom,
+} from 'features/sermon-search/@x/barMorph'
 import { renderWithProviders } from 'shared/mocks'
 import { useSearchTourActions } from '../lib/useSearchTourActions'
 import { searchSessionNonceAtom } from '../model/searchSession'
@@ -92,19 +95,36 @@ describe('<SearchTabScreen>', () => {
     expect(getByText('SEARCH_SCREEN')).toBeTruthy()
   })
 
-  test('marks search open only while it is the active route', async () => {
+  test('keeps the bottom search island in its closed circle pose on the route', async () => {
     const ctx = createCtx()
     isSearchOpenAtom(ctx, false)
 
     mockPathname = '/search'
     const { rerender } = await renderScreen(ctx)
 
-    expect(ctx.get(isSearchOpenAtom)).toBe(true)
+    // The field lives on the page now: the bottom island must not morph into a
+    // field pill, so nothing writes the morph's open flag on the search route.
+    expect(ctx.get(isSearchOpenAtom)).toBe(false)
 
     mockPathname = '/more'
     await rerender(<SearchTabScreen />)
 
     expect(ctx.get(isSearchOpenAtom)).toBe(false)
+  })
+
+  test('focuses the page field when the search route opens', async () => {
+    const ctx = createCtx()
+    searchFocusRequestAtom(ctx, 0)
+
+    mockPathname = '/listen'
+    const { rerender } = await renderScreen(ctx)
+
+    expect(ctx.get(searchFocusRequestAtom)).toBe(0)
+
+    mockPathname = '/search'
+    await rerender(<SearchTabScreen />)
+
+    expect(ctx.get(searchFocusRequestAtom)).toBeGreaterThan(0)
   })
 
   test('resets the session when the path moves away from search', async () => {
@@ -130,16 +150,20 @@ describe('<SearchTabScreen>', () => {
     const ctx = createCtx()
     searchQueryAtom(ctx, 'вера')
     searchSessionNonceAtom(ctx, 1)
+    searchFocusRequestAtom(ctx, 0)
 
     mockPathname = '/search'
     const { rerender } = await renderScreen(ctx)
+    const focusRequestOnEntry = ctx.get(searchFocusRequestAtom)
 
     mockPathname = '/search/playlist'
     await rerender(<SearchTabScreen />)
 
-    expect(ctx.get(isSearchOpenAtom)).toBe(true)
     expect(ctx.get(searchQueryAtom)).toBe('вера')
     expect(ctx.get(searchSessionNonceAtom)).toBe(1)
+    // A detail push stays inside the search route: the page field is not
+    // re-focused, it keeps the focus the session already owns.
+    expect(ctx.get(searchFocusRequestAtom)).toBe(focusRequestOnEntry)
   })
 
   test('registers the tour actions on behalf of the page', async () => {

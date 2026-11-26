@@ -1,1 +1,1 @@
-Pauses the sermon while you record a voice message in another app; playback resumes when the recording ends. Wide layout: on tablets and desktop the tab bar floats at the top of the screen.
+Search field sits at the top of the search page: it focuses on open, the tab bar expands while searching, and scrolling results collapses it again.

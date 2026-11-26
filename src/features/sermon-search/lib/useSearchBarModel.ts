@@ -1,9 +1,10 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
-import { useEffect, useRef, useState } from 'react'
-import { isSearchOpenAtom, searchInputRequestAtom, searchQueryAtom } from '../model'
-import { isSearchFieldVisibleAtom, searchFocusRequestAtom } from '../model-searchField'
+import { useState } from 'react'
+import { searchInputRequestAtom, searchQueryAtom } from '../model'
+import { searchFocusRequestAtom } from '../model-searchField'
 import { useCloseSearch } from './useCloseSearch'
 import { useDistinctValuesOnOpen } from './useDistinctValuesOnOpen'
+import { useExternalFocusRequest } from './useExternalFocusRequest'
 import { useExternalInputRequest } from './useExternalInputRequest'
 import { useResetInputOnClose } from './useResetInputOnClose'
 import { useSearchInputFocus } from './useSearchInputFocus'
@@ -12,16 +13,17 @@ import { useVoiceInput } from './useVoiceInput'
 /**
  * Owns the input state and side effects: local text, external typing, focus
  * reporting, voice input and the clear/close semantics (⊗ and Escape).
- * @param onFocusChange - Reports focus transitions to the island owner.
- * @returns Input state, focus state and the handlers the bar renders.
+ * @param isSearchOpen - Session open flag: the page field is always open, the retired bottom pill reads the atom.
+ * @param isSearchFieldVisible - Field-on-screen flag: always true for the page field.
+ * @param onFocusChange - Reports focus transitions to the field owner.
  */
-export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) => {
+export const useSearchBarModel = (
+  isSearchOpen: boolean,
+  isSearchFieldVisible: boolean,
+  onFocusChange?: (isFocused: boolean) => void,
+) => {
   const ctx = useCtx()
   const [, setQuery] = useAtom(searchQueryAtom)
-  const [isSearchOpen] = useAtom(isSearchOpenAtom)
-  // A hidden field must release focus: a lingering keyboard covers the collapsed
-  // row and spends the first tap on the search circle on the focus handoff.
-  const [isSearchFieldVisible] = useAtom(isSearchFieldVisibleAtom)
   // Local state drives the input so async re-renders (spinner flips, results
   // landing) can never push a stale query back. Seeded from the atom at mount.
   const [inputValue, setInputValue] = useState(() => ctx.get(searchQueryAtom))
@@ -32,17 +34,7 @@ export const useSearchBarModel = (onFocusChange?: (isFocused: boolean) => void) 
   const inputRef = useSearchInputFocus(isSearchFieldVisible)
   const closeSearch = useCloseSearch()
   useDistinctValuesOnOpen(isSearchOpen)
-
-  // Focus stays user-driven: the nonce seeds the last handled value so a stale
-  // request is not replayed when the bar remounts.
-  const lastHandledFocusRequest = useRef(focusRequest)
-
-  useEffect(() => {
-    if (focusRequest === lastHandledFocusRequest.current) return
-
-    lastHandledFocusRequest.current = focusRequest
-    inputRef.current?.focus()
-  }, [focusRequest, inputRef])
+  useExternalFocusRequest(focusRequest, inputRef)
 
   const handleChangeText = (text: string) => {
     setInputValue(text)

@@ -2,7 +2,6 @@ import { createCtx } from '@reatom/framework'
 import { currentAudioAtom, isPlayerExpandedAtom } from 'entities/player/@x/sheet'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { renderHookWithProviders } from 'shared/mocks'
-import { isSearchOpenAtom } from '../@x/barMorph'
 import { useIsBarCollapseSuspended } from './useIsBarCollapseSuspended'
 
 const AUDIO: AudioPlayerData = {
@@ -16,16 +15,13 @@ const AUDIO: AudioPlayerData = {
 const renderSuspension = async ({
   audio = null,
   isPlayerExpanded = false,
-  isSearchOpen = false,
 }: {
   audio?: AudioPlayerData | null
   isPlayerExpanded?: boolean
-  isSearchOpen?: boolean
 }) => {
   const ctx = createCtx()
   currentAudioAtom(ctx, audio)
   isPlayerExpandedAtom(ctx, isPlayerExpanded)
-  isSearchOpenAtom(ctx, isSearchOpen)
 
   const { result } = await renderHookWithProviders(() => useIsBarCollapseSuspended(), { ctx })
 
@@ -43,9 +39,5 @@ describe('useIsBarCollapseSuspended', () => {
 
   test('stays suspended while the player is expanded', async () => {
     expect(await renderSuspension({ audio: AUDIO, isPlayerExpanded: true })).toBe(true)
-  })
-
-  test('stays suspended while the search route owns the screen', async () => {
-    expect(await renderSuspension({ audio: AUDIO, isSearchOpen: true })).toBe(true)
   })
 })

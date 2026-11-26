@@ -208,6 +208,20 @@ describe('<SearchIslandMorph>', () => {
     expect(StyleSheet.flatten(findContentWrapper(input).props.style).opacity).toBe(1)
   })
 
+  test('keeps the closed search circle for a page-owned search field', async () => {
+    const { getByPlaceholderText, queryByLabelText } = await renderMorph()
+
+    // Production no longer opens the bottom field on `/search`: the route only
+    // renders the circle and the page hosts the input. The frame must therefore
+    // stay the closed circle and the bottom field must stay pointer-inert.
+    const frame = StyleSheet.flatten(findMorphContainer().props.style)
+    expect(frame.width).toBe(frame.height)
+
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true })
+    expect(findContentWrapper(input).props.pointerEvents).toBe('none')
+    expect(queryByLabelText(CLOSE_LABEL)).toBeNull()
+  })
+
   test('renders the magnifier glyph at its animated size instead of scaling it', async () => {
     const { ctx } = await renderMorph()
 
@@ -369,14 +383,13 @@ describe('<SearchIslandMorph>', () => {
     expect(findMorphContainer().props.pointerEvents).toBe('box-none')
   })
 
-  test('opens the search route by tapping the closed circle', async () => {
+  test('opens the search route from the closed circle without opening a pill', async () => {
     const { ctx, getByPlaceholderText, getByRole } = await renderMorph()
 
     expect(ctx.get(isSearchOpenAtom)).toBe(false)
 
-    // A collapsed bar must expand and the field must turn visible in ONE
-    // transaction: the island's morph target would otherwise flip expand→collapse
-    // in the same tick and the tap would open the route without a clean morph.
+    // A collapsed bar expands on the tap, but the bottom island no longer morphs
+    // into a field: the page owns the input now.
     await act(async () => {
       setBarCollapsed(ctx, true)
     })
@@ -385,27 +398,17 @@ describe('<SearchIslandMorph>', () => {
       if (!isCollapsed) openWhenBarExpanded.push(ctx.get(isSearchOpenAtom))
     })
 
-    // The morph starts from the atom subscription, so the flag must already be set
-    // when navigation is requested — a route-commit-timed write would leave the
-    // pill in its closed circle for a frame.
-    let isOpenWhenNavigating = false
-    mockRouter.navigate.mockImplementationOnce(() => {
-      isOpenWhenNavigating = ctx.get(isSearchOpenAtom)
-    })
-
     await fireEvent.press(getByRole('button', { name: SEARCH_LABEL }))
     await act(async () => {
       advanceMorphFrames()
     })
 
-    expect(openWhenBarExpanded).toEqual([true])
-    expect(isOpenWhenNavigating).toBe(true)
-    expect(ctx.get(isSearchOpenAtom)).toBe(true)
-    // Tap → atom → driver → live field: the same gesture reaches the pill content.
-    expect(searchOpenMorphDriver.progress.value).toBe(1)
-    const input = getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true })
-    expect(findContentWrapper(input).props.pointerEvents).toBe('box-none')
+    expect(openWhenBarExpanded).toEqual([false])
     expect(mockRouter.navigate).toHaveBeenCalledWith('/search')
+    expect(ctx.get(isSearchOpenAtom)).toBe(false)
+    expect(searchOpenMorphDriver.progress.value).toBe(0)
+    const input = getByPlaceholderText(SEARCH_PLACEHOLDER, { includeHiddenElements: true })
+    expect(findContentWrapper(input).props.pointerEvents).toBe('none')
   })
 
   test('hides the search button from assistive tech while the field is visible', async () => {

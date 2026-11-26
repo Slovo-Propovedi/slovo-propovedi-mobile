@@ -1,17 +1,13 @@
 import { action } from '@reatom/framework'
 import { setBarCollapsed } from 'shared/ui/layout'
-import { isSearchOpenAtom, searchInputRequestAtom, searchQueryAtom } from './model'
+import { searchInputRequestAtom, searchQueryAtom } from './model'
 import { isSearchFieldFocusedAtom } from './model-searchField'
 
-// Opening writes the bar and the open flag in ONE transaction. Two separate
-// writes target the tab-island morph twice in the same tick when the bar was
-// collapsed: first "expand" (the flag is still false), then "collapse" as the
-// field turns visible. The interrupted target can strand the island expanded /
-// the pill unstarted, so the route opens without its morph. One transaction also
-// makes the field visible before anything reads the half-open bar state.
+// Opening search only expands the bottom bar: the input lives on the page now,
+// so no session flag is written here. Expanding in the press tick (before the
+// route commits) keeps the bar from expanding a frame late on the new screen.
 export const openSearch = action(ctx => {
   setBarCollapsed(ctx, false)
-  isSearchOpenAtom(ctx, true)
 }, 'openSearch')
 
 // Every field a search session owns. Cleared in ONE transaction when the user

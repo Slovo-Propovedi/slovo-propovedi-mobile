@@ -2,12 +2,14 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
 import { type ReactElement } from 'react'
 import { StyleSheet } from 'react-native'
+import { type TestInstance } from 'test-renderer'
 import { isSearchFieldFocusedAtom, searchQueryAtom } from 'features/sermon-search'
 import { useFeatureFlag } from 'entities/feature-flags'
 import { searchHistoryAtom } from 'entities/search-history'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
 import { showInfo } from 'shared/model/info-dialog'
+import { isBarCollapsedAtom, setBarCollapsed } from 'shared/ui/layout'
 import { INDENTS } from 'shared/ui/theme'
 import { type PagedSearch } from '../lib/pagedGroup'
 import { usePagedSearch } from '../lib/usePagedSearch'
@@ -46,6 +48,18 @@ jest.mock('entities/player', () => ({
   usePlayNewSermon: jest.fn(),
 }))
 
+// The page field fetches the distinct values for its suggestions on open; keep
+// that request offline so the screen test never leaves a pending socket.
+jest.mock('shared/api', () => ({
+  mapAllSermonsResponse: jest.fn(),
+  sermonsApi: {
+    getSermons: () => ({
+      sermonControllerFindAll: jest.fn(),
+      sermonControllerGetDistinctValues: jest.fn().mockResolvedValue({ artists: [], books: [] }),
+    }),
+  },
+}))
+
 jest.mock('entities/offline-cache', () => ({
   useTrackItemCache: jest.fn(() => ({
     isCached: false,
@@ -80,6 +94,7 @@ jest.mock('entities/listening-history', () => ({
 }))
 
 const RECENT_SEARCHES_TITLE = 'Недавние поиски'
+const SEARCH_PLACEHOLDER = 'Проповеди, проповедники, название книги'
 const CLEAR_LABEL = 'Очистить'
 const CANCEL_LABEL = 'Отмена'
 const CLEAR_DIALOG_TITLE = 'Очистить историю поиска?'
@@ -134,6 +149,18 @@ const getScrollables = () =>
     instance =>
       instance.props.keyboardShouldPersistTaps === 'handled' && instance.props.horizontal !== true,
   ) ?? []
+
+// Depth-first render order: lets a test assert that the page field sits after
+// the scope select on the main page and before the results select while a query
+// is active, without depending on host-specific layout APIs.
+const findNodeIndex = (predicate: (node: TestInstance) => boolean) =>
+  (screen.root?.queryAll(() => true) ?? []).findIndex(predicate)
+
+const getFieldIndex = () => findNodeIndex(node => node.props.placeholder === SEARCH_PLACEHOLDER)
+
+const getScopeTabsIndex = () => findNodeIndex(node => node.props.testID === 'pill-tabs-stretch-row')
+
+const getResultsTabsIndex = () => findNodeIndex(node => node.props.testID === 'search-group-tabs')
 
 const renderScreen = async ({
   focused = false,
@@ -192,6 +219,51 @@ describe('<SearchScreen>', () => {
     expect(screen.getByRole('button', { name: 'Читать' })).toBeTruthy()
     expect(screen.getByText(RECENT_SEARCHES_TITLE)).toBeTruthy()
     expect(screen.getByText(SERMON.title)).toBeTruthy()
+  })
+
+  test('renders the search field under the scope tabs on the main page', async () => {
+    await renderScreen({ history: [SERMON] })
+
+    const fieldIndex = getFieldIndex()
+
+    expect(fieldIndex).toBeGreaterThanOrEqual(0)
+    expect(fieldIndex).toBeGreaterThan(getScopeTabsIndex())
+  })
+
+  test('renders the search field above the results content', async () => {
+    await renderScreen({
+      focused: true,
+      paged: createPaged({ sermons: createGroup([SERMON]) }),
+      query: 'вера',
+    })
+
+    const fieldIndex = getFieldIndex()
+
+    expect(fieldIndex).toBeGreaterThanOrEqual(0)
+    expect(fieldIndex).toBeLessThan(getResultsTabsIndex())
+  })
+
+  test('routes typing in the page field through the search query atom', async () => {
+    const { ctx } = await renderScreen()
+
+    await fireEvent.changeText(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), 'вера')
+
+    expect(ctx.get(searchQueryAtom)).toBe('вера')
+  })
+
+  test('expands the collapsed bar when the page field takes focus', async () => {
+    const { ctx } = await renderScreen()
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    expect(ctx.get(isBarCollapsedAtom)).toBe(true)
+
+    await act(async () => {
+      fireEvent(screen.getByPlaceholderText(SEARCH_PLACEHOLDER), 'focus')
+    })
+
+    expect(ctx.get(isBarCollapsedAtom)).toBe(false)
   })
 
   test('shows the title, scope pills and recents while the field is focused with an empty query', async () => {

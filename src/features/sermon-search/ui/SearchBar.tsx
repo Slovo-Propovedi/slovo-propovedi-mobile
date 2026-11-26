@@ -1,8 +1,11 @@
+import { useAtom } from '@reatom/npm-react'
 import { Platform, TextInput, View } from 'react-native'
 import { useEscapeKey } from 'shared/lib/escape-key'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
 import { useTheme } from 'shared/ui/theme'
 import { useSearchBarModel } from '../lib/useSearchBarModel'
+import { isSearchOpenAtom } from '../model'
+import { isSearchFieldVisibleAtom } from '../model-searchField'
 import { styles } from './SearchBar.styles'
 import { SearchBarClearButton } from './SearchBarClearButton'
 import { SearchBarMicButton } from './SearchBarMicButton'
@@ -11,9 +14,23 @@ import { SearchSuggestions } from './SearchSuggestions'
 const SEARCH_PLACEHOLDER = 'Проповеди, проповедники, название книги'
 
 // The magnifier lives in the morphing search frame as its always-mounted first
-// child; this component is only the field's content row.
-export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boolean) => void }) => {
+// child; this component is only the field's content row. The page-hosted field
+// passes its own session/visibility flags and opens suggestions downward; the
+// bottom pill keeps the atom-derived flags and the upward dropdown.
+export const SearchBar = ({
+  isOpen,
+  isVisible,
+  onFocusChange,
+  suggestionsPlacement = 'above',
+}: {
+  isOpen?: boolean
+  isVisible?: boolean
+  onFocusChange?: (isFocused: boolean) => void
+  suggestionsPlacement?: 'above' | 'below'
+}) => {
   const { currentTheme } = useTheme()
+  const [isOpenAtom] = useAtom(isSearchOpenAtom)
+  const [isVisibleAtom] = useAtom(isSearchFieldVisibleAtom)
   const {
     handleChangeText,
     handleClear,
@@ -26,7 +43,7 @@ export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boole
     isFocused,
     isSearchOpen,
     voiceInput,
-  } = useSearchBarModel(onFocusChange)
+  } = useSearchBarModel(isOpen ?? isOpenAtom, isVisible ?? isVisibleAtom, onFocusChange)
 
   // Esc goes through the shared escape stack: its capture listener on document
   // sees the event before the focused input, so one path covers focus and blur.
@@ -71,6 +88,7 @@ export const SearchBar = ({ onFocusChange }: { onFocusChange?: (isFocused: boole
           query={inputValue}
           isFocused={isFocused}
           onSelect={handleSelectSuggestion}
+          isBelow={suggestionsPlacement === 'below'}
         />
       )}
     </View>

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Wide layout: on tablets and desktop the tab bar floats at the top of the screen
 
+### Changed
+
+- Search field sits at the top of the search page; it focuses when the page opens, the tab bar stays expanded on focus, and scrolling results collapses it again
+
 ### Fixed
 
 - Pauses the sermon while you record a voice message in another app; playback resumes when the recording ends (Android)
