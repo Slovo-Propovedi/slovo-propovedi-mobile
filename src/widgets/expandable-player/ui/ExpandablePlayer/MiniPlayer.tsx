@@ -8,7 +8,7 @@ import { CoverImage, GlassIsland, MovingText, useMarqueeCycle, usePageBlurTarget
 import { type ThemeColors } from 'shared/ui/theme'
 import { getPlayerSubtitle } from '../../lib/getPlayerSubtitle'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
-import { MiniPlayerTransport } from './MiniPlayerTransport'
+import { MiniPlayerControlsSlot } from './MiniPlayerControlsSlot'
 import { type createMiniStyles } from './miniStyles'
 
 // Web: the row renders as <div role="link" tabindex=0> (RNW maps 'link' to the
@@ -108,7 +108,8 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
               style={miniStyles.miniPlaylistName}
             />
           </View>
-          <MiniPlayerTransport
+          <MiniPlayerControlsSlot
+            audio={audio}
             playing={playing}
             miniStyles={miniStyles}
             onPlayPause={onPlayPause}

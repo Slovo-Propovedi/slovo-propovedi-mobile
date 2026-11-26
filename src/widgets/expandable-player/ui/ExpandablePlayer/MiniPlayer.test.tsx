@@ -25,6 +25,22 @@ jest.mock('expo-router', () => ({
   usePathname: () => '/listen',
 }))
 
+const mockIsWideLayout = { value: false }
+
+jest.mock('shared/ui/layout', () => {
+  const actual = jest.requireActual('shared/ui/layout')
+
+  return { ...actual, useIsWideLayout: () => mockIsWideLayout.value }
+})
+
+const WIDE_ROW_TEXT = 'wide controls row'
+
+jest.mock('./MiniPlayerControlsRow', () => {
+  const { Text } = jest.requireActual('react-native')
+
+  return { MiniPlayerControlsRow: () => <Text>{WIDE_ROW_TEXT}</Text> }
+})
+
 // The mini player wires the title/subtitle marquee contract through MovingText;
 // capturing its props is the cheapest honest check of that wiring (MarqueeText
 // itself is covered by its own suite).
@@ -146,6 +162,7 @@ describe('<MiniPlayer>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     capturedMovingTextProps.length = 0
+    mockIsWideLayout.value = false
   })
 
   const findFill = (color: string) =>
@@ -436,5 +453,21 @@ describe('<MiniPlayer>', () => {
     )
 
     measureSpy.mockRestore()
+  })
+
+  test('wide layout swaps the compact transport for the controls row', async () => {
+    mockIsWideLayout.value = true
+
+    const { getByText, queryByRole } = await renderMiniPlayer()
+
+    expect(getByText(WIDE_ROW_TEXT)).toBeTruthy()
+    expect(queryByRole('button', { name: PLAY_LABEL })).toBeNull()
+  })
+
+  test('compact layout keeps the single play button', async () => {
+    const { getByRole, queryByText } = await renderMiniPlayer()
+
+    expect(queryByText(WIDE_ROW_TEXT)).toBeNull()
+    expect(getByRole('button', { name: PLAY_LABEL })).toBeTruthy()
   })
 })

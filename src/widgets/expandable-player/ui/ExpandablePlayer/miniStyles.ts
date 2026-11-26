@@ -24,6 +24,12 @@ export const MINI_PLAY_HIT_SLOP = (MIN_TOUCH_TARGET - MINI_PLAY_BOX_SIZE) / 2
 // 60 / 2 − 36 / 2 = 12dp.
 export const MINI_EXPANDED_TRANSPORT_RIGHT_INSET =
   BAR_CIRCLE_SIZE_EXPANDED / 2 - MINI_PLAY_BOX_SIZE / 2
+// Gap between the wide row's control clusters: tight enough that the row reads
+// as one toolbar, wide enough to keep the 36dp visual boxes distinct.
+export const MINI_WIDE_CONTROL_GAP = INDENTS.lowest
+// prev/play/next keep their 48dp touch boxes; the slot mirrors that width so the
+// transport distributes the three buttons exactly (space-evenly, no dead air).
+export const MINI_WIDE_TRANSPORT_WIDTH = MIN_TOUCH_TARGET * 3
 
 export const createMiniStyles = (theme: ThemeColors) =>
   StyleSheet.create({
