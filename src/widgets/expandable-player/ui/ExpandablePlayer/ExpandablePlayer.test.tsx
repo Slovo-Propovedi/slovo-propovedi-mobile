@@ -12,6 +12,7 @@ import { advanceMorphFrames } from 'shared/mocks/morphFrames'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { isBarCollapsedAtom, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
 import { miniPillOpacitySv } from '../../model/miniPillFade'
+import { showPlaylistAtom } from '../../model/showPlaylistAtom'
 import { useExpandAnimation } from '../../model/useExpandAnimation'
 import { ExpandablePlayer } from './ExpandablePlayer'
 
@@ -99,6 +100,22 @@ jest.mock('./ContainerView', () => ({
   ContainerView: () => null,
 }))
 
+// Captures the props the real CollapsedMiniPlayer threads into the collapsed
+// queue-sheet host, so the widget-level wiring is asserted without gorhom.
+const mockSheetHostProps: Array<{ playlistMenuComponent?: unknown }> = []
+
+jest.mock('./MiniPlayerSheetHost', () => {
+  const { Text } = jest.requireActual('react-native')
+
+  return {
+    MiniPlayerSheetHost: (props: { playlistMenuComponent?: unknown }) => {
+      mockSheetHostProps.push(props)
+
+      return <Text testID='mini-sheet-host'>sheet-host</Text>
+    },
+  }
+})
+
 jest.mock('./styles', () => ({
   createStyles: () => ({
     backdrop: {},
@@ -124,6 +141,7 @@ jest.mock('./MiniPlayer', () => {
 })
 
 const PLAY_PAUSE_LABEL = 'play-pause'
+const SHEET_HOST_TEST_ID = 'mini-sheet-host'
 // The focused pill is 48 tall; sliding it down by its height plus the two outer
 // gaps lands its top on the focused search pill's top (see CollapsedMiniPlayer).
 const MINI_TUCK_DISTANCE = 60
@@ -189,6 +207,7 @@ describe('<ExpandablePlayer>', () => {
     jest.clearAllMocks()
     mockTogglePlay.mockResolvedValue(undefined)
     mockMiniPlayerProps.length = 0
+    mockSheetHostProps.length = 0
     searchFocusMorphDriver.reset()
     miniPillOpacitySv.value = 1
     currentAudioAtom(ctx, mockAudio)
@@ -210,6 +229,27 @@ describe('<ExpandablePlayer>', () => {
     })
 
     expect(mockTogglePlay).toHaveBeenCalledTimes(1)
+  })
+
+  test('threads the playlist menu into the collapsed queue host', async () => {
+    const MenuStub = () => null
+
+    const { getByTestId } = await renderWithProviders(
+      <ExpandablePlayer playlistMenuComponent={MenuStub} />,
+      { ctx },
+    )
+
+    expect(getByTestId(SHEET_HOST_TEST_ID)).toBeTruthy()
+    expect(mockSheetHostProps.at(-1)?.playlistMenuComponent).toBe(MenuStub)
+  })
+
+  test('keeps the collapsed queue host unmounted while the player is expanded', async () => {
+    isPlayerExpandedAtom(ctx, true)
+    showPlaylistAtom(ctx, true)
+
+    const { queryByTestId } = await renderWithProviders(<ExpandablePlayer />, { ctx })
+
+    expect(queryByTestId(SHEET_HOST_TEST_ID)).toBeNull()
   })
 
   test('moves the mini player into the collapsed line while the search route shows an empty field', async () => {

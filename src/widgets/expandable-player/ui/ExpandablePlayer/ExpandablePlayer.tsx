@@ -104,6 +104,7 @@ export const ExpandablePlayer = ({
           barCollapsed={isBarCollapsed}
           onPress={gesture.handleMiniTap}
           miniBarRestingStyle={miniBarRestingStyle}
+          playlistMenuComponent={playlistMenuComponent}
         />
       )}
       <ContainerView

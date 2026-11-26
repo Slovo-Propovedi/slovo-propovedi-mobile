@@ -13,8 +13,10 @@ import { type ThemeColors } from 'shared/ui/theme'
 import { MINI_PILL_TUCK_DISTANCE } from '../../lib/getMiniPlayerGeometry'
 import { useMiniPillFade } from '../../model/useMiniPillFade'
 import { useMiniPlayerMount } from '../../model/useMiniPlayerMount'
+import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
 import { miniLayerStyle } from './commonStyles'
 import { MiniPlayer } from './MiniPlayer'
+import { MiniPlayerSheetHost } from './MiniPlayerSheetHost'
 import { createMiniStyles } from './miniStyles'
 
 /**
@@ -34,6 +36,7 @@ import { createMiniStyles } from './miniStyles'
  * @param root0.onPress - Tap handler that expands the player.
  * @param root0.playing - Whether playback is active.
  * @param root0.playlist - Current playlist, if any.
+ * @param root0.playlistMenuComponent - Queue-sheet header menu injected by the app.
  */
 export const CollapsedMiniPlayer = ({
   audio,
@@ -49,6 +52,7 @@ export const CollapsedMiniPlayer = ({
   onPress,
   playing,
   playlist,
+  playlistMenuComponent,
 }: {
   audio: AudioPlayerData
   barCollapsed: boolean
@@ -63,6 +67,7 @@ export const CollapsedMiniPlayer = ({
   onPress: () => void
   playing: boolean
   playlist: null | PlaylistData
+  playlistMenuComponent?: PlaylistMenuSlot
 }) => {
   const miniTargetRef = useOnboardingTargetRef('player.mini')
   const miniStyles = createMiniStyles(currentTheme)
@@ -113,6 +118,7 @@ export const CollapsedMiniPlayer = ({
         currentTheme={currentTheme}
         miniBarRestingStyle={miniBarRestingStyle}
       />
+      <MiniPlayerSheetHost playlist={playlist} playlistMenuComponent={playlistMenuComponent} />
     </Animated.View>
   )
 }

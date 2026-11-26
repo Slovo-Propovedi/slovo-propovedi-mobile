@@ -6,6 +6,7 @@ import { type AudioPlayerData } from 'entities/sermon'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { showDetailsAtom } from '../../model/showDetailsAtom'
+import { showPlaylistAtom } from '../../model/showPlaylistAtom'
 import { showSoundSettingsAtom } from '../../model/showSoundSettingsAtom'
 import { MiniPlayerControlsRow } from './MiniPlayerControlsRow'
 
@@ -13,6 +14,7 @@ const ADD_TO_FAVORITES_LABEL = 'Добавить в избранное'
 const REMOVE_FROM_FAVORITES_LABEL = 'Убрать из избранного'
 const TEXT_SERMON_LABEL = 'Текст проповеди'
 const MENU_LABEL = 'Меню плеера'
+const OPEN_PLAYLIST_LABEL = 'Открыть плейлист'
 const DETAILS_LABEL = 'Подробнее'
 const SOUND_SETTINGS_LABEL = 'Настройки звука'
 const REPEAT_OFF_LABEL = 'Повтор: выключен'
@@ -284,9 +286,21 @@ describe('<MiniPlayerControlsRow>', () => {
     expect(ctx.get(showSoundSettingsAtom)).toBe(true)
   })
 
-  test('omits the queue burger until the sheet task lands', async () => {
-    const { queryByLabelText } = await renderRow()
+  test('renders the queue burger in the wide row', async () => {
+    const { getByLabelText } = await renderRow()
 
-    expect(queryByLabelText('Открыть плейлист')).toBeNull()
+    expect(getByLabelText(OPEN_PLAYLIST_LABEL)).toBeTruthy()
+  })
+
+  test('opens the queue sheet from the burger without expanding the player', async () => {
+    const ctx = createCtx()
+    const { getByLabelText } = await renderRow(ctx)
+
+    await act(async () => {
+      fireEvent.press(getByLabelText(OPEN_PLAYLIST_LABEL))
+    })
+
+    expect(ctx.get(showPlaylistAtom)).toBe(true)
+    expect(ctx.get(isPlayerExpandedAtom)).toBe(false)
   })
 })
