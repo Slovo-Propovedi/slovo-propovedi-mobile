@@ -36,7 +36,7 @@ afterEach(() => {
 
 describe('useScreenChromePadding', () => {
   test('compact: bottom reserves the tab bar and mini player, no top chrome', async () => {
-    mockWindowWidth = 767
+    mockWindowWidth = 390
 
     const { result } = await renderHookWithProviders(() => useScreenChromePadding())
 

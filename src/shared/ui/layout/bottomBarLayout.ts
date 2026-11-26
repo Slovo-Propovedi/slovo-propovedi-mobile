@@ -101,3 +101,6 @@ export const BAR_MORPH_DURATION_MS = 200 as const
 // Viewport width at or above which the app switches to the tablet/desktop wide
 // layout. Below it the phone layout is kept.
 export const WIDE_LAYOUT_MIN_WIDTH = 768 as const
+// Shortest-side threshold of the wide layout: the window must be tablet-class in
+// BOTH dimensions, so a phone in landscape (844×390) keeps the phone layout.
+export const WIDE_LAYOUT_MIN_SHORTEST_SIDE = 600 as const

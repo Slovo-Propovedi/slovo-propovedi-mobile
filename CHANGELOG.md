@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Wide layout applies only to tablet-class screens (at least 768 pt on the long side and 600 pt on the short side), so a phone in landscape keeps the usual layout
 - Pauses the sermon while you record a voice message in another app; playback resumes when the recording ends (Android)
 - Web (iOS): the page fills the full physical screen height, removing the background band left below the app
 - Web (iOS): the floating bottom chrome keeps a guaranteed 21 px gap above the screen bottom that vertically centers the home indicator, even when the safe-area probe reports zero — in the browser and the installed PWA alike
