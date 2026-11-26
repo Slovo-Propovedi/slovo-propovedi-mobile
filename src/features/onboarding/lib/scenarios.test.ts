@@ -70,7 +70,7 @@ describe('onboarding scenario data', () => {
       expect(step.tapTargetId).toBeUndefined()
       expect(step.tapActionId).toBeUndefined()
     })
-    expect(whatsNew.steps[0].text).toContain('768')
+    expect(whatsNew.steps[0].text).toContain('планшетах и десктопе')
     expect(whatsNew.steps[0].text).toContain('мини-плеер')
     expect(whatsNew.steps[1].text).toContain('Поле поиска')
     expect(whatsNew.steps[1].text).toContain('под полем')

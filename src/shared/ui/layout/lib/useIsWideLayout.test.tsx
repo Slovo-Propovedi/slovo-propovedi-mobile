@@ -39,6 +39,12 @@ describe('useIsWideLayout', () => {
     expect(await renderAt(768, 600)).toBe(true)
   })
 
+  test('a tablet-class shortest side alone is not enough: 600×767 stays compact', async () => {
+    // The long-side clause: 600 clears the shortest-side gate, but 767 is one
+    // point below the 768 long-side threshold.
+    expect(await renderAt(600, 767)).toBe(false)
+  })
+
   test('phone portrait (390×844) is not wide', async () => {
     expect(await renderAt(390, 844)).toBe(false)
   })

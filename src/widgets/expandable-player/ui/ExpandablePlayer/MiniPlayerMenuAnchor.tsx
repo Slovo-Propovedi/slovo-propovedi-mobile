@@ -17,7 +17,7 @@ import { type createWideMiniStyles, MINI_WIDE_ICON_SIZE } from './miniWideStyles
 const MENU_LABEL = 'Меню плеера'
 
 /**
- * ⋮ of the wide mini pill: measures itself, opens the anchored `PlayerMenu`
+ * ⋯ of the wide mini pill: measures itself, opens the anchored `PlayerMenu`
  * portal, and routes «Подробнее»/«Настройки звука» through the expand-then-show
  * path (the sheets live inside the fullscreen player, so the sheet must be open
  * before the atom flips).

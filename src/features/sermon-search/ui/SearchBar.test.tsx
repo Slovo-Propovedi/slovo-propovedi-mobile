@@ -228,6 +228,12 @@ describe('<SearchBar>', () => {
     await renderWithProviders(<SearchBar />, { ctx })
     await flushAnimationFrame()
 
+    // A request that arrives while the field is invisible is consumed without
+    // focusing: the closed bar must never raise the keyboard behind the UI.
+    await act(async () => {
+      focusSearchInput(ctx)
+    })
+
     expect(focusMock).not.toHaveBeenCalled()
   })
 

@@ -13,7 +13,7 @@ import { useVoiceInput } from './useVoiceInput'
 /**
  * Owns the input state and side effects: local text, external typing, focus
  * reporting, voice input and the clear/close semantics (⊗ and Escape).
- * @param isSearchOpen - Session open flag: the page field is always open, the retired bottom pill reads the atom.
+ * @param isSearchOpen - Session open flag: the page field derives it from the search route, the retired bottom pill reads the atom.
  * @param isSearchFieldVisible - Field-on-screen flag: always true for the page field.
  * @param onFocusChange - Reports focus transitions to the field owner.
  */

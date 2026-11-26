@@ -1,7 +1,6 @@
 import {
   BAR_BOTTOM_INSET_MIN,
   BAR_CIRCLE_SIZE,
-  BAR_CIRCLE_SIZE_EXPANDED,
   BAR_EXPANDED_ISLAND_TOP_MARGIN,
   BAR_OUTER_GAP,
   BAR_PILL_ROW_GAP,
@@ -66,27 +65,25 @@ describe('getMiniPlayerGeometry', () => {
     },
   )
 
-  test('settled geometry: the pill floats BAR_PILL_ROW_GAP above the island and spans the row inner edges', () => {
+  test('settled geometry: the pill floats BAR_PILL_ROW_GAP above the one island and spans the row inner edges', () => {
     const paddingBottom = BAR_BOTTOM_INSET_MIN
     const tabBarHeight = BAR_ROW_MIN_HEIGHT + paddingBottom
     const { bottom, left, width } = geometryAt(tabBarHeight)
 
-    // Independent model of the expanded islands row: the tab island and the
-    // search circle split the row's inner width with one outer gap between them.
+    // The compact expanded row is ONE island: the search slot is folded into the
+    // tab island, so the island spans the row's whole inner width (the separate
+    // circle only appears once the row folds).
     const rowLeft = getColumnSideInset(SCREEN_WIDTH, 0, CONTENT_COLUMN_WIDTH)
     const rowContentWidth =
       Math.min(SCREEN_WIDTH, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
-    const islandWidth = rowContentWidth - BAR_CIRCLE_SIZE_EXPANDED - BAR_OUTER_GAP
-    const horizontalGap = rowContentWidth - (islandWidth + BAR_CIRCLE_SIZE_EXPANDED)
     const verticalGap = bottom - islandTopFromScreenBottom(paddingBottom)
 
     // Apple Music reference (Issue #153): the pill floats with a wider vertical
-    // gap than the horizontal gap between the island and the search circle.
-    expect(horizontalGap).toBe(BAR_OUTER_GAP)
+    // gap above the islands row.
     expect(verticalGap).toBe(BAR_PILL_ROW_GAP)
 
     // The pill spans exactly the row's inner edges, so its left/right insets
-    // match the island's and the search circle's.
+    // match the island's.
     expect(left).toBe(rowLeft + BAR_SIDE_INSET_EXPANDED)
     expect(width).toBe(rowContentWidth)
   })

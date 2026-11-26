@@ -14,15 +14,15 @@ const TEXT_SERMON_LABEL = 'Текст проповеди'
 const OPEN_PLAYLIST_LABEL = 'Открыть плейлист'
 
 /**
- * Right cluster of the wide pill: the ⋮ menu, the disabled text-sermon
+ * Right cluster of the wide pill: the ⋯ menu, the disabled text-sermon
  * placeholder and the queue burger, in that order. The burger opens the shared
  * queue sheet while the pill stays collapsed — the collapsed sheet host draws
- * above the pill layer. Buttons hide one by one as the window narrows;
- * unmounting the ⋮ anchor also closes its popover.
+ * above the pill layer. Buttons hide one by one as the chrome narrows;
+ * unmounting the ⋯ anchor also closes its popover.
  * @param root0 - Cluster props.
  * @param root0.audio - Current sermon (menu source).
  * @param root0.styles - Wide-pill styles built for the active theme.
- * @param root0.visibility - Which controls fit the current window width.
+ * @param root0.visibility - Which controls fit the current chrome width.
  */
 export const MiniPlayerMenuCluster = ({
   audio,

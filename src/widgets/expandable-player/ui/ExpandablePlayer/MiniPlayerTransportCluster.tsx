@@ -9,10 +9,10 @@ import {
 import { useFavoriteSermon } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { IconButton } from 'shared/ui/icon-button'
-import { FONT_SIZES, useTheme } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { type MiniControlsVisibility } from '../../lib/getMiniControlsVisibility'
 import { MINI_PLAY_HIT_SLOP, MINI_WIDE_TRANSPORT_BUTTON_WIDTH } from './miniStyles'
-import { type createWideMiniStyles } from './miniWideStyles'
+import { type createWideMiniStyles, MINI_WIDE_ICON_SIZE } from './miniWideStyles'
 
 const ADD_TO_FAVORITES_LABEL = 'Добавить в избранное'
 const REMOVE_FROM_FAVORITES_LABEL = 'Убрать из избранного'
@@ -28,7 +28,7 @@ type ExcludedTransportButton = PlayerControlButtonType.Next | PlayerControlButto
  * @param root0 - Cluster props.
  * @param root0.audio - Current sermon (favorite target).
  * @param root0.styles - Wide-pill styles built for the active theme.
- * @param root0.visibility - Which controls fit the current window width.
+ * @param root0.visibility - Which controls fit the current chrome width.
  */
 export const MiniPlayerTransportCluster = ({
   audio,
@@ -76,7 +76,7 @@ export const MiniPlayerTransportCluster = ({
           accessibilityLabel={isFavorite ? REMOVE_FROM_FAVORITES_LABEL : ADD_TO_FAVORITES_LABEL}
           Icon={
             <Ionicons
-              size={FONT_SIZES.xl}
+              size={MINI_WIDE_ICON_SIZE}
               name={isFavorite ? 'heart' : 'heart-outline'}
               style={[styles.icon, isFavorite && { color: currentTheme.primary }]}
             />

@@ -103,8 +103,9 @@ export const COLLAPSE_SCROLL_THRESHOLD = 80 as const
 // Scroll offset at or above which the collapsed bar expands back.
 export const EXPAND_TOP_THRESHOLD = 4 as const
 export const BAR_MORPH_DURATION_MS = 200 as const
-// Viewport width at or above which the app switches to the tablet/desktop wide
-// layout. Below it the phone layout is kept.
+// Long-side threshold of the wide layout. Together with the shortest-side
+// threshold below it makes the window tablet-class in BOTH dimensions; below
+// either one the compact layout is kept.
 export const WIDE_LAYOUT_MIN_WIDTH = 768 as const
 // Shortest-side threshold of the wide layout: the window must be tablet-class in
 // BOTH dimensions, so a phone in landscape (844×390) keeps the phone layout.

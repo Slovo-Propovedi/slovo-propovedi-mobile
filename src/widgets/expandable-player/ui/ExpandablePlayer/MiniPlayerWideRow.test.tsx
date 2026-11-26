@@ -343,7 +343,7 @@ describe('<MiniPlayerWideRow>', () => {
     expect(getByLabelText(REMOVE_FROM_FAVORITES_LABEL)).toBeTruthy()
   })
 
-  test('opens the anchored portal with the anchored PlayerMenu on the ⋮ press', async () => {
+  test('opens the anchored portal with the anchored PlayerMenu on the ⋯ press', async () => {
     mockMeasureInWindow(RECT)
     const { getByLabelText, getByText } = await renderRow()
 

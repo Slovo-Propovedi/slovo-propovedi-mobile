@@ -52,7 +52,11 @@ export const PlayerControlButton = ({
     Icon={
       <Entypo
         size={size}
-        style={[styles.icon, color ? { color } : null, isDisabled && styles.iconDisabled]}
+        style={[
+          styles.icon,
+          color !== undefined ? { color } : null,
+          isDisabled && styles.iconDisabled,
+        ]}
         name={match(type)
           .with(PlayerControlButtonType.Next, () => 'controller-fast-forward' as const)
           .with(PlayerControlButtonType.Pause, () => 'controller-paus' as const)

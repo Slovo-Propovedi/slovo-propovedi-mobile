@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Wide layout on tablets and desktop (screens from 768 pt): the tabs and search button share one island at the top, and the mini-player becomes a bottom island with the full control set — repeat, previous/play/next, favorites, sermon menu and the current playlist (a «Sermon text» button is reserved and inactive for now)
-- Search page: the field moved to the top, under the Listen/Read toggle and above the results, and takes focus when the page opens; the bar stays expanded while searching and collapses again as you scroll, so only the tab island and the search circle remain at the bottom
+- Wide layout on tablet-class screens (at least 768 pt on the long side and 600 pt on the short side), so a phone in landscape keeps the usual look: the tabs and search button share one island at the top, and the mini-player becomes a bottom island with the full control set — repeat, previous/play/next, favorites, sermon menu and the current playlist (a «Sermon text» button is reserved and inactive for now); the bottom island keeps the same safe-area gap as the tab-bar row (20 pt on iPad, 21 pt on iOS web) instead of hugging the screen edge, and screen content starts right under the floating top island without an extra bottom-inset-sized gap
+- Search page: the field moved to the top, under the Listen/Read toggle and above the results, and takes focus when the page opens; the bar stays expanded while searching and collapses again as you scroll, folding the row back to the tab circle and the search circle
 
 ### Changed
 
@@ -18,9 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Wide layout applies only to tablet-class screens (at least 768 pt on the long side and 600 pt on the short side), so a phone in landscape keeps the usual layout
-- Wide layout: the bottom mini-player keeps the same safe-area gap as the tab-bar row (20 pt on iPad, 21 pt on iOS web), instead of hugging the screen edge
-- Wide layout: screen content no longer leaves an extra bottom-inset-sized gap under the top tab island
 - Wide layout: the floating top island no longer sits on an opaque full-width band — list content scrolls under the glass instead of being cut at its edge, and the band no longer swallows taps
 - Wide layout: playlist screens and the playlist editor start their content below the floating top island instead of under it
 - Pauses the sermon while you record a voice message in another app; playback resumes when the recording ends (Android)
