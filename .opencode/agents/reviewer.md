@@ -1,7 +1,7 @@
 ---
 description: Expert code reviewer for security, performance, and philosophy compliance
 mode: subagent
-model: opencode-go/glm-5.3-flash
+model: opencode-go/glm-5.3
 permissions:
   - action: edit
     resource: '*'
