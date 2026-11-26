@@ -19,6 +19,7 @@ import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { getFloatingContainerStyle } from './getFloatingContainerStyle'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
+import { TabIslandSearchSlot } from './TabIslandSearchSlot'
 import { TabSlot } from './TabSlot'
 import { useTabPress } from './useTabPress'
 
@@ -82,8 +83,7 @@ export const CustomTabBar = ({
           restingInsetStyle,
         ]}
       >
-        {/* Pass-through host: a drag on its padding/gaps lands on the list
-            behind the bar; pointer-inert while the focused field replaced it. */}
+        {/* Pass-through host: drags on its padding/gaps reach the list; inert while focused. */}
         <GlassIsland
           isLight={isLight}
           hostStyle={styles.floatingIsland}
@@ -120,10 +120,11 @@ export const CustomTabBar = ({
                 </TabSlot>
               )
             })}
+            {isWide && !hideSearch && <TabIslandSearchSlot />}
           </Animated.View>
         </GlassIsland>
       </Animated.View>
-      {!hideSearch && <SearchIslandMorph />}
+      {!hideSearch && !isWide && <SearchIslandMorph />}
     </Animated.View>
   )
 }

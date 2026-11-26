@@ -9,10 +9,15 @@ import {
 import { advanceMorphFrames, countActiveMorphFrames } from 'shared/mocks/morphFrames'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import {
+  BAR_CIRCLE_SIZE_EXPANDED,
+  BAR_OUTER_GAP,
+  BAR_SIDE_INSET_EXPANDED,
+  CONTENT_COLUMN_WIDTH,
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
+import { MIN_TOUCH_TARGET } from 'shared/ui/theme'
 import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
 import { ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
@@ -142,6 +147,37 @@ describe('useTabIslandMorph', () => {
     // slot: routing the raw route count into the width would shrink every tab.
     expect(withHidden.result.current.expandedTabWidth).toBeLessThan(
       visible.result.current.expandedTabWidth,
+    )
+  })
+
+  test('fills the column and reserves the in-island search slot in the wide layout', async () => {
+    // Fresh ctx: the shared test context may carry focus from an earlier test.
+    const { result } = await renderHookWithProviders(
+      () => useTabIslandMorph({ ...MORPH_INPUT, isForceExpanded: true }),
+      { ctx: createCtx() },
+    )
+    const rowContentWidth =
+      Math.min(MORPH_INPUT.rowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
+
+    // The wide search button lives INSIDE the island, so the island takes the
+    // whole column instead of yielding a circle and gap to a separate island.
+    expect(result.current.restingIslandStyle.width).toBe(rowContentWidth)
+    // The tabs share what the row padding and the trailing search slot leave.
+    expect(result.current.expandedTabWidth).toBe(
+      (rowContentWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2 - MIN_TOUCH_TARGET) / 3,
+    )
+  })
+
+  test('keeps the separate search circle gap in the compact layout', async () => {
+    const { result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT), {
+      ctx: createCtx(),
+    })
+    const rowContentWidth =
+      Math.min(MORPH_INPUT.rowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
+
+    // Compact still hands the separate search circle its diameter plus gap.
+    expect(result.current.restingIslandStyle.width).toBe(
+      rowContentWidth - BAR_CIRCLE_SIZE_EXPANDED - BAR_OUTER_GAP,
     )
   })
 

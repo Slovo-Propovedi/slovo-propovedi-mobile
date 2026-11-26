@@ -637,6 +637,33 @@ describe('<CustomTabBar>', () => {
     })
   })
 
+  test('renders the wide search button inside the tab island, not as a separate circle', async () => {
+    mockWindowWidth = 1024
+    const { getByRole } = await renderTabBar()
+
+    // The separate glass search island is gone in wide: the tab island is the
+    // only glass surface and the magnifier trails the tabs inside it.
+    expect(findSearchCircle()).toBeUndefined()
+    expect(findGlassBlurs()).toHaveLength(1)
+    expect(getByRole('button', { name: 'Поиск' })).toBeTruthy()
+  })
+
+  test('pressing the in-island search button in the wide layout opens the search route', async () => {
+    mockWindowWidth = 1024
+    const { getByRole } = await renderTabBar()
+
+    await fireEvent.press(getByRole('button', { name: 'Поиск' }))
+
+    expect(mockOpenSearch).toHaveBeenCalledTimes(1)
+  })
+
+  test('hides the in-island search button on the wide admin layout', async () => {
+    mockWindowWidth = 1024
+    const { queryByRole } = await renderTabBar(0, { hideSearch: true })
+
+    expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
+  })
+
   const createBarProps = () => ({
     descriptors: {},
     emitter: createMockEmitter(),

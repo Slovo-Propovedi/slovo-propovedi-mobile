@@ -13,7 +13,11 @@ import { isTabIslandCollapsedAtom } from '../model/barMorph'
 import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
 import { getIslandContentStyle } from './getBarMorphStyles'
-import { getIslandStyle, ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
+import {
+  getIslandStyle,
+  ISLAND_CONTENT_PADDING_HORIZONTAL,
+  TAB_ISLAND_SEARCH_SLOT_WIDTH,
+} from './getIslandStyle'
 import { getTabIslandRestingStyles } from './getTabIslandRestingStyles'
 
 interface TabIslandMorphInput {
@@ -55,15 +59,20 @@ export const useTabIslandMorph = ({
   // follow the atoms, but every consumer reads this zero-valued progress.
   const expandedProgress = useSharedValue(0)
 
-  // The expanded island lives only in the expanded-bar state, so its width
-  // always follows the expanded side inset; the collapsed circle takes its
-  // diameter from the island height and its position from the row's padding.
+  // The expanded island follows the expanded side inset; the collapsed circle
+  // takes its diameter from the island height and the row's padding.
   const rowContentWidth =
     Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
+  // Wide folds the search button into the island (full column); compact still
+  // yields the separate circle's diameter plus its outer gap.
+  const hasInIslandSearch = isForceExpanded && !hideSearch
   const expandedIslandWidth = Math.max(
     BAR_CIRCLE_SIZE_EXPANDED,
-    hideSearch ? rowContentWidth : rowContentWidth - BAR_CIRCLE_SIZE_EXPANDED - BAR_OUTER_GAP,
+    hideSearch || hasInIslandSearch
+      ? rowContentWidth
+      : rowContentWidth - BAR_CIRCLE_SIZE_EXPANDED - BAR_OUTER_GAP,
   )
+  const inIslandSearchWidth = hasInIslandSearch ? TAB_ISLAND_SEARCH_SLOT_WIDTH : 0
 
   const islandStyle = useAnimatedStyle(() =>
     getIslandStyle(
@@ -96,10 +105,10 @@ export const useTabIslandMorph = ({
 
   return {
     contentStyle,
-    // The slots own the island width minus its horizontal padding, so the row
-    // never overflows the rounded edges.
+    // The slots own the island width minus its padding and trailing search slot.
     expandedTabWidth:
-      (expandedIslandWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2) / Math.max(routeCount, 1),
+      (expandedIslandWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2 - inIslandSearchWidth) /
+      Math.max(routeCount, 1),
     // Target shape of the morph: hidden slots must stop receiving touches as
     // soon as the island is collapsing, not when their width animation lands.
     isCollapsed: isForceExpanded ? false : liveIsCollapsed,
