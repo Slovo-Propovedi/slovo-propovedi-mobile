@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Wide layout: on tablets and desktop the tab bar floats at the top of the screen
+
 ### Fixed
 
 - Pauses the sermon while you record a voice message in another app; playback resumes when the recording ends (Android)

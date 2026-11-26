@@ -1,1 +1,1 @@
-Pauses the sermon while you record a voice message in another app; playback resumes when the recording ends.
+Pauses the sermon while you record a voice message in another app; playback resumes when the recording ends. Wide layout: on tablets and desktop the tab bar floats at the top of the screen.

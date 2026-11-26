@@ -38,6 +38,15 @@ export const styles = {
     right: 0,
     zIndex: 10,
   },
+  // Wide layout: the chrome floats at the top of the screen. No `bottom` here —
+  // setting both edges would stretch the container.
+  floatingContainerTop: {
+    alignItems: 'center' as const,
+    left: 0,
+    position: 'absolute' as const,
+    right: 0,
+    zIndex: 10,
+  },
   floatingIsland: {
     borderRadius: RADIUSES.round,
     // No static height: the animated morph style (getIslandStyle) owns it. A

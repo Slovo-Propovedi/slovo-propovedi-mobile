@@ -16,6 +16,10 @@ export const TAB_BAR_ISLAND_HEIGHT_EXPANDED = 60 as const
 // already includes the bottom safe-area padding, which keeps the offset valid
 // for any inset.
 export const BAR_EXPANDED_ISLAND_TOP_MARGIN = BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED
+// Top margin of the floating chrome in the wide layout, where the tab-bar island
+// floats at the top of the screen: a small gap below the safe-area line that
+// matches the islands' outer gap.
+export const BAR_TOP_ISLAND_MARGIN = 8 as const
 /**
  * The circle stays circular: width = height = radius * 2 at the uniform
  * one-line height, so its diameter deliberately mirrors the island height.

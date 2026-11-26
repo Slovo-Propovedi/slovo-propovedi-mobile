@@ -15,10 +15,12 @@ import {
   BAR_BOTTOM_INSET_MIN,
   BAR_CIRCLE_SIZE_EXPANDED,
   BAR_ROW_MIN_HEIGHT,
+  BAR_TOP_ISLAND_MARGIN,
   isBarCollapsedAtom,
   isTabBarMeasuredAtom,
   keyboardBottomInsetSv,
   setBarCollapsed,
+  TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
   tabBarHeightAtom,
 } from 'shared/ui/layout'
@@ -41,13 +43,25 @@ jest.mock('expo-router', () => ({
 }))
 
 let mockBottomInset = 0
+let mockTopInset = 0
+let mockWindowWidth = 400
+
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ fontScale: 1, height: 800, width: mockWindowWidth }),
+}))
 
 jest.mock('react-native-safe-area-context', () => {
   const actual = jest.requireActual('react-native-safe-area-context')
 
   return {
     ...actual,
-    useSafeAreaInsets: () => ({ bottom: mockBottomInset, left: 0, right: 0, top: 0 }),
+    useSafeAreaInsets: () => ({
+      bottom: mockBottomInset,
+      left: 0,
+      right: 0,
+      top: mockTopInset,
+    }),
   }
 })
 
@@ -106,7 +120,7 @@ const renderTabBar = async (
       emitter={emitter}
       hideSearch={hideSearch}
       navigateToTab={mockNavigate}
-      insets={{ bottom: 0, left: 0, right: 0, top: 0 }}
+      insets={{ bottom: 0, left: 0, right: 0, top: mockTopInset }}
     />,
     { ctx },
   )
@@ -116,6 +130,8 @@ describe('<CustomTabBar>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockBottomInset = 0
+    mockTopInset = 0
+    mockWindowWidth = 400
     mockIsSearchFieldVisible = false
     tabIslandMorphDriver.reset()
     oneLineBarMorphDriver.reset()
@@ -180,6 +196,20 @@ describe('<CustomTabBar>', () => {
         flat?.left === 0 &&
         flat?.right === 0
       )
+    })[0]
+
+  const findTopAnchoredFloatingContainer = () =>
+    screen.root?.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
+
+      return flat?.position === 'absolute' && flat?.zIndex === 10 && typeof flat?.top === 'number'
+    })[0]
+
+  const findTabIsland = () =>
+    screen.root?.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
+
+      return flat?.borderRadius === RADIUSES.round && flat?.maxWidth === 600
     })[0]
 
   test('ignores a zero-height layout report', async () => {
@@ -547,6 +577,64 @@ describe('<CustomTabBar>', () => {
     } finally {
       keyboardBottomInsetSv.value = 0
     }
+  })
+
+  test('anchors the floating chrome to the safe-area top in the wide layout', async () => {
+    mockWindowWidth = 768
+    mockTopInset = 20
+    await renderTabBar()
+
+    const container = findTopAnchoredFloatingContainer()
+
+    // The wide layout floats the island at the top of the screen (Apple Music
+    // iPad style) instead of hugging the bottom edge.
+    expect(StyleSheet.flatten(container?.props.style)).toMatchObject({
+      top: 20 + BAR_TOP_ISLAND_MARGIN,
+    })
+    expect(StyleSheet.flatten(container?.props.style)?.bottom).toBeUndefined()
+  })
+
+  test('keeps the island expanded while the bar is collapsed in the wide layout', async () => {
+    mockWindowWidth = 1024
+    await renderTabBar(0, { isCollapsed: true })
+
+    expect(StyleSheet.flatten(findTabIsland()?.props.style)).toMatchObject({
+      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+    })
+    expect(StyleSheet.flatten(findTabIsland()?.props.style)?.width).toBeGreaterThan(
+      BAR_CIRCLE_SIZE_EXPANDED,
+    )
+    expect(StyleSheet.flatten(findIslandContent()?.props.style)).toMatchObject({
+      paddingLeft: 10,
+      paddingRight: 10,
+    })
+  })
+
+  test('does not lift the floating chrome above the keyboard in the wide layout', async () => {
+    mockWindowWidth = 1024
+    keyboardBottomInsetSv.value = 280
+
+    try {
+      await renderTabBar()
+
+      const container = findTopAnchoredFloatingContainer()
+
+      expect(container).toBeDefined()
+      expect(StyleSheet.flatten(container?.props.style)?.transform).toBeUndefined()
+    } finally {
+      keyboardBottomInsetSv.value = 0
+    }
+  })
+
+  test('keeps the bottom anchor and collapse morph just below the wide breakpoint', async () => {
+    mockWindowWidth = 767
+    await renderTabBar(0, { isCollapsed: true })
+
+    expect(findFloatingContainer()).toBeDefined()
+    expect(StyleSheet.flatten(findFloatingContainer()?.props.style)?.top).toBeUndefined()
+    expect(StyleSheet.flatten(findTabIsland()?.props.style)).toMatchObject({
+      height: TAB_BAR_ISLAND_HEIGHT,
+    })
   })
 
   const createBarProps = () => ({

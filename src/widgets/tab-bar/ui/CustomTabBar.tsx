@@ -3,7 +3,12 @@ import Animated from 'react-native-reanimated'
 import { SearchIslandMorph } from 'widgets/search-island/@x/morph'
 import { OnboardingTarget } from 'features/onboarding'
 import { GlassIsland } from 'shared/ui'
-import { BAR_ROW_MIN_HEIGHT, useBarBottomPadding, useKeyboardLiftStyle } from 'shared/ui/layout'
+import {
+  BAR_ROW_MIN_HEIGHT,
+  useBarBottomPadding,
+  useIsWideLayout,
+  useKeyboardLiftStyle,
+} from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getVisibleTabRoutes, SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
 import { type TabBarProps } from '../lib/tabBarTypes'
@@ -11,6 +16,7 @@ import { useActiveTabRouteKey } from '../lib/useActiveTabRouteKey'
 import { useRowInsetStyle } from '../lib/useRowInsetStyle'
 import { useTabBarMeasurement } from '../lib/useTabBarMeasurement'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
+import { getFloatingContainerStyle } from './getFloatingContainerStyle'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
 import { TabSlot } from './TabSlot'
@@ -19,6 +25,7 @@ import { useTabPress } from './useTabPress'
 export const CustomTabBar = ({
   emitter,
   hideSearch = false,
+  insets,
   navigateToTab,
   state,
 }: {
@@ -33,6 +40,7 @@ export const CustomTabBar = ({
     navigateToTab,
   })
   const { width: windowWidth } = useWindowDimensions()
+  const isWide = useIsWideLayout()
   const { onLayout, rowWidth } = useTabBarMeasurement()
   const activeRouteKey = useActiveTabRouteKey(state.routes, state.index)
   const visibleRoutes = getVisibleTabRoutes(state.routes)
@@ -50,16 +58,20 @@ export const CustomTabBar = ({
     settledOneLine,
   } = useTabIslandMorph({
     hideSearch,
+    isForceExpanded: isWide,
     routeCount: visibleRoutes.length,
     rowWidth,
     windowWidth,
   })
   const bottomPadding = useBarBottomPadding()
   const keyboardLiftStyle = useKeyboardLiftStyle()
-  const { insetStyle, restingInsetStyle } = useRowInsetStyle()
+  const { insetStyle, restingInsetStyle } = useRowInsetStyle(isWide)
 
   return (
-    <Animated.View pointerEvents='box-none' style={[styles.floatingContainer, keyboardLiftStyle]}>
+    <Animated.View
+      pointerEvents='box-none'
+      style={getFloatingContainerStyle(isWide, insets.top, keyboardLiftStyle)}
+    >
       <Animated.View
         onLayout={onLayout}
         pointerEvents='box-none'
