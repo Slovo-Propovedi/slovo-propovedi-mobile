@@ -1,5 +1,5 @@
 import { useAction, useAtom } from '@reatom/npm-react'
-import { type StyleProp, type ViewStyle } from 'react-native'
+import { type OpaqueColorValue, type StyleProp, type ViewStyle } from 'react-native'
 import { currentAudioAtom, currentPlaylistAtom, setCurrentAudioAction } from '../model'
 import { PlayerControls } from './PlayerControls/PlayerControls'
 import { type ControlsNames, type PlayerControlsSize } from './PlayerControls/PlayerControls.types'
@@ -7,6 +7,7 @@ import { type ControlsNames, type PlayerControlsSize } from './PlayerControls/Pl
 type PlayerControlsVariant = 'default' | 'fullscreen'
 
 export const SermonPlayerControls = ({
+  color,
   excludeButtons,
   onLongPressSeek,
   onPressOutSeek,
@@ -14,6 +15,8 @@ export const SermonPlayerControls = ({
   style,
   variant,
 }: {
+  /** Icon tint for the default (non-fullscreen) variant; fullscreen keeps its white icons. */
+  color?: OpaqueColorValue | string
   excludeButtons?: ControlsNames[]
   onLongPressSeek?: (direction: 'backward' | 'forward') => void
   onPressOutSeek?: () => void
@@ -29,6 +32,7 @@ export const SermonPlayerControls = ({
     <PlayerControls
       size={size}
       style={style}
+      color={color}
       variant={variant}
       currentAudio={currentAudio}
       excludeButtons={excludeButtons}

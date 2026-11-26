@@ -1,4 +1,4 @@
-import { type StyleProp, type ViewStyle } from 'react-native'
+import { type OpaqueColorValue, type StyleProp, type ViewStyle } from 'react-native'
 import { type PlaylistData } from 'entities/playlist/@x/player'
 import { type AudioPlayerData } from 'entities/sermon/@x/player'
 import { useGuardedTogglePlay } from '../../lib/useGuardedTogglePlay'
@@ -14,6 +14,7 @@ import { usePlayerTrackState } from './usePlayerTrackState'
 type PlayerControlsVariant = 'default' | 'fullscreen'
 
 export const PlayerControls = ({
+  color,
   currentAudio,
   currentPlaylist,
   excludeButtons,
@@ -24,6 +25,8 @@ export const PlayerControls = ({
   style,
   variant = 'default',
 }: {
+  /** Icon tint for the default (non-fullscreen) variant; fullscreen keeps its white icons. */
+  color?: OpaqueColorValue | string
   currentAudio: AudioPlayerData | null
   currentPlaylist: null | PlaylistData
   excludeButtons?: ControlsNames[]
@@ -85,6 +88,7 @@ export const PlayerControls = ({
     <DefaultControls
       size={size}
       style={style}
+      color={color}
       isPlaying={isPlaying}
       togglePlay={togglePlay}
       isBuffering={isBuffering}

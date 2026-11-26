@@ -8,16 +8,21 @@ import { applyRepeatMode } from '../lib/applyRepeatMode'
 import { type RepeatMode, repeatModeAtom, setRepeatModeAction } from '../model'
 
 const REPEAT_MODES: RepeatMode[] = ['off', 'track', 'queue']
+const REPEAT_INACTIVE_COLOR = '#9ca3af'
 
 interface IconConfig {
   color: string
   name: keyof typeof MaterialCommunityIcons.glyphMap
 }
 
-const getRepeatIcon = (mode: RepeatMode, primaryColor: string): IconConfig => {
+const getRepeatIcon = (
+  mode: RepeatMode,
+  primaryColor: string,
+  inactiveColor: string,
+): IconConfig => {
   switch (mode) {
     case 'off':
-      return { color: '#9ca3af', name: 'repeat-off' }
+      return { color: inactiveColor, name: 'repeat-off' }
     case 'queue':
       return { color: primaryColor, name: 'repeat' }
     case 'track':
@@ -36,7 +41,14 @@ const getRepeatLabel = (mode: RepeatMode): string => {
   }
 }
 
-export const PlayerRepeatToggle = ({ style }: { style?: StyleProp<ViewStyle> }) => {
+export const PlayerRepeatToggle = ({
+  inactiveColor = REPEAT_INACTIVE_COLOR,
+  style,
+}: {
+  /** Tint of the "off" glyph; active modes keep the theme accent. */
+  inactiveColor?: string
+  style?: StyleProp<ViewStyle>
+}) => {
   const { currentTheme } = useTheme()
   const [repeatMode] = useAtom(repeatModeAtom)
   const setRepeatMode = useAction(setRepeatModeAction)
@@ -49,7 +61,7 @@ export const PlayerRepeatToggle = ({ style }: { style?: StyleProp<ViewStyle> }) 
     applyRepeatMode(nextMode)
   }, [repeatMode, setRepeatMode])
 
-  const iconConfig = getRepeatIcon(repeatMode, currentTheme.primary)
+  const iconConfig = getRepeatIcon(repeatMode, currentTheme.primary, inactiveColor)
 
   return (
     <IconButton

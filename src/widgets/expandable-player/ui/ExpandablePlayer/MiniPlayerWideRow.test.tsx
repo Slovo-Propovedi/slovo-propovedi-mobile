@@ -6,7 +6,7 @@ import { isPlayerExpandedAtom } from 'entities/player'
 import { type AudioPlayerData } from 'entities/sermon'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
-import { LightTheme } from 'shared/ui/theme'
+import { DarkTheme, LightTheme, useTheme } from 'shared/ui/theme'
 import { showDetailsAtom } from '../../model/showDetailsAtom'
 import { showPlaylistAtom } from '../../model/showPlaylistAtom'
 import { showSoundSettingsAtom } from '../../model/showSoundSettingsAtom'
@@ -57,6 +57,21 @@ const mockUseFavoriteSermon = jest.fn()
 const mockSnapshotMembership = jest.fn()
 const mockDropdownProps = jest.fn()
 const mockPlayerMenuProps = jest.fn()
+const mockRepeatToggleProps = jest.fn()
+const mockTransportProps = jest.fn()
+
+// The icon tints of the pill's transport must follow the active theme, exactly
+// like the compact pill's play button. Mocking the hook pins the theme instead
+// of depending on the test runner's color scheme.
+jest.mock('shared/ui/theme', () => {
+  const actual = jest.requireActual('shared/ui/theme')
+
+  return { ...actual, useTheme: jest.fn() }
+})
+
+const mockUseTheme = jest.mocked(useTheme)
+const DARK_CONTEXT = { currentTheme: DarkTheme, isLight: false, themeMode: 'dark' } as const
+const LIGHT_CONTEXT = { currentTheme: LightTheme, isLight: true, themeMode: 'light' } as const
 
 jest.mock('entities/playlist', () => ({
   useFavoriteSermon: () => mockUseFavoriteSermon(),
@@ -88,22 +103,36 @@ jest.mock('entities/player', () => {
     ),
     PlayerControlButtonType,
     PlayerControlsSize: { Small: 20 },
-    PlayerRepeatToggle: () => (
-      <Pressable accessibilityRole='button' accessibilityLabel='Повтор: выключен'>
-        <Text>repeat</Text>
-      </Pressable>
-    ),
-    SermonPlayerControls: ({ excludeButtons = [] }: { excludeButtons?: string[] }) => (
-      <>
-        {!excludeButtons.includes(PlayerControlButtonType.Prev) && (
-          <PlayerControlButton type={PlayerControlButtonType.Prev} />
-        )}
-        <PlayerControlButton type={PlayerControlButtonType.Play} />
-        {!excludeButtons.includes(PlayerControlButtonType.Next) && (
-          <PlayerControlButton type={PlayerControlButtonType.Next} />
-        )}
-      </>
-    ),
+    PlayerRepeatToggle: (props: { inactiveColor?: string }) => {
+      mockRepeatToggleProps(props)
+
+      return (
+        <Pressable accessibilityRole='button' accessibilityLabel='Повтор: выключен'>
+          <Text>repeat</Text>
+        </Pressable>
+      )
+    },
+    SermonPlayerControls: ({
+      color,
+      excludeButtons = [],
+    }: {
+      color?: string
+      excludeButtons?: string[]
+    }) => {
+      mockTransportProps({ color })
+
+      return (
+        <>
+          {!excludeButtons.includes(PlayerControlButtonType.Prev) && (
+            <PlayerControlButton type={PlayerControlButtonType.Prev} />
+          )}
+          <PlayerControlButton type={PlayerControlButtonType.Play} />
+          {!excludeButtons.includes(PlayerControlButtonType.Next) && (
+            <PlayerControlButton type={PlayerControlButtonType.Next} />
+          )}
+        </>
+      )
+    },
   }
 })
 
@@ -224,6 +253,7 @@ describe('<MiniPlayerWideRow>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockWindowWidth = WIDEST
+    mockUseTheme.mockReturnValue(DARK_CONTEXT)
     mockUseFavoriteSermon.mockReturnValue({
       isFavorite: false,
       toggleFavorite: mockToggleFavorite,
@@ -244,6 +274,30 @@ describe('<MiniPlayerWideRow>', () => {
     expect(getByLabelText(ADD_TO_FAVORITES_LABEL)).toBeTruthy()
     expect(getByLabelText(TEXT_SERMON_LABEL)).toBeTruthy()
     expect(getByLabelText(MENU_LABEL)).toBeTruthy()
+  })
+
+  test('themes the transport glyphs and the repeat toggle from the dark theme', async () => {
+    await renderRow()
+
+    expect(mockTransportProps).toHaveBeenCalledWith(
+      expect.objectContaining({ color: DarkTheme.text }),
+    )
+    expect(mockRepeatToggleProps).toHaveBeenCalledWith(
+      expect.objectContaining({ inactiveColor: DarkTheme.text }),
+    )
+  })
+
+  test('themes the transport glyphs and the repeat toggle from the light theme', async () => {
+    mockUseTheme.mockReturnValue(LIGHT_CONTEXT)
+
+    await renderRow()
+
+    expect(mockTransportProps).toHaveBeenCalledWith(
+      expect.objectContaining({ color: LightTheme.text }),
+    )
+    expect(mockRepeatToggleProps).toHaveBeenCalledWith(
+      expect.objectContaining({ inactiveColor: LightTheme.text }),
+    )
   })
 
   test('toggles the favorite from the heart button', async () => {

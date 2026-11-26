@@ -61,8 +61,9 @@ export const MiniPlayerTransportCluster = ({
         visibility.clusterSide === 'right' && styles.transportClusterRight,
       ]}
     >
-      {visibility.repeat && <PlayerRepeatToggle />}
+      {visibility.repeat && <PlayerRepeatToggle inactiveColor={currentTheme.text} />}
       <SermonPlayerControls
+        color={currentTheme.text}
         excludeButtons={excludeButtons}
         size={PlayerControlsSize.Small}
         style={{ width: MINI_WIDE_TRANSPORT_BUTTON_WIDTH * visibleTransportButtons }}

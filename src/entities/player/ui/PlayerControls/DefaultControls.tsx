@@ -1,4 +1,10 @@
-import { ActivityIndicator, type StyleProp, View, type ViewStyle } from 'react-native'
+import {
+  ActivityIndicator,
+  type OpaqueColorValue,
+  type StyleProp,
+  View,
+  type ViewStyle,
+} from 'react-native'
 import { useTheme } from 'shared/ui/theme'
 import { PlayerControlButton } from '../control-button/control-button'
 import { PlayerControlButtonType } from '../control-button/control-button.types'
@@ -7,6 +13,7 @@ import { playerControlsStyles as styles } from './PlayerControls.styles'
 import { type ControlsNames, type PlayerControlsSize } from './PlayerControls.types'
 
 export const DefaultControls = ({
+  color,
   excludeButtons,
   hasCurrentAudio,
   isBuffering,
@@ -17,6 +24,8 @@ export const DefaultControls = ({
   togglePlay,
   toggleTrack,
 }: {
+  /** Shared tint of the prev/play/next glyphs; omitted keeps the button's default black. */
+  color?: OpaqueColorValue | string
   excludeButtons?: ControlsNames[]
   hasCurrentAudio: boolean
   isBuffering: boolean
@@ -36,6 +45,7 @@ export const DefaultControls = ({
       {!excludedButtons[PlayerControlButtonType.Prev] && (
         <PlayerControlButton
           size={size}
+          color={color}
           isDisabled={isTrackButtonDisabled}
           type={PlayerControlButtonType.Prev}
           onPress={() => void toggleTrack('prev')}
@@ -51,6 +61,7 @@ export const DefaultControls = ({
           </View>
         ) : (
           <PlayerControlButton
+            color={color}
             size={size * 2}
             onPress={togglePlay}
             isDisabled={!hasCurrentAudio}
@@ -60,6 +71,7 @@ export const DefaultControls = ({
       {!excludedButtons[PlayerControlButtonType.Next] && (
         <PlayerControlButton
           size={size}
+          color={color}
           isDisabled={isTrackButtonDisabled}
           type={PlayerControlButtonType.Next}
           onPress={() => void toggleTrack('next')}
