@@ -9,9 +9,11 @@ import { BAR_BOTTOM_INSET_WEB, getBarBottomPadding, IOS_WEB_ISLANDS_GAP } from '
  * safe-area line; inset-less early frames keep the clearance floor. Web: the
  * visible bottom gap mirrors the expanded chrome's side insets (uniform frame
  * around the floating chrome, issue #154), while a larger real inset (installed
- * PWA safe-area line) still wins. On iOS web the OS already owns the home-
- * indicator clearance below the page, so the probe is ignored and only the
- * islands' breathing gap remains.
+ * PWA safe-area line) still wins. On iOS web the shell is `100lvh` (full
+ * physical screen, via the `ios-web` class from ensureIosWebShellClass) — the
+ * earlier dvh shortfall is what letterboxed the page — so only the islands'
+ * breathing gap remains and the probe is ignored (it double-counts the OS band
+ * whenever it reports one).
  */
 export const useBarBottomPadding = (): number => {
   const { bottom } = useSafeAreaInsets()
