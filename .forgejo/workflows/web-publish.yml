@@ -50,16 +50,56 @@ jobs:
       # the report accumulates into one readable page. `|| true` keeps the
       # cosmetic summary from failing the publish on exotic runners.
       - name: Write summary header
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
           set -e
           SHORT_SHA="${GITHUB_SHA:-unknown}"
           SHORT_SHA="${SHORT_SHA:0:7}"
           {
-            echo "## Manual web publish — \`${{ github.ref_name }}\`"
+            echo "## Manual web publish — \`$REF_NAME\`"
             echo ''
             echo "- Commit: \`$SHORT_SHA\` · $(date -u '+%Y-%m-%d %H:%M UTC')"
             echo ''
           } | scripts/ci/step-summary.sh || true
+
+      # A manual run has no tag: the branch name becomes the deployment label —
+      # and the registry tag. Registry tag grammar applies: only
+      # [A-Za-z0-9._-], no leading `.` or `-`, at most 128 bytes, and the
+      # literal name `latest` is rejected so a branch never shadows the
+      # implicit `latest` tag anchored to releases. Fail fast here so a bad
+      # branch name never survives the multi-minute export.
+      - name: Validate deploy tag grammar
+        env:
+          DEPLOY_TAG: ${{ github.ref_name }}
+        run: |
+          set -e
+          case "$DEPLOY_TAG" in
+            '')
+              echo '::error::DEPLOY_TAG is empty — refusing to build'
+              exit 1 ;;
+          esac
+          case "$DEPLOY_TAG" in
+            .*)
+              echo "::error::DEPLOY_TAG ($DEPLOY_TAG) must not start with '.'"
+              exit 1 ;;
+            -*)
+              echo "::error::DEPLOY_TAG ($DEPLOY_TAG) must not start with '-'"
+              exit 1 ;;
+          esac
+          case "$DEPLOY_TAG" in
+            *[!A-Za-z0-9._-]*)
+              echo "::error::DEPLOY_TAG ($DEPLOY_TAG) contains a character outside [A-Za-z0-9._-]"
+              exit 1 ;;
+          esac
+          if [ "${#DEPLOY_TAG}" -gt 128 ]; then
+            echo "::error::DEPLOY_TAG ($DEPLOY_TAG) exceeds the 128-character registry tag limit"
+            exit 1
+          fi
+          if [ "$DEPLOY_TAG" = latest ]; then
+            echo '::error::DEPLOY_TAG "latest" is reserved for release-anchored tags'
+            exit 1
+          fi
 
       - name: Validate required web vars
         id: webvars
@@ -180,38 +220,6 @@ jobs:
           chmod +x "$HOME/.docker-cli/docker-buildx"
           export PATH="$HOME/.docker-cli:$PATH"
 
-          # A manual run has no tag: the branch name becomes the deployment
-          # label — and the registry tag. Registry tag grammar applies: only
-          # [A-Za-z0-9._-], no leading `.` or `-`, at most 128 bytes, and the
-          # literal name `latest` is rejected so a branch never shadows the
-          # implicit `latest` tag anchored to releases.
-          case "$DEPLOY_TAG" in
-            '')
-              echo '::error::DEPLOY_TAG is empty — refusing to build'
-              exit 1 ;;
-          esac
-          case "$DEPLOY_TAG" in
-            .*)
-              echo "::error::DEPLOY_TAG ($DEPLOY_TAG) must not start with '.'"
-              exit 1 ;;
-            -*)
-              echo "::error::DEPLOY_TAG ($DEPLOY_TAG) must not start with '-'"
-              exit 1 ;;
-          esac
-          case "$DEPLOY_TAG" in
-            *[!A-Za-z0-9._-]*)
-              echo "::error::DEPLOY_TAG ($DEPLOY_TAG) contains a character outside [A-Za-z0-9._-]"
-              exit 1 ;;
-          esac
-          if [ "${#DEPLOY_TAG}" -gt 128 ]; then
-            echo "::error::DEPLOY_TAG ($DEPLOY_TAG) exceeds the 128-character registry tag limit"
-            exit 1
-          fi
-          if [ "$DEPLOY_TAG" = latest ]; then
-            echo '::error::DEPLOY_TAG "latest" is reserved for release-anchored tags'
-            exit 1
-          fi
-
           REGISTRY_HOST="${REPOSITORY_URL#https://}"
           # Image names must be lowercase: owner/repo come from the runner's
           # GITHUB_REPOSITORY env lowercased whole (${var,,}), so no org is
@@ -309,6 +317,7 @@ jobs:
       - name: Run summary
         if: always()
         env:
+          JOB_STATUS: ${{ job.status }}
           WEB_VARS_OUTCOME: ${{ steps.webvars.outcome }}
           WEB_EXPORT_OUTCOME: ${{ steps.webexport.outcome }}
           DEPLOY_ENABLED: ${{ steps.deploycfg.outputs.deploy }}
@@ -335,6 +344,10 @@ jobs:
             VERDICT='❌ failed — web export never ran (see log)'
           elif [ "$WEB_EXPORT_OUTCOME" = 'success' ] && [ "$DEPLOY_RESULT" = 'deployed' ]; then
             VERDICT='🎉 done: web published'
+          elif [ "$JOB_STATUS" = 'failure' ]; then
+            VERDICT='❌ failed — a fatal step broke (see log)'
+          elif [ "$JOB_STATUS" = 'cancelled' ]; then
+            VERDICT='❌ cancelled — the run was stopped (see log)'
           else
             VERDICT="⚠️ finished with warnings — web: $WEB"
           fi
