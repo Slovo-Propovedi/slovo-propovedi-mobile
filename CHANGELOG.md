@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wide layout applies only to tablet-class screens (at least 768 pt on the long side and 600 pt on the short side), so a phone in landscape keeps the usual layout
 - Wide layout: the bottom mini-player keeps the same safe-area gap as the tab-bar row (20 pt on iPad, 21 pt on iOS web), instead of hugging the screen edge
 - Wide layout: screen content no longer leaves an extra bottom-inset-sized gap under the top tab island
+- Wide layout: the floating top island no longer sits on an opaque full-width band — list content scrolls under the glass instead of being cut at its edge, and the band no longer swallows taps
 - Wide layout: playlist screens and the playlist editor start their content below the floating top island instead of under it
 - Pauses the sermon while you record a voice message in another app; playback resumes when the recording ends (Android)
 - Web (iOS): the page fills the full physical screen height, removing the background band left below the app

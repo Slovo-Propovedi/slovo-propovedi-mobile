@@ -32,7 +32,7 @@ const PlaylistSkeletonList = () => (
 
 export const AdminPlaylistsScreen = () => {
   const insets = useSafeAreaInsets()
-  const { topChromeHeight } = useScreenChromePadding()
+  const { topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -64,7 +64,7 @@ export const AdminPlaylistsScreen = () => {
           styles.container,
           {
             backgroundColor: currentTheme.background,
-            paddingTop: Math.max(insets.top, topChromeHeight),
+            paddingTop: insets.top,
           },
         ]}
       >
@@ -80,7 +80,7 @@ export const AdminPlaylistsScreen = () => {
             )}
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: tabBarHeight + INDENTS.low },
+              { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
             ]}
             ListEmptyComponent={
               isLoading ? (

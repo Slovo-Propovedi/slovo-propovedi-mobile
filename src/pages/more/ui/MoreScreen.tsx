@@ -15,7 +15,7 @@ import { styles } from './styles'
 
 export const MoreScreen = () => {
   const insets = useSafeAreaInsets()
-  const { topChromeHeight } = useScreenChromePadding()
+  const { topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const restore = useAction(restoreSession)
@@ -39,11 +39,14 @@ export const MoreScreen = () => {
           styles.container,
           {
             backgroundColor: currentTheme.background,
-            paddingTop: Math.max(insets.top, topChromeHeight),
+            paddingTop: insets.top,
           },
         ]}
       >
-        <ScrollView ref={tourScrollableRef}>
+        <ScrollView
+          ref={tourScrollableRef}
+          contentContainerStyle={{ paddingTop: topChromeScrollInset }}
+        >
           <ScreenTitleRow title='Ещё'>
             {canOpenAdminPanel && <AdminPanelButton />}
             <HelpHeaderButton />

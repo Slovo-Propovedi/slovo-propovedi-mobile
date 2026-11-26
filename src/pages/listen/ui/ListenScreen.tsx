@@ -18,7 +18,7 @@ export const ListenScreen = () => {
   const insets = useSafeAreaInsets()
   const { currentTheme } = useTheme()
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
-  const { bottomChromeHeight, topChromeHeight } = useScreenChromePadding()
+  const { bottomChromeHeight, topChromeScrollInset } = useScreenChromePadding()
   const { onContentSizeChange, onScroll } = useBarCollapseOnScroll({
     isSuspended: isBarCollapseSuspended,
   })
@@ -44,7 +44,7 @@ export const ListenScreen = () => {
           styles.safeArea,
           {
             backgroundColor: currentTheme.background,
-            paddingTop: Math.max(insets.top, topChromeHeight),
+            paddingTop: insets.top,
           },
         ]}
       >
@@ -56,9 +56,11 @@ export const ListenScreen = () => {
             keyboardDismissMode='on-drag'
             keyboardShouldPersistTaps='handled'
             onContentSizeChange={onContentSizeChange}
-            contentContainerStyle={[{ paddingBottom: bottomChromeHeight }]}
             style={[styles.scroll, { backgroundColor: currentTheme.background }]}
             refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
+            contentContainerStyle={[
+              { paddingBottom: bottomChromeHeight, paddingTop: topChromeScrollInset },
+            ]}
           >
             <ListenTopRow showAdminButton={canOpenAdminPanel} />
             <DynamicSectionsSlider onboardingTargetId='listen.sections' />

@@ -55,7 +55,21 @@ describe('useScreenChromePadding', () => {
     expect(result.current).toEqual({
       bottomChromeHeight: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight,
       topChromeHeight: 0,
+      topChromeScrollInset: 0,
     })
+  })
+
+  test('wide: the island clearance lives in scroll content, the safe area in the layout', async () => {
+    mockWindowWidth = 1024
+
+    const { result } = await renderHookWithProviders(() => useScreenChromePadding())
+
+    // The screen root keeps only the safe-area strip: the island band above the
+    // scroller is gone, so content scrolls and takes taps under the glass.
+    expect(result.current.topChromeScrollInset).toBe(
+      BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+    )
+    expect(result.current.topChromeHeight - result.current.topChromeScrollInset).toBe(mockTopInset)
   })
 
   test('wide native: the mini pill rests on the real safe-area line (iPad 20)', async () => {
@@ -68,6 +82,7 @@ describe('useScreenChromePadding', () => {
     expect(result.current).toEqual({
       bottomChromeHeight: PLAYER_SIZES.miniPlayerHeight + 20 + BAR_OUTER_GAP,
       topChromeHeight: mockTopInset + BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+      topChromeScrollInset: BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
     })
   })
 

@@ -15,7 +15,7 @@ import { styles } from './styles'
 
 export const AdminHomeScreen = () => {
   const insets = useSafeAreaInsets()
-  const { topChromeHeight } = useScreenChromePadding()
+  const { topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
   const [user] = useAtom(authUserAtom)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -29,18 +29,21 @@ export const AdminHomeScreen = () => {
           styles.container,
           {
             backgroundColor: currentTheme.background,
-            paddingTop: Math.max(insets.top, topChromeHeight),
+            paddingTop: insets.top,
           },
         ]}
       >
         <PullToRefresh onRefresh={stats.reload} refreshing={stats.isRefreshing}>
           <ScrollView
-            contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + INDENTS.low }]}
             refreshControl={createRefreshControl(
               stats.isRefreshing,
               stats.reload,
               currentTheme.primary,
             )}
+            contentContainerStyle={[
+              styles.content,
+              { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
+            ]}
           >
             <AdminHomeHeader user={user} />
 

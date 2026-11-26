@@ -1,10 +1,39 @@
 import { createCtx } from '@reatom/framework'
-import { fireEvent } from '@testing-library/react-native'
+import { fireEvent, screen } from '@testing-library/react-native'
 import { type ReactNode } from 'react'
+import { StyleSheet } from 'react-native'
+import { type TestInstance } from 'test-renderer'
 import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
 import { authMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
+import { BAR_OUTER_GAP, BAR_ROW_MIN_HEIGHT, BAR_TOP_ISLAND_MARGIN } from 'shared/ui/layout'
 import { MoreScreen } from './MoreScreen'
+
+// The floating top island occupies this much of the scroll content in wide.
+const WIDE_TOP_CHROME_SCROLL_INSET = BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP
+
+const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+
+const findContentScrollView = () =>
+  screen.root?.queryAll(
+    instance =>
+      SCROLL_HOST_TYPES.has(String(instance.type)) &&
+      instance.props.contentContainerStyle !== undefined,
+  )[0]
+
+// Total layout padding between the scroll host and the screen root. Any value
+// here is an opaque band that clips the list and swallows drags over it.
+const topBandHeightAboveScroller = (scrollView: TestInstance): number => {
+  let band = 0
+  let current: null | TestInstance = scrollView
+
+  while (current !== null) {
+    band += StyleSheet.flatten(current.props.style)?.paddingTop ?? 0
+    current = current.parent
+  }
+
+  return band
+}
 
 const ADMIN_PANEL_LABEL = 'В админ панель'
 
@@ -202,5 +231,20 @@ describe('<MoreScreen>', () => {
     const { getByText } = await renderWithProviders(<MoreScreen />)
     await fireEvent.press(getByText('Поделиться приложением'))
     expect(mockPush).toHaveBeenCalledWith('/share')
+  })
+
+  test('reserves the wide top island inside the scroll content, not as a band above it', async () => {
+    await renderWithProviders(<MoreScreen />)
+    const scrollView = findContentScrollView()
+
+    expect(scrollView).toBeDefined()
+    // Jest renders a tablet-class frame, so the wide layout is active and the
+    // provider's zero insets leave only the island clearance to reserve.
+    expect(StyleSheet.flatten(scrollView?.props.contentContainerStyle)?.paddingTop).toBe(
+      WIDE_TOP_CHROME_SCROLL_INSET,
+    )
+    // No opaque plate above the scroller: it would clip the first rows and
+    // swallow drags that start over the band.
+    expect(scrollView && topBandHeightAboveScroller(scrollView)).toBe(0)
   })
 })

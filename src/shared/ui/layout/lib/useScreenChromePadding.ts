@@ -15,10 +15,17 @@ import { useIsWideLayout } from './useIsWideLayout'
  * bottom padding (`useBarBottomPadding`), and the top reserves the islands row's
  * CONTENT height — the measured row also carries the bottom padding, which must
  * not inflate the top chrome.
+ *
+ * `topChromeScrollInset` is the part of `topChromeHeight` that belongs to a
+ * scroll container's CONTENT, not to the screen layout: the safe-area strip
+ * stays outside the scroller, while the island clearance lives in the content.
+ * That keeps the first item below the island at rest yet lets it scroll under
+ * the floating glass instead of being clipped by an opaque full-width band.
  */
 export const useScreenChromePadding = (): {
   bottomChromeHeight: number
   topChromeHeight: number
+  topChromeScrollInset: number
 } => {
   const isWide = useIsWideLayout()
   const insets = useSafeAreaInsets()
@@ -30,10 +37,12 @@ export const useScreenChromePadding = (): {
     return {
       bottomChromeHeight: tabBarHeight + miniPlayerHeight,
       topChromeHeight: 0,
+      topChromeScrollInset: 0,
     }
 
   return {
     bottomChromeHeight: miniPlayerHeight + barBottomPadding + BAR_OUTER_GAP,
     topChromeHeight: insets.top + BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+    topChromeScrollInset: BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
   }
 }

@@ -1,11 +1,23 @@
 import { createCtx } from '@reatom/framework'
-import { act, fireEvent } from '@testing-library/react-native'
+import { act, fireEvent, screen } from '@testing-library/react-native'
 import { type ReactNode } from 'react'
+import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
 import { authMocks, sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
+import { BAR_OUTER_GAP, BAR_ROW_MIN_HEIGHT, BAR_TOP_ISLAND_MARGIN } from 'shared/ui/layout'
 import { ListenScreen } from './ListenScreen'
+
+// A tablet-class frame keeps every test in the wide layout; the provider's
+// insets are zero, so only the chrome reserve is left in the top band.
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ fontScale: 1, height: 800, width: 1024 }),
+}))
+
+// The floating top island occupies this much of the scroll content in wide.
+const WIDE_TOP_CHROME_SCROLL_INSET = BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP
 
 const mockPush = jest.fn()
 
@@ -152,6 +164,28 @@ const setAuthenticatedUser = (ctx: ReturnType<typeof createCtx>, role: 'admin' |
   authStatusAtom(ctx, 'authenticated')
 }
 
+// The screen's vertical scroller: the host that owns the content container.
+const findContentScrollView = () =>
+  screen.root?.queryAll(
+    instance =>
+      SCROLL_HOST_TYPES.has(String(instance.type)) &&
+      instance.props.contentContainerStyle !== undefined,
+  )[0]
+
+// Total layout padding between the scroll host and the screen root. Any value
+// here is an opaque band that clips the list and swallows drags over it.
+const topBandHeightAboveScroller = (scrollView: TestInstance): number => {
+  let band = 0
+  let current: null | TestInstance = scrollView
+
+  while (current !== null) {
+    band += StyleSheet.flatten(current.props.style)?.paddingTop ?? 0
+    current = current.parent
+  }
+
+  return band
+}
+
 describe('<ListenScreen>', () => {
   beforeEach(() => {
     mockPush.mockClear()
@@ -255,5 +289,20 @@ describe('<ListenScreen>', () => {
     // The shield is an in-flow sibling of the magnifier inside the scroll
     // content: it shares the top row and scrolls with the sections.
     expect(hasScrollAncestor(getByLabelText(ADMIN_BUTTON_LABEL))).toBe(true)
+  })
+
+  test('reserves the wide top island inside the scroll content, not as a band above it', async () => {
+    await renderWithProviders(<ListenScreen />, {})
+    const scrollView = findContentScrollView()
+
+    expect(scrollView).toBeDefined()
+    // The island clearance rides in the content: cards start below the island at
+    // rest, but scroll (and take taps) under the glass while the page moves.
+    expect(StyleSheet.flatten(scrollView?.props.contentContainerStyle)?.paddingTop).toBe(
+      WIDE_TOP_CHROME_SCROLL_INSET,
+    )
+    // No opaque plate above the scroller: the full-width chrome band would clip
+    // the first cards and swallow drags that start over it.
+    expect(scrollView && topBandHeightAboveScroller(scrollView)).toBe(0)
   })
 })

@@ -27,11 +27,10 @@ const LIST_TEST_ID = 'admin-sermons-list'
 
 export const AdminSermonsScreen = () => {
   const insets = useSafeAreaInsets()
-  const { topChromeHeight } = useScreenChromePadding()
+  const { topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  const topInset = Math.max(insets.top, topChromeHeight)
   const {
     isError,
     isLoading,
@@ -66,7 +65,7 @@ export const AdminSermonsScreen = () => {
       <View
         style={[
           styles.container,
-          { backgroundColor: currentTheme.background, paddingTop: topInset },
+          { backgroundColor: currentTheme.background, paddingTop: insets.top },
         ]}
       >
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
@@ -82,7 +81,7 @@ export const AdminSermonsScreen = () => {
             )}
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: tabBarHeight + INDENTS.low },
+              { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
             ]}
             ListEmptyComponent={
               isLoading ? (
