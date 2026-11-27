@@ -1,4 +1,4 @@
-// Circle imports by the FSD `@x` convention: the tab bar renders the search morph
-// inside its floating chrome, so it must reach the widget without a same-layer
-// barrel import.
-export { SearchIslandMorph } from '../ui/SearchIslandMorph'
+// Circle import by the FSD `@x` convention: the tab bar owns the one moving
+// search button, which interpolates its rect between the in-island slot and the
+// search circle geometry the search island defines.
+export { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'

@@ -23,6 +23,7 @@ export const TabIslandSearchSlot = ({
   expandedWidth,
   isActive,
   isCollapsed,
+  isDetached = false,
   isSettledCollapsed,
   isSettledOneLine,
   isWideLayout,
@@ -35,6 +36,11 @@ export const TabIslandSearchSlot = ({
   /** The search route is focused: paint the active-tab capsule on the slot. */
   isActive: boolean
   isCollapsed: boolean
+  /**
+   * Compact: the search button moved to the row layer (the detached button),
+   * so the slot keeps only its width as a layout spacer.
+   */
+  isDetached?: boolean
   isSettledCollapsed: boolean
   isSettledOneLine: boolean
   /** Wide layout: the search slot matches the slim constant island height. */
@@ -44,20 +50,21 @@ export const TabIslandSearchSlot = ({
 }) => {
   const openSearch = useOpenSearch()
 
+  const slotProps = {
+    expandedWidth,
+    isActive: false,
+    isCollapsed,
+    isSettledCollapsed,
+    isSettledOneLine,
+    isWideLayout,
+    oneLineProgress,
+    progress,
+  } as const
+
+  if (isDetached) return <TabSlot {...slotProps} />
+
   return (
-    <TabSlot
-      // The search tab never owns the collapsed circle: the folded row gives
-      // that circle to the fallback «Слушать» tab and shows search in its own
-      // separate circle.
-      isActive={false}
-      progress={progress}
-      isCollapsed={isCollapsed}
-      isWideLayout={isWideLayout}
-      expandedWidth={expandedWidth}
-      oneLineProgress={oneLineProgress}
-      isSettledOneLine={isSettledOneLine}
-      isSettledCollapsed={isSettledCollapsed}
-    >
+    <TabSlot {...slotProps}>
       <View
         style={styles.tabButton}
         // The slot stays mounted while folded (it fades with the island), so

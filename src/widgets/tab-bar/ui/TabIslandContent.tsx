@@ -83,6 +83,7 @@ export const TabIslandContent = ({
       {!hideSearch && (
         <TabIslandSearchSlot
           progress={progress}
+          isDetached={!isWide}
           isWideLayout={isWide}
           isCollapsed={isCollapsed}
           isActive={isSearchFocused}

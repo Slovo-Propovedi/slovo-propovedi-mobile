@@ -14,7 +14,7 @@ import { useTabBarMeasurement } from '../lib/useTabBarMeasurement'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { getFloatingContainerStyle, getIslandsRowStyle } from './getFloatingContainerStyle'
 import { styles } from './styles'
-import { TabBarSearchCircle } from './TabBarSearchCircle'
+import { TabBarSearchButton } from './TabBarSearchButton'
 import { TabIslandContent } from './TabIslandContent'
 import { useTabPress } from './useTabPress'
 
@@ -37,6 +37,13 @@ export const CustomTabBar = ({
   const { onLayout, rowWidth } = useTabBarMeasurement()
   const activeRouteKey = useActiveTabRouteKey(state.routes, state.index)
   const visibleRoutes = getVisibleTabRoutes(state.routes)
+  const morph = useTabIslandMorph({
+    hideSearch,
+    isForceExpanded: isWide,
+    routeCount: visibleRoutes.length,
+    rowWidth,
+    windowWidth,
+  })
   const {
     contentStyle,
     expandedSearchWidth,
@@ -48,15 +55,7 @@ export const CustomTabBar = ({
     progress,
     restingContentStyle,
     restingIslandStyle,
-    settledCollapsed,
-    settledOneLine,
-  } = useTabIslandMorph({
-    hideSearch,
-    isForceExpanded: isWide,
-    routeCount: visibleRoutes.length,
-    rowWidth,
-    windowWidth,
-  })
+  } = morph
   const { motion, motionFor, requestTravel, resting } = useCapsuleTravel({
     activeRouteKey,
     hideSearch,
@@ -108,17 +107,24 @@ export const CustomTabBar = ({
             activeRouteKey={activeRouteKey}
             handleTabPress={handleTabPress}
             isTabAvailable={isTabAvailable}
-            settledOneLine={settledOneLine}
             isSearchFocused={isSearchFocused}
             oneLineProgress={oneLineProgress}
             expandedTabWidth={expandedTabWidth}
-            settledCollapsed={settledCollapsed}
+            settledOneLine={morph.settledOneLine}
+            settledCollapsed={morph.settledCollapsed}
             expandedSearchWidth={expandedSearchWidth}
             restingContentStyle={restingContentStyle}
           />
         </GlassIsland>
       </Animated.View>
-      {!hideSearch && !isWide && <TabBarSearchCircle isActive={isSearchFocused} />}
+      {!hideSearch && !isWide && (
+        <TabBarSearchButton
+          morph={morph}
+          isActive={isSearchFocused}
+          routeCount={visibleRoutes.length}
+          capsuleMotion={motionFor(visibleRoutes.length)}
+        />
+      )}
     </Animated.View>
   )
 }

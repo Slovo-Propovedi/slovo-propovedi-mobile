@@ -17,6 +17,8 @@ import {
   BAR_BOTTOM_INSET_MIN,
   BAR_CIRCLE_SIZE_EXPANDED,
   BAR_ROW_MIN_HEIGHT,
+  BAR_SIDE_INSET_COLLAPSED,
+  BAR_SIDE_INSET_EXPANDED,
   BAR_TOP_ISLAND_MARGIN,
   CONTENT_COLUMN_WIDTH,
   isBarCollapsedAtom,
@@ -139,7 +141,7 @@ const renderTabBar = async (
 }
 
 const TAB_ISLAND_NOT_FOUND = 'tab island not found'
-const SEARCH_FRAME_NOT_FOUND = 'search morph frame not found'
+const SEARCH_BUTTON_NOT_FOUND = 'search button host not found'
 
 describe('<CustomTabBar>', () => {
   beforeEach(() => {
@@ -233,33 +235,72 @@ describe('<CustomTabBar>', () => {
       return flat?.borderRadius === RADIUSES.round && flat?.maxWidth === 600
     })[0]
 
-  // The morph frame is the only absolutely positioned row layer; its trailing
-  // ✕ sibling shares zIndex 20 but never the row direction.
-  const findSearchMorphFrame = () =>
+  // The detached search button is the row-layer host that carries the moving
+  // geometry: absolute, raised above the island, and the only zIndex-20 absolute
+  // node with a numeric left (the ✕ close slot is positioned by `right`).
+  const findSearchButtonHost = (): TestInstance | undefined =>
     screen.root?.queryAll(instance => {
       const flat = StyleSheet.flatten(instance.props.style)
 
-      return flat?.flexDirection === 'row' && flat?.position === 'absolute' && flat?.zIndex === 20
+      return (
+        flat?.position === 'absolute' &&
+        flat?.zIndex === 20 &&
+        flat?.flexDirection === undefined &&
+        typeof flat?.left === 'number'
+      )
     })[0]
 
-  // The in-island search slot is the morphed TabSlot wrapping the «Поиск»
-  // button; walk up to the Animated.View that carries the slot geometry.
-  const findInIslandSearchSlot = () => {
-    const island = findTabIsland()
+  const searchGlassOpacity = () => {
+    const host = findSearchButtonHost()
 
-    if (!island) throw new Error(TAB_ISLAND_NOT_FOUND)
+    if (!host) throw new Error(SEARCH_BUTTON_NOT_FOUND)
 
-    let node = within(island).getByRole('button', {
-      includeHiddenElements: true,
-      name: 'Поиск',
-    }).parent
+    // The glass is the only absolute-fill child carrying an animated opacity in
+    // the expanded state (the label text has no `top`, the capsule sits inset).
+    const glass = host.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
 
-    while (node !== null && StyleSheet.flatten(node.props.style)?.minWidth === undefined)
-      node = node.parent
+      return flat?.top === 0 && typeof flat?.opacity === 'number'
+    })[0]
 
-    if (node === null) throw new Error('in-island search slot not found')
+    return StyleSheet.flatten(glass?.props.style)?.opacity
+  }
 
-    return node
+  const findMovingCapsule = () => {
+    const host = findSearchButtonHost()
+
+    if (!host) throw new Error(SEARCH_BUTTON_NOT_FOUND)
+
+    return host.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
+
+      return flat?.backgroundColor === CAPSULE_COLOR && flat?.top === 4
+    })[0]
+  }
+
+  // In-island slot rect of the compact expanded row: the oracle the detached
+  // button must start from. The row is centred in the content column with the
+  // expanded side inset and the inner content padding.
+  const expandedSlotRect = () => {
+    const rowContentWidth =
+      Math.min(mockWindowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
+    const slotWidth = (rowContentWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2) / 4
+
+    return {
+      left: BAR_SIDE_INSET_EXPANDED + ISLAND_CONTENT_PADDING_HORIZONTAL + 3 * slotWidth,
+      width: slotWidth,
+    }
+  }
+
+  // Independent oracle for the closed circle at a given one-line progress.
+  const closedCircleRect = (oneLine: number) => {
+    const sideInset =
+      BAR_SIDE_INSET_EXPANDED + (BAR_SIDE_INSET_COLLAPSED - BAR_SIDE_INSET_EXPANDED) * oneLine
+    const height =
+      TAB_BAR_ISLAND_HEIGHT +
+      (TAB_BAR_ISLAND_HEIGHT_EXPANDED - TAB_BAR_ISLAND_HEIGHT) * (1 - oneLine)
+
+    return { height, left: sideInset + mockWindowWidth - sideInset * 2 - height, width: height }
   }
 
   test('ignores a zero-height layout report', async () => {
@@ -357,19 +398,20 @@ describe('<CustomTabBar>', () => {
     })
   })
 
-  test('frosts the tab island, the search morph and its hidden close circle', async () => {
+  test('frosts the tab island and its detached search button', async () => {
     await renderTabBar()
 
     const blurs = findGlassBlurs()
 
-    // Island + morph container + the always-mounted public ✕ slot.
-    expect(blurs).toHaveLength(3)
+    // Island + the moving search button's own glass (invisible on the island,
+    // but always mounted so the tear-off carries a real surface).
+    expect(blurs).toHaveLength(2)
     expect(blurs.every(blur => blur.props.tint === 'light')).toBe(true)
     // The fill is a layer ABOVE the blur: the native snapshot is opaque, so a
     // backgroundColor underneath it would never show through.
-    expect(findFill(getGlassFill(true))).toHaveLength(3)
+    expect(findFill(getGlassFill(true))).toHaveLength(2)
     expect(StyleSheet.flatten(blurs?.[0]?.props.style)?.backgroundColor).toBeUndefined()
-    expect(findHairlineBorders(getGlassBorder(true))).toHaveLength(3)
+    expect(findHairlineBorders(getGlassBorder(true))).toHaveLength(2)
   })
 
   test('renders the glass island without its own shadow', async () => {
@@ -393,11 +435,11 @@ describe('<CustomTabBar>', () => {
 
     const blurs = findGlassBlurs()
 
-    expect(blurs).toHaveLength(3)
+    expect(blurs).toHaveLength(2)
     expect(blurs.every(blur => blur.props.tint === 'dark')).toBe(true)
-    expect(findFill(getGlassFill(false))).toHaveLength(3)
+    expect(findFill(getGlassFill(false))).toHaveLength(2)
     expect(StyleSheet.flatten(blurs?.[0]?.props.style)?.backgroundColor).toBeUndefined()
-    expect(findHairlineBorders(getGlassBorder(false))).toHaveLength(3)
+    expect(findHairlineBorders(getGlassBorder(false))).toHaveLength(2)
   })
 
   // The clipping wrapper (Issue #152) has no padding now: the animated inset
@@ -567,23 +609,19 @@ describe('<CustomTabBar>', () => {
     expect(findTravelCapsules(island)[0]).toHaveStyle({ opacity: 0 })
   })
 
-  test('folds the search button into the expanded compact island', async () => {
-    const { getByRole } = await renderTabBar()
-    const island = findTabIsland()
+  test('rests the search button on the expanded island slot', async () => {
+    await renderTabBar()
+    const slot = expandedSlotRect()
+    const button = StyleSheet.flatten(findSearchButtonHost()?.props.style)
 
-    if (!island) throw new Error(TAB_ISLAND_NOT_FOUND)
-
-    // The expanded row reads as one island: the search button sits in the same
-    // glass subtree as the tabs.
-    expect(within(island).getByRole('button', { name: 'Поиск' })).toBeTruthy()
-    // The separate circle still exists (geometry is shared with the field morph)
-    // but is faded out and touch-inert while the bar is expanded.
-    expect(StyleSheet.flatten(findSearchMorphFrame()?.props.style)?.opacity).toBe(0)
-    expect(findSearchMorphFrame()?.props.pointerEvents).toBe('none')
-    expect(getByRole('button', { name: 'Поиск' })).toBeTruthy()
+    // Expanded: the button covers the in-island slot exactly, with its own
+    // glass invisible on the island's glass.
+    expect(button?.left).toBe(slot.left)
+    expect(button?.width).toBe(slot.width)
+    expect(searchGlassOpacity()).toBe(0)
   })
 
-  test('restores the separate search circle once the bar folds to one line', async () => {
+  test('detaches the search button onto its own circle once the bar folds', async () => {
     const { ctx } = await renderTabBar()
 
     await act(async () => {
@@ -593,11 +631,153 @@ describe('<CustomTabBar>', () => {
       advanceMorphFrames()
     })
 
-    // Folded: the circle is the row's search affordance again and the in-island
-    // slot has faded to zero width/opacity.
-    expect(StyleSheet.flatten(findSearchMorphFrame()?.props.style)?.opacity).toBe(1)
-    expect(findSearchMorphFrame()?.props.pointerEvents).toBe('box-none')
-    expect(StyleSheet.flatten(findInIslandSearchSlot().props.style)?.opacity).toBe(0)
+    const button = StyleSheet.flatten(findSearchButtonHost()?.props.style)
+
+    // Folded: the button owns the circle rect and carries its own glass.
+    expect(button?.left).toBe(closedCircleRect(1).left)
+    expect(button?.width).toBe(closedCircleRect(1).width)
+    expect(searchGlassOpacity()).toBe(1)
+  })
+
+  test('tears the search button off the island across the collapse morph', async () => {
+    const ctx = createCtx()
+    const props = createBarProps()
+    const { rerender } = await renderWithProviders(
+      <CustomTabBar state={createMockState(0)} {...props} />,
+      { ctx },
+    )
+    const slot = expandedSlotRect()
+    const expanded = StyleSheet.flatten(findSearchButtonHost()?.props.style)
+
+    expect(expanded?.left).toBe(slot.left)
+    expect(expanded?.width).toBe(slot.width)
+    // Inside the island its own glass must be invisible: it sits on the island's.
+    expect(searchGlassOpacity()).toBe(0)
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames(1)
+    })
+    // Force the style layer to read the mid-flight shared value (the jest
+    // reanimated mock evaluates animated styles on render, not on the UI thread).
+    await rerender(<CustomTabBar state={createMockState(0)} {...props} />)
+
+    const mid = StyleSheet.flatten(findSearchButtonHost()?.props.style)
+    const midCircle = closedCircleRect(0.5)
+
+    expect(mid?.left).toBe((slot.left + midCircle.left) / 2)
+    expect(mid?.width).toBe((slot.width + midCircle.width) / 2)
+    expect(mid?.left).toBeGreaterThan(slot.left)
+    expect(searchGlassOpacity()).toBe(0.5)
+
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    const collapsed = StyleSheet.flatten(findSearchButtonHost()?.props.style)
+    const circle = closedCircleRect(1)
+
+    expect(collapsed?.left).toBe(circle.left)
+    expect(collapsed?.width).toBe(circle.width)
+    expect(searchGlassOpacity()).toBe(1)
+  })
+
+  test('glues the search button back into the island across the expand morph', async () => {
+    const ctx = createCtx()
+    setBarCollapsed(ctx, true)
+    const props = createBarProps()
+    const { rerender } = await renderWithProviders(
+      <CustomTabBar state={createMockState(0)} {...props} />,
+      { ctx },
+    )
+    const collapsed = StyleSheet.flatten(findSearchButtonHost()?.props.style)
+
+    expect(collapsed?.left).toBe(closedCircleRect(1).left)
+    expect(searchGlassOpacity()).toBe(1)
+
+    await act(async () => {
+      setBarCollapsed(ctx, false)
+    })
+    await act(async () => {
+      advanceMorphFrames(1)
+    })
+    await rerender(<CustomTabBar state={createMockState(0)} {...props} />)
+
+    const mid = StyleSheet.flatten(findSearchButtonHost()?.props.style)
+    const slot = expandedSlotRect()
+    const midCircle = closedCircleRect(0.5)
+
+    expect(mid?.left).toBe((slot.left + midCircle.left) / 2)
+    expect(mid?.left).toBeLessThan(collapsed?.left as number)
+    expect(searchGlassOpacity()).toBe(0.5)
+
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    const expanded = StyleSheet.flatten(findSearchButtonHost()?.props.style)
+
+    expect(expanded?.left).toBe(slot.left)
+    expect(expanded?.width).toBe(slot.width)
+    expect(searchGlassOpacity()).toBe(0)
+  })
+
+  test('lands the detached search button on the circle the collapsed pill clears', async () => {
+    const ctx = createCtx()
+    await renderWithProviders(<CustomTabBar state={createMockState(0)} {...createBarProps()} />, {
+      ctx,
+    })
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    const collapsed = StyleSheet.flatten(findSearchButtonHost()?.props.style)
+
+    // The collapsed mini pill starts at circle + BAR_OUTER_GAP from the row's
+    // inner left edge, so the arriving circle must own the row's inner right
+    // edge (the `getMiniPlayerGeometry` invariant).
+    expect(collapsed?.width).toBe(closedCircleRect(1).width)
+    expect((collapsed?.left as number) + (collapsed?.width as number)).toBe(
+      mockWindowWidth - BAR_SIDE_INSET_COLLAPSED,
+    )
+  })
+
+  test('keeps the search affordance inside the wide island', async () => {
+    mockWindowWidth = 1024
+    const { getByRole } = await renderTabBar()
+    const island = findTabIsland()
+
+    if (!island) throw new Error(TAB_ISLAND_NOT_FOUND)
+
+    // Wide pins separation to 0: no detached row-layer host, the slot stays put.
+    expect(findSearchButtonHost()).toBeUndefined()
+    expect(within(island).getByRole('button', { name: 'Поиск' })).toBeTruthy()
+    expect(getByRole('button', { name: 'Поиск' })).toBeTruthy()
+  })
+
+  test('keeps the active search capsule on the detached button', async () => {
+    const ctx = createCtx()
+    await renderWithProviders(<CustomTabBar state={createMockState(1)} {...createBarProps()} />, {
+      ctx,
+    })
+
+    // Expanded: the island's traveling capsule owns the highlight.
+    expect(StyleSheet.flatten(findMovingCapsule()?.props.style)?.opacity).toBe(0)
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    expect(StyleSheet.flatten(findMovingCapsule()?.props.style)?.opacity).toBe(1)
   })
 
   test('hides the search button on the admin tab layout', async () => {
@@ -606,34 +786,37 @@ describe('<CustomTabBar>', () => {
     expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
   })
 
-  test('keeps the search morph mounted while the search field is visible', async () => {
-    mockIsSearchFieldVisible = true
-    await renderTabBar(0, { isCollapsed: true })
-    const frame = findSearchMorphFrame()
+  test('keeps one mounted search button through the collapse morph', async () => {
+    const { ctx } = await renderTabBar()
 
-    if (!frame) throw new Error(SEARCH_FRAME_NOT_FOUND)
+    expect(
+      screen.root?.queryAll(instance => instance.props.accessibilityLabel === 'Поиск'),
+    ).toHaveLength(1)
 
-    // The circle is the same always-mounted morph container, not a handoff
-    // button: it leaves the accessibility tree but is never unmounted.
-    expect(within(frame).getByLabelText('Поиск', { includeHiddenElements: true })).toBeTruthy()
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    expect(
+      screen.root?.queryAll(instance => instance.props.accessibilityLabel === 'Поиск'),
+    ).toHaveLength(1)
   })
 
-  test('does not paint its own search-morph shadow', async () => {
-    mockIsSearchFieldVisible = true
+  test('does not paint its own search-button shadow', async () => {
     await renderTabBar()
+    const host = findSearchButtonHost()
 
-    expect(StyleSheet.flatten(findSearchCircle()?.props.style)?.boxShadow).toBeUndefined()
+    if (!host) throw new Error(SEARCH_BUTTON_NOT_FOUND)
+
+    expect(
+      host.queryAll(instance => StyleSheet.flatten(instance.props.style)?.boxShadow !== undefined),
+    ).toHaveLength(0)
   })
 
-  test('hides the search button from assistive tech while the search field is visible', async () => {
-    mockIsSearchFieldVisible = true
-    const { queryByRole } = await renderTabBar(0, { isCollapsed: true })
-
-    expect(queryByRole('button', { name: 'Поиск' })).toBeNull()
-  })
-
-  test('shows the search button again when a collapsed bar hides the field', async () => {
-    mockIsSearchFieldVisible = false
+  test('shows the search button in the collapsed bar', async () => {
     const { getByRole } = await renderTabBar(0, { isCollapsed: true })
 
     expect(getByRole('button', { name: 'Поиск' })).toBeTruthy()
@@ -1001,16 +1184,16 @@ describe('<CustomTabBar>', () => {
     })
 
     const island = findTabIsland()
-    const frame = findSearchMorphFrame()
+    const host = findSearchButtonHost()
 
-    if (!island || !frame) throw new Error('tab chrome not found')
+    if (!island || !host) throw new Error('tab chrome not found')
 
     // The fallback tab fills the circle but is not the active destination: it
     // keeps the default tint and no capsule.
     expect(within(island).getByText('Слушать')).not.toHaveStyle({ color: '#f16031' })
     expect(island.queryAll(isVisibleCapsuleNode)).toHaveLength(0)
-    // Search owns the active capsule on its own circle.
-    expect(frame.queryAll(isVisibleCapsuleNode)).toHaveLength(1)
+    // Search owns the active capsule on its own detached circle.
+    expect(host.queryAll(isVisibleCapsuleNode)).toHaveLength(1)
   })
 
   test('leaves the search circle plain while a normal tab is active', async () => {
@@ -1025,11 +1208,11 @@ describe('<CustomTabBar>', () => {
       advanceMorphFrames()
     })
 
-    const frame = findSearchMorphFrame()
+    const host = findSearchButtonHost()
 
-    if (!frame) throw new Error(SEARCH_FRAME_NOT_FOUND)
+    if (!host) throw new Error(SEARCH_BUTTON_NOT_FOUND)
 
-    expect(frame.queryAll(isVisibleCapsuleNode)).toHaveLength(0)
+    expect(host.queryAll(isVisibleCapsuleNode)).toHaveLength(0)
   })
 
   test('sizes the active item from the one-line axis so the icon centers in the search-open circle', async () => {
