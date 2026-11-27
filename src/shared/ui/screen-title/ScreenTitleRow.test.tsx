@@ -22,4 +22,15 @@ describe('<ScreenTitleRow>', () => {
 
     expect(getByText('action')).toBeTruthy()
   })
+
+  test('omits the title but keeps the actions slot when hideTitle is set', async () => {
+    const { getByText, queryByRole } = await render(
+      <ScreenTitleRow hideTitle title='Ещё'>
+        <Text>action</Text>
+      </ScreenTitleRow>,
+    )
+
+    expect(queryByRole('header', { name: 'Ещё' })).toBeNull()
+    expect(getByText('action')).toBeTruthy()
+  })
 })

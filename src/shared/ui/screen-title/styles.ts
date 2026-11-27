@@ -19,4 +19,7 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZES.h1,
     fontWeight: '700',
   },
+  titleSpacer: {
+    flex: 1,
+  },
 })

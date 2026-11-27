@@ -6,7 +6,7 @@ import { useTourScrollable } from 'features/onboarding'
 import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { BLUR_TARGET_ROUTES, BlurBackdrop, createRefreshControl, PullToRefresh } from 'shared/ui'
-import { useBarCollapseOnScroll, useScreenChromePadding } from 'shared/ui/layout'
+import { useBarCollapseOnScroll, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { usePullToRefresh } from '../lib/usePullToRefresh'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
@@ -18,6 +18,7 @@ export const ListenScreen = () => {
   const insets = useSafeAreaInsets()
   const { currentTheme } = useTheme()
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
+  const isWide = useIsWideLayout()
   const { bottomChromeHeight, topChromeScrollInset } = useScreenChromePadding()
   const { onContentSizeChange, onScroll } = useBarCollapseOnScroll({
     isSuspended: isBarCollapseSuspended,
@@ -62,7 +63,7 @@ export const ListenScreen = () => {
               { paddingBottom: bottomChromeHeight, paddingTop: topChromeScrollInset },
             ]}
           >
-            <ListenTopRow showAdminButton={canOpenAdminPanel} />
+            <ListenTopRow hideTitle={isWide} showAdminButton={canOpenAdminPanel} />
             <DynamicSectionsSlider onboardingTargetId='listen.sections' />
             <MyPlaylistsSlider
               onboardingTargetId='listen.my-playlists'

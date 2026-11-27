@@ -20,6 +20,16 @@ jest.mock('expo-router', () => ({
   useNavigation: () => ({ addListener: jest.fn() }),
 }))
 
+const WIDE_DIMENSIONS = { fontScale: 1, height: 800, width: 1024 }
+const COMPACT_DIMENSIONS = { fontScale: 1, height: 390, width: 844 }
+
+const mockUseWindowDimensions = jest.fn(() => WIDE_DIMENSIONS)
+
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => mockUseWindowDimensions(),
+}))
+
 const mockNavigateToBookReader = jest.fn()
 const mockNavigateToBooksList = jest.fn()
 
@@ -123,6 +133,7 @@ describe('<ReadScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockedUseFeatureFlag.mockReturnValue(true)
+    mockUseWindowDimensions.mockReturnValue(WIDE_DIMENSIONS)
   })
 
   test('renders nothing when the read feature flag is disabled', async () => {
@@ -148,7 +159,15 @@ describe('<ReadScreen>', () => {
     expect(getByText(TOPICAL_TITLE)).toBeTruthy()
   })
 
-  test('renders the large screen title', async () => {
+  test('hides the tab-duplicate title in the wide layout', async () => {
+    const { queryByRole } = await renderWithProviders(<ReadScreen />)
+
+    expect(queryByRole('header', { name: 'Читать' })).toBeNull()
+  })
+
+  test('renders the title in the compact layout', async () => {
+    mockUseWindowDimensions.mockReturnValue(COMPACT_DIMENSIONS)
+
     const { getByRole } = await renderWithProviders(<ReadScreen />)
 
     expect(getByRole('header', { name: 'Читать' })).toBeTruthy()

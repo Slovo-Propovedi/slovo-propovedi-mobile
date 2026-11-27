@@ -7,7 +7,7 @@ import { HelpHeaderButton, OnboardingTarget, useTourScrollable } from 'features/
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { APP_NAME, APP_VERSION } from 'shared/config'
 import { BLUR_TARGET_ROUTES, BlurBackdrop, ScreenTitleRow } from 'shared/ui'
-import { useScreenChromePadding } from 'shared/ui/layout'
+import { useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { AdminPanelButton } from './AdminPanelButton'
 import { MoreMenuSettingsItem } from './MoreMenuSettingsItem'
@@ -15,6 +15,7 @@ import { styles } from './styles'
 
 export const MoreScreen = () => {
   const insets = useSafeAreaInsets()
+  const isWide = useIsWideLayout()
   const { topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
@@ -47,7 +48,7 @@ export const MoreScreen = () => {
           ref={tourScrollableRef}
           contentContainerStyle={{ paddingTop: topChromeScrollInset }}
         >
-          <ScreenTitleRow title='Ещё'>
+          <ScreenTitleRow title='Ещё' hideTitle={isWide}>
             {canOpenAdminPanel && <AdminPanelButton />}
             <HelpHeaderButton />
           </ScreenTitleRow>

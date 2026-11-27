@@ -9,11 +9,16 @@ import { renderWithProviders } from 'shared/mocks'
 import { BAR_OUTER_GAP, BAR_ROW_MIN_HEIGHT, BAR_TOP_ISLAND_MARGIN } from 'shared/ui/layout'
 import { ListenScreen } from './ListenScreen'
 
+const WIDE_DIMENSIONS = { fontScale: 1, height: 800, width: 1024 }
+const COMPACT_DIMENSIONS = { fontScale: 1, height: 390, width: 844 }
+
 // A tablet-class frame keeps every test in the wide layout; the provider's
 // insets are zero, so only the chrome reserve is left in the top band.
+const mockUseWindowDimensions = jest.fn(() => WIDE_DIMENSIONS)
+
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
-  default: () => ({ fontScale: 1, height: 800, width: 1024 }),
+  default: () => mockUseWindowDimensions(),
 }))
 
 // The floating top island occupies this much of the scroll content in wide.
@@ -191,6 +196,7 @@ describe('<ListenScreen>', () => {
     mockPush.mockClear()
     mockedRestoreSession.mockClear()
     mockedRestoreSession.mockResolvedValue(null)
+    mockUseWindowDimensions.mockReturnValue(WIDE_DIMENSIONS)
   })
 
   test('shows sections by default', async () => {
@@ -205,7 +211,15 @@ describe('<ListenScreen>', () => {
     expect(getByText('BLUR_TARGET:/listen')).toBeTruthy()
   })
 
-  test('renders the large screen title', async () => {
+  test('hides the tab-duplicate title in the wide layout', async () => {
+    const { queryByRole } = await renderWithProviders(<ListenScreen />, {})
+
+    expect(queryByRole('header', { name: 'Слушать' })).toBeNull()
+  })
+
+  test('renders the title in the compact layout', async () => {
+    mockUseWindowDimensions.mockReturnValue(COMPACT_DIMENSIONS)
+
     const { getByRole } = await renderWithProviders(<ListenScreen />, {})
 
     expect(getByRole('header', { name: 'Слушать' })).toBeTruthy()

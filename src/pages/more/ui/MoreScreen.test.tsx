@@ -12,6 +12,16 @@ import { MoreScreen } from './MoreScreen'
 // The floating top island occupies this much of the scroll content in wide.
 const WIDE_TOP_CHROME_SCROLL_INSET = BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP
 
+const WIDE_DIMENSIONS = { fontScale: 1, height: 800, width: 1024 }
+const COMPACT_DIMENSIONS = { fontScale: 1, height: 390, width: 844 }
+
+const mockUseWindowDimensions = jest.fn(() => WIDE_DIMENSIONS)
+
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => mockUseWindowDimensions(),
+}))
+
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
 
 const findContentScrollView = () =>
@@ -102,6 +112,7 @@ describe('<MoreScreen>', () => {
     mockPush.mockClear()
     mockedRestoreSession.mockClear()
     mockedRestoreSession.mockResolvedValue(null)
+    mockUseWindowDimensions.mockReturnValue(WIDE_DIMENSIONS)
   })
 
   test('renders app name, version and description in the header', async () => {
@@ -111,7 +122,15 @@ describe('<MoreScreen>', () => {
     expect(getByText('Приложение для прослушивания и чтения проповедей')).toBeTruthy()
   })
 
-  test('renders the large screen title', async () => {
+  test('hides the tab-duplicate title in the wide layout', async () => {
+    const { queryByRole } = await renderWithProviders(<MoreScreen />)
+
+    expect(queryByRole('header', { name: 'Ещё' })).toBeNull()
+  })
+
+  test('renders the title in the compact layout', async () => {
+    mockUseWindowDimensions.mockReturnValue(COMPACT_DIMENSIONS)
+
     const { getByRole } = await renderWithProviders(<MoreScreen />)
 
     expect(getByRole('header', { name: 'Ещё' })).toBeTruthy()
