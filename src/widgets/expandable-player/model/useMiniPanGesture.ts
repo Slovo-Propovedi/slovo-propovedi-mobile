@@ -43,6 +43,9 @@ export const useMiniPanGesture = ({
 }: UseMiniPanGestureParams) => {
   // Distance from the screen bottom to the expanded pill's real resting edge, so
   // a full swipe-up lands exactly on the expanded bar state.
+  // shortcut: drag distance derives from the module-load SCREEN_HEIGHT, so it goes
+  // stale after rotation/multi-window; revisit when rotation complaints appear
+  // (tracked in docs/debt.md → stale screen-dimension constants).
   const dragDistance =
     SCREEN_HEIGHT - getExpandedRestingBottom(tabBarHeight, isWideLayout, wideBottomInset)
 

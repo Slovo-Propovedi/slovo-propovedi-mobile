@@ -68,16 +68,25 @@ export const useGeometryAnimatedStyles = ({
     // keeps it visible for the morph.
     return { ...style, opacity: getContainerOpacity(progress.value), top: style.top + reapply }
   })
-  const miniBarStyle = useAnimatedStyle(() =>
-    getMiniBarStyle({
+  const miniBarStyle = useAnimatedStyle(() => {
+    // Same heal channel as the container: a tick write re-runs this worklet and
+    // re-applies the pill's geometry natively, so a post-measurement correction
+    // (the collapsed row's 80→102dp) cannot be dropped or overwritten. The
+    // alternating ±0.01dp offset defeats no-diff skip; `- reapply` moves the pill
+    // in the same screen direction as the container's `top + reapply`, and the
+    // collapsed container shares the pill's rect, so the guard then heals both.
+    const reapply = geometryReapplyTick.value % 2 === 1 ? 0.01 : -0.01
+    const style = getMiniBarStyle({
       barProgress: isWideLayout ? 0 : barProgress.value,
       fullScreenHeight,
       isWideLayout,
       screenWidth,
       tabBarHeight: tabBarHeightShared.value,
       wideBottomInset,
-    }),
-  )
+    })
+
+    return { ...style, bottom: style.bottom - reapply }
+  })
 
   return { containerStyle, miniBarStyle }
 }

@@ -42,7 +42,11 @@ export const hydrateOfflineRegistry = async (ctx: Ctx): Promise<void> => {
   if (!registry) return
 
   await ctx.schedule(() => {
-    offlineRegistryAtom(ctx, registry)
+    // Merge, never replace: registrations can land while the storage read is in
+    // flight (background caching starts before hydration on cold start), and a
+    // blind overwrite would erase them. The in-memory entries are fresher than
+    // the stored snapshot, so `current` wins on a key collision.
+    offlineRegistryAtom(ctx, current => ({ ...registry, ...current }))
   })
 }
 

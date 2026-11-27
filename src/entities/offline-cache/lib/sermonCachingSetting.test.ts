@@ -52,8 +52,8 @@ describe('sermonCachingSetting model', () => {
   })
 
   describe('sermonCaching race with the startup hydration', () => {
-    // The startup load is dispatched after two awaited steps in app/_layout.tsx, so
-    // its getItem can still be in flight when the user presses the toggle. The read
+    // The startup load is dispatched first in app/_layout.tsx's chain, so its
+    // getItem can still be in flight when the user presses the toggle. The read
     // is held open, the press lands, then the read resolves with a value that
     // predates the press.
     const raceWithSlowStartupRead = async (pressedEnabled: boolean, storedValue: string) => {

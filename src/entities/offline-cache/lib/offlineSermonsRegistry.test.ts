@@ -4,6 +4,7 @@ import { type PlaylistData } from 'entities/playlist/@x/offline-cache'
 import { type SermonData } from 'entities/sermon/@x/offline-cache'
 import {
   clearOfflineRegistry,
+  flushOfflineRegistryPersist,
   hydrateOfflineRegistry,
   offlineRegistryAtom,
   registerOfflineSermon,
@@ -139,6 +140,38 @@ describe('offlineSermonsRegistry', () => {
         sermon: mockSermon,
       },
     })
+  })
+
+  test('hydrateOfflineRegistry preserves entries registered before hydration', async () => {
+    const otherSermon: SermonData = {
+      ...mockSermon,
+      audioUrl: OTHER_AUDIO_URL,
+      id: 'sermon-2',
+      title: 'Sermon 2',
+    }
+
+    // Background caching can register an entry while the storage read is still
+    // in flight; hydration must merge the stored snapshot instead of replacing
+    // the live registry.
+    registerOfflineSermon(ctx, AUDIO_URL, mockSermon, mockPlaylist)
+    await flushOfflineRegistryPersist()
+    await AsyncStorage.setItem(
+      OFFLINE_SERMONS_REGISTRY,
+      JSON.stringify({
+        [OTHER_AUDIO_URL]: {
+          playlist: null,
+          registeredAt: 1,
+          sermon: otherSermon,
+        },
+      }),
+    )
+
+    await hydrateOfflineRegistry(ctx)
+
+    const registry = ctx.get(offlineRegistryAtom)
+    expect(Object.keys(registry).sort()).toEqual([AUDIO_URL, OTHER_AUDIO_URL].sort())
+    expect(registry[AUDIO_URL].sermon).toEqual(mockSermon)
+    expect(registry[OTHER_AUDIO_URL].sermon).toEqual(otherSermon)
   })
 
   test('hydrateOfflineRegistry keeps the atom empty when storage is absent', async () => {

@@ -427,7 +427,14 @@ describe('useExpandAnimation first committed frame', () => {
       width: number
     }
 
-    expect(result.miniBarStyle).toEqual(result.miniBarRestingStyle)
+    // The heal channel adds a sub-pixel re-apply offset (±0.01dp) to the pill's
+    // bottom, so compare the geometry within that tolerance rather than exactly.
+    const { bottom: restingBottom, ...restingGeometry } = result.miniBarRestingStyle
+    expect(result.miniBarStyle).toMatchObject(restingGeometry)
+    expect((result.miniBarStyle as unknown as { bottom: number }).bottom).toBeCloseTo(
+      restingBottom,
+      1,
+    )
     expect(containerStyle).toMatchObject({
       bottom: EXPANDED_BOTTOM,
       left: BAR_SIDE_INSET_EXPANDED,
@@ -472,6 +479,41 @@ describe('useExpandAnimation container visibility', () => {
 
   test('keeps the collapsed container transparent so the pill glass shows the page', async () => {
     expect(await renderContainerOpacity(false)).toBe(0)
+  })
+})
+
+describe('useExpandAnimation geometry heal channel', () => {
+  const pillBottom = (result: ReturnType<typeof useExpandAnimation>) =>
+    (result.miniBarStyle as unknown as { bottom: number }).bottom
+
+  test('re-derives the mini pill geometry when the heal tick advances', async () => {
+    const renders: Array<ReturnType<typeof useExpandAnimation>> = []
+
+    const Harness = ({ revision }: { revision: number }) => {
+      const result = useExpandAnimation(false, TAB_BAR_HEIGHT)
+      renders.push(result)
+
+      return <Text testID='harness'>{String(revision)}</Text>
+    }
+
+    const { rerender } = await renderWithProviders(<Harness revision={0} />)
+    const initial = renders[renders.length - 1]
+    const initialBottom = pillBottom(initial)
+
+    // The tick write forces the worklet to re-run; a plain re-render is used to
+    // read the re-derived style (the reanimated mock evaluates animated styles
+    // on the JS thread at render time).
+    await act(async () => {
+      initial.forceGeometryReapply()
+    })
+    await rerender(<Harness revision={1} />)
+    const healedBottom = pillBottom(renders[renders.length - 1])
+
+    // Advancing the tick flips the sub-pixel re-apply offset. Without the pill
+    // reading the tick the value would be identical and the native apply would
+    // be skipped, dropping the post-measurement 80→102dp correction.
+    expect(healedBottom).not.toBe(initialBottom)
+    expect(healedBottom).toBeCloseTo(initialBottom - 0.02, 5)
   })
 })
 

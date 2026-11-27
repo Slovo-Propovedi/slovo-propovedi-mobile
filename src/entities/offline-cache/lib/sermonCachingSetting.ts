@@ -7,8 +7,8 @@ export const sermonCachingEnabledAtom = atom<boolean>(true, 'sermonCachingEnable
 
 /**
  * Set the moment the user touches the toggle, never reset. The startup load is
- * dispatched from `app/_layout.tsx` after two awaited steps (orphan cleanup, registry
- * hydration), so its `getItem` can still be in flight when the user reaches the
+ * dispatched from `app/_layout.tsx` as the FIRST step of the chain, so its
+ * `getItem` can still be in flight when the user reaches the
  * Offline screen. That read then holds a value from *before* the user's press and
  * would snap the switch back — the user pressed, waited, and got the old state. The
  * press is the freshest intent, so the later hydration is stale by definition and
