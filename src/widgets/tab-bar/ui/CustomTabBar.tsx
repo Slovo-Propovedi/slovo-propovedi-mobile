@@ -41,6 +41,7 @@ export const CustomTabBar = ({
   const visibleRoutes = getVisibleTabRoutes(state.routes)
   const {
     contentStyle,
+    expandedSearchWidth,
     expandedTabWidth,
     isCollapsed,
     isFocused,
@@ -111,9 +112,9 @@ export const CustomTabBar = ({
                 isWideLayout={isWide}
                 isCollapsed={isCollapsed}
                 isActive={isSearchFocused}
-                expandedWidth={expandedTabWidth}
                 isSettledOneLine={settledOneLine}
                 oneLineProgress={oneLineProgress}
+                expandedWidth={expandedSearchWidth}
                 isSettledCollapsed={settledCollapsed}
               />
             )}

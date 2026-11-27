@@ -3,6 +3,7 @@ import { useContext } from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { useHasFinePointer } from '../../lib/hooks/useHasFinePointer'
 import { IconButton } from '../icon-button/IconButton'
+import { useIsWideLayout } from '../layout/lib/useIsWideLayout'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { MIN_TOUCH_TARGET } from '../theme/themed'
 import { RefreshContext } from './refreshContext'
@@ -17,11 +18,14 @@ const ICON_SIZE = 24
 export const RefreshButton = () => {
   const context = useContext(RefreshContext)
   const hasFinePointer = useHasFinePointer()
+  const isWide = useIsWideLayout()
   const { currentTheme } = useTheme()
 
   if (!context || !hasFinePointer) return null
 
-  if (context.refreshing)
+  // Wide already paints the refreshing state in the WideTopActions overlay, so
+  // the button keeps its normal look there instead of showing a second spinner.
+  if (context.refreshing && !isWide)
     return (
       <View style={styles.spinner}>
         <ActivityIndicator color={currentTheme.primary} />

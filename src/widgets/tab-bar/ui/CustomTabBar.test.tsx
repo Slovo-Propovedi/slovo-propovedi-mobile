@@ -30,7 +30,12 @@ import {
   WIDE_TAB_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
 import { RADIUSES, themeModeAtom } from 'shared/ui/theme'
-import { ISLAND_CONTENT_PADDING_HORIZONTAL, TAB_SLOT_NATURAL_WIDTH } from '../lib/getIslandStyle'
+import {
+  ISLAND_CONTENT_PADDING_HORIZONTAL,
+  WIDE_SEARCH_SLOT_WIDTH,
+  WIDE_TAB_LABEL_SIZE,
+  WIDE_TAB_SLOT_WIDTH,
+} from '../lib/getIslandStyle'
 import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { CustomTabBar } from './CustomTabBar'
 import { styles } from './styles'
@@ -792,25 +797,26 @@ describe('<CustomTabBar>', () => {
 
     if (!island) throw new Error(TAB_ISLAND_NOT_FOUND)
 
-    // Four slots (three tabs + search) at the natural pitch plus the inner
-    // paddings: a narrow pill, not the 550pt-wide column.
-    const naturalWidth = ISLAND_CONTENT_PADDING_HORIZONTAL * 2 + 4 * TAB_SLOT_NATURAL_WIDTH
-    expect(naturalWidth).toBe(372)
+    // Three label-only tab slots plus the narrower icon-only search slot, with
+    // the inner paddings: a narrow pill, not the 550pt-wide column.
+    const naturalWidth =
+      ISLAND_CONTENT_PADDING_HORIZONTAL * 2 + 3 * WIDE_TAB_SLOT_WIDTH + WIDE_SEARCH_SLOT_WIDTH
+    expect(naturalWidth).toBe(332)
     expect(StyleSheet.flatten(island.props.style)?.width).toBe(naturalWidth)
     expect(naturalWidth).toBeLessThan(CONTENT_COLUMN_WIDTH)
   })
 
-  test('gives every wide slot the natural width and centers the island', async () => {
+  test('gives wide tabs and the search slot their per-kind widths and centers the island', async () => {
     mockWindowWidth = 1024
     await renderTabBar()
 
     const widths = findTabSlots().map(slot => StyleSheet.flatten(slot.props.style)?.width)
 
     expect(widths).toEqual([
-      TAB_SLOT_NATURAL_WIDTH,
-      TAB_SLOT_NATURAL_WIDTH,
-      TAB_SLOT_NATURAL_WIDTH,
-      TAB_SLOT_NATURAL_WIDTH,
+      WIDE_TAB_SLOT_WIDTH,
+      WIDE_TAB_SLOT_WIDTH,
+      WIDE_TAB_SLOT_WIDTH,
+      WIDE_SEARCH_SLOT_WIDTH,
     ])
 
     // The row no longer pads a full-width island: it just centers the hugged pill.
@@ -818,6 +824,34 @@ describe('<CustomTabBar>', () => {
     expect(rowStyle).toMatchObject({ justifyContent: 'center' })
     expect(rowStyle?.paddingLeft).toBeUndefined()
     expect(rowStyle?.paddingRight).toBeUndefined()
+  })
+
+  test('renders the wide tabs as text-only labels without icons', async () => {
+    mockWindowWidth = 1024
+    const { getByText } = await renderTabBar()
+
+    for (const label of ['Слушать', 'Читать', 'Ещё'])
+      expect(getByText(label)).toHaveStyle({ fontSize: WIDE_TAB_LABEL_SIZE })
+
+    const iconsInTabs = findTabSlots()
+      .slice(0, 3)
+      .flatMap(slot =>
+        slot.queryAll(instance => StyleSheet.flatten(instance.props.style)?.fontSize === 28),
+      )
+
+    expect(iconsInTabs).toHaveLength(0)
+  })
+
+  test('renders the wide search slot as an icon without its label', async () => {
+    mockWindowWidth = 1024
+    await renderTabBar()
+
+    const searchSlot = findTabSlots()[3]
+
+    expect(
+      searchSlot.queryAll(instance => StyleSheet.flatten(instance.props.style)?.fontSize === 28),
+    ).toHaveLength(1)
+    expect(within(searchSlot).queryByText('Поиск')).toBeNull()
   })
 
   const CAPSULE_COLOR = 'rgba(241, 96, 49, 0.18)'

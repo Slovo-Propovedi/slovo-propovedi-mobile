@@ -7,7 +7,6 @@ import {
   BlurBackdrop,
   createRefreshControl,
   EmptyState,
-  getRefreshTopOffset,
   PullToRefresh,
   WideTopActions,
 } from 'shared/ui'
@@ -36,7 +35,6 @@ export const AdminPlaylistsScreen = () => {
   const insets = useSafeAreaInsets()
   const isWide = useIsWideLayout()
   const { topChromeScrollInset: scrollInset } = useScreenChromePadding()
-  const refreshTopOffset = getRefreshTopOffset(isWide)
   const router = useRouter()
   const { currentTheme } = useTheme()
   const { primary } = currentTheme
@@ -73,7 +71,7 @@ export const AdminPlaylistsScreen = () => {
           },
         ]}
       >
-        <PullToRefresh onRefresh={refresh} refreshing={isRefreshing} topOffset={refreshTopOffset}>
+        <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
           <FlatList
             onEndReachedThreshold={0.5}
             keyExtractor={item => item.id}

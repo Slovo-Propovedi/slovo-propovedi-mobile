@@ -1,4 +1,4 @@
-import { MIN_TOUCH_TARGET } from 'shared/ui/theme'
+import { FONT_SIZES, MIN_TOUCH_TARGET } from 'shared/ui/theme'
 import { clampProgress, getIslandHeight, interpolateSize } from './getIslandMath'
 
 interface IslandLayout {
@@ -17,14 +17,25 @@ export const ISLAND_CONTENT_PADDING_HORIZONTAL = 10
 // The active capsule is wider than its slot (the reference capsule is wider
 // than one tab pitch), so it bleeds into the gap instead of hugging the label.
 export const CAPSULE_HORIZONTAL_OVERHANG = 10
-// Natural width of one expanded slot in the wide top island. The wide pill hugs
-// its content instead of spanning the column, so every slot gets this fixed
-// pitch: the 28dp icon and the widest tab label («Слушать» ≈ 54dp at 12/500)
-// fit inside the item box, which loses the 4dp horizontal margin on each side.
-// 88 leaves ~26dp of breathing room and still fits the label at the 1.2 max
-// font-scale multiplier. RU-first fixed pitch; longer localizations would need
-// runtime text measurement.
-export const TAB_SLOT_NATURAL_WIDTH = 88
+// Natural width of one wide tab slot. Wide tabs drop the icon and render only
+// their label at WIDE_TAB_LABEL_SIZE, so the slot is sized to the widest label
+// («Слушать» ≈ 63dp at 16/500). The 1.2 max font-scale multiplier needs ~76dp,
+// plus the item's 4dp horizontal margin on each side = ~84dp; 88 leaves a
+// breathing gap without clipping. RU-first fixed pitch — longer localizations
+// would need runtime text measurement.
+export const WIDE_TAB_SLOT_WIDTH = 88
+// Wide search is icon-only, so its slot only owes the minimum touch target.
+export const WIDE_SEARCH_SLOT_WIDTH = MIN_TOUCH_TARGET
+// Wide tab labels replace the icon in the slim 48dp island. 16 fits the 40dp
+// item box (48 minus the two 4dp vertical margins) even at 1.2 font scale.
+export const WIDE_TAB_LABEL_SIZE = FONT_SIZES.md
+
+// Natural width of the wide pill: label slots for the visible tabs plus the
+// icon-only search slot, with the island's inner paddings.
+export const getWideIslandWidth = (routeCount: number, hasSearch: boolean) =>
+  ISLAND_CONTENT_PADDING_HORIZONTAL * 2 +
+  routeCount * WIDE_TAB_SLOT_WIDTH +
+  (hasSearch ? WIDE_SEARCH_SLOT_WIDTH : 0)
 
 // Width and height of the tab island.
 //

@@ -1,4 +1,4 @@
-import { Text } from 'react-native'
+import { StyleSheet, Text } from 'react-native'
 import Animated, {
   type SharedValue,
   useAnimatedStyle,
@@ -7,6 +7,7 @@ import Animated, {
 import { useTheme } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
 import { getTabItemStyle } from '../lib/getBarMorphStyles'
+import { WIDE_TAB_LABEL_SIZE } from '../lib/getIslandStyle'
 import { getCapsuleOpacity, getTabIconOffset } from '../lib/getTabItemStyle'
 import { ActiveTabCapsule } from './ActiveTabCapsule'
 import { styles } from './styles'
@@ -15,12 +16,19 @@ import { getTabLabel } from './tabLabels'
 
 const AnimatedText = Animated.createAnimatedComponent(Text)
 
+// Wide tabs are text-only: the label leaves the absolute layer and becomes the
+// item's only centred child, growing to the wider pill size.
+const wideLabelStyle = StyleSheet.create({
+  label: { fontSize: WIDE_TAB_LABEL_SIZE, fontWeight: '500', textAlign: 'center' },
+})
+
 export const TabButton = ({
   accessibilityLabel,
   collapseProgress,
   isActive,
   isBarVisuallyCollapsed = false,
   isDisabled,
+  isSearchSlot = false,
   isWideLayout = false,
   oneLineProgress,
   onPress,
@@ -36,6 +44,8 @@ export const TabButton = ({
   // keeps its press haptic like the search circle instead of being silent.
   isBarVisuallyCollapsed?: boolean
   isDisabled?: boolean
+  /** The search slot: wide renders it icon-only, without the «Поиск» label. */
+  isSearchSlot?: boolean
   /** Wide layout: the island is pinned to its slim constant height. */
   isWideLayout?: boolean
   // One-line (height) axis: owns the item height so it fills the island in every
@@ -63,6 +73,10 @@ export const TabButton = ({
     : isActive
       ? currentTheme.primary
       : currentTheme.text
+  // Wide splits the affordance: tabs are label-only (Apple Music top bar), the
+  // search slot is icon-only. Compact keeps the stacked icon + label.
+  const isWideTab = isWideLayout && !isSearchSlot
+  const isWideSearch = isWideLayout && isSearchSlot
 
   return (
     <TouchableButton
@@ -75,16 +89,20 @@ export const TabButton = ({
     >
       <Animated.View style={[styles.tabItem, itemStyle]}>
         {isActive && <ActiveTabCapsule style={capsuleStyle} />}
-        <Animated.View style={iconStyle}>
-          <TabIcon color={color} isActive={isActive} routeName={routeName} />
-        </Animated.View>
-        <AnimatedText
-          numberOfLines={1}
-          maxFontSizeMultiplier={1.2}
-          style={[styles.tabText, { color }, labelStyle]}
-        >
-          {getTabLabel(routeName)}
-        </AnimatedText>
+        {!isWideTab && (
+          <Animated.View style={iconStyle}>
+            <TabIcon color={color} isActive={isActive} routeName={routeName} />
+          </Animated.View>
+        )}
+        {!isWideSearch && (
+          <AnimatedText
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+            style={[isWideTab ? wideLabelStyle.label : styles.tabText, { color }, labelStyle]}
+          >
+            {getTabLabel(routeName)}
+          </AnimatedText>
+        )}
       </Animated.View>
     </TouchableButton>
   )

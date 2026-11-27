@@ -8,7 +8,6 @@ import {
   BlurBackdrop,
   createRefreshControl,
   EmptyState,
-  getRefreshTopOffset,
   PullToRefresh,
   WideTopActions,
 } from 'shared/ui'
@@ -65,11 +64,7 @@ export const AdminSectionsScreen = () => {
           },
         ]}
       >
-        <PullToRefresh
-          onRefresh={reload}
-          refreshing={isRefreshing}
-          topOffset={getRefreshTopOffset(isWide)}
-        >
+        <PullToRefresh onRefresh={reload} refreshing={isRefreshing}>
           <DraggableFlatList
             renderItem={renderItem}
             keyExtractor={item => item.id}

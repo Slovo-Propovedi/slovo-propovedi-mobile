@@ -66,6 +66,7 @@ export const TabIslandSearchSlot = ({
           id={isSettledCollapsed ? undefined : SEARCH_TARGET_ID}
         >
           <TabButton
+            isSearchSlot
             isActive={isActive}
             onPress={openSearch}
             collapseProgress={progress}

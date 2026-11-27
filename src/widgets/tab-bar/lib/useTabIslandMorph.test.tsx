@@ -18,7 +18,11 @@ import {
 } from 'shared/ui/layout'
 import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
-import { ISLAND_CONTENT_PADDING_HORIZONTAL, TAB_SLOT_NATURAL_WIDTH } from './getIslandStyle'
+import {
+  ISLAND_CONTENT_PADDING_HORIZONTAL,
+  WIDE_SEARCH_SLOT_WIDTH,
+  WIDE_TAB_SLOT_WIDTH,
+} from './getIslandStyle'
 import { useTabIslandMorph } from './useTabIslandMorph'
 
 const MORPH_INPUT = { hideSearch: false, routeCount: 3, rowWidth: 390, windowWidth: 390 }
@@ -160,18 +164,20 @@ describe('useTabIslandMorph', () => {
         }),
       { ctx: createCtx() },
     )
-    const naturalWidth = ISLAND_CONTENT_PADDING_HORIZONTAL * 2 + 4 * TAB_SLOT_NATURAL_WIDTH
+    const naturalWidth =
+      ISLAND_CONTENT_PADDING_HORIZONTAL * 2 + 3 * WIDE_TAB_SLOT_WIDTH + WIDE_SEARCH_SLOT_WIDTH
     const rowContentWidth = CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2
 
-    // Four slots (three tabs + search) at the natural pitch plus the inner
-    // paddings: the wide island is a narrow pill, not the full column.
-    expect(naturalWidth).toBe(372)
+    // Three label-only tabs plus the narrower icon-only search slot, with the
+    // inner paddings: the wide island is a narrow pill, not the full column.
+    expect(naturalWidth).toBe(332)
     expect(result.current.restingIslandStyle.width).toBe(naturalWidth)
     // The wide island is permanently pinned to the slim 48dp height.
     expect(result.current.restingIslandStyle.height).toBe(WIDE_TAB_ISLAND_HEIGHT)
     expect(naturalWidth).toBeLessThan(rowContentWidth)
-    // Every slot (search included) gets the same natural width.
-    expect(result.current.expandedTabWidth).toBe(TAB_SLOT_NATURAL_WIDTH)
+    // Tabs keep the label pitch; search keeps only the touch target.
+    expect(result.current.expandedTabWidth).toBe(WIDE_TAB_SLOT_WIDTH)
+    expect(result.current.expandedSearchWidth).toBe(WIDE_SEARCH_SLOT_WIDTH)
   })
 
   test('shares the compact island equally between the tabs and the search tab', async () => {

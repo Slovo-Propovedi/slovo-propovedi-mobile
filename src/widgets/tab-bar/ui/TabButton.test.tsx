@@ -4,6 +4,7 @@ import { type SharedValue } from 'react-native-reanimated'
 import { hapticLight } from 'shared/lib/haptics'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
+import { WIDE_TAB_LABEL_SIZE } from '../lib/getIslandStyle'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
 
@@ -42,6 +43,7 @@ const renderTabButton = async (
   collapseProgress = progressValue(0),
   isBarVisuallyCollapsed = false,
   oneLineProgress = progressValue(0),
+  { isSearchSlot = false, isWideLayout = false } = {},
 ) =>
   await renderWithProviders(
     <TabButton
@@ -49,6 +51,8 @@ const renderTabButton = async (
       isActive={isActive}
       routeKey={routeName}
       routeName={routeName}
+      isSearchSlot={isSearchSlot}
+      isWideLayout={isWideLayout}
       oneLineProgress={oneLineProgress}
       collapseProgress={collapseProgress}
       isBarVisuallyCollapsed={isBarVisuallyCollapsed}
@@ -249,5 +253,24 @@ describe('<TabButton>', () => {
     await renderTabButton('listen', false)
 
     expect(findCapsule()).toBeUndefined()
+  })
+
+  test('wide tab renders only its label at the wide font size', async () => {
+    await renderTabButton('listen', false, progressValue(0), false, progressValue(0), {
+      isWideLayout: true,
+    })
+
+    expect(screen.getByText('Слушать')).toHaveStyle({ fontSize: WIDE_TAB_LABEL_SIZE })
+    expect(findIconGlyphs('#000')).toHaveLength(0)
+  })
+
+  test('wide search slot renders only its icon, without a label', async () => {
+    await renderTabButton('search', false, progressValue(0), false, progressValue(0), {
+      isSearchSlot: true,
+      isWideLayout: true,
+    })
+
+    expect(screen.queryByText('Поиск')).toBeNull()
+    expect(findIconGlyphs('#000')).toHaveLength(1)
   })
 })

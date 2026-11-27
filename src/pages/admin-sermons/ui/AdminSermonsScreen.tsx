@@ -8,7 +8,6 @@ import {
   BlurBackdrop,
   createRefreshControl,
   EmptyState,
-  getRefreshTopOffset,
   PullToRefresh,
   WideTopActions,
 } from 'shared/ui'
@@ -31,7 +30,6 @@ export const AdminSermonsScreen = () => {
   const insets = useSafeAreaInsets()
   const isWide = useIsWideLayout()
   const { topChromeScrollInset: scrollInset } = useScreenChromePadding()
-  const refreshTopOffset = getRefreshTopOffset(isWide)
   const router = useRouter()
   const { currentTheme } = useTheme()
   const { primary } = currentTheme
@@ -73,7 +71,7 @@ export const AdminSermonsScreen = () => {
           { backgroundColor: currentTheme.background, paddingTop: insets.top },
         ]}
       >
-        <PullToRefresh onRefresh={refresh} refreshing={isRefreshing} topOffset={refreshTopOffset}>
+        <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
           <FlatList
             testID={LIST_TEST_ID}
             onEndReachedThreshold={0.5}

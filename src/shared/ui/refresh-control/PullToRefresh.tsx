@@ -21,14 +21,8 @@ import { usePullToRefreshGesture } from './usePullToRefreshGesture'
  * @param root0.children - Scrollable content wrapped by the gesture.
  * @param root0.onRefresh - Reload callback fired when a pull passes the threshold.
  * @param root0.refreshing - Controlled spinner state owned by the parent.
- * @param root0.topOffset - Extra spinner-slot top offset (compact layout).
  */
-export const PullToRefresh = ({
-  children,
-  onRefresh,
-  refreshing,
-  topOffset = 0,
-}: PullToRefreshProps) => {
+export const PullToRefresh = ({ children, onRefresh, refreshing }: PullToRefreshProps) => {
   const { currentTheme } = useTheme()
   const isWide = useIsWideLayout()
   const { contentRef, isArmed, spinnerRef, wrapperRef } = usePullToRefreshGesture({
@@ -41,11 +35,7 @@ export const PullToRefresh = ({
     <RefreshContext.Provider value={refreshContext}>
       <View ref={wrapperRef} style={styles.wrapper}>
         {isWide ? null : (
-          <View
-            ref={spinnerRef}
-            pointerEvents='none'
-            style={[styles.spinnerSlot, { top: topOffset }]}
-          >
+          <View ref={spinnerRef} pointerEvents='none' style={styles.spinnerSlot}>
             <ActivityIndicator color={isArmed ? currentTheme.primary : currentTheme.textMuted} />
           </View>
         )}

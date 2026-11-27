@@ -2,7 +2,12 @@ import { screen, userEvent } from '@testing-library/react-native'
 import { type ComponentType } from 'react'
 import { Platform } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
+import { useIsWideLayout } from '../layout/lib/useIsWideLayout'
 import { RefreshContext } from './refreshContext'
+
+jest.mock('../layout/lib/useIsWideLayout', () => ({ useIsWideLayout: jest.fn() }))
+
+const mockUseIsWideLayout = useIsWideLayout as jest.MockedFunction<typeof useIsWideLayout>
 
 // jest-expo resolves `.native.tsx` first; the web implementation is under test.
 const { RefreshButton } = jest.requireActual<{ RefreshButton: ComponentType }>(
@@ -30,6 +35,7 @@ const renderButton = (context: { onRefresh: () => void; refreshing: boolean } | 
 describe('<RefreshButton> (web)', () => {
   beforeEach(() => {
     Platform.OS = 'web'
+    mockUseIsWideLayout.mockReturnValue(false)
   })
 
   afterEach(() => {
@@ -73,5 +79,15 @@ describe('<RefreshButton> (web)', () => {
     await renderButton({ onRefresh: jest.fn(), refreshing: true })
 
     expect(screen.queryByRole('button', { name: LABEL })).toBeNull()
+  })
+
+  test('keeps the normal button in the wide layout so only the overlay spinner shows', async () => {
+    mockMatchMedia(true)
+    mockUseIsWideLayout.mockReturnValue(true)
+    await renderButton({ onRefresh: jest.fn(), refreshing: true })
+
+    // Wide: WideTopActions already paints the refreshing overlay spinner, so
+    // the button must not swap itself for a second inline spinner.
+    expect(screen.getByRole('button', { name: LABEL })).toBeTruthy()
   })
 })

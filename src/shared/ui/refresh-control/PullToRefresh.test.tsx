@@ -3,7 +3,7 @@ import { type ComponentType, type ReactNode, useContext } from 'react'
 import { StyleSheet, Text } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import { useIsWideLayout } from '../layout/lib/useIsWideLayout'
-import { getRefreshTopOffset } from './pull-to-refresh.lib'
+import * as pullToRefreshLib from './pull-to-refresh.lib'
 import { RefreshContext } from './refreshContext'
 
 // jest-expo resolves `.native.tsx` first; the web gesture wrapper is under test.
@@ -12,7 +12,6 @@ const { PullToRefresh } = jest.requireActual<{
     children: ReactNode
     onRefresh: () => void
     refreshing: boolean
-    topOffset?: number
   }>
 }>('./PullToRefresh.tsx')
 
@@ -28,9 +27,9 @@ const ContextProbe = () => {
   return <Text>{context ? WIRED_TEXT : 'no-refresh'}</Text>
 }
 
-const renderRefresh = (topOffset?: number, children: ReactNode = <></>) =>
+const renderRefresh = (children: ReactNode = <></>) =>
   renderWithProviders(
-    <PullToRefresh refreshing onRefresh={jest.fn()} topOffset={topOffset}>
+    <PullToRefresh refreshing onRefresh={jest.fn()}>
       {children}
     </PullToRefresh>,
   )
@@ -51,7 +50,7 @@ describe('<PullToRefresh> (web)', () => {
   test('leaves the wide spinner to the actions container', async () => {
     mockUseIsWideLayout.mockReturnValue(true)
 
-    await renderRefresh(getRefreshTopOffset(true))
+    await renderRefresh()
 
     // In the wide layout the fixed WideTopActions overlay owns the spinner, so
     // the pull wrapper must not render a second one.
@@ -61,7 +60,7 @@ describe('<PullToRefresh> (web)', () => {
   test('keeps the wide refresh wiring for the overlay', async () => {
     mockUseIsWideLayout.mockReturnValue(true)
 
-    await renderRefresh(getRefreshTopOffset(true), <ContextProbe />)
+    await renderRefresh(<ContextProbe />)
 
     expect(screen.getByText(WIRED_TEXT)).toBeTruthy()
   })
@@ -70,5 +69,11 @@ describe('<PullToRefresh> (web)', () => {
     await renderRefresh()
 
     expect(spinnerStyle()?.top).toBe(0)
+  })
+
+  test('no longer exposes the dead per-screen spinner offset helper', () => {
+    // The wide spinner moved into WideTopActions, so nothing consumes a
+    // per-screen slot offset any more.
+    expect('getRefreshTopOffset' in pullToRefreshLib).toBe(false)
   })
 })
