@@ -1,18 +1,27 @@
-import { StyleSheet } from 'react-native'
-import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from 'shared/config'
+import { Dimensions, StyleSheet } from 'react-native'
 import { COLORS, FONT_SIZES, INDENTS, RADIUSES, type ThemeColors } from 'shared/ui/theme'
 
+const CARD_ARTWORK_SIZE_RATIO = 0.25
+
 // Card rows carry a large cover (as on the user playlist screen); the separator
-// offset on that screen is derived from this constant, so it must stay public.
-export const LIST_ITEM_CARD_ARTWORK_SIZE = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.25
+// offset on that screen is derived from this size, so it must stay public. The
+// window's short side is read at call time, never at module load: a module
+// constant kept the launch size forever after a split-screen/web resize.
+export const getListItemCardArtworkSize = (): number => {
+  const { height, width } = Dimensions.get('window')
+
+  return Math.min(width, height) * CARD_ARTWORK_SIZE_RATIO
+}
 
 // Cover size of the `surface` rows used across the admin section screens. Only
 // `surfaceArtwork` below consumes it now: user-facing rows match the larger
-// `LIST_ITEM_CARD_ARTWORK_SIZE` instead.
+// `getListItemCardArtworkSize()` instead.
 const SURFACE_ARTWORK_SIZE = 56
 
-export const createListItemBaseStyles = (theme: ThemeColors) =>
-  StyleSheet.create({
+export const createListItemBaseStyles = (theme: ThemeColors) => {
+  const cardArtworkSize = getListItemCardArtworkSize()
+
+  return StyleSheet.create({
     body: {
       flex: 1,
     },
@@ -26,8 +35,8 @@ export const createListItemBaseStyles = (theme: ThemeColors) =>
     },
     cardArtwork: {
       borderRadius: RADIUSES.low,
-      height: LIST_ITEM_CARD_ARTWORK_SIZE,
-      width: LIST_ITEM_CARD_ARTWORK_SIZE,
+      height: cardArtworkSize,
+      width: cardArtworkSize,
     },
     cardBody: {
       flex: 1,
@@ -79,3 +88,4 @@ export const createListItemBaseStyles = (theme: ThemeColors) =>
       flex: 1,
     },
   })
+}

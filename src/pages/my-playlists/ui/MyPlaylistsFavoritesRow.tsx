@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
-import { LIST_ITEM_CARD_ARTWORK_SIZE, ListItemBase } from 'entities/list-item'
+import { getListItemCardArtworkSize, ListItemBase } from 'entities/list-item'
 import { type LocalPlaylistData } from 'entities/playlist'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { MyPlaylistsMarkerAvatar } from './MyPlaylistsMarkerAvatar'
@@ -30,7 +30,7 @@ export const MyPlaylistsFavoritesRow = ({
       title={playlist.title}
       artworkNode={
         <MyPlaylistsMarkerAvatar
-          size={LIST_ITEM_CARD_ARTWORK_SIZE}
+          size={getListItemCardArtworkSize()}
           renderIcon={iconSize => (
             <Ionicons size={iconSize} name={HEART_ICON} color={currentTheme.primary} />
           )}

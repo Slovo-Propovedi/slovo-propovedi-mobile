@@ -26,7 +26,7 @@
 - **Обычный режим** (`MyPlaylistsNormalView`, `src/pages/my-playlists/ui/MyPlaylistsNormalView.tsx`)
   — то же тело списка, что у серверного списка секции: общий виджет `PlaylistList`
   (`src/widgets/playlist-list/`) — схлопывающийся контентный заголовок, карточные строки
-  (`ListItemBase` card-вариант, плитка обложки `LIST_ITEM_CARD_ARTWORK_SIZE`) и разделители
+  (`ListItemBase` card-вариант, плитка обложки `getListItemCardArtworkSize()`) и разделители
   (`PlaylistListSeparator`). Первым элементом списка идёт строка «Избранные» — её обложку
   подменяет маркер-сердце (`MyPlaylistsMarkerAvatar`, `Ionicons 'heart'` цвета
   `currentTheme.primary`); ниже — локальные плейлисты; **завершающей строкой футера списка** —

@@ -1,6 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, userEvent, waitFor } from '@testing-library/react-native'
-import { LIST_ITEM_CARD_ARTWORK_SIZE } from 'entities/list-item'
+import { getListItemCardArtworkSize } from 'entities/list-item'
 import {
   FAVORITES_PLAYLIST,
   type LocalPlaylistData,
@@ -163,7 +163,7 @@ describe('<MyPlaylistsScreen>', () => {
 
     const { getByText } = await renderWithProviders(<MyPlaylistsScreen />, { ctx })
 
-    const avatarSize = { height: LIST_ITEM_CARD_ARTWORK_SIZE, width: LIST_ITEM_CARD_ARTWORK_SIZE }
+    const avatarSize = { height: getListItemCardArtworkSize(), width: getListItemCardArtworkSize() }
 
     expect(getByText('heart').parent).toHaveStyle(avatarSize)
     expect(getByText('add').parent).toHaveStyle(avatarSize)

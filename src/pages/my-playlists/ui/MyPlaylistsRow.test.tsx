@@ -1,5 +1,5 @@
 import { fireEvent } from '@testing-library/react-native'
-import { LIST_ITEM_CARD_ARTWORK_SIZE } from 'entities/list-item'
+import { getListItemCardArtworkSize } from 'entities/list-item'
 import { type LocalPlaylistData } from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks'
 import { AVATAR_CONTENT_SIZE_RATIO } from 'shared/ui'
@@ -70,7 +70,7 @@ describe('<MyPlaylistsRow>', () => {
     const { getByText } = await utils
 
     expect(getByText('П')).toHaveStyle({
-      fontSize: LIST_ITEM_CARD_ARTWORK_SIZE * AVATAR_CONTENT_SIZE_RATIO,
+      fontSize: getListItemCardArtworkSize() * AVATAR_CONTENT_SIZE_RATIO,
     })
   })
 

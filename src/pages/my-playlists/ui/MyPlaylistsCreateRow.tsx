@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { OnboardingTarget } from 'features/onboarding'
-import { LIST_ITEM_CARD_ARTWORK_SIZE, ListItemBase } from 'entities/list-item'
+import { getListItemCardArtworkSize, ListItemBase } from 'entities/list-item'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { MyPlaylistsMarkerAvatar } from './MyPlaylistsMarkerAvatar'
 
@@ -31,7 +31,7 @@ export const MyPlaylistsCreateRow = ({
         title={CREATE_TITLE}
         artworkNode={
           <MyPlaylistsMarkerAvatar
-            size={LIST_ITEM_CARD_ARTWORK_SIZE}
+            size={getListItemCardArtworkSize()}
             renderIcon={iconSize => (
               <Ionicons size={iconSize} name={CREATE_ICON} color={currentTheme.primary} />
             )}

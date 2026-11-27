@@ -1,11 +1,10 @@
 import { useAction } from '@reatom/npm-react'
 import { Stack } from 'expo-router'
 import { useState } from 'react'
-import { FlatList, View } from 'react-native'
+import { FlatList, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAdminListHeaderActions } from 'widgets/admin-list-header'
 import { type APITypes } from 'shared/api'
-import { SCREEN_WIDTH } from 'shared/config/screen-dimensions'
 import { predictDropKinds, useFileDrop } from 'shared/lib/file-drop'
 import { showToast } from 'shared/model'
 import { createRefreshControl, DropOverlay, PullToRefresh } from 'shared/ui'
@@ -25,6 +24,7 @@ import { styles } from './styles'
 // живого артворка сервер отклоняет (409).
 export const AdminMediaScreen = () => {
   const insets = useSafeAreaInsets()
+  const { width: windowWidth } = useWindowDimensions()
   const { currentTheme } = useTheme()
   const showToastAction = useAction(showToast)
   const {
@@ -49,7 +49,7 @@ export const AdminMediaScreen = () => {
   const { handleFiles } = useDroppedImageUpload(upload, isUploading)
   const { draggedItems, isDragActive } = useFileDrop(handleFiles)
 
-  const { numColumns, tileSize } = measureMediaGrid(SCREEN_WIDTH)
+  const { numColumns, tileSize } = measureMediaGrid(windowWidth)
   const headerOptions = useAdminListHeaderActions({
     icon: 'cloud-upload-outline',
     isActionDisabled: isUploading,

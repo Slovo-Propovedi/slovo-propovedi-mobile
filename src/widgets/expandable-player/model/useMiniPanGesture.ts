@@ -1,7 +1,7 @@
+import { Dimensions } from 'react-native'
 import { Gesture } from 'react-native-gesture-handler'
 import { type SharedValue, withTiming } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { SCREEN_HEIGHT } from 'shared/config'
 import { getExpandedRestingBottom } from '../lib/getExpandedRestingBottom'
 import { COLLAPSE_DURATION_MS, EXPAND_DURATION_MS } from './expandDurations'
 
@@ -42,12 +42,12 @@ export const useMiniPanGesture = ({
   wideBottomInset,
 }: UseMiniPanGestureParams) => {
   // Distance from the screen bottom to the expanded pill's real resting edge, so
-  // a full swipe-up lands exactly on the expanded bar state.
-  // shortcut: drag distance derives from the module-load SCREEN_HEIGHT, so it goes
-  // stale after rotation/multi-window; revisit when rotation complaints appear
-  // (tracked in docs/debt.md → stale screen-dimension constants).
+  // a full swipe-up lands exactly on the expanded bar state. The height is read
+  // at call time (the gesture is rebuilt on every render), so a rotation or a
+  // split-screen resize cannot leave the drag distance on the launch height.
   const dragDistance =
-    SCREEN_HEIGHT - getExpandedRestingBottom(tabBarHeight, isWideLayout, wideBottomInset)
+    Dimensions.get('window').height -
+    getExpandedRestingBottom(tabBarHeight, isWideLayout, wideBottomInset)
 
   return Gesture.Pan()
     .activeOffsetY(-10) // Only activate when swiping UP 10px (negative Y)

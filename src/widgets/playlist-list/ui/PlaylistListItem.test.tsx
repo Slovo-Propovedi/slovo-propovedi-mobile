@@ -1,6 +1,6 @@
 import { fireEvent } from '@testing-library/react-native'
 import { Text } from 'react-native'
-import { LIST_ITEM_CARD_ARTWORK_SIZE } from 'entities/list-item'
+import { getListItemCardArtworkSize } from 'entities/list-item'
 import { renderWithProviders } from 'shared/mocks'
 import { type PlaylistListItemData } from '../model'
 import { PlaylistListItem } from './PlaylistListItem'
@@ -73,7 +73,7 @@ describe('<PlaylistListItem>', () => {
     await renderWithProviders(<PlaylistListItem item={makeItem()} onPress={jest.fn()} />)
 
     expect(mockLetterAvatar).toHaveBeenCalledWith({
-      size: LIST_ITEM_CARD_ARTWORK_SIZE,
+      size: getListItemCardArtworkSize(),
       title: PLAYLIST_TITLE,
     })
   })

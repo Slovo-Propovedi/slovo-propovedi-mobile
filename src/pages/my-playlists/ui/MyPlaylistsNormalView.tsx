@@ -5,7 +5,7 @@ import {
   type PlaylistListItemData,
   PlaylistListSeparator,
 } from 'widgets/playlist-list'
-import { LIST_ITEM_CARD_ARTWORK_SIZE } from 'entities/list-item'
+import { getListItemCardArtworkSize } from 'entities/list-item'
 import { type LocalPlaylistData } from 'entities/playlist'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { MyPlaylistsCreateRow } from './MyPlaylistsCreateRow'
@@ -38,7 +38,7 @@ export const MyPlaylistsNormalView = ({
         ...favorites,
         artworkNode: (
           <MyPlaylistsMarkerAvatar
-            size={LIST_ITEM_CARD_ARTWORK_SIZE}
+            size={getListItemCardArtworkSize()}
             renderIcon={iconSize => (
               <Ionicons size={iconSize} name={HEART_ICON} color={currentTheme.primary} />
             )}

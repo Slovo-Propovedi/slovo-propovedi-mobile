@@ -24,6 +24,5 @@ export {
   CURRENT_SOUND_VOLUME,
   PLAYER_STARTUP_ATTEMPTS,
 } from './player-storage-keys'
-export { SCREEN_HEIGHT, SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from './screen-dimensions'
 export { SEARCH_HISTORY } from './search-history-storage-keys'
 export { APP_NAME, APP_VERSION } from './version'

@@ -1,11 +1,11 @@
-import { LIST_ITEM_CARD_ARTWORK_SIZE, ListItemBase } from 'entities/list-item'
+import { getListItemCardArtworkSize, ListItemBase } from 'entities/list-item'
 import { PlaylistLetterAvatar } from 'shared/ui'
 import { type PlaylistListItemData } from '../model'
 
 // Строка плейлиста в списке. Слот обложки обязателен: без artwork/artworkNode он
 // схлопывался бы, и высота строки падала. Поэтому при `artwork: null` в тот же
 // слот кладётся плитка-буква (`PlaylistLetterAvatar`) стандартного размера
-// `LIST_ITEM_CARD_ARTWORK_SIZE` — каждая строка получает одинаковую высоту.
+// `getListItemCardArtworkSize()` — каждая строка получает одинаковую высоту.
 // `artworkNode` (маркер «Избранные»/«Создать плейлист») имеет приоритет над
 // обложкой и фолбэк-плиткой.
 export const PlaylistListItem = ({
@@ -23,7 +23,7 @@ export const PlaylistListItem = ({
     artworkNode={
       item.artworkNode ??
       (item.artwork == null ? (
-        <PlaylistLetterAvatar title={item.title} size={LIST_ITEM_CARD_ARTWORK_SIZE} />
+        <PlaylistLetterAvatar title={item.title} size={getListItemCardArtworkSize()} />
       ) : undefined)
     }
   />

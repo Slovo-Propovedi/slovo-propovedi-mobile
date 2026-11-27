@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { LIST_ITEM_CARD_ARTWORK_SIZE, ListItemBase } from 'entities/list-item'
+import { getListItemCardArtworkSize, ListItemBase } from 'entities/list-item'
 import { type LocalPlaylistData } from 'entities/playlist'
 import { PlaylistLetterAvatar } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
@@ -14,7 +14,7 @@ const ROW_STYLE = { marginBottom: INDENTS.medium }
 
 // Строка локального плейлиста в `card`-варианте — той же геометрии, что
 // серверные строки плейлистов в списке раздела (`PlaylistListItem`): плитка
-// обложки `LIST_ITEM_CARD_ARTWORK_SIZE` (производная от размера экрана, не
+// обложки `getListItemCardArtworkSize()` (производная от размера экрана, не
 // хардкод), карточный фон и тот же вертикальный отступ. Вне редактирования тап
 // навигирует. В режиме редактирования строка получает drag-ручку (как строки
 // админки): перетаскивание стартует только с ручки, long-press по телу строки
@@ -42,7 +42,7 @@ export const MyPlaylistsRow = ({
     dragLabel={DRAG_LABEL}
     drag={isDraggingEnabled ? drag : undefined}
     onPress={isDraggingEnabled ? () => undefined : onPress}
-    artworkNode={<PlaylistLetterAvatar title={item.title} size={LIST_ITEM_CARD_ARTWORK_SIZE} />}
+    artworkNode={<PlaylistLetterAvatar title={item.title} size={getListItemCardArtworkSize()} />}
     right={
       onDelete ? (
         <IconButton

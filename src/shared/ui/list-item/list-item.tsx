@@ -1,6 +1,5 @@
-import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native'
+import { Dimensions, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import { match } from 'ts-pattern'
-import { SIZE_OF_MINIMUM_SIDE_OF_SCREEN } from '../../config/screen-dimensions'
 import { CoverImage } from '../cover-image/cover-image'
 import { COLORS } from '../theme/colors'
 import { useTheme } from '../theme/ThemeContext/useTheme'
@@ -18,6 +17,16 @@ interface ListItemProps<T> {
   testID?: string
 }
 
+const PREVIEW_MIDDLE_SIZE_RATIO = 0.25
+
+// Read at call time: the window's short side is rotation-invariant, but a
+// split-screen/web resize must not keep the launch size (a module constant did).
+const getPreviewMiddleSize = (): number => {
+  const { height, width } = Dimensions.get('window')
+
+  return Math.min(width, height) * PREVIEW_MIDDLE_SIZE_RATIO
+}
+
 export const ListItem: ListItemComponent = ({
   data: { artwork, title },
   size = ListItemSize.Small,
@@ -25,6 +34,8 @@ export const ListItem: ListItemComponent = ({
   testID,
 }) => {
   const { currentTheme } = useTheme()
+  const previewMiddleSize = getPreviewMiddleSize()
+
   return (
     <View testID={testID} style={[styles.component, style]}>
       <View
@@ -32,7 +43,10 @@ export const ListItem: ListItemComponent = ({
         style={[
           styles.previewContainer,
           match(size)
-            .with(ListItemSize.Middle, () => styles.previewMiddle)
+            .with(ListItemSize.Middle, () => ({
+              height: previewMiddleSize,
+              width: previewMiddleSize,
+            }))
             .with(ListItemSize.Small, () => styles.previewSmall)
             .exhaustive(),
         ]}
@@ -48,8 +62,6 @@ export const ListItem: ListItemComponent = ({
   )
 }
 
-const previewMiddleSize = SIZE_OF_MINIMUM_SIDE_OF_SCREEN * 0.25
-
 const styles = StyleSheet.create({
   component: {
     alignItems: 'center',
@@ -61,7 +73,6 @@ const styles = StyleSheet.create({
   listItemTitle: { fontSize: FONT_SIZES.h2 },
   preview: { borderRadius: RADIUSES.low, height: '100%' },
   previewContainer: { borderRadius: RADIUSES.low, marginVertical: INDENTS.middle },
-  previewMiddle: { height: previewMiddleSize, width: previewMiddleSize },
   previewSmall: { height: 40, width: 40 },
   textsContainer: {
     borderBottomColor: COLORS.disabled,

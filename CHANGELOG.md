@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The mini-player appears on the first frame after launch instead of waiting for the tab bar measurement and the offline startup chain
 - Collapsing the player crossfades the fullscreen sheet into the mini-player pill, so the pill is fully visible when the sheet is gone instead of popping in at the end
 - Bottom chrome (tab island, search button, mini-player and its highlight) keeps its portrait width through a rotation instead of re-deriving a landscape one a frame behind the native relayout; the chrome is only re-centred
+- Rotation is one reflow: slider cards and the detached search circle keep their size instead of resizing and shifting after the native relayout, and the tab-bar height is derived in the same commit as the bar's bottom padding instead of settling through two Android layout passes
 
 ## [0.35.1] - 2026-11-24
 
