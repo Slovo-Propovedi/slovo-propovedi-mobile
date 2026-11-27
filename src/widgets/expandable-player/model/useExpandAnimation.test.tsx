@@ -22,6 +22,7 @@ import {
 import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
 import { useExpandAnimation } from './useExpandAnimation'
+import * as geometrySharedValues from './useGeometrySharedValues'
 
 const TAB_BAR_HEIGHT = 98
 const PILL_RADIUS = PLAYER_SIZES.miniPlayerHeight / 2
@@ -534,6 +535,10 @@ describe('useExpandAnimation geometry heal channel', () => {
 
 describe('useExpandAnimation window rotation', () => {
   test('publishes the rotated window to the animated layer before paint', async () => {
+    // The pre-paint channels are the persistent shared values the geometry hook
+    // creates for the worklets; the assertion reads them at their source instead
+    // of widening the hook's public result for tests.
+    const geometrySpy = jest.spyOn(geometrySharedValues, 'useGeometrySharedValues')
     const renders: Array<ReturnType<typeof useExpandAnimation>> = []
 
     const Harness = () => {
@@ -567,11 +572,15 @@ describe('useExpandAnimation window rotation', () => {
 
     expect(restingPillWidth(rotated)).toBe(rotatedWidth)
     expect(restingContainerWidth(rotated)).toBe(rotatedWidth)
-    expect(rotated.screenWidthShared.value).toBe(844)
-    expect(rotated.fullScreenHeightShared.value).toBe(390)
+
+    const rotatedChannels = geometrySpy.mock.results.at(-1)?.value
+    const rotatedTick = geometrySpy.mock.calls.at(-1)?.[0].geometryReapplyTick
+
+    expect(rotatedChannels?.screenWidthShared.value).toBe(844)
+    expect(rotatedChannels?.fullScreenHeightShared.value).toBe(390)
     // A dimension change also bumps the heal tick in the same layout effect, so
     // cached no-diff worklets re-derive the rotated numbers.
-    expect(rotated.geometryReapplyTick.value).toBe(1)
+    expect(rotatedTick?.value).toBe(1)
   })
 })
 

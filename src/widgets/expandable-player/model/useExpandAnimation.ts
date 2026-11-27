@@ -25,11 +25,7 @@ interface UseExpandAnimationResult {
   containerStyle: ReturnType<typeof useAnimatedStyle>
   /** Stable reference — forces containerStyle worklet to re-run on the UI thread. */
   forceGeometryReapply: () => void
-  /** Pre-paint full screen height channel read by the geometry worklets. */
-  fullScreenHeightShared: SharedValue<number>
   fullStyle: ReturnType<typeof useAnimatedStyle>
-  /** Alternating ±0.01dp heal tick (Issue #63). */
-  geometryReapplyTick: SharedValue<number>
   miniBarRestingStyle: ReturnType<typeof getMiniBarStyle>
   miniBarStyle: ReturnType<typeof useAnimatedStyle>
   miniStyle: ReturnType<typeof useAnimatedStyle>
@@ -37,8 +33,6 @@ interface UseExpandAnimationResult {
   restingContainerStyle: ReturnType<typeof getRestingContainerStyle>
   screenHeight: number
   screenWidth: number
-  /** Pre-paint window width channel read by the geometry worklets. */
-  screenWidthShared: SharedValue<number>
 }
 
 export const useExpandAnimation = (
@@ -113,9 +107,7 @@ export const useExpandAnimation = (
     barExpandedTop,
     containerStyle,
     forceGeometryReapply,
-    fullScreenHeightShared,
     fullStyle,
-    geometryReapplyTick,
     miniBarRestingStyle,
     miniBarStyle,
     miniStyle,
@@ -123,6 +115,5 @@ export const useExpandAnimation = (
     restingContainerStyle,
     screenHeight,
     screenWidth,
-    screenWidthShared,
   }
 }
