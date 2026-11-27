@@ -18,6 +18,7 @@ import {
   BAR_CIRCLE_SIZE_EXPANDED,
   BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
+  CONTENT_COLUMN_WIDTH,
   isBarCollapsedAtom,
   isTabBarMeasuredAtom,
   keyboardBottomInsetSv,
@@ -27,6 +28,7 @@ import {
   tabBarHeightAtom,
 } from 'shared/ui/layout'
 import { RADIUSES, themeModeAtom } from 'shared/ui/theme'
+import { ISLAND_CONTENT_PADDING_HORIZONTAL, TAB_SLOT_NATURAL_WIDTH } from '../lib/getIslandStyle'
 import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { CustomTabBar } from './CustomTabBar'
 import { styles } from './styles'
@@ -774,6 +776,42 @@ describe('<CustomTabBar>', () => {
 
       return flat?.minWidth !== undefined && typeof flat?.width === 'number'
     }) ?? []
+
+  test('hugs its content in the wide layout instead of spanning the column', async () => {
+    mockWindowWidth = 1024
+    await renderTabBar()
+
+    const island = findTabIsland()
+
+    if (!island) throw new Error(TAB_ISLAND_NOT_FOUND)
+
+    // Four slots (three tabs + search) at the natural pitch plus the inner
+    // paddings: a narrow pill, not the 550pt-wide column.
+    const naturalWidth = ISLAND_CONTENT_PADDING_HORIZONTAL * 2 + 4 * TAB_SLOT_NATURAL_WIDTH
+    expect(naturalWidth).toBe(372)
+    expect(StyleSheet.flatten(island.props.style)?.width).toBe(naturalWidth)
+    expect(naturalWidth).toBeLessThan(CONTENT_COLUMN_WIDTH)
+  })
+
+  test('gives every wide slot the natural width and centers the island', async () => {
+    mockWindowWidth = 1024
+    await renderTabBar()
+
+    const widths = findTabSlots().map(slot => StyleSheet.flatten(slot.props.style)?.width)
+
+    expect(widths).toEqual([
+      TAB_SLOT_NATURAL_WIDTH,
+      TAB_SLOT_NATURAL_WIDTH,
+      TAB_SLOT_NATURAL_WIDTH,
+      TAB_SLOT_NATURAL_WIDTH,
+    ])
+
+    // The row no longer pads a full-width island: it just centers the hugged pill.
+    const rowStyle = StyleSheet.flatten(findIslandsRow()?.props.style)
+    expect(rowStyle).toMatchObject({ justifyContent: 'center' })
+    expect(rowStyle?.paddingLeft).toBeUndefined()
+    expect(rowStyle?.paddingRight).toBeUndefined()
+  })
 
   const CAPSULE_COLOR = 'rgba(241, 96, 49, 0.18)'
 

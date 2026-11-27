@@ -26,8 +26,13 @@ export const getIslandsRowStyle = (
   insets: ReturnType<typeof useRowInsetStyle>,
 ) => [
   styles.islandsRow,
+  // Wide hugs the island: the row only centers the narrow pill instead of
+  // spreading content across the column.
+  isWide && { justifyContent: 'center' as const },
   !isWide && styles.islandsRowElevated,
   { height: BAR_ROW_MIN_HEIGHT + bottomPadding, paddingBottom: bottomPadding },
-  insets.insetStyle,
-  insets.restingInsetStyle,
+  // Wide hugs the island: the column insets would pad a full-width row around a
+  // narrow pill, so the row only centers it.
+  !isWide && insets.insetStyle,
+  !isWide && insets.restingInsetStyle,
 ]

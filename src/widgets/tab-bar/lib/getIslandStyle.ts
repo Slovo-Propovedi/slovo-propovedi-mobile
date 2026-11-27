@@ -17,6 +17,14 @@ export const ISLAND_CONTENT_PADDING_HORIZONTAL = 10
 // The active capsule is wider than its slot (the reference capsule is wider
 // than one tab pitch), so it bleeds into the gap instead of hugging the label.
 export const CAPSULE_HORIZONTAL_OVERHANG = 10
+// Natural width of one expanded slot in the wide top island. The wide pill hugs
+// its content instead of spanning the column, so every slot gets this fixed
+// pitch: the 28dp icon and the widest tab label («Слушать» ≈ 54dp at 12/500)
+// fit inside the item box, which loses the 4dp horizontal margin on each side.
+// 88 leaves ~26dp of breathing room and still fits the label at the 1.2 max
+// font-scale multiplier. RU-first fixed pitch; longer localizations would need
+// runtime text measurement.
+export const TAB_SLOT_NATURAL_WIDTH = 88
 
 // Width and height of the tab island.
 //

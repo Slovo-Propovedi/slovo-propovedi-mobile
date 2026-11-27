@@ -17,7 +17,7 @@ import {
 } from 'shared/ui/layout'
 import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
-import { ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
+import { ISLAND_CONTENT_PADDING_HORIZONTAL, TAB_SLOT_NATURAL_WIDTH } from './getIslandStyle'
 import { useTabIslandMorph } from './useTabIslandMorph'
 
 const MORPH_INPUT = { hideSearch: false, routeCount: 3, rowWidth: 390, windowWidth: 390 }
@@ -147,23 +147,28 @@ describe('useTabIslandMorph', () => {
     )
   })
 
-  test('fills the column and shares it equally between the tabs and the search tab in the wide layout', async () => {
+  test('hugs its content in the wide layout instead of spanning the column', async () => {
     // Fresh ctx: the shared test context may carry focus from an earlier test.
     const { result } = await renderHookWithProviders(
-      () => useTabIslandMorph({ ...MORPH_INPUT, isForceExpanded: true }),
+      () =>
+        useTabIslandMorph({
+          ...MORPH_INPUT,
+          isForceExpanded: true,
+          rowWidth: 1024,
+          windowWidth: 1024,
+        }),
       { ctx: createCtx() },
     )
-    const rowContentWidth =
-      Math.min(MORPH_INPUT.rowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
+    const naturalWidth = ISLAND_CONTENT_PADDING_HORIZONTAL * 2 + 4 * TAB_SLOT_NATURAL_WIDTH
+    const rowContentWidth = CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2
 
-    // The wide search button lives INSIDE the island, so the island takes the
-    // whole column instead of yielding a circle and gap to a separate island.
-    expect(result.current.restingIslandStyle.width).toBe(rowContentWidth)
-    // The search button is a full tab slot now: three tabs + search split the
-    // row padding share equally, with no fixed trailing reservation.
-    expect(result.current.expandedTabWidth).toBe(
-      (rowContentWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2) / 4,
-    )
+    // Four slots (three tabs + search) at the natural pitch plus the inner
+    // paddings: the wide island is a narrow pill, not the full column.
+    expect(naturalWidth).toBe(372)
+    expect(result.current.restingIslandStyle.width).toBe(naturalWidth)
+    expect(naturalWidth).toBeLessThan(rowContentWidth)
+    // Every slot (search included) gets the same natural width.
+    expect(result.current.expandedTabWidth).toBe(TAB_SLOT_NATURAL_WIDTH)
   })
 
   test('shares the compact island equally between the tabs and the search tab', async () => {

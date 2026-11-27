@@ -12,7 +12,11 @@ import { isTabIslandCollapsedAtom } from '../model/barMorph'
 import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
 import { getIslandContentStyle } from './getBarMorphStyles'
-import { getIslandStyle, ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
+import {
+  getIslandStyle,
+  ISLAND_CONTENT_PADDING_HORIZONTAL,
+  TAB_SLOT_NATURAL_WIDTH,
+} from './getIslandStyle'
 import { getTabIslandRestingStyles } from './getTabIslandRestingStyles'
 
 interface TabIslandMorphInput {
@@ -60,11 +64,13 @@ export const useTabIslandMorph = ({
     Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
   // Every layout folds the search button into the island: wide always, compact
   // while expanded. Compact's separate circle only fades in as the island
-  // collapses, so the expanded row reads as one island and takes the whole
-  // content column. The search button is a full tab slot and takes an equal
-  // share next to the tabs.
+  // collapses, so its expanded row reads as one full-column island. Wide pins
+  // the island open and lets it hug natural-width slots instead (Apple Music
+  // iPad pill); the search button is a full slot in both.
   const expandedSlotCount = routeCount + (hideSearch ? 0 : 1)
-  const expandedIslandWidth = Math.max(BAR_CIRCLE_SIZE_EXPANDED, rowContentWidth)
+  const expandedIslandWidth = isForceExpanded
+    ? ISLAND_CONTENT_PADDING_HORIZONTAL * 2 + expandedSlotCount * TAB_SLOT_NATURAL_WIDTH
+    : Math.max(BAR_CIRCLE_SIZE_EXPANDED, rowContentWidth)
 
   const islandStyle = useAnimatedStyle(() =>
     getIslandStyle(
@@ -97,11 +103,12 @@ export const useTabIslandMorph = ({
 
   return {
     contentStyle,
-    // Every slot — the tabs and the search tab — gets an equal share of the
-    // island width minus its padding.
-    expandedTabWidth:
-      (expandedIslandWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2) /
-      Math.max(expandedSlotCount, 1),
+    // Compact: every slot — the tabs and the search tab — gets an equal share of
+    // the island width minus its padding. Wide: every slot gets the natural pitch.
+    expandedTabWidth: isForceExpanded
+      ? TAB_SLOT_NATURAL_WIDTH
+      : (expandedIslandWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2) /
+        Math.max(expandedSlotCount, 1),
     // Target shape of the morph: hidden slots must stop receiving touches as
     // soon as the island is collapsing, not when their width animation lands.
     isCollapsed: isForceExpanded ? false : liveIsCollapsed,
