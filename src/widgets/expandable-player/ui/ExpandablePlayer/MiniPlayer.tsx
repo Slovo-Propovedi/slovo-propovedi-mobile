@@ -71,9 +71,9 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
     // Wide windows move the transport cluster left of the artwork (Apple Music
     // order); phones keep the compact artwork/title/single-play row.
     const isWideLayout = useIsWideLayout()
-    // The pill is positioned inside this natively centred column. Its cap is the
-    // layout base and the wide pill's own 650 cap (the widest the pill can get),
-    // so a compact→wide flip never leaves the column narrower than the pill.
+    // The pill is positioned inside this natively centred column, and the wide
+    // pill is SIZED on the same column (`getWideMiniPlayerGeometry`), so it can
+    // never span outside its host: the touch bands beside the column stay alive.
     const columnMaxWidth = Math.min(useLayoutBaseWidth(), WIDE_MINI_PLAYER_MAX_WIDTH)
 
     return (

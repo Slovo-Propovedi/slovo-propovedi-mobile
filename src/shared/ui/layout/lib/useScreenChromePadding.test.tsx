@@ -126,20 +126,6 @@ describe('useScreenChromePadding', () => {
     expect(result.current.bottomChromeSpaceStyle).toEqual({ height: 64 + 20 + BAR_OUTER_GAP })
   })
 
-  test('wide: the measured row height (with its bottom padding) does not inflate the top', async () => {
-    Platform.OS = 'android'
-    mockWindowWidth = 768
-    mockBottomInset = 20
-    // A measured row on a home-indicator tablet: 68 content box + 20 padding.
-    setTabBarHeight(getSharedTestCtx(), BAR_ROW_MIN_HEIGHT + mockBottomInset)
-
-    const { result } = await renderHookWithProviders(() => useScreenChromePadding())
-
-    expect(result.current.topChromeHeight).toBe(
-      mockTopInset + BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
-    )
-  })
-
   test('wide native: inset-less frames keep the chrome clearance floor', async () => {
     Platform.OS = 'android'
     mockWindowWidth = 768

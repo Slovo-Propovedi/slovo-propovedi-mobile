@@ -45,9 +45,9 @@ interface MiniPlayerGeometryInput {
   /** 0 = detached pill above the tab row, 1 = pill in the collapsed bottom line. */
   barProgress: number
   /**
-   * Chrome content width the compact pill is SIZED from (the window's short
-   * side on phones). Position still centres inside the live window, so a
-   * rotation moves the pill without resizing it. Defaults to `screenWidth`.
+   * Chrome content width the pill is SIZED from (the window's short side on
+   * phones, the layout base). Position still centres inside the live window, so
+   * a rotation moves the pill without resizing it. Defaults to `screenWidth`.
    */
   contentWidth?: number
   fullScreenHeight: number
@@ -74,7 +74,7 @@ interface MiniPlayerGeometryInput {
  * Worklet-safe: called from React resting styles and Reanimated animated styles.
  * @param input - Geometry inputs and morph progress.
  * @param input.barProgress - 0 = detached pill, 1 = pill in the collapsed row.
- * @param input.contentWidth - Width the compact pill is sized from; defaults to `screenWidth`.
+ * @param input.contentWidth - Width the pill is sized from (both layouts); defaults to `screenWidth`.
  * @param input.fullScreenHeight - Full device screen height.
  * @param input.isWideLayout - Whether the wide layout applies.
  * @param input.screenWidth - Current window width.
@@ -92,7 +92,12 @@ export const getMiniPlayerGeometry = ({
 }: MiniPlayerGeometryInput): MiniPlayerGeometry => {
   'worklet'
   if (isWideLayout)
-    return getWideMiniPlayerGeometry({ fullScreenHeight, screenWidth, wideBottomInset })
+    return getWideMiniPlayerGeometry({
+      contentWidth,
+      fullScreenHeight,
+      screenWidth,
+      wideBottomInset,
+    })
 
   // The compact pill lays out in the chrome column but is centred in the LIVE
   // window, so a rotation only moves it.

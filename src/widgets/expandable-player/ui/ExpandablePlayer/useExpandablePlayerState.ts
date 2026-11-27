@@ -19,20 +19,18 @@ import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
  */
 export const useExpandablePlayerState = () => {
   const { currentTheme, isLight } = useTheme()
-  const [measuredTabBarHeight] = useAtom(tabBarHeightAtom)
-  // A non-focused root-stack screen renders the tabs with `display: none` on web
-  // (and may detach them natively), so the tab row's onLayout reports a 0 height
-  // while hidden. Adopting 0 would park the pill at the very bottom of the screen
-  // and the first visible frame after navigating back would show it there until
-  // the row re-measures (Issue #132). A non-positive height is not a measurement:
-  // keep the last real one.
-  const lastValidTabBarHeightRef = useRef(
-    measuredTabBarHeight > 0 ? measuredTabBarHeight : PLAYER_SIZES.tabBarHeight,
+  const [publishedTabBarHeight] = useAtom(tabBarHeightAtom)
+  // The publisher derives the height (`useTabBarMeasurement`) and ignores
+  // zero/short onLayout reports, so this retention guard is vestigial — kept as
+  // a cheap data-boundary fallback: a non-positive height is still not a
+  // measurement and must not become the pill's geometry (Issue #132).
+  const lastKnownTabBarHeightRef = useRef(
+    publishedTabBarHeight > 0 ? publishedTabBarHeight : PLAYER_SIZES.tabBarHeight,
   )
-  // eslint-disable-next-line react-hooks/refs -- intentional: retain the last real onLayout height across renders
-  if (measuredTabBarHeight > 0) lastValidTabBarHeightRef.current = measuredTabBarHeight
+  // eslint-disable-next-line react-hooks/refs -- intentional: retain the last known height across renders
+  if (publishedTabBarHeight > 0) lastKnownTabBarHeightRef.current = publishedTabBarHeight
   // eslint-disable-next-line react-hooks/refs -- intentional: the retained height is the player's trusted geometry input
-  const tabBarHeight = lastValidTabBarHeightRef.current
+  const tabBarHeight = lastKnownTabBarHeightRef.current
   const [audio] = useAtom(currentAudioAtom)
   const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
   const isSearchFieldVisible = useIsSearchFieldVisible()

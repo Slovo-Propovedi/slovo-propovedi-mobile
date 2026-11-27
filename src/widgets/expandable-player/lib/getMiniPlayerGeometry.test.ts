@@ -13,6 +13,7 @@ import {
   WIDE_MINI_PLAYER_MAX_WIDTH,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
+import { getMiniBarStyle } from './getMiniBarStyle'
 import { getMiniPlayerGeometry } from './getMiniPlayerGeometry'
 
 const SCREEN_HEIGHT = 800
@@ -181,6 +182,24 @@ describe('getMiniPlayerGeometry wide layout', () => {
     expect(WIDE_MINI_PLAYER_MAX_WIDTH).toBe(650)
     expect(wideGeometryAt({ screenWidth: 768, tabBarHeight: 98 }).width).toBe(650)
     expect(wideGeometryAt({ screenWidth: 1194, tabBarHeight: 98 }).width).toBe(650)
+  })
+
+  test('sizes the wide pill on its column: a 768x600 window keeps it inside the column', () => {
+    // Short side 600 caps the native centring column at 600, while the live width
+    // (768) would let the old pill span 650: the 25px bands beside the column
+    // then fell outside the pill's host and Android dropped taps there.
+    const { right, width } = getMiniBarStyle({
+      barProgress: 0,
+      contentWidth: 600,
+      fullScreenHeight: 600,
+      isWideLayout: true,
+      screenWidth: 768,
+      tabBarHeight: 98,
+      wideBottomInset: IPAD_BOTTOM_INSET,
+    })
+
+    expect(width).toBe(600)
+    expect(right).toBe(0)
   })
 
   test.each([IPAD_BOTTOM_INSET, DESKTOP_WEB_FLOOR])(
