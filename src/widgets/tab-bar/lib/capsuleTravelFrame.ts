@@ -1,4 +1,5 @@
 import { type FrameInfo } from 'react-native-reanimated'
+import { collectSlotPasses } from './capsuleSlotPasses'
 import {
   CAPSULE_OVERSHOOT_MS,
   CAPSULE_RETURN_MS,
@@ -21,6 +22,8 @@ interface CapsuleFrameResult {
   landed: boolean
   /** Intermediate slots whose bounds the capsule swept into this frame. */
   passedSlots: number
+  /** Id of the travel this frame belongs to; the JS side drops stale events. */
+  travelId: number
 }
 
 const enterPhase = (state: CapsuleFrameState, nextPhase: number) => {
@@ -29,51 +32,24 @@ const enterPhase = (state: CapsuleFrameState, nextPhase: number) => {
   state.elapsed.value = 0
 }
 
-// A pass fires the frame the capsule's swept segment first touches a passed
-// slot's bounds — segment overlap, not a point-in-rect test, so a coarse frame
-// cannot jump clean over a slot. The per-slot flag keeps it to one pulse per
-// travel, mirroring the settle-once contract.
-const collectSlotPasses = (state: CapsuleFrameState) => {
-  'worklet'
-  const segmentLow = Math.min(state.previousCenter.value, state.capsuleCenter.value)
-  const segmentHigh = Math.max(state.previousCenter.value, state.capsuleCenter.value)
-
-  state.previousCenter.value = state.capsuleCenter.value
-
-  if (segmentLow === segmentHigh) return 0
-
-  const crossed = [...state.passCrossed.value]
-  let passedSlots = 0
-
-  for (let index = 0; index < state.passRects.value.length; index++) {
-    if (crossed[index]) continue
-
-    const rect = state.passRects.value[index]
-
-    if (!rect) continue
-    if (segmentHigh < rect.center - rect.slotWidth / 2) continue
-    if (segmentLow > rect.center + rect.slotWidth / 2) continue
-
-    crossed[index] = true
-    passedSlots += 1
-  }
-
-  state.passCrossed.value = crossed
-
-  return passedSlots
-}
-
-// One UI-thread step of the choreography. Reports the landing frame and how many
-// intermediate slots it crossed so the JS surface can cue the right haptics.
+// One UI-thread step of the choreography. Reports the landing frame, how many
+// intermediate slots it crossed, and the travel id so the JS surface can cue
+// the right haptics and drop callbacks a newer travel superseded.
 export const stepCapsuleFrame = (
   state: CapsuleFrameState,
   frameInfo: FrameInfo,
 ): CapsuleFrameResult => {
   'worklet'
-  if (!state.isRunning.value) return { landed: false, passedSlots: 0 }
+  const travelId = state.travelId.value
 
+  if (!state.isRunning.value) return { landed: false, passedSlots: 0, travelId }
+
+  const previousCenter = state.previousCenter.value
   const delta = Math.min(frameInfo.timeSincePreviousFrame ?? 0, MAX_FRAME_DELTA_MS)
   state.elapsed.value += delta
+
+  let landed = false
+  let passedSlots = 0
 
   if (state.phase.value === CAPSULE_PHASE_TRAVEL) {
     const progress = Math.min(1, state.elapsed.value / state.duration.value)
@@ -85,18 +61,14 @@ export const stepCapsuleFrame = (
     state.capsuleWidth.value =
       state.startWidth.value + (state.targetWidth.value - state.startWidth.value) * eased
 
-    const passedSlots = collectSlotPasses(state)
+    passedSlots = collectSlotPasses(state, previousCenter)
 
     if (progress >= 1) {
       state.capsuleCenter.value = state.targetCenter.value
       state.capsuleWidth.value = state.targetWidth.value
       enterPhase(state, CAPSULE_PHASE_OVERSHOOT)
     }
-
-    return { landed: false, passedSlots }
-  }
-
-  if (state.phase.value === CAPSULE_PHASE_OVERSHOOT) {
+  } else if (state.phase.value === CAPSULE_PHASE_OVERSHOOT) {
     const progress = Math.min(1, state.elapsed.value / CAPSULE_OVERSHOOT_MS)
     const eased = easeOutQuad(progress)
     state.capsuleCenter.value =
@@ -104,22 +76,25 @@ export const stepCapsuleFrame = (
     state.arrivalPulse.value = eased
 
     if (progress >= 1) enterPhase(state, CAPSULE_PHASE_RETURN)
+  } else {
+    const progress = Math.min(1, state.elapsed.value / CAPSULE_RETURN_MS)
+    const eased = easeInOutSine(progress)
+    state.capsuleCenter.value =
+      state.targetCenter.value + state.direction.value * state.overshoot.value * (1 - eased)
+    state.arrivalPulse.value = 1 - eased
 
-    return { landed: false, passedSlots: 0 }
+    if (progress >= 1) {
+      state.capsuleCenter.value = state.targetCenter.value
+      state.arrivalPulse.value = 0
+      state.travelActivity.value = 0
+      state.isRunning.value = false
+      landed = true
+    }
   }
 
-  const progress = Math.min(1, state.elapsed.value / CAPSULE_RETURN_MS)
-  const eased = easeInOutSine(progress)
-  state.capsuleCenter.value =
-    state.targetCenter.value + state.direction.value * state.overshoot.value * (1 - eased)
-  state.arrivalPulse.value = 1 - eased
+  // Advance the swept-segment origin on EVERY frame, whatever the phase: the
+  // next frame's pass test must start where this one ended.
+  state.previousCenter.value = state.capsuleCenter.value
 
-  if (progress < 1) return { landed: false, passedSlots: 0 }
-
-  state.capsuleCenter.value = state.targetCenter.value
-  state.arrivalPulse.value = 0
-  state.travelActivity.value = 0
-  state.isRunning.value = false
-
-  return { landed: true, passedSlots: 0 }
+  return { landed, passedSlots, travelId }
 }

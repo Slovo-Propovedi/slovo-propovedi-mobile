@@ -27,6 +27,8 @@ export interface CapsuleFrameState {
   targetCenter: SharedValue<number>
   targetWidth: SharedValue<number>
   travelActivity: SharedValue<number>
+  /** Monotonic travel id: stale UI→JS callbacks carry the previous id. */
+  travelId: SharedValue<number>
 }
 
 export interface CapsuleLanding {
@@ -52,6 +54,7 @@ export const createCapsuleFrameState = (): CapsuleFrameState => ({
   targetCenter: makeMutable(0),
   targetWidth: makeMutable(0),
   travelActivity: makeMutable(0),
+  travelId: makeMutable(0),
 })
 
 export const snapCapsule = (state: CapsuleFrameState, landing: CapsuleLanding) => {

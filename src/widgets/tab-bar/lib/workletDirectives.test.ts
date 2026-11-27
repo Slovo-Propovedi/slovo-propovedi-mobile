@@ -30,7 +30,8 @@ const WORKLET_HELPERS: Array<[string, string[]]> = [
     ],
   ],
   ['capsulePulse.ts', ['getSlotEmphasis', 'getTravelScale']],
-  ['capsuleTravelFrame.ts', ['collectSlotPasses', 'enterPhase', 'stepCapsuleFrame']],
+  ['capsuleSlotPasses.ts', ['collectSlotPasses']],
+  ['capsuleTravelFrame.ts', ['enterPhase', 'stepCapsuleFrame']],
 ]
 
 const readSource = (file: string) => readFileSync(join(__dirname, file), 'utf8')

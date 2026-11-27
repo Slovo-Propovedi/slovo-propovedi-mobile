@@ -1,8 +1,6 @@
-import { type FrameInfo, type SharedValue } from 'react-native-reanimated'
+import { type FrameInfo } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { hapticHighlightPass, hapticLanding } from 'shared/lib/haptics'
 import { type MorphFrameHost } from 'shared/lib/hooks/atomMorphClock'
-import { type CapsuleSlotRect } from '../lib/capsuleTravel'
 import { stepCapsuleFrame } from '../lib/capsuleTravelFrame'
 import {
   beginCapsuleTravel,
@@ -10,35 +8,24 @@ import {
   createCapsuleFrameState,
   snapCapsule,
 } from '../lib/capsuleTravelState'
-
-export interface CapsuleTravelDriver {
-  arrivalPulse: SharedValue<number>
-  attachFrameHost: (host: MorphFrameHost) => () => void
-  capsuleCenter: SharedValue<number>
-  capsuleWidth: SharedValue<number>
-  /** UI-thread step the bar's React surface registers with `useFrameCallback`. */
-  frameStep: (frameInfo: FrameInfo) => void
-  registerSettledListener: (listener: () => void) => () => void
-  /** Test-only: parks the capsule and drops hosts and listeners. */
-  reset: () => void
-  snapTo: (landing: CapsuleLanding) => void
-  travelActivity: SharedValue<number>
-  /** Glides to the landing, then overshoots along the trajectory and returns. */
-  travelTo: (
-    landing: CapsuleLanding,
-    slotDistance: number,
-    slotRects: readonly CapsuleSlotRect[],
-  ) => void
-}
+import { type CapsuleTravelDriver } from './capsuleTravelDriverTypes'
+import { createCapsuleTravelHaptics } from './capsuleTravelHaptics'
 
 // Frame-driven choreography instead of wall-clock `withTiming`: the travel
 // advances only as far as the frames it received, so tests can sample it frame
 // by frame and a JS stall cannot collapse the animation into its end state.
 const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
   const state = createCapsuleFrameState()
+  const haptics = createCapsuleTravelHaptics()
   const hosts = new Set<MorphFrameHost>()
   const settledListeners = new Set<() => void>()
   let isRunningFlag = false
+
+  // Opens a new travel generation and mirrors it into the frame state so the
+  // worklet can stamp its scheduled callbacks with the id.
+  const beginTravel = () => {
+    state.travelId.value = haptics.begin()
+  }
 
   // Only the first attached surface steps the clock; the rest stay standby so
   // an unmount hands the travel over to the next mounted bar.
@@ -47,24 +34,26 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
     for (const host of hosts) host.setActive(host === primary && isRunningFlag)
   }
 
-  const settle = () => {
+  const settle = (travelId: number) => {
+    if (!haptics.land(travelId)) return
+
     isRunningFlag = false
     syncActiveHosts()
-    hapticLanding()
     for (const listener of settledListeners) listener()
   }
 
   const frameStep = (frameInfo: FrameInfo) => {
     'worklet'
 
-    const { landed, passedSlots } = stepCapsuleFrame(state, frameInfo)
+    const { landed, passedSlots, travelId } = stepCapsuleFrame(state, frameInfo)
 
-    for (let pass = 0; pass < passedSlots; pass++) scheduleOnRN(hapticHighlightPass)
+    for (let pass = 0; pass < passedSlots; pass++) scheduleOnRN(haptics.firePass, travelId)
 
-    if (landed) scheduleOnRN(settle)
+    if (landed) scheduleOnRN(settle, travelId)
   }
 
   const snapTo = (landing: CapsuleLanding) => {
+    beginTravel()
     snapCapsule(state, landing)
     isRunningFlag = false
     syncActiveHosts()
@@ -93,6 +82,7 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
       }
     },
     reset: () => {
+      haptics.reset()
       snapTo({ center: 0, width: 0 })
       for (const host of hosts) host.setActive(false)
       hosts.clear()
@@ -103,7 +93,9 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
     travelTo: (landing, slotDistance, slotRects) => {
       // A press starts the travel synchronously; the route-render effect then
       // reconciles with the same destination. Keep the already-running trip
-      // instead of rewinding it to the current frame.
+      // instead of rewinding it to the current frame. No new generation here:
+      // the idempotent reconcile must not invalidate the running travel's
+      // queued pass/settle events.
       if (isRunningFlag && state.targetCenter.value === landing.center) return
 
       if (slotDistance <= 0 || state.capsuleCenter.value === landing.center) {
@@ -112,6 +104,7 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
         return
       }
 
+      beginTravel()
       beginCapsuleTravel(state, landing, slotDistance, slotRects)
       isRunningFlag = true
       syncActiveHosts()
