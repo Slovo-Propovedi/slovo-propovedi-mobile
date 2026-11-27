@@ -30,15 +30,15 @@ export interface SlotCapsuleMotion {
   travelActivity: SharedValue<number>
 }
 
-// Travel timings: one slot is a 210ms glide, every further slot adds 70ms up to
-// a 280ms ceiling. Arrival is an 80ms overshoot followed by an 80ms return.
-const CAPSULE_TRAVEL_BASE_MS = 140
-const CAPSULE_TRAVEL_PER_SLOT_MS = 70
-export const CAPSULE_TRAVEL_MAX_MS = 280
-export const CAPSULE_OVERSHOOT_MS = 80
-export const CAPSULE_RETURN_MS = 80
+// Travel timings: one slot is a 150ms glide, every further slot adds 50ms up to
+// a 220ms ceiling. Arrival is a 60ms overshoot followed by a 70ms return.
+const CAPSULE_TRAVEL_BASE_MS = 100
+const CAPSULE_TRAVEL_PER_SLOT_MS = 50
+export const CAPSULE_TRAVEL_MAX_MS = 220
+export const CAPSULE_OVERSHOOT_MS = 60
+export const CAPSULE_RETURN_MS = 70
 // The capsule rides this share of its own width past the destination.
-export const CAPSULE_OVERSHOOT_RATIO = 0.28
+export const CAPSULE_OVERSHOOT_RATIO = 0.18
 // Two capsule overhangs minus the item's 4dp margin on each side, so the moving
 // capsule keeps the footprint of the old per-slot highlight.
 const CAPSULE_SLOT_BLEED = CAPSULE_HORIZONTAL_OVERHANG * 2 - 8

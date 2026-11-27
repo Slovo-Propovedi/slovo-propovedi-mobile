@@ -1059,8 +1059,8 @@ describe('<CustomTabBar>', () => {
     expect(getByText('Ещё')).toHaveStyle({ color: '#f16031' })
     expect(getByText('Поиск')).not.toHaveStyle({ color: '#f16031' })
 
-    // Four 100ms frames only land the travel; the overshoot and the return need
-    // two more before the settled React state re-reads the capsule position.
+    // Three 100ms frames land the 220ms travel; the overshoot and the return
+    // settle within ten before the settled React state re-reads the capsule.
     await act(async () => {
       advanceMorphFrames(10)
     })

@@ -22,7 +22,7 @@ const COMPACT_INPUT = {
   tabWidth: 92.5,
 }
 
-const advance = async (frameCount = 1, deltaMs = 70) => {
+const advance = async (frameCount = 1, deltaMs = 50) => {
   await act(async () => {
     advanceMorphFrames(frameCount, deltaMs)
   })
@@ -63,7 +63,7 @@ describe('capsuleTravelDriver', () => {
     await advance()
     const middle = capsuleTravelDriver.capsuleCenter.value
 
-    // Half of the 280ms two-slot travel lands exactly on «Читать»'s centre.
+    // Half of the 200ms two-slot travel lands exactly on «Читать»'s centre.
     expect(first).toBeGreaterThan(54)
     expect(first).toBeLessThan(142)
     expect(middle).toBeCloseTo(142, 5)
@@ -81,9 +81,9 @@ describe('capsuleTravelDriver', () => {
     await act(async () => {
       rerender({ ...WIDE_INPUT, activeRouteKey: 'more' })
     })
-    // Two frames land the travel, the next two cover the overshoot.
-    await advance(3)
-    await advance()
+    // Four 50ms frames land the 200ms travel; the next two cover the 60ms
+    // overshoot.
+    await advance(4)
 
     expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(230, 5)
     expect(capsuleTravelDriver.arrivalPulse.value).toBe(0)
@@ -91,14 +91,14 @@ describe('capsuleTravelDriver', () => {
     await advance()
     const overshootCenter = capsuleTravelDriver.capsuleCenter.value
 
-    // The capsule rides ~28% of its width past the target…
-    expect(overshootCenter).toBeGreaterThan(250)
+    // The capsule rides ~18% of its width past the target…
+    expect(overshootCenter).toBeGreaterThan(240)
     // …while the arrival pulse peaks stronger than the travel pulse.
     expect(capsuleTravelDriver.arrivalPulse.value).toBeGreaterThan(0.9)
 
     await advance()
     expect(capsuleTravelDriver.arrivalPulse.value).toBe(1)
-    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(258, 5)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(248, 5)
 
     await advance()
     expect(capsuleTravelDriver.capsuleCenter.value).toBeGreaterThan(230)
@@ -134,7 +134,7 @@ describe('capsuleTravelDriver', () => {
     await advance()
     await advance()
 
-    // Same 280ms choreography puts the capsule on «Читать»'s compact centre.
+    // Same 200ms choreography puts the capsule on «Читать»'s compact centre.
     expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(148.75, 5)
   })
 

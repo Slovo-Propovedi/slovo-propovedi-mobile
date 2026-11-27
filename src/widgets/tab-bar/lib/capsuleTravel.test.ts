@@ -75,8 +75,9 @@ describe('getSlotEmphasis', () => {
 
 describe('getTravelDuration', () => {
   test('scales with the number of slots crossed and clamps at the ceiling', () => {
-    expect(getTravelDuration(1)).toBe(210)
-    expect(getTravelDuration(2)).toBe(CAPSULE_TRAVEL_MAX_MS)
+    expect(getTravelDuration(1)).toBe(150)
+    expect(getTravelDuration(2)).toBe(200)
+    expect(getTravelDuration(3)).toBe(CAPSULE_TRAVEL_MAX_MS)
     expect(getTravelDuration(5)).toBe(CAPSULE_TRAVEL_MAX_MS)
   })
 })
