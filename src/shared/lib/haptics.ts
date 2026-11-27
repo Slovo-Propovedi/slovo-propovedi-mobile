@@ -53,6 +53,17 @@ const fireImpact = (androidHaptic: AndroidHaptics, iosStyle: ImpactFeedbackStyle
   void impactAsync(iosStyle).catch(() => {})
 }
 
+// Softest native tick: iOS selection / Android Context_Click. Shared by the
+// scrub tick (also pulses on web) and the travel-pass tick (silent on web).
+const fireSelectionTick = (): void => {
+  if (Platform.OS === 'android') {
+    void performAndroidHapticsAsync(AndroidHaptics.Context_Click).catch(() => {})
+    return
+  }
+
+  void selectionAsync().catch(() => {})
+}
+
 // Fire-and-forget press feedback: light impact on iOS, system haptic on Android,
 // Vibration API pulse on web (silent no-op where unsupported). Gated by the global
 // «Виброотклик» toggle (hapticsEnabledAtom) — disabling it silences presses and
@@ -74,33 +85,27 @@ export const hapticLight = (): void => {
   fireImpact(AndroidHaptics.Virtual_Key, ImpactFeedbackStyle.Light)
 }
 
-// Landing cue for the liquid tab highlight: one medium impact when the capsule
-// settles on its destination tab. Deliberately NOT throttled — it arrives a full
-// travel (150–220ms) after the press pulse and is a distinct event, not a repeat
-// tap. Native only: the web Vibration API has no meaningful analogue for a
-// gliding highlight, so the trip stays silent there even where it exists.
-// Both platforms use a Medium impact: Android's `Confirm` preset is a
-// double-tick pattern, so it made every landing vibrate twice (and rapid tab
-// switches stacked the ticks into an accumulation). Cosmetic like its siblings:
-// the rejected promise is swallowed so it can never crash the app.
+// Landing cue for the liquid tab highlight: the Light tap-level pulse (iOS
+// `impactAsync(Light)`, Android a single Virtual_Key haptic) when the capsule
+// reaches its tab. NOT throttled — a distinct event, not a repeat tap.
+// Native only: web stays silent, there is no analogue for a gliding highlight.
 export const hapticLanding = (): void => {
   if (!ctx.get(hapticsEnabledAtom)) return
 
   if (Platform.OS === 'web') return
 
-  void impactAsync(ImpactFeedbackStyle.Medium).catch(() => {})
+  fireImpact(AndroidHaptics.Virtual_Key, ImpactFeedbackStyle.Light)
 }
 
-// Light cue for the traveling highlight crossing an intermediate slot: one pulse
-// per passed tab. Deliberately NOT throttled — consecutive slots land inside the
-// press-throttle window, yet each pass is a distinct beat, not a repeat tap.
-// Gated by «Виброотклик»; web has no analogue for a gliding highlight (silent).
+// Softest cue for a travel pass: one selection tick per passed tab, lighter
+// than the Light landing. NOT throttled — each pass is a distinct beat. Gated
+// by «Виброотклик»; silent on web (no analogue for a gliding highlight).
 export const hapticHighlightPass = (): void => {
   if (!ctx.get(hapticsEnabledAtom)) return
 
   if (Platform.OS === 'web') return
 
-  fireImpact(AndroidHaptics.Virtual_Key, ImpactFeedbackStyle.Light)
+  fireSelectionTick()
 }
 
 // Perceptible tick for continuous value scrubbing (seek slider): iOS uses
@@ -120,10 +125,5 @@ export const hapticTick = (): void => {
     return
   }
 
-  if (Platform.OS === 'android') {
-    void performAndroidHapticsAsync(AndroidHaptics.Context_Click).catch(() => {})
-    return
-  }
-
-  void selectionAsync().catch(() => {})
+  fireSelectionTick()
 }

@@ -218,29 +218,29 @@ describe('hapticLanding', () => {
     jest.clearAllMocks()
   })
 
-  test('triggers a medium impact on iOS', () => {
+  test('triggers a light impact on iOS, like the old tap haptic', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
     try {
       hapticLanding()
 
       expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
-      expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Medium)
+      expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Light)
       expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }
   })
 
-  test('triggers a single Medium impact on Android', () => {
+  test('triggers a single Virtual_Key pulse on Android', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
     try {
       hapticLanding()
 
       // AndroidHaptics.Confirm is a double-tick preset; one landing must be a
-      // single pulse, so Android uses the same Medium impact as iOS.
-      expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
-      expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Medium)
-      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
+      // single Virtual_Key-class pulse, the same primitive as a light tap.
+      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledTimes(1)
+      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Virtual_Key)
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }
@@ -273,6 +273,7 @@ describe('hapticLanding', () => {
       hapticLanding()
 
       expect(mockedImpactAsync).not.toHaveBeenCalled()
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
       mockedCtxGet.mockReturnValue(true)
@@ -285,24 +286,25 @@ describe('hapticHighlightPass', () => {
     jest.clearAllMocks()
   })
 
-  test('triggers a light impact on iOS', () => {
+  test('triggers a selection tick on iOS, softer than a light impact', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
     try {
       hapticHighlightPass()
 
-      expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Light)
+      expect(mockedSelectionAsync).toHaveBeenCalledTimes(1)
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
       expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }
   })
 
-  test('triggers the system Virtual_Key haptic on Android', () => {
+  test('triggers the lightest Context_Click tick on Android', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
     try {
       hapticHighlightPass()
 
-      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Virtual_Key)
+      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Context_Click)
       expect(mockedImpactAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
@@ -317,9 +319,7 @@ describe('hapticHighlightPass', () => {
       hapticHighlightPass()
       hapticHighlightPass()
 
-      expect(mockedImpactAsync).toHaveBeenCalledTimes(2)
-      expect(mockedImpactAsync).toHaveBeenNthCalledWith(1, ImpactFeedbackStyle.Light)
-      expect(mockedImpactAsync).toHaveBeenNthCalledWith(2, ImpactFeedbackStyle.Light)
+      expect(mockedSelectionAsync).toHaveBeenCalledTimes(2)
     } finally {
       restorePlatform.restore()
     }
@@ -334,6 +334,7 @@ describe('hapticHighlightPass', () => {
       hapticHighlightPass()
 
       expect(vibrate).not.toHaveBeenCalled()
+      expect(mockedSelectionAsync).not.toHaveBeenCalled()
       expect(mockedImpactAsync).not.toHaveBeenCalled()
       expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
@@ -351,7 +352,9 @@ describe('hapticHighlightPass', () => {
       mockedCtxGet.mockReturnValue(false)
       hapticHighlightPass()
 
+      expect(mockedSelectionAsync).not.toHaveBeenCalled()
       expect(mockedImpactAsync).not.toHaveBeenCalled()
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
       mockedCtxGet.mockReturnValue(true)

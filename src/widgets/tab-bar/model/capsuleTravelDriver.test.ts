@@ -1,5 +1,5 @@
 import { act } from '@testing-library/react-native'
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics'
+import { impactAsync, ImpactFeedbackStyle, selectionAsync } from 'expo-haptics'
 import { Platform } from 'react-native'
 import { ctx } from 'shared/lib/reatom-ctx/ctx'
 import { advanceMorphFrames, countActiveMorphFrames } from 'shared/mocks/morphFrames'
@@ -33,11 +33,15 @@ interface DeferredRNMock {
 const { __flushScheduledOnRN } = jest.requireMock<DeferredRNMock>('react-native-worklets')
 
 const mockedImpactAsync = impactAsync as jest.MockedFunction<typeof impactAsync>
+const mockedSelectionAsync = selectionAsync as jest.MockedFunction<typeof selectionAsync>
 
 const countImpacts = (style: ImpactFeedbackStyle) =>
   mockedImpactAsync.mock.calls.filter(([callStyle]) => callStyle === style).length
 
-const impactSequence = () => mockedImpactAsync.mock.calls.map(([style]) => style)
+// Intermediate beats are the softest selection tick; the landing is the Light
+// impact of a plain tap. Both counts are asserted step by step.
+const countTicks = () => mockedSelectionAsync.mock.calls.length
+const countLandings = () => countImpacts(ImpactFeedbackStyle.Light)
 
 // Wide: [Слушать][Читать][Ещё][Поиск] — slot centres 54, 142, 230, 298.
 const WIDE_INPUT = {
@@ -237,7 +241,7 @@ describe('capsuleTravelDriver', () => {
     expect(capsuleTravelDriver.capsuleCenter.value).toBe(230)
   })
 
-  test('adjacent travel fires exactly one Medium at the end', async () => {
+  test('adjacent travel fires exactly one Light landing at the end', async () => {
     const { rerender } = await renderTravel(WIDE_INPUT)
 
     await act(async () => {
@@ -246,19 +250,22 @@ describe('capsuleTravelDriver', () => {
     // Distance 1 → one beat at 100% of the 150ms travel: the landing itself.
     await advance(2)
 
-    expect(impactSequence()).toEqual([])
+    expect(countTicks()).toBe(0)
+    expect(countLandings()).toBe(0)
 
     await advance(1)
 
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Medium])
+    expect(countTicks()).toBe(0)
+    expect(countLandings()).toBe(1)
 
     // The spring-back adds nothing.
     await advance(4)
 
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Medium])
+    expect(countTicks()).toBe(0)
+    expect(countLandings()).toBe(1)
   })
 
-  test('distance two splits the travel in half: Light at 50%, Medium at 100%', async () => {
+  test('distance two splits the travel in half: tick at 50%, Light landing at 100%', async () => {
     const { rerender } = await renderTravel(WIDE_INPUT)
 
     await act(async () => {
@@ -266,22 +273,26 @@ describe('capsuleTravelDriver', () => {
     })
     await advance(1)
 
-    expect(impactSequence()).toEqual([])
+    expect(countTicks()).toBe(0)
+    expect(countLandings()).toBe(0)
 
     await advance(1)
 
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Light])
+    expect(countTicks()).toBe(1)
+    expect(countLandings()).toBe(0)
 
     await advance(1)
 
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Light])
+    expect(countTicks()).toBe(1)
+    expect(countLandings()).toBe(0)
 
     await advance(1)
 
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Light, ImpactFeedbackStyle.Medium])
+    expect(countTicks()).toBe(1)
+    expect(countLandings()).toBe(1)
   })
 
-  test('distance three splits the travel in thirds: Light, Light, Medium', async () => {
+  test('distance three splits the travel in thirds: tick, tick, Light landing', async () => {
     const { rerender } = await renderTravel(WIDE_INPUT)
 
     await act(async () => {
@@ -290,27 +301,26 @@ describe('capsuleTravelDriver', () => {
     // 220ms travel: 1/3 ≈ 73ms, 2/3 ≈ 147ms, 3/3 = 220ms.
     await advance(1)
 
-    expect(impactSequence()).toEqual([])
+    expect(countTicks()).toBe(0)
+    expect(countLandings()).toBe(0)
 
     await advance(1)
 
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Light])
+    expect(countTicks()).toBe(1)
 
     await advance(1)
 
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Light, ImpactFeedbackStyle.Light])
+    expect(countTicks()).toBe(2)
 
     await advance(1)
 
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Light, ImpactFeedbackStyle.Light])
+    expect(countTicks()).toBe(2)
+    expect(countLandings()).toBe(0)
 
     await advance(1)
 
-    expect(impactSequence()).toEqual([
-      ImpactFeedbackStyle.Light,
-      ImpactFeedbackStyle.Light,
-      ImpactFeedbackStyle.Medium,
-    ])
+    expect(countTicks()).toBe(2)
+    expect(countLandings()).toBe(1)
   })
 
   test('fires the landing beat on the arrival frame, without a route commit', async () => {
@@ -318,19 +328,22 @@ describe('capsuleTravelDriver', () => {
 
     // A press starts the travel; no navigation re-render happens in this test.
     result.current.requestTravel('more')
-    // Distance 2 → Light at half the 200ms travel, Medium at the arrival.
+    // Distance 2 → tick at half the 200ms travel, Light landing at the arrival.
     await advance(2)
 
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Light])
+    expect(countTicks()).toBe(1)
+    expect(countLandings()).toBe(0)
 
     await advance(2)
 
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Light, ImpactFeedbackStyle.Medium])
+    expect(countTicks()).toBe(1)
+    expect(countLandings()).toBe(1)
 
     // The spring-back is silent.
     await advance(4)
 
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Light, ImpactFeedbackStyle.Medium])
+    expect(countTicks()).toBe(1)
+    expect(countLandings()).toBe(1)
   })
 
   test('stays silent when the haptics setting is off', async () => {
@@ -343,6 +356,7 @@ describe('capsuleTravelDriver', () => {
       })
       await advance(10)
 
+      expect(mockedSelectionAsync).not.toHaveBeenCalled()
       expect(mockedImpactAsync).not.toHaveBeenCalled()
     } finally {
       hapticsEnabledAtom(ctx, true)
@@ -359,57 +373,44 @@ describe('capsuleTravelDriver', () => {
       })
       await advance(10)
 
+      expect(mockedSelectionAsync).not.toHaveBeenCalled()
       expect(mockedImpactAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }
   })
 
-  test('keeps the exact light/medium sequence across sequential travels', async () => {
+  test('keeps tick and Light landing counts across sequential travels', async () => {
     const { rerender, result } = await renderTravel(WIDE_INPUT)
 
-    // 0 → 3 («Слушать» → «Поиск»): distance 3 → Light, Light, Medium.
+    // 0 → 3 («Слушать» → «Поиск»): distance 3 → tick, tick, Light landing.
     await act(async () => {
       rerender({ ...WIDE_INPUT, activeRouteKey: 'listen', isSearchFocused: true })
     })
     await advance(10)
 
-    expect(impactSequence()).toEqual([
-      ImpactFeedbackStyle.Light,
-      ImpactFeedbackStyle.Light,
-      ImpactFeedbackStyle.Medium,
-    ])
+    expect(countTicks()).toBe(2)
+    expect(countLandings()).toBe(1)
 
-    // 3 → 1 («Поиск» → «Читать»): distance 2 → Light, Medium.
+    // 3 → 1 («Поиск» → «Читать»): distance 2 → tick, Light landing.
     result.current.requestTravel('read')
     await act(async () => {
       rerender({ ...WIDE_INPUT, activeRouteKey: 'read' })
     })
     await advance(9)
 
-    expect(impactSequence()).toEqual([
-      ImpactFeedbackStyle.Light,
-      ImpactFeedbackStyle.Light,
-      ImpactFeedbackStyle.Medium,
-      ImpactFeedbackStyle.Light,
-      ImpactFeedbackStyle.Medium,
-    ])
+    expect(countTicks()).toBe(3)
+    expect(countLandings()).toBe(2)
 
-    // 1 → 2 («Читать» → «Ещё»): adjacent → only the Medium landing.
+    // 1 → 2 («Читать» → «Ещё»): adjacent → only the Light landing.
     result.current.requestTravel('more')
     await act(async () => {
       rerender({ ...WIDE_INPUT, activeRouteKey: 'more' })
     })
     await advance(8)
 
-    expect(impactSequence()).toEqual([
-      ImpactFeedbackStyle.Light,
-      ImpactFeedbackStyle.Light,
-      ImpactFeedbackStyle.Medium,
-      ImpactFeedbackStyle.Light,
-      ImpactFeedbackStyle.Medium,
-      ImpactFeedbackStyle.Medium,
-    ])
+    expect(countTicks()).toBe(3)
+    expect(countLandings()).toBe(3)
   })
 
   test('does not replay the landing of a travel the next press superseded', async () => {
@@ -434,11 +435,12 @@ describe('capsuleTravelDriver', () => {
 
     await flushScheduled()
 
-    // Only B's beats are felt; A's stale light and landing are dropped.
-    expect(impactSequence()).toEqual([ImpactFeedbackStyle.Light, ImpactFeedbackStyle.Medium])
+    // Only B's beats are felt; A's stale tick and landing are dropped.
+    expect(countTicks()).toBe(1)
+    expect(countLandings()).toBe(1)
   })
 
-  test('drops a queued light beat when a rapid press aborts the travel', async () => {
+  test('drops a queued tick when a rapid press aborts the travel', async () => {
     const { rerender, result } = await renderTravel(WIDE_INPUT)
 
     // Travel A: «Слушать» → «Ещё», its half-way beat queued.
@@ -456,7 +458,8 @@ describe('capsuleTravelDriver', () => {
     })
     await flushScheduled()
 
-    expect(countImpacts(ImpactFeedbackStyle.Light)).toBe(0)
+    expect(countTicks()).toBe(0)
+    expect(countLandings()).toBe(0)
   })
 
   test('spaces the beats by time, not by swept distance', async () => {
@@ -469,11 +472,11 @@ describe('capsuleTravelDriver', () => {
     // third boundary is due, not both intermediate slots.
     await advance(1, 100)
 
-    expect(countImpacts(ImpactFeedbackStyle.Light)).toBe(1)
+    expect(countTicks()).toBe(1)
 
     await advance(10)
 
-    expect(countImpacts(ImpactFeedbackStyle.Light)).toBe(2)
-    expect(countImpacts(ImpactFeedbackStyle.Medium)).toBe(1)
+    expect(countTicks()).toBe(2)
+    expect(countLandings()).toBe(1)
   })
 })
