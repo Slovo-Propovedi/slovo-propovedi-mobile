@@ -231,13 +231,16 @@ describe('hapticLanding', () => {
     }
   })
 
-  test('triggers the system Confirm haptic on Android', () => {
+  test('triggers a single Medium impact on Android', () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
     try {
       hapticLanding()
 
-      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Confirm)
-      expect(mockedImpactAsync).not.toHaveBeenCalled()
+      // AndroidHaptics.Confirm is a double-tick preset; one landing must be a
+      // single pulse, so Android uses the same Medium impact as iOS.
+      expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
+      expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Medium)
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
     }

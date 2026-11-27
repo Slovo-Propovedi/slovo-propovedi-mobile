@@ -79,15 +79,16 @@ export const hapticLight = (): void => {
 // travel (150–220ms) after the press pulse and is a distinct event, not a repeat
 // tap. Native only: the web Vibration API has no meaningful analogue for a
 // gliding highlight, so the trip stays silent there even where it exists.
-// Android keeps the system haptic engine (Confirm — the strong confirmation cue)
-// so the response follows the device's settings like hapticLight. Cosmetic like
-// its siblings: the rejected promise is swallowed so it can never crash the app.
+// Both platforms use a Medium impact: Android's `Confirm` preset is a
+// double-tick pattern, so it made every landing vibrate twice (and rapid tab
+// switches stacked the ticks into an accumulation). Cosmetic like its siblings:
+// the rejected promise is swallowed so it can never crash the app.
 export const hapticLanding = (): void => {
   if (!ctx.get(hapticsEnabledAtom)) return
 
   if (Platform.OS === 'web') return
 
-  fireImpact(AndroidHaptics.Confirm, ImpactFeedbackStyle.Medium)
+  void impactAsync(ImpactFeedbackStyle.Medium).catch(() => {})
 }
 
 // Light cue for the traveling highlight crossing an intermediate slot: one pulse
