@@ -6,6 +6,21 @@ export const TRIGGER_DISTANCE = 64
 export const SPINNER_SLOT_HEIGHT = 40
 /** Minimum gap between two pull-to-refresh reloads. */
 export const REFRESH_MIN_INTERVAL_MS = 2000
+
+/**
+ * Tint of the refresh spinner: primary as soon as the pull arms a refresh (or a
+ * reload is running), muted before the trigger. Shared by the compact in-wrapper
+ * spinner and the wide overlay spinner.
+ * @param isArmed - The pull passed the trigger threshold, or a refresh is active.
+ * @param theme - Current theme colors.
+ * @param theme.primary - Accent color of the armed/running spinner.
+ * @param theme.textMuted - Gray tint before the pull arms.
+ * @returns The spinner color.
+ */
+export const getRefreshSpinnerColor = (
+  isArmed: boolean,
+  theme: { primary: string; textMuted: string },
+): string => (isArmed ? theme.primary : theme.textMuted)
 /** Duration of the content/spinner settle animation after a release. */
 export const RESTING_DURATION_MS = 200
 

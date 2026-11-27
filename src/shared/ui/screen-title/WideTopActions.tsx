@@ -7,6 +7,7 @@ import {
   WIDE_TAB_ISLAND_HEIGHT,
 } from '../layout/bottomBarLayout'
 import { useIsWideLayout } from '../layout/lib/useIsWideLayout'
+import { getRefreshSpinnerColor } from '../refresh-control/pull-to-refresh.lib'
 import { RefreshContext } from '../refresh-control/refreshContext'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { INDENTS, MIN_TOUCH_TARGET } from '../theme/themed'
@@ -32,6 +33,7 @@ const SPINNER_ID = 'wide-top-actions-spinner'
 export const WideTopActions = ({ children }: { children: ReactNode }) => {
   const isWide = useIsWideLayout()
   const context = useContext(RefreshContext)
+  const isArmed = context?.isArmed ?? false
   const isRefreshing = context?.refreshing ?? false
   const fallbackProgress = useSharedValue(0)
   const pullProgress = context?.pullProgress ?? fallbackProgress
@@ -52,7 +54,7 @@ export const WideTopActions = ({ children }: { children: ReactNode }) => {
         pointerEvents='none'
         style={[styles.spinner, spinnerStyle]}
       >
-        <ActivityIndicator color={currentTheme.primary} />
+        <ActivityIndicator color={getRefreshSpinnerColor(isRefreshing || isArmed, currentTheme)} />
       </Animated.View>
       <View testID={TEST_ID} pointerEvents='box-none' style={styles.container}>
         {children}

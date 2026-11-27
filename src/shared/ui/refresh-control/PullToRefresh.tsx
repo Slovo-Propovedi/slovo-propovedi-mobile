@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { useSharedValue } from 'react-native-reanimated'
 import { useIsWideLayout } from '../layout/lib/useIsWideLayout'
 import { useTheme } from '../theme/ThemeContext/useTheme'
-import { SPINNER_SLOT_HEIGHT } from './pull-to-refresh.lib'
+import { getRefreshSpinnerColor, SPINNER_SLOT_HEIGHT } from './pull-to-refresh.lib'
 import { type PullToRefreshProps } from './pull-to-refresh.types'
 import { RefreshContext } from './refreshContext'
 import { usePullToRefreshGesture } from './usePullToRefreshGesture'
@@ -41,8 +41,8 @@ export const PullToRefresh = ({ children, onRefresh, refreshing }: PullToRefresh
     refreshing,
   })
   const refreshContext = useMemo(
-    () => ({ onRefresh, pullProgress, refreshing }),
-    [onRefresh, pullProgress, refreshing],
+    () => ({ isArmed, onRefresh, pullProgress, refreshing }),
+    [isArmed, onRefresh, pullProgress, refreshing],
   )
 
   return (
@@ -50,7 +50,7 @@ export const PullToRefresh = ({ children, onRefresh, refreshing }: PullToRefresh
       <View ref={wrapperRef} style={styles.wrapper}>
         {isWide ? null : (
           <View ref={spinnerRef} pointerEvents='none' style={styles.spinnerSlot}>
-            <ActivityIndicator color={isArmed ? currentTheme.primary : currentTheme.textMuted} />
+            <ActivityIndicator color={getRefreshSpinnerColor(isArmed, currentTheme)} />
           </View>
         )}
         <View ref={contentRef} style={styles.content}>

@@ -9,6 +9,8 @@ import { type SharedValue } from 'react-native-reanimated'
  * overlay can fade its spinner in during the pull without a re-render per move.
  */
 export const RefreshContext = createContext<{
+  /** Pull passed the trigger threshold, or a refresh is running. */
+  isArmed?: boolean
   onRefresh: () => Promise<void> | void
   /** Absent in synthetic providers (e.g. Admin list headers). */
   pullProgress?: SharedValue<number>
