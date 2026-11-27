@@ -1,4 +1,5 @@
 import { CoverImage } from 'shared/ui'
+import { useLayoutBaseWidth } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { createListItemBaseStyles } from './styles'
 import { type ListItemVariant } from './types'
@@ -11,7 +12,8 @@ export const ListItemArtwork = ({
   variant: ListItemVariant
 }) => {
   const { currentTheme } = useTheme()
-  const styles = createListItemBaseStyles(currentTheme)
+  const baseWidth = useLayoutBaseWidth()
+  const styles = createListItemBaseStyles(currentTheme, baseWidth)
 
   return (
     <CoverImage uri={uri} style={variant === 'card' ? styles.cardArtwork : styles.surfaceArtwork} />

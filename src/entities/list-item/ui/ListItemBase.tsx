@@ -1,6 +1,7 @@
 import { memo, type ReactNode } from 'react'
 import { Platform, type StyleProp, Text, View, type ViewStyle } from 'react-native'
 import { MovingText } from 'shared/ui'
+import { useLayoutBaseWidth } from 'shared/ui/layout'
 import { PressableButton } from 'shared/ui/pressable-button'
 import { useTheme } from 'shared/ui/theme'
 import { ListItemArtwork } from './ListItemArtwork'
@@ -49,7 +50,8 @@ const ListItemBaseComponent = ({
   variant?: ListItemVariant
 }) => {
   const { currentTheme } = useTheme()
-  const styles = createListItemBaseStyles(currentTheme)
+  const baseWidth = useLayoutBaseWidth()
+  const styles = createListItemBaseStyles(currentTheme, baseWidth)
   const isSurface = variant === 'surface'
   const titleStyle = isSurface ? styles.surfaceTitle : styles.cardTitle
   const subtitleStyle = isSurface ? styles.surfaceSubtitle : styles.cardSubtitle

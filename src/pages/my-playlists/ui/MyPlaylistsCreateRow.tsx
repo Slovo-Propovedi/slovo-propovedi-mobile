@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { OnboardingTarget } from 'features/onboarding'
 import { getListItemCardArtworkSize, ListItemBase } from 'entities/list-item'
+import { useLayoutBaseWidth } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { MyPlaylistsMarkerAvatar } from './MyPlaylistsMarkerAvatar'
 
@@ -22,6 +23,7 @@ export const MyPlaylistsCreateRow = ({
   onPress: () => void
 }) => {
   const { currentTheme } = useTheme()
+  const baseWidth = useLayoutBaseWidth()
 
   return (
     <OnboardingTarget id={onboardingTargetId}>
@@ -31,7 +33,7 @@ export const MyPlaylistsCreateRow = ({
         title={CREATE_TITLE}
         artworkNode={
           <MyPlaylistsMarkerAvatar
-            size={getListItemCardArtworkSize()}
+            size={getListItemCardArtworkSize(baseWidth)}
             renderIcon={iconSize => (
               <Ionicons size={iconSize} name={CREATE_ICON} color={currentTheme.primary} />
             )}

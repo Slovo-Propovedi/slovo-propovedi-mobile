@@ -27,18 +27,18 @@ export const useTabBarMeasurement = () => {
   const bottomPadding = useBarBottomPadding()
   const isWide = useIsWideLayout()
   const derivedHeight = (isWide ? WIDE_BAR_ROW_HEIGHT : BAR_ROW_MIN_HEIGHT) + bottomPadding
-  const setMeasuredTabBarHeight = useAction(setTabBarHeight)
+  const publishTabBarHeight = useAction(setTabBarHeight)
 
   useLayoutEffect(() => {
-    setMeasuredTabBarHeight(derivedHeight)
-  }, [derivedHeight, setMeasuredTabBarHeight])
+    publishTabBarHeight(derivedHeight)
+  }, [derivedHeight, publishTabBarHeight])
 
   const onLayout = (event: LayoutChangeEvent) => {
     const { height } = event.nativeEvent.layout
 
     if (height <= derivedHeight) return
 
-    setMeasuredTabBarHeight(height)
+    publishTabBarHeight(height)
   }
 
   return { bottomPadding, onLayout }

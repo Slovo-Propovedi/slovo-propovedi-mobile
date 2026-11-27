@@ -3,6 +3,7 @@ import { getListItemCardArtworkSize, ListItemBase } from 'entities/list-item'
 import { type LocalPlaylistData } from 'entities/playlist'
 import { PlaylistLetterAvatar } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
+import { useLayoutBaseWidth } from 'shared/ui/layout'
 import { COLORS, INDENTS } from 'shared/ui/theme'
 
 const DRAG_LABEL = 'Переместить плейлист'
@@ -34,23 +35,29 @@ export const MyPlaylistsRow = ({
   item: LocalPlaylistData
   onDelete?: () => void
   onPress: () => void
-}) => (
-  <ListItemBase
-    style={ROW_STYLE}
-    title={item.title}
-    isActive={isActive}
-    dragLabel={DRAG_LABEL}
-    drag={isDraggingEnabled ? drag : undefined}
-    onPress={isDraggingEnabled ? () => undefined : onPress}
-    artworkNode={<PlaylistLetterAvatar title={item.title} size={getListItemCardArtworkSize()} />}
-    right={
-      onDelete ? (
-        <IconButton
-          onPress={onDelete}
-          accessibilityLabel={DELETE_LABEL}
-          Icon={<Ionicons name='trash-outline' color={COLORS.error} size={DELETE_ICON_SIZE} />}
-        />
-      ) : undefined
-    }
-  />
-)
+}) => {
+  const baseWidth = useLayoutBaseWidth()
+
+  return (
+    <ListItemBase
+      style={ROW_STYLE}
+      title={item.title}
+      isActive={isActive}
+      dragLabel={DRAG_LABEL}
+      drag={isDraggingEnabled ? drag : undefined}
+      onPress={isDraggingEnabled ? () => undefined : onPress}
+      artworkNode={
+        <PlaylistLetterAvatar title={item.title} size={getListItemCardArtworkSize(baseWidth)} />
+      }
+      right={
+        onDelete ? (
+          <IconButton
+            onPress={onDelete}
+            accessibilityLabel={DELETE_LABEL}
+            Icon={<Ionicons name='trash-outline' color={COLORS.error} size={DELETE_ICON_SIZE} />}
+          />
+        ) : undefined
+      }
+    />
+  )
+}

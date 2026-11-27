@@ -1,10 +1,10 @@
 import { action, atom } from '@reatom/framework'
 import { PLAYER_SIZES } from '../theme/themed'
 
-/** Approximation used only until the real tab bar height is measured via onLayout. */
+/** Conservative starting value until the derived tab bar height is published in the first layout commit. */
 export const tabBarHeightAtom = atom<number>(PLAYER_SIZES.tabBarHeight, 'tabBarHeightAtom')
 
-/** Set to true the first time CustomTabBar reports its real height. */
+/** Set once the derived tab bar height has been published (kept for consumers that gate on the first commit). */
 export const isTabBarMeasuredAtom = atom<boolean>(false, 'isTabBarMeasuredAtom')
 
 export const setTabBarHeight = action((ctx, height: number) => {

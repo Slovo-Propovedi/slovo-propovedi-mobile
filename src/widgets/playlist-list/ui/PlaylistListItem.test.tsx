@@ -6,6 +6,13 @@ import { type PlaylistListItemData } from '../model'
 import { PlaylistListItem } from './PlaylistListItem'
 
 const mockLetterAvatar = jest.fn()
+const BASE_WIDTH = 390
+
+jest.mock('shared/ui/layout', () => {
+  const actual = jest.requireActual('shared/ui/layout')
+
+  return { ...actual, useLayoutBaseWidth: () => BASE_WIDTH }
+})
 
 jest.mock('shared/ui', () => {
   const { View } = jest.requireActual('react-native')
@@ -73,7 +80,7 @@ describe('<PlaylistListItem>', () => {
     await renderWithProviders(<PlaylistListItem item={makeItem()} onPress={jest.fn()} />)
 
     expect(mockLetterAvatar).toHaveBeenCalledWith({
-      size: getListItemCardArtworkSize(),
+      size: getListItemCardArtworkSize(BASE_WIDTH),
       title: PLAYLIST_TITLE,
     })
   })

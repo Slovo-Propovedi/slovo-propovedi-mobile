@@ -1,6 +1,6 @@
-Tablet: tabs+search top island, content under
-full mini-player, no titles, actions top-right; highlight+haptic
+Tablet: top tab+search island; full mini-player, no titles, actions top-right;
+haptic; layout animates
 Search: field top, folds on scroll, results morph, button detaches
-Fixed: instant pill, collapse crossfade; cards/circle keep size on rotation
-chrome frozen on rotation, recording pauses, split-screen (Android)
+Fixed: instant pill/collapse, sizes on rotation, chrome frozen,
+recording pause, split-screen; search circle tap; pill rotation; wide flip
 iOS web: full height, Safari toolbar/keyboard, 21px home gap

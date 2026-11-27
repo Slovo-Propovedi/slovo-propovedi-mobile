@@ -7,6 +7,7 @@ import {
 } from 'widgets/playlist-list'
 import { getListItemCardArtworkSize } from 'entities/list-item'
 import { type LocalPlaylistData } from 'entities/playlist'
+import { useLayoutBaseWidth } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { MyPlaylistsCreateRow } from './MyPlaylistsCreateRow'
 import { MyPlaylistsMarkerAvatar } from './MyPlaylistsMarkerAvatar'
@@ -32,13 +33,14 @@ export const MyPlaylistsNormalView = ({
   orderedRest: LocalPlaylistData[]
 }) => {
   const { currentTheme } = useTheme()
+  const baseWidth = useLayoutBaseWidth()
 
   const favoritesItem: PlaylistListItemData | undefined = favorites
     ? {
         ...favorites,
         artworkNode: (
           <MyPlaylistsMarkerAvatar
-            size={getListItemCardArtworkSize()}
+            size={getListItemCardArtworkSize(baseWidth)}
             renderIcon={iconSize => (
               <Ionicons size={iconSize} name={HEART_ICON} color={currentTheme.primary} />
             )}

@@ -310,7 +310,8 @@ read-modify-write по id с тем же путём персиста. **«Изб
 режим** (`MyPlaylistsNormalView`) теперь переиспользует то же тело списка, что серверный список
 секции — общий виджет `PlaylistList` (`src/widgets/playlist-list/`): схлопывающийся контентный
 заголовок, карточные строки (`ListItemBase` card-вариант, плитка обложки
-`getListItemCardArtworkSize()`) и разделители. Первым элементом списка идёт «Избранные» — её
+`getListItemCardArtworkSize(useLayoutBaseWidth())` — размер пересчитывается на resize, а не
+берётся из окна в момент вызова) и разделители. Первым элементом списка идёт «Избранные» — её
 обложку подменяет маркер-сердце `MyPlaylistsMarkerAvatar` (`Ionicons 'heart'`, размер
 `size * AVATAR_CONTENT_SIZE_RATIO`); ниже — локальные плейлисты; **завершающей строкой футера
 списка** — «Создать плейлист» (`MyPlaylistsCreateRow`, `listFooter`), то есть под плейлистами.

@@ -8,6 +8,13 @@ import { MyPlaylistsRow } from './MyPlaylistsRow'
 const ITEM: LocalPlaylistData = { id: 'a', sermonIds: [], sermons: [], title: 'Плейлист A' }
 const DRAG_LABEL = 'Переместить плейлист'
 const DELETE_LABEL = 'Удалить плейлист'
+const mockBaseWidth = 390
+
+jest.mock('shared/ui/layout', () => {
+  const actual = jest.requireActual('shared/ui/layout')
+
+  return { ...actual, useLayoutBaseWidth: () => mockBaseWidth }
+})
 
 const renderRow = (props?: {
   isDraggingEnabled?: boolean
@@ -70,7 +77,7 @@ describe('<MyPlaylistsRow>', () => {
     const { getByText } = await utils
 
     expect(getByText('П')).toHaveStyle({
-      fontSize: getListItemCardArtworkSize() * AVATAR_CONTENT_SIZE_RATIO,
+      fontSize: getListItemCardArtworkSize(mockBaseWidth) * AVATAR_CONTENT_SIZE_RATIO,
     })
   })
 

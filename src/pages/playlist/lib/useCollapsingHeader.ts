@@ -1,7 +1,7 @@
 import { useAction } from '@reatom/npm-react'
 import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useEffect } from 'react'
-import { Dimensions } from 'react-native'
+import { useWindowDimensions } from 'react-native'
 import {
   interpolate,
   type SharedValue,
@@ -13,13 +13,11 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { nextBarCollapsedState, setBarCollapsed } from 'shared/ui/layout'
 
-const { height: windowHeight } = Dimensions.get('window')
-
+// Base image height is 50% of the LIVE viewport height: a rotation into
+// landscape must shrink it instead of keeping the launch (portrait) height.
+const BASE_IMAGE_HEIGHT_RATIO = 0.5
 // Estimated header height for initial calculation (actual from useHeaderHeight)
 const ESTIMATED_HEADER_HEIGHT = 100
-
-// Base image height (50% of screen) - used for threshold calculation
-const BASE_IMAGE_HEIGHT = windowHeight * 0.5
 
 interface UseCollapsingHeaderResult {
   headerImageHeight: number
@@ -32,6 +30,7 @@ interface UseCollapsingHeaderResult {
 export const useCollapsingHeader = (): UseCollapsingHeaderResult => {
   const scrollY = useSharedValue(0)
   const headerHeight = useHeaderHeight() || ESTIMATED_HEADER_HEIGHT
+  const { height: windowHeight } = useWindowDimensions()
   // The same scroll handler also drives the floating bottom bar, so the list
   // keeps a single worklet instead of stacking a second scroll handler.
   const applyBarCollapsed = useAction(setBarCollapsed)
@@ -40,7 +39,7 @@ export const useCollapsingHeader = (): UseCollapsingHeaderResult => {
   const wasBarCollapsedSv = useSharedValue(false)
 
   // Image extends behind the header for a seamless look
-  const headerImageHeight = BASE_IMAGE_HEIGHT + headerHeight
+  const headerImageHeight = windowHeight * BASE_IMAGE_HEIGHT_RATIO + headerHeight
 
   // Title appears when scroll position reaches this threshold
   // Title is centered in headerImageContainer (which extends behind header)

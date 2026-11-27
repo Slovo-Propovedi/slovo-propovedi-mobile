@@ -25,7 +25,7 @@ export const MINI_PILL_TUCK_DISTANCE = PLAYER_SIZES.miniPlayerHeight + BAR_OUTER
  * @param screenWidth - Current window width.
  * @param contentWidth - Chrome content width the column is capped by; defaults to `screenWidth`.
  */
-export const getMiniPillColumnWidth = (screenWidth: number, contentWidth?: number): number => {
+const getMiniPillColumnWidth = (screenWidth: number, contentWidth?: number): number => {
   'worklet'
   return Math.min(contentWidth ?? screenWidth, WIDE_MINI_PLAYER_MAX_WIDTH)
 }

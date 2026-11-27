@@ -18,7 +18,7 @@ import { useIsWideLayout } from './useIsWideLayout'
  *
  * Both sides derive from one authority: the wide pill sits on the chrome's
  * bottom padding (`useBarBottomPadding`), and the top reserves the islands row's
- * CONTENT height — the measured row also carries the bottom padding, which must
+ * CONTENT height — the derived row also carries the bottom padding, which must
  * not inflate the top chrome.
  *
  * `topChromeScrollInset` is the part of `topChromeHeight` that belongs to a

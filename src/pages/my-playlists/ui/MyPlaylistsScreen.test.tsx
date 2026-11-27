@@ -163,7 +163,10 @@ describe('<MyPlaylistsScreen>', () => {
 
     const { getByText } = await renderWithProviders(<MyPlaylistsScreen />, { ctx })
 
-    const avatarSize = { height: getListItemCardArtworkSize(), width: getListItemCardArtworkSize() }
+    const avatarSize = {
+      height: getListItemCardArtworkSize(390),
+      width: getListItemCardArtworkSize(390),
+    }
 
     expect(getByText('heart').parent).toHaveStyle(avatarSize)
     expect(getByText('add').parent).toHaveStyle(avatarSize)

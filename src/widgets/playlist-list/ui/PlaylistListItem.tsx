@@ -1,5 +1,6 @@
 import { getListItemCardArtworkSize, ListItemBase } from 'entities/list-item'
 import { PlaylistLetterAvatar } from 'shared/ui'
+import { useLayoutBaseWidth } from 'shared/ui/layout'
 import { type PlaylistListItemData } from '../model'
 
 // Строка плейлиста в списке. Слот обложки обязателен: без artwork/artworkNode он
@@ -14,17 +15,21 @@ export const PlaylistListItem = ({
 }: {
   item: PlaylistListItemData
   onPress: () => void
-}) => (
-  <ListItemBase
-    onPress={onPress}
-    title={item.title}
-    artwork={item.artwork}
-    subtitle={item.subtitle}
-    artworkNode={
-      item.artworkNode ??
-      (item.artwork == null ? (
-        <PlaylistLetterAvatar title={item.title} size={getListItemCardArtworkSize()} />
-      ) : undefined)
-    }
-  />
-)
+}) => {
+  const baseWidth = useLayoutBaseWidth()
+
+  return (
+    <ListItemBase
+      onPress={onPress}
+      title={item.title}
+      artwork={item.artwork}
+      subtitle={item.subtitle}
+      artworkNode={
+        item.artworkNode ??
+        (item.artwork == null ? (
+          <PlaylistLetterAvatar title={item.title} size={getListItemCardArtworkSize(baseWidth)} />
+        ) : undefined)
+      }
+    />
+  )
+}
