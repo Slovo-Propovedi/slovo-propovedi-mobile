@@ -11,10 +11,13 @@ const GLOBAL_GROUP_TITLE = 'Глобальные'
 const PLAYER_GROUP_TITLE = 'Плеер'
 
 const mockPathname = jest.fn(() => '/listen')
+const mockIsWideLayout = jest.fn(() => true)
 
 jest.mock('expo-router', () => ({
   usePathname: () => mockPathname(),
 }))
+
+jest.mock('shared/ui/layout', () => ({ useIsWideLayout: () => mockIsWideLayout() }))
 
 jest.mock('entities/feature-flags', () => ({
   useFeatureFlag: () => true,
@@ -37,6 +40,22 @@ describe('<ScenarioPickerModal>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockPathname.mockReturnValue('/listen')
+    mockIsWideLayout.mockReturnValue(true)
+  })
+
+  test('offers the whats-new tour in the wide layout', async () => {
+    await renderPicker()
+
+    expect(screen.getByText('Что нового')).toBeTruthy()
+  })
+
+  test('hides the whats-new tour in the compact layout', async () => {
+    mockIsWideLayout.mockReturnValue(false)
+
+    await renderPicker()
+
+    expect(screen.queryByText('Что нового')).toBeNull()
+    expect(screen.getByText('Добро пожаловать')).toBeTruthy()
   })
 
   test('splits scenarios into screen and global groups on /listen', async () => {

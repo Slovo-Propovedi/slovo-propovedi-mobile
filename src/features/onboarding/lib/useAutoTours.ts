@@ -3,6 +3,7 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { usePathname } from 'expo-router'
 import { useEffect, useRef } from 'react'
 import { setToursSeenVersion, TOURS_SEEN_VERSION_KEY, toursDisabledAtom } from 'shared/model'
+import { useIsWideLayout } from 'shared/ui/layout'
 import { onboardingTourAtom, startOnboardingTour } from '../model/tour'
 import { contentFingerprint } from './contentFingerprint'
 import { type AutoTourDecision, resolveAutoTour } from './resolveAutoTour'
@@ -18,6 +19,7 @@ export const useAutoTours = ({ delayMs = AUTO_TOUR_DELAY_MS }: { delayMs?: numbe
   const [activeTour] = useAtom(onboardingTourAtom)
   const setSeenFingerprint = useAction(setToursSeenVersion)
   const startTour = useAction(startOnboardingTour)
+  const isWideLayout = useIsWideLayout()
   const pathname = usePathname()
   const isDecidedRef = useRef(false)
   const pathnameRef = useRef(pathname)
@@ -30,18 +32,29 @@ export const useAutoTours = ({ delayMs = AUTO_TOUR_DELAY_MS }: { delayMs?: numbe
   useEffect(() => {
     if (isDecidedRef.current) return
 
-    const timer = setTimeout(() => {
-      isDecidedRef.current = true
+    let cancelled = false
 
+    const timer = setTimeout(() => {
       void (async () => {
-        if (toursDisabled) return
+        if (toursDisabled) {
+          isDecidedRef.current = true
+          return
+        }
 
         const seen = await AsyncStorage.getItem(TOURS_SEEN_VERSION_KEY)
+        if (cancelled) return
+
         const decision: AutoTourDecision = resolveAutoTour(
           seen,
           WHATS_NEW_FINGERPRINT,
           WHATS_NEW_STEPS.length > 0,
         )
+        // «Что нового» announces the wide-layout rebuild: on a compact window it is
+        // not eligible and nothing is marked seen, so a later wide session can show
+        // it. The decision is left undecided to re-evaluate when the window widens.
+        if (decision === 'whatsNew' && !isWideLayout) return
+
+        isDecidedRef.current = true
         if (decision === null) return
 
         // Welcome also marks the current «Что нового» content as seen: a fresh
@@ -51,6 +64,9 @@ export const useAutoTours = ({ delayMs = AUTO_TOUR_DELAY_MS }: { delayMs?: numbe
       })()
     }, delayMs)
 
-    return () => clearTimeout(timer)
-  }, [activeTour, delayMs, setSeenFingerprint, startTour, toursDisabled])
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [activeTour, delayMs, isWideLayout, setSeenFingerprint, startTour, toursDisabled])
 }

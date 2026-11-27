@@ -9,8 +9,11 @@ import { whatsNewScenario } from './scenarioData/whatsNew'
 import { useAutoTours } from './useAutoTours'
 
 const mockPathname = jest.fn(() => '/listen')
+const mockIsWideLayout = jest.fn(() => true)
 
 jest.mock('expo-router', () => ({ usePathname: () => mockPathname() }))
+
+jest.mock('shared/ui/layout', () => ({ useIsWideLayout: () => mockIsWideLayout() }))
 
 jest.mock('../model/tour', () => {
   const actual = jest.requireActual('../model/tour')
@@ -40,6 +43,7 @@ describe('useAutoTours', () => {
   beforeEach(async () => {
     jest.clearAllMocks()
     mockPathname.mockReturnValue('/listen')
+    mockIsWideLayout.mockReturnValue(true)
     await AsyncStorage.clear()
   })
 
@@ -108,6 +112,53 @@ describe('useAutoTours', () => {
     expect(mockSetItem.mock.invocationCallOrder[0]).toBeLessThan(
       mockStartTour.mock.invocationCallOrder[0],
     )
+  })
+
+  test('does not start whatsNew and writes nothing in the compact layout', async () => {
+    mockGetItem.mockResolvedValue(LEGACY_VERSION)
+    mockIsWideLayout.mockReturnValue(false)
+
+    const { ctx } = await renderAutoTours()
+    await flushDelay()
+
+    expect(mockSetItem).not.toHaveBeenCalled()
+    expect(mockStartTour).not.toHaveBeenCalled()
+    expect(ctx.get(onboardingTourAtom)).toBeNull()
+  })
+
+  test('starts whatsNew once the compact window becomes wide', async () => {
+    mockGetItem.mockResolvedValue(LEGACY_VERSION)
+    mockIsWideLayout.mockReturnValue(false)
+
+    const { ctx, rerender } = await renderAutoTours()
+    await flushDelay()
+
+    expect(mockStartTour).not.toHaveBeenCalled()
+
+    mockIsWideLayout.mockReturnValue(true)
+    await rerender(undefined)
+    await flushDelay()
+
+    await waitFor(() =>
+      expect(ctx.get(onboardingTourAtom)).toEqual({
+        deckIndex: 0,
+        scenarioId: 'whatsNew',
+        skippedDeckIndexes: [],
+      }),
+    )
+    expect(mockSetItem).toHaveBeenCalledWith(SEEN_KEY, WHATS_NEW_FINGERPRINT)
+  })
+
+  test('does not re-present whatsNew in a compact session after a wide one', async () => {
+    mockGetItem.mockResolvedValue(WHATS_NEW_FINGERPRINT)
+    mockIsWideLayout.mockReturnValue(false)
+
+    const { ctx } = await renderAutoTours()
+    await flushDelay()
+
+    expect(mockSetItem).not.toHaveBeenCalled()
+    expect(mockStartTour).not.toHaveBeenCalled()
+    expect(ctx.get(onboardingTourAtom)).toBeNull()
   })
 
   test('still writes the seen fingerprint but skips start when a tour is already active', async () => {

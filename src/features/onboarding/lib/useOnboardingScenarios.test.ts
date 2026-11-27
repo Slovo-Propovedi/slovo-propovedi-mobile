@@ -2,10 +2,13 @@ import { renderHookWithProviders } from 'shared/mocks'
 import { useOnboardingScenarios } from './useOnboardingScenarios'
 
 const mockUseFeatureFlag = jest.fn((_key: string) => false)
+const mockIsWideLayout = jest.fn(() => true)
 
 jest.mock('entities/feature-flags', () => ({
   useFeatureFlag: (key: string) => mockUseFeatureFlag(key),
 }))
+
+jest.mock('shared/ui/layout', () => ({ useIsWideLayout: () => mockIsWideLayout() }))
 
 const scenarioIds = (scenarios: Array<{ id: string }>) => scenarios.map(scenario => scenario.id)
 
@@ -13,6 +16,7 @@ describe('useOnboardingScenarios', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockUseFeatureFlag.mockImplementation(() => false)
+    mockIsWideLayout.mockReturnValue(true)
   })
 
   test('keeps the read scenario when its flag is on', async () => {
@@ -45,6 +49,22 @@ describe('useOnboardingScenarios', () => {
     expect(ids).toContain('welcome')
     expect(ids).toContain('whatsNew')
     expect(ids.slice(-2)).toEqual(['welcome', 'whatsNew'])
+  })
+
+  test('hides the whats-new tour from the compact picker', async () => {
+    mockIsWideLayout.mockReturnValue(false)
+
+    const { result } = await renderHookWithProviders(() => useOnboardingScenarios())
+
+    const ids = scenarioIds(result.current)
+    expect(ids).not.toContain('whatsNew')
+    expect(ids).toContain('welcome')
+  })
+
+  test('offers the whats-new tour in the wide picker', async () => {
+    const { result } = await renderHookWithProviders(() => useOnboardingScenarios())
+
+    expect(scenarioIds(result.current)).toContain('whatsNew')
   })
 
   test('default scope keeps the screen scenarios and drops the player scope', async () => {
