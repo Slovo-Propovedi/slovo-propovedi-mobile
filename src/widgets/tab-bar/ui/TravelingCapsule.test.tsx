@@ -6,7 +6,7 @@ import { getSlotRects } from '../lib/capsuleTravel'
 import { TravelingCapsule } from './TravelingCapsule'
 
 const CAPSULE_COLOR = 'rgba(241, 96, 49, 0.18)'
-const RECTS = getSlotRects([88, 88, 88, 48])
+const RECTS = getSlotRects([88, 88, 88, 48], 10)
 
 const progressValue = (value: number) => ({ value }) as unknown as SharedValue<number>
 
@@ -15,14 +15,14 @@ const findCapsule = () =>
     instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === CAPSULE_COLOR,
   )[0]
 
-const renderCapsule = async (progress: number, restingLeft = -6) => {
+const renderCapsule = async (progress: number, restingLeft = 4) => {
   await renderWithProviders(
     <TravelingCapsule
       progress={progressValue(progress)}
       resting={{ left: restingLeft, width: 100 }}
       motion={{
         arrivalPulse: progressValue(0),
-        capsuleCenter: progressValue(44),
+        capsuleCenter: progressValue(54),
         capsuleWidth: progressValue(100),
         slotRects: RECTS,
         travelActivity: progressValue(0),
@@ -44,7 +44,7 @@ describe('<TravelingCapsule>', () => {
     expect(capsule).toHaveStyle({
       backgroundColor: CAPSULE_COLOR,
       opacity: 1,
-      transform: [{ translateX: -6 }],
+      transform: [{ translateX: 4 }],
       width: 100,
     })
   })

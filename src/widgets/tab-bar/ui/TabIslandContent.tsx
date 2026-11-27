@@ -52,45 +52,47 @@ export const TabIslandContent = ({
   settledOneLine,
   visibleRoutes,
 }: TabIslandContentProps) => (
-  <Animated.View style={[styles.islandContent, contentStyle, restingContentStyle]}>
+  <Animated.View style={styles.islandContent}>
     <TravelingCapsule motion={capsule} progress={progress} resting={restingCapsule} />
-    {visibleRoutes.map((route, index) => {
-      // The fallback tab owns the collapsed circle while search is focused, but
-      // search is the active destination: the tab is not highlighted.
-      const isActiveSlot = route.key === activeRouteKey
+    <Animated.View style={[styles.slotsRow, contentStyle, restingContentStyle]}>
+      {visibleRoutes.map((route, index) => {
+        // The fallback tab owns the collapsed circle while search is focused,
+        // but search is the active destination: the tab is not highlighted.
+        const isActiveSlot = route.key === activeRouteKey
 
-      return (
-        <TabBarTab
-          key={route.key}
+        return (
+          <TabBarTab
+            key={route.key}
+            progress={progress}
+            routeKey={route.key}
+            isWideLayout={isWide}
+            routeName={route.name}
+            isActiveSlot={isActiveSlot}
+            isBarCollapsed={isCollapsed}
+            capsuleMotion={motionFor(index)}
+            expandedWidth={expandedTabWidth}
+            isSettledOneLine={settledOneLine}
+            oneLineProgress={oneLineProgress}
+            isSettledCollapsed={settledCollapsed}
+            isDisabled={!isTabAvailable(route.name)}
+            isHighlighted={isActiveSlot && !isSearchFocused}
+            onPress={() => handleTabPress(route, isActiveSlot)}
+          />
+        )
+      })}
+      {!hideSearch && (
+        <TabIslandSearchSlot
           progress={progress}
-          routeKey={route.key}
           isWideLayout={isWide}
-          routeName={route.name}
-          isActiveSlot={isActiveSlot}
-          isBarCollapsed={isCollapsed}
-          capsuleMotion={motionFor(index)}
-          expandedWidth={expandedTabWidth}
+          isCollapsed={isCollapsed}
+          isActive={isSearchFocused}
           isSettledOneLine={settledOneLine}
           oneLineProgress={oneLineProgress}
+          expandedWidth={expandedSearchWidth}
           isSettledCollapsed={settledCollapsed}
-          isDisabled={!isTabAvailable(route.name)}
-          isHighlighted={isActiveSlot && !isSearchFocused}
-          onPress={() => handleTabPress(route, isActiveSlot)}
+          capsuleMotion={motionFor(visibleRoutes.length)}
         />
-      )
-    })}
-    {!hideSearch && (
-      <TabIslandSearchSlot
-        progress={progress}
-        isWideLayout={isWide}
-        isCollapsed={isCollapsed}
-        isActive={isSearchFocused}
-        isSettledOneLine={settledOneLine}
-        oneLineProgress={oneLineProgress}
-        expandedWidth={expandedSearchWidth}
-        isSettledCollapsed={settledCollapsed}
-        capsuleMotion={motionFor(visibleRoutes.length)}
-      />
-    )}
+      )}
+    </Animated.View>
   </Animated.View>
 )

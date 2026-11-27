@@ -53,10 +53,12 @@ export const getTravelDuration = (slotDistance: number) => {
   )
 }
 
-// Slot rectangles in the island content's coordinate space: the slots tile it
-// from 0 with no gap (the 8dp inter-item gap lives inside each slot's item).
-export const getSlotRects = (slotWidths: readonly number[]) => {
-  let left = 0
+// Slot rectangles in the island content's coordinate space. The capsule layer
+// is absolute in the unpadded content box, so the row's horizontal inset is
+// added explicitly: the first slot starts after it (native Yoga offsets an
+// absolute child by the parent's padding, CSS does not).
+export const getSlotRects = (slotWidths: readonly number[], padding: number) => {
+  let left = padding
 
   return slotWidths.map(slotWidth => {
     const rect = {

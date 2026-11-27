@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrameCallback } from 'react-native-reanimated'
 import { capsuleTravelDriver } from '../model/capsuleTravelDriver'
 import { type CapsuleTravelMotion, getSlotRects, type SlotCapsuleMotion } from './capsuleTravel'
+import { ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
 
 interface CapsuleTravel {
   /** Values the traveling capsule element reads. */
@@ -46,7 +47,7 @@ export const useCapsuleTravel = ({
 
     if (searchSlotIndex >= 0) widths.push(searchWidth)
 
-    return getSlotRects(widths)
+    return getSlotRects(widths, ISLAND_CONTENT_PADDING_HORIZONTAL)
   }, [tabCount, tabWidth, searchWidth, searchSlotIndex])
   const previousIndex = useRef(activeIndex)
   // The first render must already paint the capsule on the active slot: parking

@@ -51,16 +51,15 @@ export const styles = {
     elevation: 12,
   },
   islandContent: {
-    alignItems: 'center' as const,
     // The clip lives on the content wrapper, not the island host (Issue #152):
     // on iPad Safari the slot animated styles can freeze at the expanded
     // geometry mid-morph, and a host-level overflow+border-radius fails to
     // clip composited children — the frozen tabs then paint outside the pill.
     borderRadius: RADIUSES.round,
     flex: 1,
-    flexDirection: 'row' as const,
     height: '100%' as const,
     overflow: 'hidden' as const,
+    position: 'relative' as const,
   },
   // Fixed-height row keeps the measured tab-bar height stable across the morph;
   // only the island inside it changes width. The island anchors to the content
@@ -86,6 +85,15 @@ export const styles = {
   // instead — see the comment there.
   islandsRowElevated: {
     elevation: 12,
+  },
+  // The slot row carries the animated horizontal inset: keeping it out of the
+  // clipping wrapper gives the absolute traveling capsule the same coordinate
+  // origin on native and web (Yoga offsets absolute children by parent padding,
+  // CSS does not).
+  slotsRow: {
+    alignItems: 'center' as const,
+    flex: 1,
+    flexDirection: 'row' as const,
   },
   tabButton: {
     flex: 1,

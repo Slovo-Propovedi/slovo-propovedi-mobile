@@ -4,7 +4,7 @@ import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { useCapsuleTravel } from '../lib/useCapsuleTravel'
 import { capsuleTravelDriver } from './capsuleTravelDriver'
 
-// Wide: [Слушать][Читать][Ещё][Поиск] — slot centres 44, 132, 220, 288.
+// Wide: [Слушать][Читать][Ещё][Поиск] — slot centres 54, 142, 230, 298.
 const WIDE_INPUT = {
   activeRouteKey: 'listen',
   hideSearch: false,
@@ -41,7 +41,7 @@ describe('capsuleTravelDriver', () => {
   test('seeds the capsule on the active slot without animating', async () => {
     await renderTravel({ ...WIDE_INPUT, activeRouteKey: 'more' })
 
-    expect(capsuleTravelDriver.capsuleCenter.value).toBe(220)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBe(230)
     expect(capsuleTravelDriver.capsuleWidth.value).toBe(100)
     expect(capsuleTravelDriver.travelActivity.value).toBe(0)
     expect(countActiveMorphFrames()).toBe(0)
@@ -50,7 +50,7 @@ describe('capsuleTravelDriver', () => {
   test('travels through the intermediate slot centres instead of jumping', async () => {
     const { rerender } = await renderTravel(WIDE_INPUT)
 
-    expect(capsuleTravelDriver.capsuleCenter.value).toBe(44)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBe(54)
 
     await act(async () => {
       rerender({ ...WIDE_INPUT, activeRouteKey: 'more' })
@@ -64,15 +64,15 @@ describe('capsuleTravelDriver', () => {
     const middle = capsuleTravelDriver.capsuleCenter.value
 
     // Half of the 280ms two-slot travel lands exactly on «Читать»'s centre.
-    expect(first).toBeGreaterThan(44)
-    expect(first).toBeLessThan(132)
-    expect(middle).toBeCloseTo(132, 5)
+    expect(first).toBeGreaterThan(54)
+    expect(first).toBeLessThan(142)
+    expect(middle).toBeCloseTo(142, 5)
 
     await advance()
     const last = capsuleTravelDriver.capsuleCenter.value
 
-    expect(last).toBeGreaterThan(132)
-    expect(last).toBeLessThan(220)
+    expect(last).toBeGreaterThan(142)
+    expect(last).toBeLessThan(230)
   })
 
   test('overshoots past the target and springs back on arrival', async () => {
@@ -85,27 +85,27 @@ describe('capsuleTravelDriver', () => {
     await advance(3)
     await advance()
 
-    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(220, 5)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(230, 5)
     expect(capsuleTravelDriver.arrivalPulse.value).toBe(0)
 
     await advance()
     const overshootCenter = capsuleTravelDriver.capsuleCenter.value
 
     // The capsule rides ~28% of its width past the target…
-    expect(overshootCenter).toBeGreaterThan(240)
+    expect(overshootCenter).toBeGreaterThan(250)
     // …while the arrival pulse peaks stronger than the travel pulse.
     expect(capsuleTravelDriver.arrivalPulse.value).toBeGreaterThan(0.9)
 
     await advance()
     expect(capsuleTravelDriver.arrivalPulse.value).toBe(1)
-    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(248, 5)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(258, 5)
 
     await advance()
-    expect(capsuleTravelDriver.capsuleCenter.value).toBeGreaterThan(220)
-    expect(capsuleTravelDriver.capsuleCenter.value).toBeLessThan(225)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBeGreaterThan(230)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBeLessThan(235)
 
     await advance()
-    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(220, 5)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(230, 5)
     expect(capsuleTravelDriver.arrivalPulse.value).toBe(0)
     expect(capsuleTravelDriver.travelActivity.value).toBe(0)
     expect(countActiveMorphFrames()).toBe(0)
@@ -118,7 +118,7 @@ describe('capsuleTravelDriver', () => {
       rerender({ ...WIDE_INPUT, activeRouteKey: 'more', isExpanded: false })
     })
 
-    expect(capsuleTravelDriver.capsuleCenter.value).toBe(220)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBe(230)
     expect(capsuleTravelDriver.travelActivity.value).toBe(0)
     expect(countActiveMorphFrames()).toBe(0)
   })
@@ -126,7 +126,7 @@ describe('capsuleTravelDriver', () => {
   test('travels across equal compact shares too', async () => {
     const { rerender } = await renderTravel(COMPACT_INPUT)
 
-    expect(capsuleTravelDriver.capsuleCenter.value).toBe(46.25)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBe(56.25)
 
     await act(async () => {
       rerender({ ...COMPACT_INPUT, activeRouteKey: 'more' })
@@ -135,7 +135,7 @@ describe('capsuleTravelDriver', () => {
     await advance()
 
     // Same 280ms choreography puts the capsule on «Читать»'s compact centre.
-    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(138.75, 5)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(148.75, 5)
   })
 
   test('lands the search slot as a valid destination', async () => {
@@ -146,7 +146,7 @@ describe('capsuleTravelDriver', () => {
     })
     await advance(10)
 
-    expect(capsuleTravelDriver.capsuleCenter.value).toBe(288)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBe(298)
     expect(capsuleTravelDriver.capsuleWidth.value).toBe(60)
   })
 })

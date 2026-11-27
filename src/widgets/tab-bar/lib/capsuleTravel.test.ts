@@ -13,19 +13,19 @@ const COMPACT_WIDTHS = [92.5, 92.5, 92.5, 92.5]
 
 describe('getSlotRects', () => {
   test('derives the wide slot centres from the per-kind slot widths', () => {
-    expect(getSlotRects(WIDE_WIDTHS).map(rect => rect.center)).toEqual([44, 132, 220, 288])
+    expect(getSlotRects(WIDE_WIDTHS, 10).map(rect => rect.center)).toEqual([54, 142, 230, 298])
   })
 
   test('gives every compact slot the same pitch and capsule width', () => {
-    const rects = getSlotRects(COMPACT_WIDTHS)
+    const rects = getSlotRects(COMPACT_WIDTHS, 10)
 
-    expect(rects.map(rect => rect.center)).toEqual([46.25, 138.75, 231.25, 323.75])
+    expect(rects.map(rect => rect.center)).toEqual([56.25, 148.75, 241.25, 333.75])
     expect(new Set(rects.map(rect => rect.capsuleWidth)).size).toBe(1)
   })
 
   test('bleeds the capsule past its slot like the static highlight did', () => {
     // Two 10dp overhangs minus the item's 4dp margin on each side.
-    expect(getSlotRects([88])[0]?.capsuleWidth).toBe(100)
+    expect(getSlotRects([88], 10)[0]?.capsuleWidth).toBe(100)
   })
 })
 
