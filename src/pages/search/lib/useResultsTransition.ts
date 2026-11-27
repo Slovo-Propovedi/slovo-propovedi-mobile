@@ -35,10 +35,14 @@ export const useResultsTransition = (isResults: boolean) => {
     clock.start(isResults ? 1 : 0)
   }, [clock, isResults])
 
-  const titleStyle = useAnimatedStyle(() => getResultsTransitionStyles(clock.progress.value).title)
-  const scopeStyle = useAnimatedStyle(() => getResultsTransitionStyles(clock.progress.value).scope)
+  // The updaters close over the SharedValue directly: a plain container object
+  // (the clock) is not a shared value, so Reanimated treats it as a React
+  // dependency instead of a UI-thread input.
+  const { progress } = clock
+  const titleStyle = useAnimatedStyle(() => getResultsTransitionStyles(progress.value).title)
+  const scopeStyle = useAnimatedStyle(() => getResultsTransitionStyles(progress.value).scope)
   const categoriesStyle = useAnimatedStyle(
-    () => getResultsTransitionStyles(clock.progress.value).categories,
+    () => getResultsTransitionStyles(progress.value).categories,
   )
 
   return { categoriesStyle, isResultsSettled, scopeStyle, titleStyle }

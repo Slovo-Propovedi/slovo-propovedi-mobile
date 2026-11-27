@@ -19,7 +19,10 @@ interface TransitionStyles {
   title: { height: number; opacity: number }
 }
 
-const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
+const clamp01 = (value: number) => {
+  'worklet'
+  return Math.min(1, Math.max(0, value))
+}
 
 /**
  * Maps the shared results progress (0 = home, 1 = results) to the page chrome
@@ -28,6 +31,7 @@ const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
  * @param progress - Shared 0→1 results progress.
  */
 export const getResultsTransitionStyles = (progress: number): TransitionStyles => {
+  'worklet'
   const fold = clamp01(progress)
   const reveal = clamp01((progress - CATEGORIES_REVEAL_START) / (1 - CATEGORIES_REVEAL_START))
 
