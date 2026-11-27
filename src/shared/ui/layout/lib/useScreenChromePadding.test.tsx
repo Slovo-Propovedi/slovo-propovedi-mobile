@@ -84,8 +84,10 @@ describe('useScreenChromePadding', () => {
 
     const { result } = await renderHookWithProviders(() => useScreenChromePadding())
 
+    // The pill grew to 64; the screen's bottom reservation follows it.
+    expect(PLAYER_SIZES.wideMiniPlayerHeight).toBe(64)
     expect(result.current).toEqual({
-      bottomChromeHeight: PLAYER_SIZES.wideMiniPlayerHeight + 20 + BAR_OUTER_GAP,
+      bottomChromeHeight: 64 + 20 + BAR_OUTER_GAP,
       topChromeHeight: mockTopInset + BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
       topChromeScrollInset:
         BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP,

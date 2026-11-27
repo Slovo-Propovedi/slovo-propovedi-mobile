@@ -9,6 +9,7 @@ import {
   getBarSideInset,
   getColumnSideInset,
   getWideChromeWidth,
+  WIDE_MINI_PLAYER_MAX_WIDTH,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 
@@ -81,17 +82,16 @@ export const getMiniPlayerGeometry = ({
   const rowContentWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH)
 
   if (isWideLayout) {
-    // The pill is the only bottom chrome: it sits on the same bottom padding as
-    // the chrome and lines up with the top island's column.
+    // The pill is the only bottom chrome: centered, with its own wider cap.
     const bottom = wideBottomInset
 
     return {
       bottom,
       height,
-      left: rowLeft + BAR_SIDE_INSET_EXPANDED,
+      left: getColumnSideInset(screenWidth, BAR_SIDE_INSET_EXPANDED, WIDE_MINI_PLAYER_MAX_WIDTH),
       radius: height / 2,
       top: fullScreenHeight - bottom - height,
-      width: getWideChromeWidth(screenWidth),
+      width: getWideChromeWidth(screenWidth, WIDE_MINI_PLAYER_MAX_WIDTH),
     }
   }
 

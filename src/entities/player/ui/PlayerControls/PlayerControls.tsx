@@ -20,6 +20,7 @@ export const PlayerControls = ({
   excludeButtons,
   onLongPressSeek,
   onPressOutSeek,
+  prevNextSize,
   setCurrentAudio,
   size = PlayerControlsSize.Large,
   style,
@@ -32,6 +33,8 @@ export const PlayerControls = ({
   excludeButtons?: ControlsNames[]
   onLongPressSeek?: (direction: 'backward' | 'forward') => void
   onPressOutSeek?: () => void
+  /** Optional prev/next glyph size for the default variant; fullscreen ignores it. */
+  prevNextSize?: number
   setCurrentAudio: (audio: AudioPlayerData) => Promise<unknown>
   size?: PlayerControlsSize
   style?: StyleProp<ViewStyle>
@@ -93,6 +96,7 @@ export const PlayerControls = ({
       togglePlay={togglePlay}
       isBuffering={isBuffering}
       toggleTrack={toggleTrack}
+      prevNextSize={prevNextSize}
       excludeButtons={excludeButtons}
       hasCurrentAudio={!!currentAudio}
       isTrackButtonDisabled={isTrackButtonDisabled}

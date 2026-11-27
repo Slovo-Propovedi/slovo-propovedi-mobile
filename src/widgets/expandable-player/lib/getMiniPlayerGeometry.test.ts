@@ -10,6 +10,7 @@ import {
   CONTENT_COLUMN_WIDTH,
   getColumnSideInset,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  WIDE_MINI_PLAYER_MAX_WIDTH,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getMiniPlayerGeometry } from './getMiniPlayerGeometry'
@@ -144,16 +145,25 @@ describe('getMiniPlayerGeometry wide layout', () => {
       wideBottomInset,
     })
 
-  const columnLeft = (screenWidth: number) =>
-    getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH) + BAR_SIDE_INSET_EXPANDED
-  const columnWidth = (screenWidth: number) =>
-    Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
+  // The wide pill has its own wider cap than the content column: it is a
+  // standalone bottom chrome, so it may exceed the 550pt island line while
+  // staying centered on the screen.
+  const pillInset = (screenWidth: number) =>
+    Math.max(BAR_SIDE_INSET_EXPANDED, (screenWidth - WIDE_MINI_PLAYER_MAX_WIDTH) / 2)
+  const pillWidth = (screenWidth: number) =>
+    Math.min(WIDE_MINI_PLAYER_MAX_WIDTH, screenWidth - BAR_SIDE_INSET_EXPANDED * 2)
 
-  test.each([768, 1194])('spans the content column at %ipx', screenWidth => {
+  test.each([768, 1194])('spans the pill max width at %ipx', screenWidth => {
     const { left, width } = wideGeometryAt({ screenWidth, tabBarHeight: 98 })
 
-    expect(left).toBe(columnLeft(screenWidth))
-    expect(width).toBe(columnWidth(screenWidth))
+    expect(left).toBe(pillInset(screenWidth))
+    expect(width).toBe(pillWidth(screenWidth))
+  })
+
+  test('caps the pill at 650pt from a 768pt window up', () => {
+    expect(WIDE_MINI_PLAYER_MAX_WIDTH).toBe(650)
+    expect(wideGeometryAt({ screenWidth: 768, tabBarHeight: 98 }).width).toBe(650)
+    expect(wideGeometryAt({ screenWidth: 1194, tabBarHeight: 98 }).width).toBe(650)
   })
 
   test.each([IPAD_BOTTOM_INSET, DESKTOP_WEB_FLOOR])(
@@ -190,7 +200,7 @@ describe('getMiniPlayerGeometry wide layout', () => {
 
     // The wide pill is the only bottom chrome: it is taller than the compact
     // 48dp one-line pill so it balances the slimmer 48dp top island.
-    expect(PLAYER_SIZES.wideMiniPlayerHeight).toBe(60)
+    expect(PLAYER_SIZES.wideMiniPlayerHeight).toBe(64)
     expect(height).toBe(PLAYER_SIZES.wideMiniPlayerHeight)
     expect(radius).toBe(PLAYER_SIZES.wideMiniPlayerHeight / 2)
   })

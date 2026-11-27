@@ -14,10 +14,18 @@ import {
   MINI_EXPANDED_TRANSPORT_RIGHT_INSET,
   MINI_PLAY_HIT_SLOP,
   MINI_WIDE_ARTWORK_SIZE,
+  MINI_WIDE_CONTROL_GAP,
 } from './miniStyles'
+import {
+  createWideMiniStyles,
+  MINI_WIDE_ACTION_BOX_SIZE,
+  MINI_WIDE_ACTION_HIT_SLOP,
+  MINI_WIDE_ACTION_ICON_SIZE,
+} from './miniWideStyles'
 
 const styles = createMiniStyles(LightTheme)
 const wideStyles = createMiniStyles(LightTheme, true)
+const wideToolbarStyles = createWideMiniStyles(LightTheme)
 
 describe('mini player horizontal alignment', () => {
   test('expanded bar: the transport glyph shares the search circle axis', () => {
@@ -102,14 +110,34 @@ describe('mini player typography', () => {
 
 describe('wide mini player styles', () => {
   test('the wide pill is taller than the compact one', () => {
-    expect(PLAYER_SIZES.wideMiniPlayerHeight).toBe(60)
+    expect(PLAYER_SIZES.wideMiniPlayerHeight).toBe(64)
     expect(wideStyles.miniContainer.height).toBe(PLAYER_SIZES.wideMiniPlayerHeight)
   })
 
   test('the wide artwork grows with the taller pill so it does not look sparse', () => {
-    expect(MINI_WIDE_ARTWORK_SIZE).toBe(44)
+    expect(MINI_WIDE_ARTWORK_SIZE).toBe(48)
     expect(wideStyles.miniCover.width).toBe(MINI_WIDE_ARTWORK_SIZE)
     expect(wideStyles.miniCover.height).toBe(MINI_WIDE_ARTWORK_SIZE)
     expect(wideStyles.miniCover.width).toBeGreaterThan(MINI_ARTWORK_SIZE)
+  })
+
+  test('repeat and favorite share one glyph/box pair, a touch under the old heart', () => {
+    expect(MINI_WIDE_ACTION_ICON_SIZE).toBe(18)
+    expect(MINI_WIDE_ACTION_BOX_SIZE).toBe(36)
+    // The smaller visual box must still expose the full 48dp touch target.
+    expect(MINI_WIDE_ACTION_BOX_SIZE + MINI_WIDE_ACTION_HIT_SLOP * 2).toBeGreaterThanOrEqual(
+      MIN_TOUCH_TARGET,
+    )
+    expect(wideToolbarStyles.actionButton.width).toBe(MINI_WIDE_ACTION_BOX_SIZE)
+    expect(wideToolbarStyles.actionButton.height).toBe(MINI_WIDE_ACTION_BOX_SIZE)
+  })
+
+  test('one gap constant drives the transport cluster and the heart-to-artwork seam', () => {
+    expect(MINI_WIDE_CONTROL_GAP).toBe(6)
+    expect(wideToolbarStyles.transportCluster.gap).toBe(MINI_WIDE_CONTROL_GAP)
+    // The row's own gap is the seam between the transport cluster (ending on the
+    // heart) and the track-info block (starting with the artwork).
+    expect(wideToolbarStyles.controlsRow.gap).toBe(MINI_WIDE_CONTROL_GAP)
+    expect(wideToolbarStyles.rightCluster.gap).toBe(MINI_WIDE_CONTROL_GAP)
   })
 })

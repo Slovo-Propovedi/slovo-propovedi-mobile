@@ -5,8 +5,12 @@ import { useFavoriteSermon } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
-import { MINI_PLAY_HIT_SLOP } from './miniStyles'
-import { type createWideMiniStyles, MINI_WIDE_ICON_SIZE } from './miniWideStyles'
+import {
+  type createWideMiniStyles,
+  MINI_WIDE_ACTION_HIT_SLOP,
+  MINI_WIDE_ACTION_ICON_SIZE,
+  WIDE_SKIP_GLYPH_SIZE,
+} from './miniWideStyles'
 
 const ADD_TO_FAVORITES_LABEL = 'Добавить в избранное'
 const REMOVE_FROM_FAVORITES_LABEL = 'Убрать из избранного'
@@ -32,20 +36,28 @@ export const MiniPlayerTransportCluster = ({
 
   return (
     <View style={styles.transportCluster} testID={TRANSPORT_CLUSTER_TEST_ID}>
-      <PlayerRepeatToggle inactiveColor={currentTheme.text} />
+      <PlayerRepeatToggle
+        style={styles.actionButton}
+        inactiveColor={currentTheme.text}
+        size={MINI_WIDE_ACTION_ICON_SIZE}
+        hitSlop={MINI_WIDE_ACTION_HIT_SLOP}
+      />
       <SermonPlayerControls
         color={currentTheme.text}
         size={PlayerControlsSize.Small}
         style={styles.transportControls}
+        // Play/pause renders at size × 2 (40); prev/next take an intermediate
+        // 28 so the three transport icons read as one set (feedback 2026-11-27).
+        prevNextSize={WIDE_SKIP_GLYPH_SIZE}
       />
       <IconButton
         onPress={toggleFavorite}
-        style={styles.iconButton}
-        hitSlop={MINI_PLAY_HIT_SLOP}
+        style={styles.actionButton}
+        hitSlop={MINI_WIDE_ACTION_HIT_SLOP}
         accessibilityLabel={isFavorite ? REMOVE_FROM_FAVORITES_LABEL : ADD_TO_FAVORITES_LABEL}
         Icon={
           <Ionicons
-            size={MINI_WIDE_ICON_SIZE}
+            size={MINI_WIDE_ACTION_ICON_SIZE}
             name={isFavorite ? 'heart' : 'heart-outline'}
             style={[styles.icon, isFavorite && { color: currentTheme.primary }]}
           />

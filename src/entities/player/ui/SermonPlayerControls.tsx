@@ -11,6 +11,7 @@ export const SermonPlayerControls = ({
   excludeButtons,
   onLongPressSeek,
   onPressOutSeek,
+  prevNextSize,
   size,
   style,
   variant,
@@ -20,6 +21,8 @@ export const SermonPlayerControls = ({
   excludeButtons?: ControlsNames[]
   onLongPressSeek?: (direction: 'backward' | 'forward') => void
   onPressOutSeek?: () => void
+  /** Optional prev/next glyph size for the default variant; fullscreen ignores it. */
+  prevNextSize?: number
   size?: PlayerControlsSize
   style?: StyleProp<ViewStyle>
   variant?: PlayerControlsVariant
@@ -35,6 +38,7 @@ export const SermonPlayerControls = ({
       color={color}
       variant={variant}
       currentAudio={currentAudio}
+      prevNextSize={prevNextSize}
       excludeButtons={excludeButtons}
       onPressOutSeek={onPressOutSeek}
       currentPlaylist={currentPlaylist}

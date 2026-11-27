@@ -22,6 +22,7 @@ const OFF_LABEL = 'Повтор: выключен'
 // The toggle's own gray; the wide mini-player overrides it with the theme color.
 const DEFAULT_INACTIVE_COLOR = '#9ca3af'
 const EXPLICIT_INACTIVE_COLOR = '#123456'
+const WIDE_ICON_SIZE = 18
 
 describe('<PlayerRepeatToggle>', () => {
   beforeEach(() => {
@@ -42,6 +43,14 @@ describe('<PlayerRepeatToggle>', () => {
 
     expect(mockRepeatIconSpy).toHaveBeenLastCalledWith(
       expect.objectContaining({ color: EXPLICIT_INACTIVE_COLOR }),
+    )
+  })
+
+  test('an explicit size overrides the fullscreen glyph size', async () => {
+    await renderWithProviders(<PlayerRepeatToggle size={WIDE_ICON_SIZE} />)
+
+    expect(mockRepeatIconSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ size: WIDE_ICON_SIZE }),
     )
   })
 })

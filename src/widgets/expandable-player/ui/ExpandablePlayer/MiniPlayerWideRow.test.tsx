@@ -2,7 +2,7 @@ import { createCtx, type Ctx } from '@reatom/framework'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { type ReactNode } from 'react'
 import { type TestInstance } from 'test-renderer'
-import { isPlayerExpandedAtom } from 'entities/player'
+import { isPlayerExpandedAtom, PlayerControlsSize } from 'entities/player'
 import { type AudioPlayerData } from 'entities/sermon'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
@@ -12,6 +12,7 @@ import { showPlaylistAtom } from '../../model/showPlaylistAtom'
 import { showSoundSettingsAtom } from '../../model/showSoundSettingsAtom'
 import { MiniPlayerWideRow } from './MiniPlayerWideRow'
 import { createMiniStyles } from './miniStyles'
+import { MINI_WIDE_ACTION_ICON_SIZE, WIDE_SKIP_GLYPH_SIZE } from './miniWideStyles'
 
 const ADD_TO_FAVORITES_LABEL = 'Добавить в избранное'
 const REMOVE_FROM_FAVORITES_LABEL = 'Убрать из избранного'
@@ -127,7 +128,7 @@ jest.mock('entities/player', () => {
     }, 'mockOpenPlayerSheet'),
     PlayerControlButtonType,
     PlayerControlsSize: { Small: 20 },
-    PlayerRepeatToggle: (props: { inactiveColor?: string }) => {
+    PlayerRepeatToggle: (props: { inactiveColor?: string; size?: number }) => {
       mockRepeatToggleProps(props)
 
       return (
@@ -139,11 +140,15 @@ jest.mock('entities/player', () => {
     SermonPlayerControls: ({
       color,
       excludeButtons = [],
+      prevNextSize,
+      size,
     }: {
       color?: string
       excludeButtons?: string[]
+      prevNextSize?: number
+      size?: number
     }) => {
-      mockTransportProps({ color })
+      mockTransportProps({ color, prevNextSize, size })
 
       return (
         <>
@@ -322,6 +327,28 @@ describe('<MiniPlayerWideRow>', () => {
     expect(mockRepeatToggleProps).toHaveBeenCalledWith(
       expect.objectContaining({ inactiveColor: LightTheme.text }),
     )
+  })
+
+  test('repeat and favorite share the calibrated icon size', async () => {
+    const { getByText } = await renderRow()
+
+    expect(mockRepeatToggleProps).toHaveBeenCalledWith(
+      expect.objectContaining({ size: MINI_WIDE_ACTION_ICON_SIZE }),
+    )
+    expect(getByText(`Ionicons:heart-outline:${MINI_WIDE_ACTION_ICON_SIZE}`)).toBeTruthy()
+  })
+
+  test('prev/next sit between the base and play/pause glyph sizes', async () => {
+    await renderRow()
+
+    expect(mockTransportProps).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prevNextSize: WIDE_SKIP_GLYPH_SIZE,
+        size: PlayerControlsSize.Small,
+      }),
+    )
+    expect(WIDE_SKIP_GLYPH_SIZE).toBeGreaterThan(PlayerControlsSize.Small)
+    expect(WIDE_SKIP_GLYPH_SIZE).toBeLessThan(PlayerControlsSize.Small * 2)
   })
 
   test('toggles the favorite from the heart button', async () => {

@@ -18,6 +18,7 @@ export {
   WIDE_ACTIONS_CENTER_Y,
   WIDE_BAR_ROW_HEIGHT,
   WIDE_CONTENT_TOP_GAP,
+  WIDE_MINI_PLAYER_MAX_WIDTH,
   WIDE_TAB_ISLAND_HEIGHT,
 } from './bottomBarLayout'
 export { nextBarCollapsedState } from './lib/barCollapseScroll'

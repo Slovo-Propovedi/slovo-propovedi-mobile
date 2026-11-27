@@ -9,6 +9,7 @@ import {
   BAR_SIDE_INSET_EXPANDED,
   CONTENT_COLUMN_WIDTH,
   TAB_BAR_ISLAND_HEIGHT,
+  WIDE_MINI_PLAYER_MAX_WIDTH,
 } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getRestingContainerStyle } from './getRestingContainerStyle'
@@ -150,7 +151,7 @@ describe('getRestingContainerStyle wide layout', () => {
     'rests in the centered column on the chrome bottom inset ($bottom)',
     ({ bottom }) => {
       const screenWidth = 1194
-      const columnInset = (screenWidth - CONTENT_COLUMN_WIDTH) / 2
+      const pillInset = (screenWidth - WIDE_MINI_PLAYER_MAX_WIDTH) / 2
       const style = getRestingContainerStyle({
         // The one-line driver may have collapsed the bottom row while scrolling;
         // the wide pill must still rest in its expanded top-island pose.
@@ -169,9 +170,9 @@ describe('getRestingContainerStyle wide layout', () => {
         borderTopLeftRadius: WIDE_PILL_RADIUS,
         borderTopRightRadius: WIDE_PILL_RADIUS,
         bottom,
-        left: columnInset + BAR_SIDE_INSET_EXPANDED,
+        left: pillInset,
         top: 800 - bottom - PLAYER_SIZES.wideMiniPlayerHeight,
-        width: CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2,
+        width: WIDE_MINI_PLAYER_MAX_WIDTH,
       })
     },
   )

@@ -11,6 +11,7 @@ import {
   getWideChromeWidth,
   IOS_WEB_ISLANDS_GAP,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  WIDE_MINI_PLAYER_MAX_WIDTH,
 } from './bottomBarLayout'
 
 describe('bottom bar geometry', () => {
@@ -49,15 +50,23 @@ describe('getBarBottomPadding', () => {
 })
 
 describe('getWideChromeWidth', () => {
-  test('caps to the content column: a constant 550pt from a 600pt window up', () => {
+  test('defaults to the content column cap once the viewport clears the insets', () => {
+    expect(getWideChromeWidth(1024)).toBe(600)
+    expect(getWideChromeWidth(1440)).toBe(600)
+    // At exactly 600pt the viewport itself is the limit: 600 − 2 × 25.
     expect(getWideChromeWidth(600)).toBe(550)
-    expect(getWideChromeWidth(1024)).toBe(550)
-    expect(getWideChromeWidth(1440)).toBe(550)
   })
 
-  test('a narrower window keeps the column minus the expanded side insets', () => {
+  test('a narrower window keeps the viewport minus the expanded side insets', () => {
     expect(getWideChromeWidth(500)).toBe(450)
     expect(getWideChromeWidth(400)).toBe(350)
+  })
+
+  test('the wide mini pill raises only its own cap to 650pt', () => {
+    expect(WIDE_MINI_PLAYER_MAX_WIDTH).toBe(650)
+    expect(getWideChromeWidth(768, WIDE_MINI_PLAYER_MAX_WIDTH)).toBe(650)
+    expect(getWideChromeWidth(1024, WIDE_MINI_PLAYER_MAX_WIDTH)).toBe(650)
+    expect(getWideChromeWidth(500, WIDE_MINI_PLAYER_MAX_WIDTH)).toBe(450)
   })
 })
 

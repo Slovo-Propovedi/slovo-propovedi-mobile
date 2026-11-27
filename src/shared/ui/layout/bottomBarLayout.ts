@@ -66,17 +66,16 @@ export const BAR_SIDE_INSET_EXPANDED = SLIDER_REST_INSET + BAR_SIDE_INSET_OFFSET
 // sliders' rest inset — unchanged by the 1 px expanded-state offset, so the
 // collapsed row keeps its original width.
 export const BAR_SIDE_INSET_COLLAPSED = (SLIDER_REST_INSET * 3) / 2
-/**
- * Inner width of the wide-layout chrome (mini pill and top island): the content
- * column capped to the viewport, minus the expanded side insets. From a 600pt
- * window up it is a constant 550pt, so the wide chrome never grows or shrinks
- * with the window — control visibility is measured against it, not the window.
- * Worklet-safe: geometry and visibility both read it.
- * @param screenWidth - Current window width in pt.
- */
-export const getWideChromeWidth = (screenWidth: number): number => {
+// The wide pill may read wider than the islands' shared content column.
+export const WIDE_MINI_PLAYER_MAX_WIDTH = 650 as const
+// Inner width of the wide chrome: min(maxWidth, viewport minus the side insets).
+// The default is the content column; the wide pill passes its own cap. Worklet-safe.
+export const getWideChromeWidth = (
+  screenWidth: number,
+  maxWidth = CONTENT_COLUMN_WIDTH,
+): number => {
   'worklet'
-  return Math.min(CONTENT_COLUMN_WIDTH, screenWidth) - BAR_SIDE_INSET_EXPANDED * 2
+  return Math.min(maxWidth, screenWidth - BAR_SIDE_INSET_EXPANDED * 2)
 }
 /**
  * Outer side inset of the bottom chrome at a given one-line morph progress.

@@ -19,6 +19,7 @@ export const DefaultControls = ({
   isBuffering,
   isPlaying,
   isTrackButtonDisabled,
+  prevNextSize,
   size,
   style,
   togglePlay,
@@ -31,6 +32,8 @@ export const DefaultControls = ({
   isBuffering: boolean
   isPlaying: boolean
   isTrackButtonDisabled: boolean
+  /** Optional prev/next glyph size; defaults to the base size (play stays 2×). */
+  prevNextSize?: number
   size: PlayerControlsSize
   style?: StyleProp<ViewStyle>
   togglePlay: () => Promise<void>
@@ -44,8 +47,8 @@ export const DefaultControls = ({
     <View testID='controls-container' style={[styles.controlsContainer, style]}>
       {!excludedButtons[PlayerControlButtonType.Prev] && (
         <PlayerControlButton
-          size={size}
           color={color}
+          size={prevNextSize ?? size}
           isDisabled={isTrackButtonDisabled}
           type={PlayerControlButtonType.Prev}
           onPress={() => void toggleTrack('prev')}
@@ -70,8 +73,8 @@ export const DefaultControls = ({
         ))}
       {!excludedButtons[PlayerControlButtonType.Next] && (
         <PlayerControlButton
-          size={size}
           color={color}
+          size={prevNextSize ?? size}
           isDisabled={isTrackButtonDisabled}
           type={PlayerControlButtonType.Next}
           onPress={() => void toggleTrack('next')}

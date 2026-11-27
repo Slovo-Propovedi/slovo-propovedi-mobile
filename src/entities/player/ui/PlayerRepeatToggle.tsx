@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useCallback } from 'react'
-import { type StyleProp, StyleSheet, type ViewStyle } from 'react-native'
+import { type PressableProps, type StyleProp, StyleSheet, type ViewStyle } from 'react-native'
 import { IconButton } from 'shared/ui/icon-button'
 import { FONT_SIZES, useTheme } from 'shared/ui/theme'
 import { applyRepeatMode } from '../lib/applyRepeatMode'
@@ -42,11 +42,17 @@ const getRepeatLabel = (mode: RepeatMode): string => {
 }
 
 export const PlayerRepeatToggle = ({
+  hitSlop,
   inactiveColor = REPEAT_INACTIVE_COLOR,
+  size = FONT_SIZES.xxl,
   style,
 }: {
+  /** Touch padding that keeps the ≥48dp target on a smaller visual box. */
+  hitSlop?: PressableProps['hitSlop']
   /** Tint of the "off" glyph; active modes keep the theme accent. */
   inactiveColor?: string
+  /** Glyph size; defaults to the fullscreen size. */
+  size?: number
   style?: StyleProp<ViewStyle>
 }) => {
   const { currentTheme } = useTheme()
@@ -65,16 +71,11 @@ export const PlayerRepeatToggle = ({
 
   return (
     <IconButton
+      hitSlop={hitSlop}
       onPress={handlePress}
       style={[styles.container, style]}
       accessibilityLabel={getRepeatLabel(repeatMode)}
-      Icon={
-        <MaterialCommunityIcons
-          size={FONT_SIZES.xxl}
-          name={iconConfig.name}
-          color={iconConfig.color}
-        />
-      }
+      Icon={<MaterialCommunityIcons size={size} name={iconConfig.name} color={iconConfig.color} />}
     />
   )
 }

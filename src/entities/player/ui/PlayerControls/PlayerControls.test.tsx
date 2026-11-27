@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native'
 import { renderWithProviders } from 'shared/mocks'
 import { COLORS } from 'shared/ui/theme'
 import { PlayerControls } from './PlayerControls'
+import { PlayerControlsSize } from './PlayerControls.types'
 
 const PREVIEW_URL = 'https://test.com/preview1.mp3'
 const TEST_ARTIST = 'Test Artist'
@@ -10,6 +11,9 @@ const PLAY_LABEL = 'Воспроизвести'
 const PAUSE_LABEL = 'Пауза'
 const NEXT_LABEL = 'Следующая проповедь'
 const PREV_LABEL = 'Предыдущая проповедь'
+const PREV_GLYPH = 'controller-fast-backward'
+const NEXT_GLYPH = 'controller-fast-forward'
+const PLAY_GLYPH = 'controller-play'
 
 jest.mock('../../lib/PlayerService', () => ({
   playerService: {
@@ -215,5 +219,54 @@ describe('<PlayerControls>', () => {
     const colors = mockEntypoSpy.mock.calls.map(([props]) => StyleSheet.flatten(props.style).color)
     expect(colors.length).toBeGreaterThan(0)
     expect(colors.every(color => color === COLORS.white)).toBe(true)
+  })
+
+  const glyphSizes = (name: string) =>
+    mockEntypoSpy.mock.calls
+      .map(([props]) => props as { name?: string; size?: number })
+      .filter(props => props.name === name)
+      .map(props => props.size)
+
+  test('default transport keeps prev/next at the base size and play at double', async () => {
+    mockEntypoSpy.mockClear()
+
+    await renderWithProviders(
+      <PlayerControls {...mockPlayerControlsProps} size={PlayerControlsSize.Small} />,
+    )
+
+    expect(glyphSizes(PREV_GLYPH)).toEqual([PlayerControlsSize.Small])
+    expect(glyphSizes(PLAY_GLYPH)).toEqual([PlayerControlsSize.Small * 2])
+    expect(glyphSizes(NEXT_GLYPH)).toEqual([PlayerControlsSize.Small])
+  })
+
+  test('an intermediate prevNextSize places prev/next between base and play', async () => {
+    const INTERMEDIATE = 28
+
+    mockEntypoSpy.mockClear()
+
+    await renderWithProviders(
+      <PlayerControls
+        {...mockPlayerControlsProps}
+        prevNextSize={INTERMEDIATE}
+        size={PlayerControlsSize.Small}
+      />,
+    )
+
+    expect(glyphSizes(PREV_GLYPH)).toEqual([INTERMEDIATE])
+    expect(glyphSizes(PLAY_GLYPH)).toEqual([PlayerControlsSize.Small * 2])
+    expect(glyphSizes(NEXT_GLYPH)).toEqual([INTERMEDIATE])
+  })
+
+  test('fullscreen ignores prevNextSize and keeps its own sizes', async () => {
+    mockEntypoSpy.mockClear()
+
+    await renderWithProviders(
+      <PlayerControls {...mockPlayerControlsProps} prevNextSize={40} variant='fullscreen' />,
+    )
+
+    // Fullscreen uses buttonSize 24 and playButtonSize 48 regardless of the prop.
+    expect(glyphSizes(PREV_GLYPH)).toEqual([24])
+    expect(glyphSizes(PLAY_GLYPH)).toEqual([48])
+    expect(glyphSizes(NEXT_GLYPH)).toEqual([24])
   })
 })

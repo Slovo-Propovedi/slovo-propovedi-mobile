@@ -33,8 +33,9 @@ export const PLAYER_SIZES = {
   // Approximation used only until the real height is measured (see shared/ui/layout)
   tabBarHeight: 80,
   // The wide layout keeps the mini pill as the only bottom chrome, so it grows
-  // to balance the slimmer 48dp top island (user feedback 2026-11-27).
-  wideMiniPlayerHeight: 60,
+  // to balance the slimmer 48dp top island (user feedback 2026-11-27). A touch
+  // taller calibration (64) gives the transport row more air.
+  wideMiniPlayerHeight: 64,
 } as const
 
 export const RADIUSES = {
