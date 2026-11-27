@@ -3,11 +3,12 @@ import { StyleSheet, Text } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import {
   BAR_TOP_ISLAND_MARGIN,
+  WIDE_ACTIONS_CENTER_Y,
   WIDE_BAR_ROW_HEIGHT,
   WIDE_TAB_ISLAND_HEIGHT,
 } from '../layout/bottomBarLayout'
 import { RefreshContext } from '../refresh-control/refreshContext'
-import { INDENTS } from '../theme/themed'
+import { INDENTS, MIN_TOUCH_TARGET } from '../theme/themed'
 import { WideTopActions } from './WideTopActions'
 
 const WIDE_DIMENSIONS = { fontScale: 1, height: 800, width: 1024 }
@@ -55,10 +56,27 @@ describe('<WideTopActions>', () => {
     expect(overlay.props.pointerEvents).toBe('box-none')
   })
 
-  test('shows the refresh spinner inside the actions row while refreshing', async () => {
+  test('centres the refresh spinner on the screen while refreshing', async () => {
     const { getByTestId } = await renderOverlay(true)
 
-    expect(getByTestId(TEST_ID)).toContainElement(getByTestId(SPINNER_ID))
+    const spinner = getByTestId(SPINNER_ID)
+    const style = StyleSheet.flatten(spinner.props.style)
+
+    // Pinned to both body edges with centred content: the spinner sits on the
+    // horizontal centre of the screen, not beside the action buttons.
+    expect(style.position).toBe('absolute')
+    expect(style.left).toBe(0)
+    expect(style.right).toBe(0)
+    expect(style.alignItems).toBe('center')
+    expect(style.height).toBe(MIN_TOUCH_TARGET)
+    // Its vertical centre is level with the actions row.
+    expect(style.top).toBe(WIDE_ACTIONS_CENTER_Y - MIN_TOUCH_TARGET / 2)
+  })
+
+  test('keeps the spinner out of the actions row', async () => {
+    const { getByTestId } = await renderOverlay(true)
+
+    expect(getByTestId(TEST_ID)).not.toContainElement(getByTestId(SPINNER_ID))
   })
 
   test('hides the refresh spinner when idle', async () => {

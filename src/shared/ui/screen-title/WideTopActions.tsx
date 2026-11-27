@@ -1,6 +1,10 @@
 import { type ReactNode, useContext } from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
-import { WIDE_ACTIONS_TOP, WIDE_TAB_ISLAND_HEIGHT } from '../layout/bottomBarLayout'
+import {
+  WIDE_ACTIONS_CENTER_Y,
+  WIDE_ACTIONS_TOP,
+  WIDE_TAB_ISLAND_HEIGHT,
+} from '../layout/bottomBarLayout'
 import { useIsWideLayout } from '../layout/lib/useIsWideLayout'
 import { RefreshContext } from '../refresh-control/refreshContext'
 import { useTheme } from '../theme/ThemeContext/useTheme'
@@ -17,9 +21,9 @@ const SPINNER_ID = 'wide-top-actions-spinner'
  * relative to that body, so no safe-area inset is added twice.
  *
  * It is also the single host of the wide refresh spinner: while the nearest
- * `PullToRefresh` reports `refreshing`, a spinner slot appears before the action
- * buttons inside the same centred row. The slot is `MIN_TOUCH_TARGET` square, so
- * its appearance never changes the row's vertical centring.
+ * `PullToRefresh` reports `refreshing`, a full-width band pins itself to both
+ * body edges so its centred content sits on the horizontal centre of the
+ * screen. Its vertical centre is level with the actions row.
  * @param root0 - Component props.
  * @param root0.children - Action buttons rendered in the slot.
  */
@@ -31,14 +35,16 @@ export const WideTopActions = ({ children }: { children: ReactNode }) => {
   if (!isWide) return null
 
   return (
-    <View testID={TEST_ID} pointerEvents='box-none' style={styles.container}>
+    <>
       {isRefreshing ? (
         <View testID={SPINNER_ID} pointerEvents='none' style={styles.spinner}>
           <ActivityIndicator color={currentTheme.primary} />
         </View>
       ) : null}
-      {children}
-    </View>
+      <View testID={TEST_ID} pointerEvents='box-none' style={styles.container}>
+        {children}
+      </View>
+    </>
   )
 }
 
@@ -57,6 +63,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: MIN_TOUCH_TARGET,
     justifyContent: 'center',
-    width: MIN_TOUCH_TARGET,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: WIDE_ACTIONS_CENTER_Y - MIN_TOUCH_TARGET / 2,
+    zIndex: 5,
   },
 })
