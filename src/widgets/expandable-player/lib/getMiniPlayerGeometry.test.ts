@@ -118,6 +118,23 @@ describe('getMiniPlayerGeometry', () => {
   })
 })
 
+describe('getMiniPlayerGeometry compact position contract', () => {
+  test('a rotated 844x390 window keeps the 390 column and centres it live', () => {
+    const geometry = getMiniPlayerGeometry({
+      barProgress: 0,
+      contentWidth: 390,
+      fullScreenHeight: 390,
+      screenWidth: 844,
+      tabBarHeight: BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN,
+      wideBottomInset: BAR_BOTTOM_INSET_MIN,
+    })
+
+    // (844 - 390) / 2 = 227 live column inset, + BAR_SIDE_INSET_EXPANDED 25.
+    expect(geometry.left).toBe(252)
+    expect(geometry.width).toBe(340)
+  })
+})
+
 describe('getMiniPlayerGeometry wide layout', () => {
   // The wide pill's bottom inset comes from the chrome's bottom padding
   // (`useBarBottomPadding`): the real safe-area line on a tablet, the desktop-web

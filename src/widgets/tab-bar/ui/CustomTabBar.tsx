@@ -1,6 +1,6 @@
 import Animated from 'react-native-reanimated'
 import { GlassIsland } from 'shared/ui'
-import { useBarBottomPadding, useIsWideLayout, useLayoutBaseWidth } from 'shared/ui/layout'
+import { useIsWideLayout, useLayoutBaseWidth } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getInstantTabNavigation } from '../lib/getInstantTabNavigation'
 import { getVisibleTabRoutes, SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
@@ -35,14 +35,14 @@ export const CustomTabBar = ({
   // orientations, so a rotation re-centres it (native flex) without resizing it.
   const layoutBaseWidth = useLayoutBaseWidth()
   const isWide = useIsWideLayout()
-  const { onLayout } = useTabBarMeasurement()
+  const { bottomPadding, onLayout } = useTabBarMeasurement()
   const activeRouteKey = useActiveTabRouteKey(state.routes, state.index)
   const visibleRoutes = getVisibleTabRoutes(state.routes)
   const morph = useTabIslandMorph({
+    baseWidth: layoutBaseWidth,
     hideSearch,
     isForceExpanded: isWide,
     routeCount: visibleRoutes.length,
-    windowWidth: layoutBaseWidth,
   })
   const {
     contentStyle,
@@ -73,7 +73,6 @@ export const CustomTabBar = ({
     navigateToTab: getInstantTabNavigation({ descriptors, fallback: navigateToTab, state }),
     onTabTravel: requestTravel,
   })
-  const bottomPadding = useBarBottomPadding()
   const { keyboardLiftStyle, shiftStyle } = useFloatingShiftStyles(insets.top)
   const rowInsets = useRowInsetStyle(isWide)
 

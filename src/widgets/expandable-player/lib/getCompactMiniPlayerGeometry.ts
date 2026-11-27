@@ -52,7 +52,7 @@ export const getCompactMiniPlayerGeometry = ({
   // inset, which morphs with the one-line state of the bar; the pill must line
   // up with the row's inner edges on every width and in every bar state.
   const sideInset = getBarSideInset(progress)
-  const contentWidth = columnWidth - sideInset * 2
+  const innerWidth = columnWidth - sideInset * 2
   // The measured row height includes the bottom safe-area padding and its fixed
   // BAR_ROW_MIN_HEIGHT content box, with the islands anchored to the box's
   // bottom edge (the safe-area line). The expanded pill therefore rests one
@@ -63,7 +63,7 @@ export const getCompactMiniPlayerGeometry = ({
   const collapsedBottom = tabBarHeight - BAR_ROW_MIN_HEIGHT
   const expandedLeft = rowLeft + sideInset
   const collapsedLeft = rowLeft + sideInset + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
-  const expandedWidth = contentWidth
+  const expandedWidth = innerWidth
   const collapsedWidth = columnWidth - (collapsedLeft - rowLeft) * 2
   // The pill keeps the compact mini height in every bar state: folded into the
   // row it fills the uniform one-line slot without growing.

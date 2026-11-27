@@ -1,31 +1,45 @@
 import { useAction } from '@reatom/npm-react'
+import { useLayoutEffect } from 'react'
 import { type LayoutChangeEvent } from 'react-native'
-import { setTabBarHeight } from 'shared/ui/layout'
+import {
+  BAR_ROW_MIN_HEIGHT,
+  setTabBarHeight,
+  useBarBottomPadding,
+  useIsWideLayout,
+  WIDE_BAR_ROW_HEIGHT,
+} from 'shared/ui/layout'
 
 /**
- * Measures the floating tab row and publishes its height.
+ * Publishes the floating tab row's height and returns the row's bottom padding.
  *
- * The WIDTH is deliberately not measured here: the row is exactly
- * `min(windowWidth, content column)` (a full-width '100%' row capped by
- * `maxWidth`), so the island derives it from `useWindowDimensions` at render.
- * Reading it through an onLayout React-state hop left the island a frame behind
- * the window on rotation while the pill and search button already used the new
- * width (crooked chrome).
+ * The height is DERIVED, not measured: the row is a fixed content box
+ * (`BAR_ROW_MIN_HEIGHT`, or `WIDE_BAR_ROW_HEIGHT` in the wide layout) plus the
+ * chrome's bottom padding, so it lands in the same commit as the row padding.
+ * An onLayout hop used to fire twice on Android (a late safe-area inset grew the
+ * padding after the first pass), settling the circle, the pill and every
+ * screen's bottom padding in two visible steps.
  *
- * A hidden tab screen (display: none) reports 0×0; publishing that zero would
- * collapse every consumer of `tabBarHeightAtom` for a frame, so a zero height is
- * ignored and only a real layout updates the measured values.
+ * `onLayout` stays only as a floor guard: a real layout pass may report a
+ * TALLER row (e.g. A future fixed header inside it), while a zero/short report
+ * is not a measurement and is ignored.
  */
 export const useTabBarMeasurement = () => {
+  const bottomPadding = useBarBottomPadding()
+  const isWide = useIsWideLayout()
+  const derivedHeight = (isWide ? WIDE_BAR_ROW_HEIGHT : BAR_ROW_MIN_HEIGHT) + bottomPadding
   const setMeasuredTabBarHeight = useAction(setTabBarHeight)
+
+  useLayoutEffect(() => {
+    setMeasuredTabBarHeight(derivedHeight)
+  }, [derivedHeight, setMeasuredTabBarHeight])
 
   const onLayout = (event: LayoutChangeEvent) => {
     const { height } = event.nativeEvent.layout
 
-    if (height <= 0) return
+    if (height <= derivedHeight) return
 
     setMeasuredTabBarHeight(height)
   }
 
-  return { onLayout }
+  return { bottomPadding, onLayout }
 }

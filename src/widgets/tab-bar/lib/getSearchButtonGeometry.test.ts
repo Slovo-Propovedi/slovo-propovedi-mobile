@@ -86,3 +86,24 @@ describe('getSearchButtonGeometry', () => {
     expect(geometry(2, 1)).toEqual(geometry(1, 1))
   })
 })
+
+describe('getSearchButtonGeometry compact position contract', () => {
+  test('a rotated 844x390 window keeps the circle on the 390 column right inner edge', () => {
+    const circle = getSearchButtonGeometry({
+      contentWidth: 390,
+      expandedSearchWidth: SLOT_WIDTH,
+      expandedTabWidth: SLOT_WIDTH,
+      oneLineProgress: 1,
+      routeCount: ROUTE_COUNT,
+      screenWidth: 844,
+      separation: 1,
+      tabBarHeight: TAB_BAR_HEIGHT,
+    })
+
+    // Live column inset (844 - 390) / 2 = 227; the circle right edge sits on the
+    // collapsed side inset inside that column, so its left is 533.
+    expect(circle.left).toBe(533)
+    expect(circle.right).toBe(BAR_SIDE_INSET_COLLAPSED)
+    expect(circle.width).toBe(TAB_BAR_ISLAND_HEIGHT)
+  })
+})

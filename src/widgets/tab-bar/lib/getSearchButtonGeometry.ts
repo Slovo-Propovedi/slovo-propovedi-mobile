@@ -7,6 +7,8 @@ interface SearchButtonGeometry {
   bottom: number
   height: number
   left: number
+  /** Inset from the centred column's right edge (the native host's frame). */
+  right: number
   width: number
 }
 
@@ -80,10 +82,18 @@ export const getSearchButtonGeometry = ({
     tabBarHeight,
   })
 
+  const height = interpolateSize(slotHeight, circle.height, separation)
+  const left = interpolateSize(slotLeft, circle.left, separation)
+  const width = interpolateSize(expandedSearchWidth, circle.width, separation)
+
   return {
     bottom: circle.bottom,
-    height: interpolateSize(slotHeight, circle.height, separation),
-    left: interpolateSize(slotLeft, circle.left, separation),
-    width: interpolateSize(expandedSearchWidth, circle.width, separation),
+    height,
+    left,
+    // Right inset inside the centred column: the native host IS that column, so
+    // Yoga positions the circle and a rotation cannot leave it on a stale
+    // live-window left while the islands row already re-centred.
+    right: columnWidth - (left - rowLeft) - width,
+    width,
   }
 }

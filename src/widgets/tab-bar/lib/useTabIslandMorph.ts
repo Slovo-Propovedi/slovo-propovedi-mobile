@@ -13,6 +13,7 @@ import { getTabIslandMetrics } from './getTabIslandMetrics'
 import { getTabIslandRestingStyles } from './getTabIslandRestingStyles'
 
 interface TabIslandMorphInput {
+  baseWidth: number
   hideSearch: boolean
   /**
    * Pin the island to its expanded pose regardless of the scroll/search atoms.
@@ -21,7 +22,6 @@ interface TabIslandMorphInput {
   isForceExpanded?: boolean
   /** Visible slots only: the search route is registered but never rendered as a tab. */
   routeCount: number
-  windowWidth: number
 }
 
 // Drives the island's morph on two axes: the shape axis (expanded ⇄ circle) from
@@ -32,10 +32,10 @@ interface TabIslandMorphInput {
 // applies only when the field is hidden AND the bar is one-line. Focus is a
 // stronger state: it retracts the island so the pill owns the row.
 export const useTabIslandMorph = ({
+  baseWidth,
   hideSearch,
   isForceExpanded = false,
   routeCount,
-  windowWidth,
 }: TabIslandMorphInput) => {
   const [liveIsCollapsed] = useAtom(isTabIslandCollapsedAtom)
   const [isFocused] = useAtom(isSearchFieldFocusedAtom)
@@ -48,16 +48,15 @@ export const useTabIslandMorph = ({
   const expandedProgress = useSharedValue(0)
 
   const { compactSlotWidth, expandedIslandWidth } = getTabIslandMetrics({
+    baseWidth,
     hideSearch,
     isForceExpanded,
     routeCount,
-    windowWidth,
   })
 
-  // Pre-paint mirror of the render-derived width: worklet closures re-register
-  // after the commit, so a rotation would otherwise animate the island at the
-  // previous window width for one frame while the resting layer already has
-  // the new one.
+  // Pre-paint mirror of the render-derived width: a real resize (the base
+  // changes) would otherwise animate the island at the previous base for one
+  // frame while the resting layer already has the new one.
   const expandedIslandWidthShared = useLayoutEffectSharedValue(expandedIslandWidth)
 
   const islandStyle = useAnimatedStyle(() =>

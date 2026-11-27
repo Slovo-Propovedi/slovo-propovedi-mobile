@@ -11,6 +11,10 @@ export const searchButtonStyles = {
     right: 4,
     top: 4,
   },
+  column: {
+    position: 'relative' as const,
+    width: '100%' as const,
+  },
   content: {
     bottom: 0,
     left: 0,
@@ -28,6 +32,16 @@ export const searchButtonStyles = {
   host: {
     borderRadius: RADIUSES.round,
     position: 'absolute' as const,
+    zIndex: 20,
+  },
+  // The circle is positioned natively: this layer centres the same content
+  // column the islands row is centred in, independently of the live window.
+  layer: {
+    alignItems: 'center' as const,
+    bottom: 0,
+    left: 0,
+    position: 'absolute' as const,
+    right: 0,
     zIndex: 20,
   },
 }

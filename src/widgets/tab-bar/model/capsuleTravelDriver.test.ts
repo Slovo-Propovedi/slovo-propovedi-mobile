@@ -209,6 +209,21 @@ describe('capsuleTravelDriver', () => {
     expect(capsuleTravelDriver.capsuleWidth.value).toBe(60)
   })
 
+  test('TEMP starts on search, presses each tab', async () => {
+    const { result } = await renderTravel({
+      ...WIDE_INPUT,
+      activeRouteKey: 'listen',
+      isSearchFocused: true,
+    })
+
+    expect(capsuleTravelDriver.capsuleCenter.value).toBe(298)
+
+    result.current.requestTravel('listen')
+    await advance(10)
+
+    throw new Error(`TEMP ticks=${countTicks()} landings=${countLandings()} center=${capsuleTravelDriver.capsuleCenter.value}`)
+  })
+
   test('starts traveling synchronously from the press path, before effects', async () => {
     const { result } = await renderTravel({ ...WIDE_INPUT, activeRouteKey: 'more' })
 

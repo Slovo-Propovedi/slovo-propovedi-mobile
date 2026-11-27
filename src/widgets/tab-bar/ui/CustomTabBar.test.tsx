@@ -22,7 +22,6 @@ import {
   BAR_TOP_ISLAND_MARGIN,
   CONTENT_COLUMN_WIDTH,
   isBarCollapsedAtom,
-  isTabBarMeasuredAtom,
   keyboardBottomInsetSv,
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT,
@@ -235,9 +234,9 @@ describe('<CustomTabBar>', () => {
       return flat?.borderRadius === RADIUSES.round && flat?.maxWidth === 600
     })[0]
 
-  // The detached search button is the row-layer host that carries the moving
-  // geometry: absolute, raised above the island, and the only zIndex-20 absolute
-  // node with a numeric left (the ✕ close slot is positioned by `right`).
+  // The detached search button is the column-layer host that carries the moving
+  // geometry: absolute, raised above the island, and positioned by `right`
+  // inside the same natively-centred column as the island (no live-window left).
   const findSearchButtonHost = (): TestInstance | undefined =>
     screen.root?.queryAll(instance => {
       const flat = StyleSheet.flatten(instance.props.style)
@@ -245,8 +244,9 @@ describe('<CustomTabBar>', () => {
       return (
         flat?.position === 'absolute' &&
         flat?.zIndex === 20 &&
+        flat?.alignItems === undefined &&
         flat?.flexDirection === undefined &&
-        typeof flat?.left === 'number'
+        typeof flat?.right === 'number'
       )
     })[0]
 
@@ -292,6 +292,7 @@ describe('<CustomTabBar>', () => {
 
     return {
       left: BAR_SIDE_INSET_EXPANDED + ISLAND_CONTENT_PADDING_HORIZONTAL + 3 * slotWidth,
+      right: BAR_SIDE_INSET_EXPANDED + ISLAND_CONTENT_PADDING_HORIZONTAL,
       width: slotWidth,
     }
   }
@@ -304,23 +305,42 @@ describe('<CustomTabBar>', () => {
       TAB_BAR_ISLAND_HEIGHT +
       (TAB_BAR_ISLAND_HEIGHT_EXPANDED - TAB_BAR_ISLAND_HEIGHT) * (1 - oneLine)
 
-    return { height, left: sideInset + layoutBase() - sideInset * 2 - height, width: height }
+    return {
+      height,
+      left: sideInset + layoutBase() - sideInset * 2 - height,
+      right: sideInset,
+      width: height,
+    }
   }
+
+  test('derives the tab-bar height instead of waiting for a layout pass', async () => {
+    const { ctx } = await renderTabBar()
+
+    // BAR_ROW_MIN_HEIGHT + the inset-less floor, same value the row uses.
+    expect(ctx.get(tabBarHeightAtom)).toBe(BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN)
+  })
+
+  test('a real safe-area inset updates the height in the same render as the row padding', async () => {
+    mockBottomInset = 34
+    const { ctx } = await renderTabBar()
+
+    expect(ctx.get(tabBarHeightAtom)).toBe(BAR_ROW_MIN_HEIGHT + 34)
+    expect(findIslandsRowAtHeight(BAR_ROW_MIN_HEIGHT + 34)).toBeDefined()
+  })
 
   test('ignores a zero-height layout report', async () => {
     const { ctx } = await renderTabBar()
 
     await fireLayout(0, 0)
 
-    expect(ctx.get(isTabBarMeasuredAtom)).toBe(false)
+    expect(ctx.get(tabBarHeightAtom)).toBe(BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN)
   })
 
-  test('publishes a positive measured height', async () => {
+  test('a layout taller than the derived height wins as a floor guard', async () => {
     const { ctx } = await renderTabBar()
 
     await fireLayout(140, 320)
 
-    expect(ctx.get(isTabBarMeasuredAtom)).toBe(true)
     expect(ctx.get(tabBarHeightAtom)).toBe(140)
   })
 
@@ -663,7 +683,7 @@ describe('<CustomTabBar>', () => {
 
     // Expanded: the button covers the in-island slot exactly, with its own
     // glass invisible on the island's glass.
-    expect(button?.left).toBe(slot.left)
+    expect(button?.right).toBe(slot.right)
     expect(button?.width).toBe(slot.width)
     expect(searchGlassOpacity()).toBe(0)
   })
@@ -681,7 +701,7 @@ describe('<CustomTabBar>', () => {
     const button = StyleSheet.flatten(findSearchButtonHost()?.props.style)
 
     // Folded: the button owns the circle rect and carries its own glass.
-    expect(button?.left).toBe(closedCircleRect(1).left)
+    expect(button?.right).toBe(closedCircleRect(1).right)
     expect(button?.width).toBe(closedCircleRect(1).width)
     expect(searchGlassOpacity()).toBe(1)
   })
@@ -696,7 +716,7 @@ describe('<CustomTabBar>', () => {
     const slot = expandedSlotRect()
     const expanded = StyleSheet.flatten(findSearchButtonHost()?.props.style)
 
-    expect(expanded?.left).toBe(slot.left)
+    expect(expanded?.right).toBe(slot.right)
     expect(expanded?.width).toBe(slot.width)
     // Inside the island its own glass must be invisible: it sits on the island's.
     expect(searchGlassOpacity()).toBe(0)
@@ -714,9 +734,9 @@ describe('<CustomTabBar>', () => {
     const mid = StyleSheet.flatten(findSearchButtonHost()?.props.style)
     const midCircle = closedCircleRect(0.5)
 
-    expect(mid?.left).toBe((slot.left + midCircle.left) / 2)
+    expect(mid?.right).toBe((slot.right + midCircle.right) / 2)
     expect(mid?.width).toBe((slot.width + midCircle.width) / 2)
-    expect(mid?.left).toBeGreaterThan(slot.left)
+    expect(mid?.right).toBeLessThan(slot.right)
     expect(searchGlassOpacity()).toBe(0.5)
 
     await act(async () => {
@@ -726,7 +746,7 @@ describe('<CustomTabBar>', () => {
     const collapsed = StyleSheet.flatten(findSearchButtonHost()?.props.style)
     const circle = closedCircleRect(1)
 
-    expect(collapsed?.left).toBe(circle.left)
+    expect(collapsed?.right).toBe(circle.right)
     expect(collapsed?.width).toBe(circle.width)
     expect(searchGlassOpacity()).toBe(1)
   })
@@ -741,7 +761,7 @@ describe('<CustomTabBar>', () => {
     )
     const collapsed = StyleSheet.flatten(findSearchButtonHost()?.props.style)
 
-    expect(collapsed?.left).toBe(closedCircleRect(1).left)
+    expect(collapsed?.right).toBe(closedCircleRect(1).right)
     expect(searchGlassOpacity()).toBe(1)
 
     await act(async () => {
@@ -756,8 +776,8 @@ describe('<CustomTabBar>', () => {
     const slot = expandedSlotRect()
     const midCircle = closedCircleRect(0.5)
 
-    expect(mid?.left).toBe((slot.left + midCircle.left) / 2)
-    expect(mid?.left).toBeLessThan(collapsed?.left as number)
+    expect(mid?.right).toBe((slot.right + midCircle.right) / 2)
+    expect(mid?.right).toBeLessThan(collapsed?.right as number)
     expect(searchGlassOpacity()).toBe(0.5)
 
     await act(async () => {
@@ -766,7 +786,7 @@ describe('<CustomTabBar>', () => {
 
     const expanded = StyleSheet.flatten(findSearchButtonHost()?.props.style)
 
-    expect(expanded?.left).toBe(slot.left)
+    expect(expanded?.right).toBe(slot.right)
     expect(expanded?.width).toBe(slot.width)
     expect(searchGlassOpacity()).toBe(0)
   })
@@ -790,9 +810,42 @@ describe('<CustomTabBar>', () => {
     // inner left edge, so the arriving circle must own the row's inner right
     // edge (the `getMiniPlayerGeometry` invariant).
     expect(collapsed?.width).toBe(closedCircleRect(1).width)
-    expect((collapsed?.left as number) + (collapsed?.width as number)).toBe(
-      mockWindowWidth - BAR_SIDE_INSET_COLLAPSED,
+    expect(collapsed?.right).toBe(BAR_SIDE_INSET_COLLAPSED)
+  })
+
+  test('centres the search circle in the same native column as the island on rotation', async () => {
+    mockWindowWidth = 390
+    mockWindowHeight = 844
+    const props = createBarProps()
+    const { rerender } = await renderWithProviders(
+      <CustomTabBar state={createMockState(0)} {...props} />,
+      { ctx: createCtx() },
     )
+    const portraitHost = findSearchButtonHost()
+
+    if (!portraitHost) throw new Error(SEARCH_BUTTON_NOT_FOUND)
+
+    const portrait = StyleSheet.flatten(portraitHost.props.style)
+    const portraitColumn = StyleSheet.flatten(portraitHost.parent?.props.style)
+
+    // The circle is positioned by `right` inside the same 390-wide, natively
+    // centred column the islands row uses — never by an absolute left derived
+    // from the live window width.
+    expect(portrait).not.toHaveProperty('left')
+    expect(portraitColumn?.maxWidth).toBe(390)
+
+    mockWindowWidth = 844
+    mockWindowHeight = 390
+    await act(async () => {
+      rerender(<CustomTabBar state={createMockState(0)} {...props} />)
+    })
+
+    const rotatedHost = findSearchButtonHost()
+
+    if (!rotatedHost) throw new Error(SEARCH_BUTTON_NOT_FOUND)
+
+    expect(StyleSheet.flatten(rotatedHost.props.style)?.right).toBe(portrait?.right)
+    expect(StyleSheet.flatten(rotatedHost.parent?.props.style)?.maxWidth).toBe(390)
   })
 
   test('keeps the search affordance inside the wide island', async () => {

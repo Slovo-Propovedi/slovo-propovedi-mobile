@@ -39,8 +39,8 @@ export const useSearchSeparation = ({
   separation,
   tabBarHeight,
 }: SearchSeparationInput) => {
-  const buttonStyle = useAnimatedStyle(() =>
-    getSearchButtonGeometry({
+  const buttonStyle = useAnimatedStyle(() => {
+    const geometry = getSearchButtonGeometry({
       contentWidth: contentWidth.value,
       expandedSearchWidth: expandedSearchWidth.value,
       expandedTabWidth: expandedTabWidth.value,
@@ -49,8 +49,17 @@ export const useSearchSeparation = ({
       screenWidth: screenWidth.value,
       separation: separation.value,
       tabBarHeight: tabBarHeight.value,
-    }),
-  )
+    })
+
+    // `right` (not the live-window `left`) drives the native host, which sits
+    // inside the same natively centred column as the islands row.
+    return {
+      bottom: geometry.bottom,
+      height: geometry.height,
+      right: geometry.right,
+      width: geometry.width,
+    }
+  })
   const glassStyle = useAnimatedStyle(() => ({ opacity: clampProgress(separation.value) }))
   const capsuleStyle = useAnimatedStyle(() => ({ opacity: clampProgress(separation.value) }))
 

@@ -576,6 +576,8 @@ describe('useExpandAnimation window rotation', () => {
 
     expect(restingPillWidth(rotated)).toBe(portraitWidth)
     expect(restingContainerWidth(rotated)).toBe(portraitWidth)
+    // The live column inset centres the pill: (844 - 390) / 2 + 25 = 252.
+    expect(rotated.miniBarRestingStyle.left).toBe(252)
 
     const rotatedChannels = geometrySpy.mock.results.at(-1)?.value
     const rotatedTick = geometrySpy.mock.calls.at(-1)?.[0].geometryReapplyTick

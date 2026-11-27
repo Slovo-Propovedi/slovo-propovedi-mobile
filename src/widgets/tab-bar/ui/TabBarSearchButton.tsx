@@ -5,7 +5,7 @@ import { OnboardingTarget } from 'features/onboarding'
 import { useOpenSearch } from 'features/sermon-search'
 import { useLayoutEffectSharedValue } from 'shared/lib/hooks/useLayoutEffectSharedValue'
 import { GlassSurface } from 'shared/ui'
-import { tabBarHeightAtom, useLayoutBaseWidth } from 'shared/ui/layout'
+import { CONTENT_COLUMN_WIDTH, tabBarHeightAtom, useLayoutBaseWidth } from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { type SlotCapsuleMotion } from '../lib/capsuleTravel'
 import { SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
@@ -55,13 +55,14 @@ export const TabBarSearchButton = ({
   const { width: screenWidth } = useWindowDimensions()
   // Sizes (slots, circle anchor) come from the frozen layout base; the live
   // window only centres the row, so a rotation moves the chrome without
-  // resizing any JS-derived geometry.
-  const contentWidth = useLayoutBaseWidth()
+  // resizing any JS-derived geometry. The wrapper is the SAME column the
+  // islands row is centred in, so the circle is positioned natively.
+  const baseWidth = useLayoutBaseWidth()
   // The button's rect is derived from the window at render; the animated style
   // reads pre-paint channels so a real resize never animates the previous width.
   const expandedSearchWidthShared = useLayoutEffectSharedValue(expandedSearchWidth)
   const expandedTabWidthShared = useLayoutEffectSharedValue(expandedTabWidth)
-  const contentWidthShared = useLayoutEffectSharedValue(contentWidth)
+  const contentWidthShared = useLayoutEffectSharedValue(baseWidth)
   const screenWidthShared = useLayoutEffectSharedValue(screenWidth)
   const { isLight } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
@@ -82,29 +83,36 @@ export const TabBarSearchButton = ({
   })
 
   return (
-    <Animated.View style={[searchButtonStyles.host, buttonStyle]}>
-      {/* Own glass: invisible on the island, fully opaque at the circle. */}
-      <Animated.View pointerEvents='none' style={[searchButtonStyles.glass, glassStyle]}>
-        <GlassSurface isLight={isLight} radius={RADIUSES.round} />
-      </Animated.View>
-      {isActive && <ActiveTabCapsule style={[searchButtonStyles.capsule, capsuleStyle]} />}
-      <View style={searchButtonStyles.content}>
-        <OnboardingTarget id={SEARCH_TARGET_ID} style={styles.tabButton}>
-          <TabButton
-            isSearchSlot
-            isActive={isActive}
-            onPress={openSearch}
-            isWideLayout={false}
-            collapseProgress={progress}
-            routeKey={SEARCH_ROUTE_NAME}
-            capsuleMotion={capsuleMotion}
-            routeName={SEARCH_ROUTE_NAME}
-            accessibilityLabel={SEARCH_LABEL}
-            oneLineProgress={oneLineProgress}
-            isBarVisuallyCollapsed={isCollapsed}
-          />
-        </OnboardingTarget>
+    <View pointerEvents='box-none' style={searchButtonStyles.layer}>
+      <View
+        pointerEvents='box-none'
+        style={[searchButtonStyles.column, { maxWidth: Math.min(baseWidth, CONTENT_COLUMN_WIDTH) }]}
+      >
+        <Animated.View style={[searchButtonStyles.host, buttonStyle]}>
+          {/* Own glass: invisible on the island, fully opaque at the circle. */}
+          <Animated.View pointerEvents='none' style={[searchButtonStyles.glass, glassStyle]}>
+            <GlassSurface isLight={isLight} radius={RADIUSES.round} />
+          </Animated.View>
+          {isActive && <ActiveTabCapsule style={[searchButtonStyles.capsule, capsuleStyle]} />}
+          <View style={searchButtonStyles.content}>
+            <OnboardingTarget id={SEARCH_TARGET_ID} style={styles.tabButton}>
+              <TabButton
+                isSearchSlot
+                isActive={isActive}
+                onPress={openSearch}
+                isWideLayout={false}
+                collapseProgress={progress}
+                routeKey={SEARCH_ROUTE_NAME}
+                capsuleMotion={capsuleMotion}
+                routeName={SEARCH_ROUTE_NAME}
+                accessibilityLabel={SEARCH_LABEL}
+                oneLineProgress={oneLineProgress}
+                isBarVisuallyCollapsed={isCollapsed}
+              />
+            </OnboardingTarget>
+          </View>
+        </Animated.View>
       </View>
-    </Animated.View>
+    </View>
   )
 }
