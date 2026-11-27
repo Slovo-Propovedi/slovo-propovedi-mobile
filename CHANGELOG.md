@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The compact↔wide layout switch is animated: the tab bar slides up to the top and the mini-player slides down over 400 ms, and the same motion plays in reverse when the window returns to the compact layout
 - Wide web: the pull-to-refresh spinner fades in during the pull, sits centred under the top island and switches from gray to the accent colour at the trigger threshold
 - Search page: the field moved to the top, under the Listen/Read toggle and above the results, and takes focus when the page opens; the bar stays expanded while searching and collapses again as you scroll, folding the row back to the tab circle and the search circle
+- Search page: switching between the home page and the results is one smooth morph — the «Поиск» title and the Listen/Read switch fold away by height and opacity, the field slides up into their place, and the category pills unfold beneath it
+- Compact tab bar: the search button tears off the island into its own circle as the row collapses and glues back when it expands — one element travelling between the slot and the circle, with its own glass fading in as it separates, instead of a circle popping in from nowhere
 
 ### Changed
 
