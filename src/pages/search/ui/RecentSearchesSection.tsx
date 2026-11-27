@@ -1,6 +1,7 @@
 import { useAtom, useCtx } from '@reatom/npm-react'
 import { Fragment, useCallback, useMemo, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { SearchResultsRow, SearchRowSeparator } from 'features/sermon-search'
 import {
   clearSearchHistoryAction,
@@ -29,7 +30,7 @@ export const RecentSearchesSection = ({
   const { currentTheme } = useTheme()
   const ctx = useCtx()
   const [history] = useAtom(searchHistoryAtom)
-  const { bottomChromeHeight } = useScreenChromePadding()
+  const { bottomChromeSpaceStyle } = useScreenChromePadding()
   const [isDialogVisible, setDialogVisible] = useState(false)
 
   const handleRemove = useCallback(
@@ -72,7 +73,7 @@ export const RecentSearchesSection = ({
       <ScrollView
         keyboardDismissMode='on-drag'
         keyboardShouldPersistTaps='handled'
-        contentContainerStyle={[styles.content, { paddingBottom: bottomChromeHeight }]}
+        contentContainerStyle={styles.content}
       >
         <View style={styles.header}>
           <Text style={[styles.title, { color: currentTheme.text }]}>{SECTION_TITLE}</Text>
@@ -92,6 +93,7 @@ export const RecentSearchesSection = ({
             <SearchRowSeparator />
           </Fragment>
         ))}
+        <Animated.View style={bottomChromeSpaceStyle} />
       </ScrollView>
       <ConfirmDialog
         title={DIALOG_TITLE}

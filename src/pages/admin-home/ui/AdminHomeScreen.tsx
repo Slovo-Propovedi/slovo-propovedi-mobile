@@ -1,6 +1,7 @@
 import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
 import { ScrollView, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { authUserAtom } from 'entities/auth'
 import {
@@ -11,7 +12,7 @@ import {
   RefreshButton,
   WideTopActions,
 } from 'shared/ui'
-import { useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
+import { useIsWideLayout, useScreenChromePadding, useSmoothInsetsPadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminStats } from '../lib/useAdminStats'
 import { AdminHomeHeader } from './AdminHomeHeader'
@@ -22,6 +23,7 @@ import { styles } from './styles'
 
 export const AdminHomeScreen = () => {
   const insets = useSafeAreaInsets()
+  const smoothInsetsPadding = useSmoothInsetsPadding({ top: insets.top })
   const isWide = useIsWideLayout()
   const { bottomBarHeight, topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
@@ -31,13 +33,11 @@ export const AdminHomeScreen = () => {
 
   return (
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.adminHome}>
-      <View
+      <Animated.View
         style={[
           styles.container,
-          {
-            backgroundColor: currentTheme.background,
-            paddingTop: insets.top,
-          },
+          { backgroundColor: currentTheme.background },
+          smoothInsetsPadding,
         ]}
       >
         <PullToRefresh onRefresh={stats.reload} refreshing={stats.isRefreshing}>
@@ -92,7 +92,7 @@ export const AdminHomeScreen = () => {
             <RefreshButton />
           </WideTopActions>
         </PullToRefresh>
-      </View>
+      </Animated.View>
     </BlurBackdrop>
   )
 }

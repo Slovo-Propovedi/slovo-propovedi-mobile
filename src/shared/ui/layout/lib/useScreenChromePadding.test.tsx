@@ -55,11 +55,16 @@ describe('useScreenChromePadding', () => {
 
     const { result } = await renderHookWithProviders(() => useScreenChromePadding())
 
-    expect(result.current).toEqual({
+    expect(result.current).toMatchObject({
       bottomBarHeight: BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN,
       bottomChromeHeight: BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN + PLAYER_SIZES.miniPlayerHeight,
       topChromeHeight: 0,
       topChromeScrollInset: 0,
+    })
+    // The bottom reserve is also handed over as an animated spacer height so a
+    // screen can glide it on an inset change (the padding itself cannot animate).
+    expect(result.current.bottomChromeSpaceStyle).toEqual({
+      height: BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN + PLAYER_SIZES.miniPlayerHeight,
     })
   })
 
@@ -111,13 +116,14 @@ describe('useScreenChromePadding', () => {
 
     // The pill grew to 64; the screen's bottom reservation follows it.
     expect(PLAYER_SIZES.wideMiniPlayerHeight).toBe(64)
-    expect(result.current).toEqual({
+    expect(result.current).toMatchObject({
       bottomBarHeight: WIDE_BAR_ROW_HEIGHT + 20,
       bottomChromeHeight: 64 + 20 + BAR_OUTER_GAP,
       topChromeHeight: mockTopInset + BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
       topChromeScrollInset:
         BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP,
     })
+    expect(result.current.bottomChromeSpaceStyle).toEqual({ height: 64 + 20 + BAR_OUTER_GAP })
   })
 
   test('wide: the measured row height (with its bottom padding) does not inflate the top', async () => {

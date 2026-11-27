@@ -2,21 +2,44 @@ import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen, within } from '@testing-library/react-native'
 import { type ReactNode } from 'react'
 import { StyleSheet } from 'react-native'
+import { withTiming } from 'react-native-reanimated'
 import { type TestInstance } from 'test-renderer'
 import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
 import { authMocks, sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import {
+  BAR_BOTTOM_INSET_MIN,
   BAR_OUTER_GAP,
   BAR_TOP_ISLAND_MARGIN,
+  INSETS_GLIDE_MS,
   WIDE_BAR_ROW_HEIGHT,
   WIDE_CONTENT_TOP_GAP,
   WIDE_TAB_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
+import { PLAYER_SIZES } from 'shared/ui/theme'
 import { ListenScreen } from './ListenScreen'
 
 const WIDE_DIMENSIONS = { fontScale: 1, height: 800, width: 1024 }
 const COMPACT_DIMENSIONS = { fontScale: 1, height: 390, width: 844 }
+
+let mockBottomInset = 0
+let mockLeftInset = 0
+let mockRightInset = 0
+let mockTopInset = 0
+
+jest.mock('react-native-safe-area-context', () => {
+  const actual = jest.requireActual('react-native-safe-area-context')
+
+  return {
+    ...actual,
+    useSafeAreaInsets: () => ({
+      bottom: mockBottomInset,
+      left: mockLeftInset,
+      right: mockRightInset,
+      top: mockTopInset,
+    }),
+  }
+})
 
 // A tablet-class frame keeps every test in the wide layout; the provider's
 // insets are zero, so only the chrome reserve is left in the top band.
@@ -149,6 +172,8 @@ const WIDE_TOP_ACTIONS_TEST_ID = 'wide-top-actions'
 const TITLE_ROW_TEST_ID = 'screen-title-row'
 const HELP_BUTTON_LABEL = 'Онбординг и помощь'
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+const BOTTOM_CHROME_SPACE_TEST_ID = 'bottom-chrome-space'
+const mockedWithTiming = withTiming as jest.Mock
 
 // A pinned element (the search bar) must not have any scroll container between
 // itself and the screen root; a scrolling element (the magnifier) must have one.
@@ -189,11 +214,38 @@ const findContentScrollView = () =>
       instance.props.contentContainerStyle !== undefined,
   )[0]
 
+// The screen always renders exactly one content scroller; tests fail loudly
+// instead of asserting against a missing host.
+const requireContentScrollView = (): TestInstance => {
+  const scrollView = findContentScrollView()
+
+  if (!scrollView) throw new Error('Expected a content scroll view')
+
+  return scrollView
+}
+
 // Text of the first content block inside the scroll container. In wide the
 // empty title row is gone, so the first section must own the top of the content.
 const firstScrollContentText = (): null | string => {
   const [firstText] = findContentScrollView()?.queryAll(node => node.type === 'Text') ?? []
   return firstText ? String(firstText.props.children) : null
+}
+
+// Lateral padding on the screen root above the scroller: the safe-area edges
+// the screen applies itself instead of a native SafeAreaView.
+const lateralPaddingAboveScroller = (scrollView: TestInstance) => {
+  let current: null | TestInstance = scrollView
+
+  while (current !== null) {
+    const style = StyleSheet.flatten(current.props.style)
+
+    if (style?.paddingLeft !== undefined)
+      return { left: style.paddingLeft, right: style.paddingRight }
+
+    current = current.parent
+  }
+
+  return null
 }
 
 // Total layout padding between the scroll host and the screen root. Any value
@@ -216,6 +268,11 @@ describe('<ListenScreen>', () => {
     mockedRestoreSession.mockClear()
     mockedRestoreSession.mockResolvedValue(null)
     mockUseWindowDimensions.mockReturnValue(WIDE_DIMENSIONS)
+    mockBottomInset = 0
+    mockLeftInset = 0
+    mockRightInset = 0
+    mockTopInset = 0
+    mockedWithTiming.mockClear()
   })
 
   test('shows sections by default', async () => {
@@ -386,5 +443,60 @@ describe('<ListenScreen>', () => {
     // No opaque plate above the scroller: the full-width chrome band would clip
     // the first cards and swallow drags that start over it.
     expect(scrollView && topBandHeightAboveScroller(scrollView)).toBe(0)
+  })
+
+  test('glides the top safe-area padding when the insets arrive in two waves', async () => {
+    mockTopInset = 20
+    const { rerender } = await renderWithProviders(<ListenScreen />, {})
+
+    expect(topBandHeightAboveScroller(requireContentScrollView())).toBe(20)
+
+    // Rotation on Android restores the bars after the first inset commit.
+    mockTopInset = 0
+    mockedWithTiming.mockClear()
+    await act(async () => {
+      await rerender(<ListenScreen />)
+    })
+
+    expect(mockedWithTiming).toHaveBeenCalledWith(0, { duration: INSETS_GLIDE_MS })
+  })
+
+  test('glides the lateral insets so content does not jump out from under the cutout', async () => {
+    const { rerender } = await renderWithProviders(<ListenScreen />, {})
+
+    expect(lateralPaddingAboveScroller(requireContentScrollView())).toEqual({ left: 0, right: 0 })
+
+    // The camera cutout lands on the left after a rotation.
+    mockLeftInset = 44
+    mockedWithTiming.mockClear()
+    await act(async () => {
+      await rerender(<ListenScreen />)
+    })
+
+    expect(mockedWithTiming).toHaveBeenCalledWith(44, { duration: INSETS_GLIDE_MS })
+  })
+
+  test('reserves the bottom chrome with a gliding spacer, not static padding', async () => {
+    const { getByTestId, rerender } = await renderWithProviders(<ListenScreen />, {})
+    const scrollView = findContentScrollView()
+
+    expect(StyleSheet.flatten(getByTestId(BOTTOM_CHROME_SPACE_TEST_ID).props.style)?.height).toBe(
+      PLAYER_SIZES.wideMiniPlayerHeight + BAR_BOTTOM_INSET_MIN + BAR_OUTER_GAP,
+    )
+    // The reserve lives in the spacer, so the padding no longer jumps on its own.
+    expect(
+      StyleSheet.flatten(scrollView?.props.contentContainerStyle)?.paddingBottom,
+    ).toBeUndefined()
+
+    mockBottomInset = 20
+    mockedWithTiming.mockClear()
+    await act(async () => {
+      await rerender(<ListenScreen />)
+    })
+
+    expect(mockedWithTiming).toHaveBeenCalledWith(
+      PLAYER_SIZES.wideMiniPlayerHeight + mockBottomInset + BAR_OUTER_GAP,
+      { duration: INSETS_GLIDE_MS },
+    )
   })
 })

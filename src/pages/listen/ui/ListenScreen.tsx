@@ -1,7 +1,7 @@
 import { useAction, useAtom } from '@reatom/npm-react'
 import { useEffect } from 'react'
 import Animated from 'react-native-reanimated'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTourScrollable } from 'features/onboarding'
 import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
@@ -12,7 +12,12 @@ import {
   PullToRefresh,
   WideTopActions,
 } from 'shared/ui'
-import { useBarCollapseOnScroll, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
+import {
+  useBarCollapseOnScroll,
+  useIsWideLayout,
+  useScreenChromePadding,
+  useSmoothInsetsPadding,
+} from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { usePullToRefresh } from '../lib/usePullToRefresh'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
@@ -21,12 +26,15 @@ import { ListenTopActions } from './ListenTopActions'
 import { ListenTopRow } from './ListenTopRow'
 import { MyPlaylistsSlider } from './MyPlaylistsSlider'
 
+const BOTTOM_CHROME_SPACE_TEST_ID = 'bottom-chrome-space'
+
 export const ListenScreen = () => {
   const insets = useSafeAreaInsets()
+  const smoothInsetsPadding = useSmoothInsetsPadding(insets)
   const { currentTheme } = useTheme()
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const isWide = useIsWideLayout()
-  const { bottomChromeHeight, topChromeScrollInset } = useScreenChromePadding()
+  const { bottomChromeSpaceStyle, topChromeScrollInset } = useScreenChromePadding()
   const { onContentSizeChange, onScroll } = useBarCollapseOnScroll({
     isSuspended: isBarCollapseSuspended,
   })
@@ -46,15 +54,8 @@ export const ListenScreen = () => {
 
   return (
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.listen}>
-      <SafeAreaView
-        edges={['left', 'right']}
-        style={[
-          styles.safeArea,
-          {
-            backgroundColor: currentTheme.background,
-            paddingTop: insets.top,
-          },
-        ]}
+      <Animated.View
+        style={[styles.safeArea, { backgroundColor: currentTheme.background }, smoothInsetsPadding]}
       >
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
           <Animated.ScrollView
@@ -64,10 +65,8 @@ export const ListenScreen = () => {
             keyboardDismissMode='on-drag'
             keyboardShouldPersistTaps='handled'
             onContentSizeChange={onContentSizeChange}
+            contentContainerStyle={[{ paddingTop: topChromeScrollInset }]}
             style={[styles.scroll, { backgroundColor: currentTheme.background }]}
-            contentContainerStyle={[
-              { paddingBottom: bottomChromeHeight, paddingTop: topChromeScrollInset },
-            ]}
             refreshControl={createRefreshControl(
               isRefreshing,
               refresh,
@@ -81,12 +80,13 @@ export const ListenScreen = () => {
               onboardingTargetId='listen.my-playlists'
               titleOnboardingTargetId='listen.my-playlists-title'
             />
+            <Animated.View style={bottomChromeSpaceStyle} testID={BOTTOM_CHROME_SPACE_TEST_ID} />
           </Animated.ScrollView>
           <WideTopActions>
             <ListenTopActions showAdminButton={canOpenAdminPanel} />
           </WideTopActions>
         </PullToRefresh>
-      </SafeAreaView>
+      </Animated.View>
     </BlurBackdrop>
   )
 }

@@ -47,7 +47,7 @@ export const SearchResultsList = ({
 }) => {
   const progressMap = useHistoryProgressMap()
   const historySermonIds = useHistorySermonIds()
-  const { bottomChromeHeight } = useScreenChromePadding()
+  const { bottomChromeSpaceStyle } = useScreenChromePadding()
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const { onScroll } = useBarCollapseOnScroll({ isSuspended: isBarCollapseSuspended })
   const showEmptyState = query.trim().length >= MIN_RESULTS_VIEW_LENGTH
@@ -56,7 +56,7 @@ export const SearchResultsList = ({
     group === 'sermons' ? paged.sermons : group === 'playlists' ? paged.playlists : paged.preachers
 
   const listProps = {
-    contentContainerStyle: [{ flexGrow: 1 }, { paddingBottom: bottomChromeHeight }],
+    contentContainerStyle: [{ flexGrow: 1 }],
     ItemSeparatorComponent: SearchRowSeparator,
     // Safe now that neither page pose depends on focus: dragging the list hides
     // the keyboard and keeps scrolling instead of leaving a dead chrome strip.
@@ -67,9 +67,14 @@ export const SearchResultsList = ({
     ) : showEmptyState ? (
       <EmptyState message={NO_RESULTS_MESSAGE} />
     ) : undefined,
-    ListFooterComponent: groupState.isLoadingMore ? (
-      <ActivityIndicator style={FOOTER_STYLE} />
-    ) : undefined,
+    // An animated `paddingBottom` inside `contentContainerStyle` is not
+    // supported by Reanimated, so the bottom reserve is a gliding spacer.
+    ListFooterComponent: (
+      <>
+        {groupState.isLoadingMore && <ActivityIndicator style={FOOTER_STYLE} />}
+        <Animated.View style={bottomChromeSpaceStyle} />
+      </>
+    ),
     onEndReached: () => {
       if (groupState.hasMore && !groupState.isLoadingMore) groupState.loadMore()
     },

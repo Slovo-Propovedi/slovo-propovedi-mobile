@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router'
-import { FlatList, Text, View } from 'react-native'
+import { FlatList, Text } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   BLUR_TARGET_ROUTES,
@@ -9,7 +10,7 @@ import {
   PullToRefresh,
   WideTopActions,
 } from 'shared/ui'
-import { useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
+import { useIsWideLayout, useScreenChromePadding, useSmoothInsetsPadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { type AdminPlaylistsListItem } from '../lib/playlistListItem'
 import { useAdminPlaylists } from '../lib/useAdminPlaylists'
@@ -32,6 +33,7 @@ const PlaylistSkeletonList = () => (
 
 export const AdminPlaylistsScreen = () => {
   const insets = useSafeAreaInsets()
+  const smoothInsetsPadding = useSmoothInsetsPadding({ top: insets.top })
   const isWide = useIsWideLayout()
   const { bottomBarHeight, topChromeScrollInset: scrollInset } = useScreenChromePadding()
   const router = useRouter()
@@ -60,13 +62,11 @@ export const AdminPlaylistsScreen = () => {
 
   return (
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.adminPlaylists}>
-      <View
+      <Animated.View
         style={[
           styles.container,
-          {
-            backgroundColor: currentTheme.background,
-            paddingTop: insets.top,
-          },
+          { backgroundColor: currentTheme.background },
+          smoothInsetsPadding,
         ]}
       >
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
@@ -119,7 +119,7 @@ export const AdminPlaylistsScreen = () => {
             <AdminPlaylistsTopActions onCreate={() => router.push(CREATE_ROUTE)} />
           </WideTopActions>
         </PullToRefresh>
-      </View>
+      </Animated.View>
     </BlurBackdrop>
   )
 }

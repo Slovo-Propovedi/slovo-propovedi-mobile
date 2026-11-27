@@ -1,13 +1,14 @@
 import { useAtom } from '@reatom/npm-react'
 import { usePathname } from 'expo-router'
 import { useCallback, useRef } from 'react'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import Animated from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAddToPlaylistModal } from 'features/add-to-playlist'
 import { useTourActionRegistrar } from 'features/onboarding'
 import { useSearchUrlSync, useSermonPlayback } from 'features/sermon-search'
 import { type SermonData } from 'entities/sermon'
 import { BLUR_TARGET_ROUTES, BlurBackdrop } from 'shared/ui'
-import { useScreenChromePadding } from 'shared/ui/layout'
+import { useScreenChromePadding, useSmoothInsetsPadding } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { useClearSearchOnLeave } from '../lib/useClearSearchOnLeave'
 import { useSearchNavigation } from '../lib/useSearchNavigation'
@@ -28,6 +29,13 @@ const CLOSE_SERMON_PICKER_ACTION_ID = 'close-sermon-playlist-picker'
 export const SearchTabScreen = () => {
   const insets = useSafeAreaInsets()
   const { topChromeHeight } = useScreenChromePadding()
+  // The resolved top edge: the field pill needs the higher of the safe area and
+  // the wide island band, and the glide must follow the resolved value.
+  const smoothInsetsPadding = useSmoothInsetsPadding({
+    left: insets.left,
+    right: insets.right,
+    top: Math.max(insets.top, topChromeHeight),
+  })
   const { currentTheme } = useTheme()
   const pathname = usePathname()
   useClearSearchOnLeave(pathname)
@@ -52,15 +60,8 @@ export const SearchTabScreen = () => {
 
   return (
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.search}>
-      <SafeAreaView
-        edges={['left', 'right']}
-        style={[
-          styles.safeArea,
-          {
-            backgroundColor: currentTheme.background,
-            paddingTop: Math.max(insets.top, topChromeHeight),
-          },
-        ]}
+      <Animated.View
+        style={[styles.safeArea, { backgroundColor: currentTheme.background }, smoothInsetsPadding]}
       >
         <SearchScreen
           key={sessionNonce}
@@ -70,7 +71,7 @@ export const SearchTabScreen = () => {
           onPreacherPress={navigateToPreacher}
           onFirstSermonChange={handleFirstSermonChange}
         />
-      </SafeAreaView>
+      </Animated.View>
       {modal}
       {sermonPlaybackModal}
     </BlurBackdrop>

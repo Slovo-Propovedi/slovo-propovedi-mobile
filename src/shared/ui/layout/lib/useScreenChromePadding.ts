@@ -9,6 +9,7 @@ import {
 } from '../bottomBarLayout'
 import { useBarBottomPadding } from './useBarBottomPadding'
 import { useIsWideLayout } from './useIsWideLayout'
+import { useSmoothInsetsSpace } from './useSmoothInsetsPadding'
 
 /**
  * Space the floating chrome occupies around screen content. Compact keeps the
@@ -31,30 +32,45 @@ import { useIsWideLayout } from './useIsWideLayout'
  * stays outside the scroller, while the island clearance lives in the content.
  * That keeps the first item below the island at rest yet lets it scroll under
  * the floating glass instead of being clipped by an opaque full-width band.
+ *
+ * `bottomChromeSpaceStyle` is the animated `height` of a trailing spacer that
+ * replaces the content's bottom padding: an animated `paddingBottom` inside
+ * `contentContainerStyle` is not supported by Reanimated, so the reserve glides
+ * as a spacer instead (no jump when the insets arrive in two waves around a
+ * rotation).
+ * Shortcut: only the main and search tab scrollers consume the spacer so far;
+ * the remaining `bottomChromeHeight` consumers still pad statically — see
+ * docs/debt.md.
  */
 export const useScreenChromePadding = (): {
   bottomBarHeight: number
   bottomChromeHeight: number
+  bottomChromeSpaceStyle: ReturnType<typeof useSmoothInsetsSpace>
   topChromeHeight: number
   topChromeScrollInset: number
 } => {
   const isWide = useIsWideLayout()
   const insets = useSafeAreaInsets()
   const barBottomPadding = useBarBottomPadding()
-  const miniPlayerHeight = PLAYER_SIZES.miniPlayerHeight
-  const barHeight = (isWide ? WIDE_BAR_ROW_HEIGHT : BAR_ROW_MIN_HEIGHT) + barBottomPadding
+  const bottomBarHeight = (isWide ? WIDE_BAR_ROW_HEIGHT : BAR_ROW_MIN_HEIGHT) + barBottomPadding
+  const bottomChromeHeight = isWide
+    ? PLAYER_SIZES.wideMiniPlayerHeight + barBottomPadding + BAR_OUTER_GAP
+    : bottomBarHeight + PLAYER_SIZES.miniPlayerHeight
+  const bottomChromeSpaceStyle = useSmoothInsetsSpace(bottomChromeHeight)
 
   if (!isWide)
     return {
-      bottomBarHeight: barHeight,
-      bottomChromeHeight: barHeight + miniPlayerHeight,
+      bottomBarHeight,
+      bottomChromeHeight,
+      bottomChromeSpaceStyle,
       topChromeHeight: 0,
       topChromeScrollInset: 0,
     }
 
   return {
-    bottomBarHeight: barHeight,
-    bottomChromeHeight: PLAYER_SIZES.wideMiniPlayerHeight + barBottomPadding + BAR_OUTER_GAP,
+    bottomBarHeight,
+    bottomChromeHeight,
+    bottomChromeSpaceStyle,
     topChromeHeight: insets.top + BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
     topChromeScrollInset:
       BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP,

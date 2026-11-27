@@ -2,12 +2,13 @@ import { useAction, useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
 import { useEffect } from 'react'
 import { ScrollView, Text, View } from 'react-native'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import Animated from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { HelpHeaderButton, OnboardingTarget, useTourScrollable } from 'features/onboarding'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { APP_NAME, APP_VERSION } from 'shared/config'
 import { BLUR_TARGET_ROUTES, BlurBackdrop, ScreenTitleRow, WideTopActions } from 'shared/ui'
-import { useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
+import { useIsWideLayout, useScreenChromePadding, useSmoothInsetsPadding } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { AdminPanelButton } from './AdminPanelButton'
 import { MoreMenuSettingsItem } from './MoreMenuSettingsItem'
@@ -15,6 +16,7 @@ import { styles } from './styles'
 
 export const MoreScreen = () => {
   const insets = useSafeAreaInsets()
+  const smoothInsetsPadding = useSmoothInsetsPadding(insets)
   const isWide = useIsWideLayout()
   const { topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
@@ -34,14 +36,11 @@ export const MoreScreen = () => {
 
   return (
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.more}>
-      <SafeAreaView
-        edges={['left', 'right']}
+      <Animated.View
         style={[
           styles.container,
-          {
-            backgroundColor: currentTheme.background,
-            paddingTop: insets.top,
-          },
+          { backgroundColor: currentTheme.background },
+          smoothInsetsPadding,
         ]}
       >
         <View style={styles.body}>
@@ -101,7 +100,7 @@ export const MoreScreen = () => {
             <HelpHeaderButton />
           </WideTopActions>
         </View>
-      </SafeAreaView>
+      </Animated.View>
     </BlurBackdrop>
   )
 }
