@@ -30,6 +30,22 @@ const METADATA: LockScreenMetadata = {
   title: 'Проповедь',
 }
 
+// Jest reuses a worker for several test files. Restore every global this file
+// touches so a later suite never inherits a `navigator.mediaSession` write
+// without the `MediaMetadata` stub that only lives here.
+const ORIGINAL_MEDIA_SESSION = Object.getOwnPropertyDescriptor(global.navigator, 'mediaSession')
+const ORIGINAL_MEDIA_METADATA = Object.getOwnPropertyDescriptor(global, 'MediaMetadata')
+
+const restoreGlobal = (target: object, key: string, descriptor?: PropertyDescriptor) => {
+  if (descriptor) Object.defineProperty(target, key, descriptor)
+  else Reflect.deleteProperty(target, key)
+}
+
+afterEach(() => {
+  restoreGlobal(global.navigator, 'mediaSession', ORIGINAL_MEDIA_SESSION)
+  restoreGlobal(global, 'MediaMetadata', ORIGINAL_MEDIA_METADATA)
+})
+
 const makeMediaSessionMock = (): MediaSessionMock => {
   const mock: MediaSessionMock = {
     metadata: null,
