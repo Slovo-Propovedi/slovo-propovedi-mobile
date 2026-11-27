@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native'
 import { withTiming } from 'react-native-reanimated'
-import { BAR_MORPH_DURATION_MS } from '../bottomBarLayout'
+import { CHROME_LAYOUT_SHIFT_DURATION_MS } from '../bottomBarLayout'
 import { getChromeShiftTranslateY, useChromeLayoutShift } from './useChromeLayoutShift'
 
 let mockIsWideLayout = false
@@ -45,12 +45,20 @@ describe('useChromeLayoutShift', () => {
     expect(result.current.translateY.value).toBe(0)
   })
 
-  test('animates toward the wide anchor over the bar morph duration', async () => {
+  test('runs the layout shift slower than the compact morph', () => {
+    // User feedback 2026-11-27: the full-anchor travel read as too fast at the
+    // compact morph duration, so the duration is pinned here rather than derived.
+    expect(CHROME_LAYOUT_SHIFT_DURATION_MS).toBe(400)
+  })
+
+  test('animates toward the wide anchor over the chrome layout shift duration', async () => {
     const { rerender } = await renderChromeShift()
 
     await rerenderInLayout(true, rerender)
 
-    expect(mockedWithTiming).toHaveBeenCalledWith(1, { duration: BAR_MORPH_DURATION_MS })
+    expect(mockedWithTiming).toHaveBeenCalledWith(1, {
+      duration: CHROME_LAYOUT_SHIFT_DURATION_MS,
+    })
   })
 
   test('animates back toward the compact anchor on the reverse flip', async () => {
@@ -59,7 +67,9 @@ describe('useChromeLayoutShift', () => {
 
     await rerenderInLayout(false, rerender)
 
-    expect(mockedWithTiming).toHaveBeenCalledWith(0, { duration: BAR_MORPH_DURATION_MS })
+    expect(mockedWithTiming).toHaveBeenCalledWith(0, {
+      duration: CHROME_LAYOUT_SHIFT_DURATION_MS,
+    })
   })
 
   test('retargets on rapid flips instead of stacking animations', async () => {
@@ -70,9 +80,9 @@ describe('useChromeLayoutShift', () => {
     await rerenderInLayout(true, rerender)
 
     expect(mockedWithTiming.mock.calls).toEqual([
-      [1, { duration: BAR_MORPH_DURATION_MS }],
-      [0, { duration: BAR_MORPH_DURATION_MS }],
-      [1, { duration: BAR_MORPH_DURATION_MS }],
+      [1, { duration: CHROME_LAYOUT_SHIFT_DURATION_MS }],
+      [0, { duration: CHROME_LAYOUT_SHIFT_DURATION_MS }],
+      [1, { duration: CHROME_LAYOUT_SHIFT_DURATION_MS }],
     ])
   })
 })

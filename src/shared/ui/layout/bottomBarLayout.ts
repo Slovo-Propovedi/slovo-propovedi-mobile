@@ -120,6 +120,7 @@ export const COLLAPSE_SCROLL_THRESHOLD = 80 as const
 // Scroll offset at or above which the collapsed bar expands back.
 export const EXPAND_TOP_THRESHOLD = 4 as const
 export const BAR_MORPH_DURATION_MS = 200 as const
+export const CHROME_LAYOUT_SHIFT_DURATION_MS = 400 as const
 // Long-side threshold of the wide layout. Together with the shortest-side
 // threshold below it makes the window tablet-class in BOTH dimensions; below
 // either one the compact layout is kept.

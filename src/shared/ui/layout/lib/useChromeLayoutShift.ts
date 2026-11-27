@@ -6,7 +6,7 @@ import {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import { BAR_MORPH_DURATION_MS } from '../bottomBarLayout'
+import { CHROME_LAYOUT_SHIFT_DURATION_MS } from '../bottomBarLayout'
 import { useIsWideLayout } from './useIsWideLayout'
 
 interface ChromeLayoutShiftOptions {
@@ -51,7 +51,8 @@ export const getChromeShiftTranslateY = (
  * retarget the same shared value, exactly like any other Reanimated timing, and
  * the translateY is derived from the CURRENT layout, so each side's entry gets
  * the matching direction (up for the top-anchored tab bar, down for the bottom
- * mini pill).
+ * mini pill). The flip covers the whole anchor distance, so it runs slower than
+ * the compact morph (CHROME_LAYOUT_SHIFT_DURATION_MS, user feedback 2026-11-27).
  * @param options - Anchor distance and the wide anchor's vertical direction.
  * @param options.distance - Distance in dp between the two anchors.
  * @param options.wideAnchorSign - +1 when wide sits above compact, -1 when below.
@@ -65,7 +66,7 @@ export const useChromeLayoutShift = ({ distance, wideAnchorSign }: ChromeLayoutS
     if (previousIsWideLayout.current === isWideLayout) return
 
     previousIsWideLayout.current = isWideLayout
-    progress.value = withTiming(isWideLayout ? 1 : 0, { duration: BAR_MORPH_DURATION_MS })
+    progress.value = withTiming(isWideLayout ? 1 : 0, { duration: CHROME_LAYOUT_SHIFT_DURATION_MS })
   }, [isWideLayout, progress])
 
   const translateY: SharedValue<number> = useDerivedValue(() =>
