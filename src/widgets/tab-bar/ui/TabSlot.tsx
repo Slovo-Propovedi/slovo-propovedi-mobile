@@ -1,5 +1,6 @@
 import { type PropsWithChildren } from 'react'
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
+import { useLayoutEffectSharedValue } from 'shared/lib/hooks/useLayoutEffectSharedValue'
 import { getTabSlotStyle } from '../lib/getIslandStyle'
 
 // One morphing tab slot: the active tab grows into the circle, hidden tabs
@@ -28,10 +29,15 @@ export const TabSlot = ({
   oneLineProgress: SharedValue<number>
   progress: SharedValue<number>
 }>) => {
+  // The slot width must reach the animated layer in the same commit as the
+  // resting layer below: a worklet closure is re-registered after the commit,
+  // so a resize would paint one frame at the old slot width while the island
+  // already carries the new one. The pre-paint channel closes that gap.
+  const expandedWidthShared = useLayoutEffectSharedValue(expandedWidth)
   const animatedStyle = useAnimatedStyle(() =>
     getTabSlotStyle(
       progress.value,
-      { expandedWidth, isActive },
+      { expandedWidth: expandedWidthShared.value, isActive },
       oneLineProgress.value,
       isWideLayout,
     ),

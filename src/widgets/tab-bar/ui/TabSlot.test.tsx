@@ -1,7 +1,10 @@
-import { screen } from '@testing-library/react-native'
+import { act, screen } from '@testing-library/react-native'
 import { Text } from 'react-native'
+import * as Reanimated from 'react-native-reanimated'
 import { type SharedValue } from 'react-native-reanimated'
+import * as layoutEffectSharedValue from 'shared/lib/hooks/useLayoutEffectSharedValue'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { usePersistentSharedValue } from 'shared/mocks/usePersistentSharedValue'
 import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
 import { TabSlot } from './TabSlot'
 
@@ -124,5 +127,49 @@ describe('<TabSlot>', () => {
     const active = await renderSlot({ isActive: true, isCollapsed: true })
 
     expect(active.props.pointerEvents).toBe('auto')
+  })
+
+  test('publishes the slot width to the worklet channel before paint', async () => {
+    // The animated layer must not run on a closure re-registered after the
+    // commit: a real resize then paints one frame at the previous width while
+    // the resting layer already carries the new one. The persistent shared
+    // value reproduces the engine's cross-render identity, so the assertion
+    // below observes the pre-paint write instead of a fresh per-render value.
+    jest
+      .spyOn(Reanimated, 'useSharedValue')
+      .mockImplementation(usePersistentSharedValue as unknown as typeof Reanimated.useSharedValue)
+    const channelSpy = jest.spyOn(layoutEffectSharedValue, 'useLayoutEffectSharedValue')
+
+    try {
+      const renderAt = (expandedWidth: number) => (
+        <TabSlot
+          isActive={false}
+          isCollapsed={false}
+          isSettledOneLine={false}
+          isSettledCollapsed={false}
+          progress={progressValue(0)}
+          expandedWidth={expandedWidth}
+          oneLineProgress={progressValue(0)}
+        >
+          <Text>tab</Text>
+        </TabSlot>
+      )
+      const { rerender } = await renderWithProviders(renderAt(100))
+
+      await act(async () => {
+        rerender(renderAt(50))
+      })
+
+      // The channel received the rendered width in the layout phase of THIS
+      // commit, and the resting layer carries the same number.
+      expect(channelSpy).toHaveBeenLastCalledWith(50)
+      expect(channelSpy.mock.results.at(-1)?.value?.value).toBe(50)
+
+      const slot = screen.getByText('tab').parent
+
+      expect((slot?.props.style as Array<Record<string, number>>).at(-1)?.width).toBe(50)
+    } finally {
+      jest.restoreAllMocks()
+    }
   })
 })

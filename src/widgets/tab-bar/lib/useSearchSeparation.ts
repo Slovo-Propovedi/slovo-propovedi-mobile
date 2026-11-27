@@ -17,7 +17,8 @@ interface SearchSeparationInput {
   screenWidth: SharedValue<number>
   /** Shape axis: 0 = in-island slot, 1 = detached search circle. */
   separation: SharedValue<number>
-  tabBarHeight: number
+  /** Pre-paint mirror of the measured tab row (the circle's bottom line). */
+  tabBarHeight: SharedValue<number>
 }
 
 // Animated surfaces of the one detached search button.
@@ -47,7 +48,7 @@ export const useSearchSeparation = ({
       routeCount,
       screenWidth: screenWidth.value,
       separation: separation.value,
-      tabBarHeight,
+      tabBarHeight: tabBarHeight.value,
     }),
   )
   const glassStyle = useAnimatedStyle(() => ({ opacity: clampProgress(separation.value) }))
