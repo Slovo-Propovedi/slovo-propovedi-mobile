@@ -239,6 +239,17 @@ describe('<ExpandablePlayer>', () => {
     expect(mockTogglePlay).toHaveBeenCalledTimes(1)
   })
 
+  test('renders the mini pill on the first frame before the tab bar is measured', async () => {
+    // The tab row re-measures on its first layout pass; gating the pill on that
+    // pass left the bottom of the screen empty until the whole startup chain
+    // hydrated the track. The pill's 80dp guess is good enough for those frames.
+    isTabBarMeasuredAtom(ctx, false)
+
+    const { queryByLabelText } = await renderWithProviders(<ExpandablePlayer />, { ctx })
+
+    expect(queryByLabelText(PLAY_PAUSE_LABEL, { includeHiddenElements: true })).toBeTruthy()
+  })
+
   test('threads the playlist menu into the collapsed queue host', async () => {
     const MenuStub = () => null
 

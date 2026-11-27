@@ -14,13 +14,9 @@ import {
 } from 'shared/config'
 import { ctx } from 'shared/lib/reatom-ctx'
 import { reportError } from 'shared/model/error-dialog'
-import {
-  repeatModeSchema,
-  setCurrentAudioAction,
-  setCurrentPlaylistAction,
-  setRepeatModeAction,
-} from '../model'
+import { repeatModeSchema, setCurrentPlaylistAction, setRepeatModeAction } from '../model'
 import { playbackRateSchema } from '../playback-rate'
+import { hydrateCurrentAudio } from './hydrateCurrentAudio'
 import { computeResumeMs } from './playbackProgress'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/native/AudioModeManager'
@@ -96,7 +92,7 @@ export const initializePlayer = async () => {
     if (parsedRepeat) await setRepeatModeAction(ctx, parsedRepeat)
 
     if (audio) {
-      await setCurrentAudioAction(ctx, audio)
+      await hydrateCurrentAudio(ctx, audio)
       const resumeMs = computeResumeMs(parsedProgress, audio.id)
       await playerService.loadAudio(audio.audioUrl, resumeMs)
       playerService.setLockScreenMetadata({

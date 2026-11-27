@@ -6,7 +6,9 @@ import {
   CURRENT_SOUND_VOLUME,
   PLAYER_STARTUP_ATTEMPTS,
 } from 'shared/config'
+import { ctx } from 'shared/lib/reatom-ctx'
 import { mockConsole } from 'shared/mocks'
+import { currentAudioAtom } from '../model'
 import { initializePlayer } from './initializePlayer'
 import { playerService } from './PlayerService'
 import { audioModeManager } from './PlayerService/native/AudioModeManager'
@@ -49,6 +51,7 @@ describe('startup crash guard', () => {
   beforeEach(async () => {
     jest.clearAllMocks()
     await AsyncStorage.clear()
+    currentAudioAtom(ctx, null)
   })
 
   describe('shouldSkipRestore', () => {
@@ -87,6 +90,24 @@ describe('startup crash guard', () => {
       expect(mockedLoadAudio).not.toHaveBeenCalled()
       expect(mockedConfigure).not.toHaveBeenCalled()
       expect(mockedSetItem).toHaveBeenCalledWith(PLAYER_STARTUP_ATTEMPTS, '0')
+    })
+
+    test('hydrates the current audio atom before persisting the restored track', async () => {
+      await seedStoredAudio()
+      const observedAtomAtPersist: unknown[] = []
+      const defaultSetItem = mockedSetItem.getMockImplementation()
+      mockedSetItem.mockImplementation(async (key: string, value: string) => {
+        if (key === CURRENT_AUDIO) observedAtomAtPersist.push(ctx.get(currentAudioAtom))
+
+        return defaultSetItem?.(key, value)
+      })
+
+      await initializePlayer()
+
+      // The pill must exist on the first frame after hydration: flip the atom
+      // first, then do the slower storage write (user actions keep the opposite
+      // order in `setCurrentAudio`).
+      expect(observedAtomAtPersist).toEqual([AUDIO])
     })
 
     test('increments counter and persists BEFORE loadAudio when below threshold', async () => {

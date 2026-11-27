@@ -79,29 +79,28 @@ const RootLayoutWithProvider = () => {
   )
 }
 
-// Purge orphaned legacy .mp3.part files, verify legacy web-cache entries,
-// hydrate the offline registry, restore the player, then re-enqueue stale
-// .cache.mp3 partials. Sweeping after restore keeps the current track's partial
-// alive for an offline resolve; a same-URL enqueue joins the existing queue
-// entry. The caching setting loads INSIDE the chain and BEFORE the player
-// restore: both downstream steps enqueue downloads through the queue gate
-// (restore → resolvePlaybackUrl → startBackgroundCaching → enqueueCache, then
-// reEnqueuePartialDownloads), and the gate reads the atom — with the default
-// `true` still in place a cold start would start a download on every launch
-// despite the setting being off.
-// Each step is isolated: a failure in offline-registry hydration or in loading
-// the caching setting must not abort the chain before the player restore runs
-// (otherwise cold start silently leaves currentAudio empty). The terminal
-// catch reports any rejection that still escapes.
-void cleanupOrphanedDownloads()
+// Restore the player FIRST so the mini pill has a track on its first frame: the
+// offline housekeeping used to serialize a multi-step startup ahead of the
+// visible chrome. The caching setting still loads BEFORE the restore — the
+// restore enqueues background caching through the queue gate, and with the
+// default `true` a cold start would start a download despite the setting off.
+// Housekeeping then sweeps orphaned legacy .mp3.part files, verifies legacy
+// web-cache entries, hydrates the offline registry and re-enqueues stale
+// .cache.mp3 partials; re-enqueueing after the restore keeps the current
+// track's partial alive for an offline resolve (a same-URL enqueue joins the
+// existing queue entry). Each step is isolated: a failure must not abort the
+// chain (otherwise cold start silently leaves currentAudio empty), and the
+// terminal catch reports any rejection that still escapes.
+void loadSermonCachingEnabled(ctx)
+  .catch(error => console.error('[startup] caching setting load failed:', error))
+  .then(() => initializePlayer())
+  .catch(error => console.error('[startup] player restore failed:', error))
+  .then(() => cleanupOrphanedDownloads())
   .catch(error => console.error('[audio-cache] orphan cleanup failed:', error))
   .then(() => resumeAudioManifestMigration())
   .catch(error => console.error('[audio-cache] manifest migration failed:', error))
   .then(() => hydrateOfflineRegistry(ctx))
   .catch(error => console.error('[startup] offline registry hydration failed:', error))
-  .then(() => loadSermonCachingEnabled(ctx))
-  .catch(error => console.error('[startup] caching setting load failed:', error))
-  .then(() => initializePlayer())
   .then(() => reEnqueuePartialDownloads(ctx))
   .catch(error => {
     console.error('[startup] chain failed:', error)

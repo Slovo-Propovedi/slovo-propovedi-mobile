@@ -10,7 +10,7 @@ import {
   isPlayingAtom,
   useGuardedTogglePlay,
 } from 'entities/player'
-import { isBarCollapsedAtom, isTabBarMeasuredAtom, tabBarHeightAtom } from 'shared/ui/layout'
+import { isBarCollapsedAtom, tabBarHeightAtom } from 'shared/ui/layout'
 import { PLAYER_SIZES, useTheme } from 'shared/ui/theme'
 
 /**
@@ -34,7 +34,6 @@ export const useExpandablePlayerState = () => {
   // eslint-disable-next-line react-hooks/refs -- intentional: the retained height is the player's trusted geometry input
   const tabBarHeight = lastValidTabBarHeightRef.current
   const [audio] = useAtom(currentAudioAtom)
-  const [isTabBarMeasured] = useAtom(isTabBarMeasuredAtom)
   const [isBarCollapsed] = useAtom(isBarCollapsedAtom)
   const isSearchFieldVisible = useIsSearchFieldVisible()
   const [isSearchFieldFocused] = useAtom(isSearchFieldFocusedAtom)
@@ -60,7 +59,6 @@ export const useExpandablePlayerState = () => {
     // itself has focus; dialogs that hold the search focus leave it in place.
     // Its whole subtree must drop below the tab bar's zIndex 10 while tucked.
     isPillTucked: isSearchFieldFocused && !expanded,
-    isTabBarMeasured,
     playing,
     playlist,
     tabBarHeight,

@@ -29,7 +29,6 @@ export const ExpandablePlayer = ({
     isBuffering,
     isLight,
     isPillTucked,
-    isTabBarMeasured,
     playing,
     playlist,
     tabBarHeight,
@@ -77,7 +76,8 @@ export const ExpandablePlayer = ({
     onMismatch: forceGeometryReapply,
   })
 
-  if (!audio || !isTabBarMeasured) return null
+  // Height is a geometry input (80dp guess until measured), never a mount gate.
+  if (!audio) return null
 
   const overlayStyle = isPillTucked ? styles.recoveryOverlayTucked : undefined
 
