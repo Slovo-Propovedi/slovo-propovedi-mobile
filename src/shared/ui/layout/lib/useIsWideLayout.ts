@@ -1,16 +1,15 @@
 import { useWindowDimensions } from 'react-native'
-import { WIDE_LAYOUT_MIN_SHORTEST_SIDE, WIDE_LAYOUT_MIN_WIDTH } from '../bottomBarLayout'
+import { getIsWideLayoutSync } from './getIsWideLayoutSync'
 
 /**
  * True at tablet/desktop windows: the wide layout needs a tablet-class shortest
  * side (600) as well as a tablet-class width (768), so a phone in landscape
- * (844×390) never enters the wide layout.
+ * (844×390) never enters the wide layout. Delegates to `getIsWideLayoutSync`, the
+ * same predicate the player's worklets evaluate against their shared window
+ * values, so the React and animated layers cannot drift apart.
  */
 export const useIsWideLayout = (): boolean => {
   const { height, width } = useWindowDimensions()
 
-  return (
-    Math.min(width, height) >= WIDE_LAYOUT_MIN_SHORTEST_SIDE &&
-    Math.max(width, height) >= WIDE_LAYOUT_MIN_WIDTH
-  )
+  return getIsWideLayoutSync(width, height)
 }

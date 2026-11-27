@@ -1,5 +1,5 @@
 import { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
-import { useIsWideLayout } from 'shared/ui/layout'
+import { getIsWideLayoutSync } from 'shared/ui/layout'
 import { getContainerGeometryStyle } from '../lib/getContainerGeometryStyle'
 import { getContainerOpacity } from '../lib/getContainerOpacity'
 import { getMiniBarStyle } from '../lib/getMiniBarStyle'
@@ -30,6 +30,11 @@ interface GeometryAnimatedStylesInput {
  * The window dimensions arrive as shared values written before paint, not as
  * worklet closure captures: a closure re-registered after the commit animates
  * the previous window for one frame (crooked chrome right after a rotation).
+ * For the same reason the wide-layout flag is derived INSIDE each worklet from
+ * those shared values (`getIsWideLayoutSync`), never captured from React: a
+ * captured boolean only flips after a re-render, so on native the pill would
+ * keep the compact geometry for a frame or more after a layout flip. Reading the
+ * shared values makes the flip visible on the very next frame evaluation.
  *
  * In the wide layout the bottom-bar morph is pinned to the expanded pose: the
  * tab island is anchored to the top, so the pill never folds into a bottom row
@@ -38,7 +43,7 @@ interface GeometryAnimatedStylesInput {
  * @param input.barProgress - Bottom-bar morph progress (0 = expanded pill, 1 = collapsed row).
  * @param input.contentWidthShared - Pre-paint chrome content width (frozen layout base).
  * @param input.expandedShared - Pre-paint mirror of `expanded` (1 = expanded, 0 = collapsed).
- * @param input.fullScreenHeightShared - Pre-paint full device screen height.
+ * @param input.fullScreenHeightShared - Pre-paint full device screen height (the window height after the web clamp).
  * @param input.geometryReapplyTick - Alternating heal tick for the Issue #63 re-apply channel.
  * @param input.progress - Expand/collapse progress (0 = mini pill, 1 = fullscreen).
  * @param input.screenWidthShared - Pre-paint current window width.
@@ -56,14 +61,15 @@ export const useGeometryAnimatedStyles = ({
   tabBarHeightShared,
   wideBottomInset,
 }: GeometryAnimatedStylesInput) => {
-  const isWideLayout = useIsWideLayout()
-
   const containerStyle = useAnimatedStyle(() => {
     // Register dependency: any write to geometryReapplyTick re-runs this worklet,
     // re-applying all returned props natively — the heal channel for Issue #63.
     // Alternating sign (±0.01dp) defeats no-diff skip while keeping the offset
     // permanently bounded — no monotonic accumulation.
     const reapply = geometryReapplyTick.value % 2 === 1 ? 0.01 : -0.01
+    // Self-derived from the pre-paint window channels, not a captured React
+    // boolean: the flip is visible on the next frame, without a render hop.
+    const isWideLayout = getIsWideLayoutSync(screenWidthShared.value, fullScreenHeightShared.value)
     // Interpolates from the CURRENT mini geometry (expanded or collapsed pill),
     // so expanding out of the collapsed bottom line stays continuous.
     const style = getContainerGeometryStyle({
@@ -91,6 +97,7 @@ export const useGeometryAnimatedStyles = ({
     // in the same screen direction as the container's `top + reapply`, and the
     // collapsed container shares the pill's rect, so the guard then heals both.
     const reapply = geometryReapplyTick.value % 2 === 1 ? 0.01 : -0.01
+    const isWideLayout = getIsWideLayoutSync(screenWidthShared.value, fullScreenHeightShared.value)
     const style = getMiniBarStyle({
       barProgress: isWideLayout ? 0 : barProgress.value,
       contentWidth: contentWidthShared.value,

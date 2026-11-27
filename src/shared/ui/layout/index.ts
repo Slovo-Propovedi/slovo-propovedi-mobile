@@ -23,6 +23,7 @@ export {
   WIDE_TAB_ISLAND_HEIGHT,
 } from './bottomBarLayout'
 export { nextBarCollapsedState } from './lib/barCollapseScroll'
+export { getIsWideLayoutSync } from './lib/getIsWideLayoutSync'
 export {
   keyboardBottomInsetSv,
   useKeyboardBottomInsetSync,
