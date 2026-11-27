@@ -503,6 +503,67 @@ describe('<CustomTabBar>', () => {
     expect(getByText('Ещё')).not.toHaveStyle({ color: '#f16031' })
   })
 
+  const findTravelCapsules = (island: TestInstance) =>
+    island.queryAll(
+      instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === CAPSULE_COLOR,
+    )
+
+  test('keeps exactly one traveling capsule in the island row', async () => {
+    await renderTabBar(0)
+
+    const island = findTabIsland()
+
+    if (!island) throw new Error(TAB_ISLAND_NOT_FOUND)
+
+    // One element owns the expanded highlight; the per-slot capsules are gone.
+    expect(findTravelCapsules(island)).toHaveLength(1)
+    expect(island.queryAll(isVisibleCapsuleNode)).toHaveLength(1)
+  })
+
+  test('slides the capsule onto the destination tab in the wide top island', async () => {
+    mockWindowWidth = 1024
+    const props = createBarProps()
+    const { rerender } = await renderWithProviders(
+      <CustomTabBar state={createMockState(0)} {...props} />,
+      { ctx: createCtx() },
+    )
+
+    await act(async () => {
+      rerender(<CustomTabBar state={createMockState(3)} {...props} />)
+    })
+    await act(async () => {
+      advanceMorphFrames(10)
+    })
+
+    const island = findTabIsland()
+
+    if (!island) throw new Error(TAB_ISLAND_NOT_FOUND)
+
+    // Wide slot centres are 44, 132, 220 and 288: «Ещё» rests the 100dp
+    // capsule at 220 - 50.
+    expect(findTravelCapsules(island)[0]).toHaveStyle({ transform: [{ translateX: 170 }] })
+  })
+
+  test('fades the traveling capsule out while the island collapses', async () => {
+    const ctx = createCtx()
+    await renderWithProviders(<CustomTabBar state={createMockState(0)} {...createBarProps()} />, {
+      ctx,
+    })
+
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    const island = findTabIsland()
+
+    if (!island) throw new Error(TAB_ISLAND_NOT_FOUND)
+
+    expect(findTravelCapsules(island)[0]).toHaveStyle({ opacity: 0 })
+  })
+
   test('folds the search button into the expanded compact island', async () => {
     const { getByRole } = await renderTabBar()
     const island = findTabIsland()
@@ -981,7 +1042,7 @@ describe('<CustomTabBar>', () => {
     expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 52 })
   })
 
-  test('drops the previously active tab highlight once search owns the row', async () => {
+  test('drops the previously active tab highlight once the capsule reaches search', async () => {
     const props = createBarProps()
     const { getByText, rerender } = await renderWithProviders(
       <CustomTabBar state={createMockState(3)} {...props} />,
@@ -989,6 +1050,17 @@ describe('<CustomTabBar>', () => {
     )
 
     await rerender(<CustomTabBar state={createMockState(1)} {...props} />)
+
+    // The traveling capsule is still parked on «Ещё», so that tab keeps the
+    // tint until the capsule leaves it.
+    expect(getByText('Ещё')).toHaveStyle({ color: '#f16031' })
+    expect(getByText('Поиск')).not.toHaveStyle({ color: '#f16031' })
+
+    // Four 100ms frames only land the travel; the overshoot and the return need
+    // two more before the settled React state re-reads the capsule position.
+    await act(async () => {
+      advanceMorphFrames(10)
+    })
 
     expect(getByText('Поиск')).toHaveStyle({ color: '#f16031' })
     expect(getByText('Ещё')).not.toHaveStyle({ color: '#f16031' })

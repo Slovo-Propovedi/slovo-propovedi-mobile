@@ -6,6 +6,7 @@ import { useTheme } from 'shared/ui/theme'
 import { getVisibleTabRoutes, SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
 import { type TabBarProps } from '../lib/tabBarTypes'
 import { useActiveTabRouteKey } from '../lib/useActiveTabRouteKey'
+import { useCapsuleTravel } from '../lib/useCapsuleTravel'
 import { useFloatingShiftStyles } from '../lib/useFloatingShiftStyles'
 import { useRowInsetStyle } from '../lib/useRowInsetStyle'
 import { useTabBarMeasurement } from '../lib/useTabBarMeasurement'
@@ -13,8 +14,7 @@ import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { getFloatingContainerStyle, getIslandsRowStyle } from './getFloatingContainerStyle'
 import { styles } from './styles'
 import { TabBarSearchCircle } from './TabBarSearchCircle'
-import { TabBarTab } from './TabBarTab'
-import { TabIslandSearchSlot } from './TabIslandSearchSlot'
+import { TabIslandContent } from './TabIslandContent'
 import { useTabPress } from './useTabPress'
 
 export const CustomTabBar = ({
@@ -60,6 +60,15 @@ export const CustomTabBar = ({
     rowWidth,
     windowWidth,
   })
+  const { motion, motionFor, resting } = useCapsuleTravel({
+    activeRouteKey,
+    hideSearch,
+    isExpanded: !isCollapsed,
+    isSearchFocused,
+    searchWidth: expandedSearchWidth,
+    tabRouteKeys: visibleRoutes.map(route => route.key),
+    tabWidth: expandedTabWidth,
+  })
   const bottomPadding = useBarBottomPadding()
   const { keyboardLiftStyle, shiftStyle } = useFloatingShiftStyles(insets.top)
   const { insetStyle, restingInsetStyle } = useRowInsetStyle(isWide)
@@ -81,45 +90,27 @@ export const CustomTabBar = ({
           animatedStyle={[islandStyle, restingIslandStyle]}
           hostStyle={[styles.floatingIsland, isWide && styles.floatingIslandElevated]}
         >
-          <Animated.View style={[styles.islandContent, contentStyle, restingContentStyle]}>
-            {visibleRoutes.map(route => {
-              // The fallback tab owns the collapsed circle while search is
-              // focused, but search is the active destination: the tab is not
-              // highlighted and search carries the active capsule.
-              const isActiveSlot = route.key === activeRouteKey
-
-              return (
-                <TabBarTab
-                  key={route.key}
-                  progress={progress}
-                  routeKey={route.key}
-                  isWideLayout={isWide}
-                  routeName={route.name}
-                  isActiveSlot={isActiveSlot}
-                  isBarCollapsed={isCollapsed}
-                  expandedWidth={expandedTabWidth}
-                  isSettledOneLine={settledOneLine}
-                  oneLineProgress={oneLineProgress}
-                  isSettledCollapsed={settledCollapsed}
-                  isDisabled={!isTabAvailable(route.name)}
-                  isHighlighted={isActiveSlot && !isSearchFocused}
-                  onPress={() => handleTabPress(route, isActiveSlot)}
-                />
-              )
-            })}
-            {!hideSearch && (
-              <TabIslandSearchSlot
-                progress={progress}
-                isWideLayout={isWide}
-                isCollapsed={isCollapsed}
-                isActive={isSearchFocused}
-                isSettledOneLine={settledOneLine}
-                oneLineProgress={oneLineProgress}
-                expandedWidth={expandedSearchWidth}
-                isSettledCollapsed={settledCollapsed}
-              />
-            )}
-          </Animated.View>
+          <TabIslandContent
+            isWide={isWide}
+            capsule={motion}
+            progress={progress}
+            motionFor={motionFor}
+            hideSearch={hideSearch}
+            restingCapsule={resting}
+            isCollapsed={isCollapsed}
+            contentStyle={contentStyle}
+            visibleRoutes={visibleRoutes}
+            activeRouteKey={activeRouteKey}
+            handleTabPress={handleTabPress}
+            isTabAvailable={isTabAvailable}
+            settledOneLine={settledOneLine}
+            isSearchFocused={isSearchFocused}
+            oneLineProgress={oneLineProgress}
+            expandedTabWidth={expandedTabWidth}
+            settledCollapsed={settledCollapsed}
+            expandedSearchWidth={expandedSearchWidth}
+            restingContentStyle={restingContentStyle}
+          />
         </GlassIsland>
       </Animated.View>
       {!hideSearch && !isWide && <TabBarSearchCircle isActive={isSearchFocused} />}

@@ -1,5 +1,6 @@
 import { type SharedValue } from 'react-native-reanimated'
 import { OnboardingTarget } from 'features/onboarding'
+import { type SlotCapsuleMotion } from '../lib/capsuleTravel'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
 import { TabSlot } from './TabSlot'
@@ -7,6 +8,7 @@ import { TabSlot } from './TabSlot'
 // One regular tab: its morphed slot plus the in-slot button and onboarding
 // target. Kept separate from the bar so the bar reads as layout composition.
 export const TabBarTab = ({
+  capsuleMotion,
   expandedWidth,
   isActiveSlot,
   isBarCollapsed,
@@ -21,6 +23,8 @@ export const TabBarTab = ({
   routeKey,
   routeName,
 }: {
+  /** Traveling capsule geometry for this slot's label/icon reaction. */
+  capsuleMotion?: SlotCapsuleMotion
   expandedWidth: number
   isActiveSlot: boolean
   isBarCollapsed: boolean
@@ -56,6 +60,7 @@ export const TabBarTab = ({
         isActive={isHighlighted}
         isWideLayout={isWideLayout}
         collapseProgress={progress}
+        capsuleMotion={capsuleMotion}
         oneLineProgress={oneLineProgress}
         isBarVisuallyCollapsed={isBarCollapsed}
       />

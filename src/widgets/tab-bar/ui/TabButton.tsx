@@ -1,4 +1,4 @@
-import { StyleSheet, Text } from 'react-native'
+import { Text } from 'react-native'
 import Animated, {
   type SharedValue,
   useAnimatedStyle,
@@ -6,33 +6,20 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useTheme } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
+import { type SlotCapsuleMotion } from '../lib/capsuleTravel'
 import { getTabItemStyle } from '../lib/getBarMorphStyles'
-import { WIDE_TAB_LABEL_SIZE } from '../lib/getIslandStyle'
-import { getCapsuleOpacity, getTabIconOffset } from '../lib/getTabItemStyle'
-import { ActiveTabCapsule } from './ActiveTabCapsule'
+import { getTabIconOffset } from '../lib/getTabItemStyle'
+import { highlightStyles } from './highlightStyles'
 import { styles } from './styles'
 import { TabIcon } from './TabIcon'
 import { getTabLabel } from './tabLabels'
+import { useSlotHighlightStyles } from './useSlotHighlightStyles'
 
 const AnimatedText = Animated.createAnimatedComponent(Text)
 
-// Wide tabs are text-only: the label leaves the absolute layer and becomes the
-// item's only centred child, growing to the wider pill size.
-const wideLabelStyle = StyleSheet.create({
-  label: { fontSize: WIDE_TAB_LABEL_SIZE, fontWeight: '500', textAlign: 'center' },
-})
-
-// The wide search slot is icon-only. Its icon must carry an explicit zero lift
-// instead of merely dropping the compact animated style: Reanimated writes
-// transforms straight to the web DOM, and a transform frozen from the compact
-// first frame (window dimensions land after mount) would keep the compact -8
-// and pin the magnifier to the top of the 48dp slot (Issue #152 pattern).
-const wideIconStyle = StyleSheet.create({
-  centered: { transform: [{ translateY: 0 }] },
-})
-
 export const TabButton = ({
   accessibilityLabel,
+  capsuleMotion,
   collapseProgress,
   isActive,
   isBarVisuallyCollapsed = false,
@@ -46,6 +33,8 @@ export const TabButton = ({
 }: {
   /** Explicit control name; otherwise it is derived from the icon + label. */
   accessibilityLabel?: string
+  /** The traveling capsule geometry this slot reacts to (absent outside the bar). */
+  capsuleMotion?: SlotCapsuleMotion
   // Shared 0..1 bar-morph progress: labels fade out as the island becomes a circle.
   collapseProgress?: SharedValue<number>
   isActive: boolean
@@ -74,10 +63,19 @@ export const TabButton = ({
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: getTabIconOffset(labelProgress.value) }],
   }))
-  const capsuleStyle = useAnimatedStyle(() => ({
-    opacity: getCapsuleOpacity(labelProgress.value, isActive),
-  }))
-  const color = isDisabled
+  const { labelColorStyle, pulseStyle } = useSlotHighlightStyles({
+    collapseProgress: labelProgress,
+    isActive,
+    isDisabled: isDisabled ?? false,
+    motion: capsuleMotion,
+    palette: {
+      muted: currentTheme.textMuted,
+      primary: currentTheme.primary,
+      text: currentTheme.text,
+    },
+  })
+  // The icon keeps the plain route state; the label alone rides the capsule.
+  const iconColor = isDisabled
     ? currentTheme.textMuted
     : isActive
       ? currentTheme.primary
@@ -96,20 +94,23 @@ export const TabButton = ({
       hapticDisabled={isActive && !isBarVisuallyCollapsed}
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
     >
-      <Animated.View style={[styles.tabItem, itemStyle]}>
-        {isActive && <ActiveTabCapsule style={capsuleStyle} />}
+      <Animated.View style={[styles.tabItem, itemStyle, pulseStyle]}>
         {!isWideTab && (
           // Wide has no stacked label to make room for, so the icon keeps an
           // explicit zero lift and stays centred in the slim slot.
-          <Animated.View style={isWideLayout ? wideIconStyle.centered : iconStyle}>
-            <TabIcon color={color} isActive={isActive} routeName={routeName} />
+          <Animated.View style={isWideLayout ? highlightStyles.wideIconCentered : iconStyle}>
+            <TabIcon color={iconColor} isActive={isActive} routeName={routeName} />
           </Animated.View>
         )}
         {!isWideSearch && (
           <AnimatedText
             numberOfLines={1}
             maxFontSizeMultiplier={1.2}
-            style={[isWideTab ? wideLabelStyle.label : styles.tabText, { color }, labelStyle]}
+            style={[
+              isWideTab ? highlightStyles.wideLabel : styles.tabText,
+              labelColorStyle,
+              labelStyle,
+            ]}
           >
             {getTabLabel(routeName)}
           </AnimatedText>

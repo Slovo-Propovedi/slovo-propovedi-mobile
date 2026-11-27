@@ -49,10 +49,3 @@ export const getTabItemHeight = (oneLineProgress: number, isWideLayout = false) 
 
   return getIslandHeight(clamped, isWideLayout) - getTabItemVerticalMargin(clamped) * 2
 }
-
-// The primary capsule belongs to the expanded bar only: the collapsed circle
-// shows just the active icon, without the pill highlight behind it.
-export const getCapsuleOpacity = (progress: number, isActive: boolean) => {
-  'worklet'
-  return isActive ? 1 - clampProgress(progress) : 0
-}

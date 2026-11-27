@@ -4,6 +4,7 @@ import { type SharedValue } from 'react-native-reanimated'
 import { hapticLight } from 'shared/lib/haptics'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
 import { TAB_BAR_ISLAND_HEIGHT } from 'shared/ui/layout'
+import { type SlotCapsuleMotion } from '../lib/capsuleTravel'
 import { WIDE_TAB_LABEL_SIZE } from '../lib/getIslandStyle'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
@@ -21,14 +22,29 @@ jest.mock('shared/ui/theme', () => {
 
 const mockedHapticLight = hapticLight as jest.MockedFunction<typeof hapticLight>
 const noop = () => {}
-const CAPSULE_COLOR = 'rgba(241, 96, 49, 0.18)'
 
 const progressValue = (value: number) => ({ value }) as unknown as SharedValue<number>
 
-const findCapsule = () =>
-  screen.root?.queryAll(
-    instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === CAPSULE_COLOR,
-  )[0]
+const travelMotion = ({
+  arrivalPulse = 0,
+  capsuleCenter,
+  isTravelTarget = false,
+  slotCenter,
+  travelActivity = 1,
+}: {
+  arrivalPulse?: number
+  capsuleCenter: number
+  isTravelTarget?: boolean
+  slotCenter: number
+  travelActivity?: number
+}): SlotCapsuleMotion => ({
+  arrivalPulse: progressValue(arrivalPulse),
+  capsuleCenter: progressValue(capsuleCenter),
+  isTravelTarget,
+  slotCenter,
+  slotWidth: 88,
+  travelActivity: progressValue(travelActivity),
+})
 
 const findIconGlyphs = (color: string) =>
   screen.root?.queryAll(instance => {
@@ -43,7 +59,15 @@ const renderTabButton = async (
   collapseProgress = progressValue(0),
   isBarVisuallyCollapsed = false,
   oneLineProgress = progressValue(0),
-  { isSearchSlot = false, isWideLayout = false } = {},
+  {
+    capsuleMotion,
+    isSearchSlot = false,
+    isWideLayout = false,
+  }: {
+    capsuleMotion?: SlotCapsuleMotion
+    isSearchSlot?: boolean
+    isWideLayout?: boolean
+  } = {},
 ) =>
   await renderWithProviders(
     <TabButton
@@ -53,6 +77,7 @@ const renderTabButton = async (
       routeName={routeName}
       isSearchSlot={isSearchSlot}
       isWideLayout={isWideLayout}
+      capsuleMotion={capsuleMotion}
       oneLineProgress={oneLineProgress}
       collapseProgress={collapseProgress}
       isBarVisuallyCollapsed={isBarVisuallyCollapsed}
@@ -159,6 +184,45 @@ describe('<TabButton>', () => {
     expect(screen.getByText('Слушать')).toHaveStyle({ color: '#f16031' })
   })
 
+  test('lets the traveling capsule own the label tint while it is away', async () => {
+    // The destination is active, but the capsule is still parked on the old
+    // slot: the label must not jump to the primary tint before it arrives.
+    await renderTabButton('listen', true, progressValue(0), false, progressValue(0), {
+      capsuleMotion: travelMotion({ capsuleCenter: 0, slotCenter: 88 }),
+    })
+
+    expect(screen.getByText('Слушать')).toHaveStyle({ color: '#000' })
+  })
+
+  test('lights the label as the capsule covers the slot', async () => {
+    await renderTabButton('listen', false, progressValue(0), false, progressValue(0), {
+      capsuleMotion: travelMotion({ capsuleCenter: 88, slotCenter: 88 }),
+    })
+
+    expect(screen.getByText('Слушать')).toHaveStyle({ color: '#f16031' })
+  })
+
+  test('pulses the slot content while the capsule crosses it', async () => {
+    await renderTabButton('listen', false, progressValue(0), false, progressValue(0), {
+      capsuleMotion: travelMotion({ capsuleCenter: 88, slotCenter: 88 }),
+    })
+
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ transform: [{ scale: 1.04 }] })
+  })
+
+  test('pulses stronger on arrival than on a pass-through', async () => {
+    await renderTabButton('listen', true, progressValue(0), false, progressValue(0), {
+      capsuleMotion: travelMotion({
+        arrivalPulse: 1,
+        capsuleCenter: 88,
+        isTravelTarget: true,
+        slotCenter: 88,
+      }),
+    })
+
+    expect(screen.getByText('Слушать').parent).toHaveStyle({ transform: [{ scale: 1.12 }] })
+  })
+
   test('inactive tab tints the label with the theme text color', async () => {
     await renderTabButton('listen', false)
 
@@ -180,20 +244,6 @@ describe('<TabButton>', () => {
 
     expect(screen.getByText('Слушать')).toHaveStyle({ color: '#666' })
     expect(findIconGlyphs('#666')).toHaveLength(1)
-  })
-
-  test('active tab renders a primary-tinted capsule behind the item when expanded', async () => {
-    await renderTabButton('listen', true, progressValue(0))
-
-    expect(findCapsule()).toHaveStyle({ backgroundColor: CAPSULE_COLOR, opacity: 1 })
-  })
-
-  test('active capsule overhangs its slot so the label is not flush with the edges', async () => {
-    // The reference capsule is wider than one tab slot, so it bleeds into the
-    // inter-item gap instead of hugging the label.
-    await renderTabButton('listen', true, progressValue(0))
-
-    expect(findCapsule()).toHaveStyle({ left: -10, right: -10 })
   })
 
   test('expanded items split the 8dp neighbour gap on both sides', async () => {
@@ -243,16 +293,15 @@ describe('<TabButton>', () => {
     expect(styles.tabButton).toMatchObject({ minHeight: 48 })
   })
 
-  test('collapsed active tab hides the capsule highlight inside the circle', async () => {
-    await renderTabButton('listen', true, progressValue(1))
+  test('never paints a capsule of its own: the traveling capsule owns it', async () => {
+    await renderTabButton('listen', true, progressValue(0))
 
-    expect(findCapsule()).toHaveStyle({ backgroundColor: CAPSULE_COLOR, opacity: 0 })
-  })
-
-  test('inactive tab renders no capsule background', async () => {
-    await renderTabButton('listen', false)
-
-    expect(findCapsule()).toBeUndefined()
+    expect(
+      screen.root?.queryAll(
+        instance =>
+          StyleSheet.flatten(instance.props.style)?.backgroundColor === 'rgba(241, 96, 49, 0.18)',
+      ),
+    ).toHaveLength(0)
   })
 
   test('wide tab renders only its label at the wide font size', async () => {

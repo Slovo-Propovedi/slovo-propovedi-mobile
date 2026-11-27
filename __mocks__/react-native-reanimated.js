@@ -41,6 +41,34 @@ jest.mock('react-native-reanimated', () => {
       sin: () => 'sin',
     },
     interpolate: p => p,
+    interpolateColor: (value, inputRange, outputRange) => {
+      // Endpoints keep their exact spelling so colour assertions stay literal;
+      // mid values blend the RGB channels of the first and last stops.
+      if (value <= inputRange[0]) return outputRange[0]
+      if (value >= inputRange[inputRange.length - 1]) {
+        return outputRange[outputRange.length - 1]
+      }
+
+      const parseHex = color => {
+        const match = /^#([0-9a-f]{6})$/i.exec(color)
+
+        if (!match) return null
+
+        const int = parseInt(match[1], 16)
+
+        return [(int >> 16) & 255, (int >> 8) & 255, int & 255]
+      }
+      const from = parseHex(outputRange[0])
+      const to = parseHex(outputRange[outputRange.length - 1])
+
+      if (!from || !to) return outputRange[0]
+
+      const span = inputRange[inputRange.length - 1] - inputRange[0]
+      const progress = (value - inputRange[0]) / span
+      const channel = index => Math.round(from[index] + (to[index] - from[index]) * progress)
+
+      return `rgb(${channel(0)}, ${channel(1)}, ${channel(2)})`
+    },
     ReduceMotion: { Always: 'always', Never: 'never', System: 'system' },
     useAnimatedReaction: () => {
       // No-op: useAnimatedReaction synchronizes shared values from the UI

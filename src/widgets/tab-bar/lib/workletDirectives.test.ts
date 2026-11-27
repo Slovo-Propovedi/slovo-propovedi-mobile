@@ -12,7 +12,6 @@ const WORKLET_HELPERS: Array<[string, string[]]> = [
   [
     'getTabItemStyle.ts',
     [
-      'getCapsuleOpacity',
       'getTabIconOffset',
       'getTabItemHeight',
       'getTabItemHorizontalMargin',
@@ -20,6 +19,18 @@ const WORKLET_HELPERS: Array<[string, string[]]> = [
     ],
   ],
   ['getIslandMath.ts', ['clampProgress', 'getIslandHeight', 'interpolateSize']],
+  [
+    'capsuleTravel.ts',
+    [
+      'easeInOutSine',
+      'easeOutQuad',
+      'getNearestSlotOverlap',
+      'getSlotOverlap',
+      'getTravelDuration',
+    ],
+  ],
+  ['capsulePulse.ts', ['getSlotEmphasis', 'getTravelScale']],
+  ['capsuleTravelFrame.ts', ['enterPhase', 'stepCapsuleFrame']],
 ]
 
 const readSource = (file: string) => readFileSync(join(__dirname, file), 'utf8')

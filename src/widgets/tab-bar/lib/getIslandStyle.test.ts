@@ -5,7 +5,6 @@ import {
 } from 'shared/ui/layout'
 import { getIslandContentPadding, getIslandStyle, getTabSlotStyle } from './getIslandStyle'
 import {
-  getCapsuleOpacity,
   getTabIconOffset,
   getTabItemHeight,
   getTabItemHorizontalMargin,
@@ -313,24 +312,5 @@ describe('getTabItemHorizontalMargin', () => {
     expect(getTabItemHorizontalMargin(0.5)).toBe(2)
     expect(getTabItemHorizontalMargin(-1)).toBe(4)
     expect(getTabItemHorizontalMargin(2)).toBe(0)
-  })
-})
-
-describe('getCapsuleOpacity', () => {
-  test('expanded active tab shows the capsule highlight', () => {
-    expect(getCapsuleOpacity(0, true)).toBe(1)
-  })
-
-  test('collapsed active tab hides the capsule highlight inside the circle', () => {
-    expect(getCapsuleOpacity(1, true)).toBe(0)
-  })
-
-  test('inactive tabs never show the capsule', () => {
-    expect(getCapsuleOpacity(0, false)).toBe(0)
-    expect(getCapsuleOpacity(1, false)).toBe(0)
-  })
-
-  test('opacity crossfades with progress', () => {
-    expect(getCapsuleOpacity(0.5, true)).toBe(0.5)
   })
 })

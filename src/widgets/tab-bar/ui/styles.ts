@@ -1,21 +1,9 @@
 import { CONTENT_COLUMN_WIDTH } from 'shared/ui/layout'
 import { MIN_TOUCH_TARGET, RADIUSES } from 'shared/ui/theme'
-import { CAPSULE_HORIZONTAL_OVERHANG } from '../lib/getIslandStyle'
 
 const TAB_LABEL_BOTTOM = 4
 
 export const styles = {
-  // Background layer of the active tab highlight; its opacity follows the morph
-  // so the collapsed circle never shows the capsule. Overhanging the slot keeps
-  // the active label away from the rounded capsule ends.
-  capsule: {
-    borderRadius: RADIUSES.round,
-    bottom: 0,
-    left: -CAPSULE_HORIZONTAL_OVERHANG,
-    position: 'absolute' as const,
-    right: -CAPSULE_HORIZONTAL_OVERHANG,
-    top: 0,
-  },
   circleButton: {
     alignItems: 'center' as const,
     justifyContent: 'center' as const,

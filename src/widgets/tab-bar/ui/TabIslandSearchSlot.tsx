@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import { type SharedValue } from 'react-native-reanimated'
 import { OnboardingTarget } from 'features/onboarding'
 import { useOpenSearch } from 'features/sermon-search'
+import { type SlotCapsuleMotion } from '../lib/capsuleTravel'
 import { SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
 import { styles } from './styles'
 import { TabButton } from './TabButton'
@@ -18,6 +19,7 @@ const SEARCH_LABEL = 'Поиск'
 // bar is expanded and hands the row over to the separate circle when the bar
 // folds. The slot morphs with the tabs and shares their width, icon and label.
 export const TabIslandSearchSlot = ({
+  capsuleMotion,
   expandedWidth,
   isActive,
   isCollapsed,
@@ -27,6 +29,8 @@ export const TabIslandSearchSlot = ({
   oneLineProgress,
   progress,
 }: {
+  /** Traveling capsule geometry for the search slot's reaction. */
+  capsuleMotion?: SlotCapsuleMotion
   expandedWidth: number
   /** The search route is focused: paint the active-tab capsule on the slot. */
   isActive: boolean
@@ -72,6 +76,7 @@ export const TabIslandSearchSlot = ({
             collapseProgress={progress}
             isWideLayout={isWideLayout}
             routeKey={SEARCH_ROUTE_NAME}
+            capsuleMotion={capsuleMotion}
             routeName={SEARCH_ROUTE_NAME}
             accessibilityLabel={SEARCH_LABEL}
             oneLineProgress={oneLineProgress}
