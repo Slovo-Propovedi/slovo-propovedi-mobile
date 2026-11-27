@@ -1,9 +1,10 @@
 import { screen } from '@testing-library/react-native'
-import { type ComponentType, type ReactNode } from 'react'
-import { StyleSheet, View } from 'react-native'
+import { type ComponentType, type ReactNode, useContext } from 'react'
+import { StyleSheet, Text } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
-import { WIDE_TOP_CHROME_SCROLL_INSET } from '../layout/bottomBarLayout'
-import { getRefreshTopOffset, SPINNER_SLOT_HEIGHT } from './pull-to-refresh.lib'
+import { useIsWideLayout } from '../layout/lib/useIsWideLayout'
+import { getRefreshTopOffset } from './pull-to-refresh.lib'
+import { RefreshContext } from './refreshContext'
 
 // jest-expo resolves `.native.tsx` first; the web gesture wrapper is under test.
 const { PullToRefresh } = jest.requireActual<{
@@ -15,45 +16,57 @@ const { PullToRefresh } = jest.requireActual<{
   }>
 }>('./PullToRefresh.tsx')
 
-const CONTENT_ID = 'refresh-content'
+jest.mock('../layout/lib/useIsWideLayout', () => ({ useIsWideLayout: jest.fn() }))
 
-const renderRefresh = (topOffset?: number) =>
+const mockUseIsWideLayout = useIsWideLayout as jest.MockedFunction<typeof useIsWideLayout>
+
+const WIRED_TEXT = 'refresh-wired'
+
+const ContextProbe = () => {
+  const context = useContext(RefreshContext)
+
+  return <Text>{context ? WIRED_TEXT : 'no-refresh'}</Text>
+}
+
+const renderRefresh = (topOffset?: number, children: ReactNode = <></>) =>
   renderWithProviders(
     <PullToRefresh refreshing onRefresh={jest.fn()} topOffset={topOffset}>
-      <View testID={CONTENT_ID} />
+      {children}
     </PullToRefresh>,
   )
 
-// The spinner slot is the only absolutely positioned view in the wrapper.
-const spinnerNode = () =>
-  screen.root?.queryAll(node => StyleSheet.flatten(node.props.style)?.position === 'absolute')[0]
-
-const spinnerStyle = () => StyleSheet.flatten(spinnerNode()?.props.style)
+// The spinner slot is the only absolutely positioned view in the wrapper; its
+// `top` and stacking layer are the seams under test.
+const spinnerStyle = () =>
+  StyleSheet.flatten(
+    screen.root?.queryAll(node => StyleSheet.flatten(node.props.style)?.position === 'absolute')[0]
+      ?.props.style,
+  )
 
 describe('<PullToRefresh> (web)', () => {
-  test('renders the spinner inside the translated content wrapper', async () => {
-    await renderRefresh(getRefreshTopOffset(true))
-
-    // Same parent as the scrollable: the slot scrolls with the content instead
-    // of floating in a separate overlay above it.
-    expect(spinnerNode()?.parent).toBe(screen.getByTestId(CONTENT_ID).parent)
+  beforeEach(() => {
+    mockUseIsWideLayout.mockReturnValue(false)
   })
 
-  test('sits in the island-clearance zone above the first content row', async () => {
+  test('leaves the wide spinner to the actions container', async () => {
+    mockUseIsWideLayout.mockReturnValue(true)
+
     await renderRefresh(getRefreshTopOffset(true))
 
-    // The slot's bottom edge meets the first content row.
-    expect(spinnerStyle()?.top).toBe(WIDE_TOP_CHROME_SCROLL_INSET - SPINNER_SLOT_HEIGHT)
-    expect((spinnerStyle()?.top ?? 0) + SPINNER_SLOT_HEIGHT).toBe(WIDE_TOP_CHROME_SCROLL_INSET)
+    // In the wide layout the fixed WideTopActions overlay owns the spinner, so
+    // the pull wrapper must not render a second one.
+    expect(spinnerStyle()).toBeUndefined()
   })
 
-  test('paints with the content instead of a separate stacking layer', async () => {
-    await renderRefresh(getRefreshTopOffset(true))
+  test('keeps the wide refresh wiring for the overlay', async () => {
+    mockUseIsWideLayout.mockReturnValue(true)
 
-    expect(spinnerStyle()?.zIndex).toBeUndefined()
+    await renderRefresh(getRefreshTopOffset(true), <ContextProbe />)
+
+    expect(screen.getByText(WIRED_TEXT)).toBeTruthy()
   })
 
-  test('keeps the spinner at the content top in the compact layout (no offset)', async () => {
+  test('keeps the spinner at the top in the compact layout (no offset)', async () => {
     await renderRefresh()
 
     expect(spinnerStyle()?.top).toBe(0)

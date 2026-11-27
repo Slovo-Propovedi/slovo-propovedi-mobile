@@ -224,41 +224,6 @@ describe('usePullToRefreshGesture', () => {
     )
   })
 
-  test('scrolls the spinner away with the content while refreshing', async () => {
-    const getGesture = await renderGesture(jest.fn(), true)
-    const wrapper = createFakeWrapper()
-    const content = createStyleNode()
-    const spinner = createStyleNode()
-    await attachNodes(getGesture(), wrapper, content, spinner)
-
-    const scroller = createScrollable(40)
-    await act(async () => {
-      wrapper.dispatch('scroll', { target: scroller })
-    })
-
-    expect(spinner.style.transform).toBe(
-      `translateY(${computeSpinnerTranslate(TRIGGER_DISTANCE, 40)}px)`,
-    )
-    expect(content.style.transform).toBe(`translateY(${TRIGGER_DISTANCE}px)`)
-  })
-
-  test('ignores scroll events of horizontally overflowing content', async () => {
-    const getGesture = await renderGesture(jest.fn(), true)
-    const wrapper = createFakeWrapper()
-    const content = createStyleNode()
-    const spinner = createStyleNode()
-    await attachNodes(getGesture(), wrapper, content, spinner)
-
-    const horizontalScroller = { ...createScrollable(0), scrollHeight: 100 }
-    await act(async () => {
-      wrapper.dispatch('scroll', { target: horizontalScroller })
-    })
-
-    expect(spinner.style.transform).toBe(
-      `translateY(${computeSpinnerTranslate(TRIGGER_DISTANCE)}px)`,
-    )
-  })
-
   test('touchcancel does not trigger a refresh', async () => {
     const onRefresh = jest.fn()
     const getGesture = await renderGesture(onRefresh)

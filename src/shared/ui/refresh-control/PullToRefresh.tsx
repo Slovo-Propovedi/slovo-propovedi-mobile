@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import { useIsWideLayout } from '../layout/lib/useIsWideLayout'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { SPINNER_SLOT_HEIGHT } from './pull-to-refresh.lib'
 import { type PullToRefreshProps } from './pull-to-refresh.types'
@@ -12,15 +13,15 @@ import { usePullToRefreshGesture } from './usePullToRefreshGesture'
  * slides down while pulling and a spinner appears in the freed top slot. The
  * handler is also shared via `RefreshContext` for the desktop `RefreshButton`.
  *
- * The spinner lives INSIDE the translated content wrapper, anchored in the
- * top inset zone, so it rides the pull like the rest of the content and the
- * hook scrolls it away with the list. It is rendered after `children` so it
- * paints above the scrollable without a zIndex layer of its own.
+ * The wide layout has no spinner here: the fixed `WideTopActions` overlay hosts
+ * it, reading the same `RefreshContext`. The pull gesture still slides the
+ * content, it just leaves the spinner to that container. Compact keeps the
+ * in-wrapper slot.
  * @param root0 - Component props.
  * @param root0.children - Scrollable content wrapped by the gesture.
  * @param root0.onRefresh - Reload callback fired when a pull passes the threshold.
  * @param root0.refreshing - Controlled spinner state owned by the parent.
- * @param root0.topOffset - Spinner-slot top offset inside the scroll content (wide chrome).
+ * @param root0.topOffset - Extra spinner-slot top offset (compact layout).
  */
 export const PullToRefresh = ({
   children,
@@ -29,6 +30,7 @@ export const PullToRefresh = ({
   topOffset = 0,
 }: PullToRefreshProps) => {
   const { currentTheme } = useTheme()
+  const isWide = useIsWideLayout()
   const { contentRef, isArmed, spinnerRef, wrapperRef } = usePullToRefreshGesture({
     onRefresh,
     refreshing,
@@ -38,8 +40,7 @@ export const PullToRefresh = ({
   return (
     <RefreshContext.Provider value={refreshContext}>
       <View ref={wrapperRef} style={styles.wrapper}>
-        <View ref={contentRef} style={styles.content}>
-          {children}
+        {isWide ? null : (
           <View
             ref={spinnerRef}
             pointerEvents='none'
@@ -47,6 +48,9 @@ export const PullToRefresh = ({
           >
             <ActivityIndicator color={isArmed ? currentTheme.primary : currentTheme.textMuted} />
           </View>
+        )}
+        <View ref={contentRef} style={styles.content}>
+          {children}
         </View>
       </View>
     </RefreshContext.Provider>
@@ -66,11 +70,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0,
+    // Above the scrolling content (0), below the floating chrome (10): the
+    // content's own `translateY` makes it a stacking context that would
+    // otherwise cover the spinner in the wide layout.
+    zIndex: 5,
   },
   wrapper: {
     flex: 1,
-    // The slot follows the scroll content; clip it once it leaves the body.
-    overflow: 'hidden',
     overscrollBehavior: 'contain',
   },
 })

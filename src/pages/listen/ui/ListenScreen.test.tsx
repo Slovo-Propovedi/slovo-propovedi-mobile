@@ -9,6 +9,7 @@ import { renderWithProviders } from 'shared/mocks'
 import {
   BAR_OUTER_GAP,
   BAR_TOP_ISLAND_MARGIN,
+  WIDE_ACTIONS_CENTER_Y,
   WIDE_BAR_ROW_HEIGHT,
   WIDE_CONTENT_TOP_GAP,
   WIDE_TAB_ISLAND_HEIGHT,
@@ -303,12 +304,12 @@ describe('<ListenScreen>', () => {
     expect(refreshControl.props.progressViewOffset).toBe(WIDE_TOP_CHROME_SCROLL_INSET)
   })
 
-  test('puts the wide refresh spinner slot in the island-clearance zone', async () => {
+  test('levels the wide refresh spinner slot with the actions row', async () => {
     await renderWithProviders(<ListenScreen />, {})
 
-    // The 40 px slot ends where the first content row starts, below the island.
-    expect(mockPullToRefreshTopOffset).toBe(WIDE_TOP_CHROME_SCROLL_INSET - 40)
-    expect(mockPullToRefreshTopOffset).toBe(56)
+    // Slot height is 40, so its top is the row centre minus half the slot.
+    expect(mockPullToRefreshTopOffset).toBe(WIDE_ACTIONS_CENTER_Y - 20)
+    expect(mockPullToRefreshTopOffset).toBe(20)
   })
 
   test('keeps the compact refresh spinner slot at the top', async () => {

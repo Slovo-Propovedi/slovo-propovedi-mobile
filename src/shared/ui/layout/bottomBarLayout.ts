@@ -31,23 +31,23 @@ export const WIDE_BAR_ROW_HEIGHT = WIDE_TAB_ISLAND_HEIGHT + BAR_EXPANDED_ISLAND_
 // floats at the top of the screen: a small gap below the safe-area line that
 // matches the islands' outer gap.
 export const BAR_TOP_ISLAND_MARGIN = 8 as const
-// Top edge of the wide top-right actions row (island bottom-anchored in the chrome row).
+// One authority for the wide top-right actions row (the island is bottom-anchored
+// in the chrome row): its top edge, and the centre the web refresh spinner lines up with.
 export const WIDE_ACTIONS_TOP = BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT - WIDE_TAB_ISLAND_HEIGHT
+export const WIDE_ACTIONS_CENTER_Y = WIDE_ACTIONS_TOP + WIDE_TAB_ISLAND_HEIGHT / 2
 // Extra clearance between the wide island band and the first content row: the
 // island clearance alone leaves only BAR_OUTER_GAP below the pill, which reads as
 // cramped for a section header. Scroll content adds this on top of the band.
 export const WIDE_CONTENT_TOP_GAP = 24 as const
-// Circle stays circular at the uniform one-line height, so the diameter mirrors
-// the island height.
+/**
+ * The circle stays circular: width = height = radius * 2 at the uniform
+ * one-line height, so its diameter deliberately mirrors the island height.
+ */
 export const BAR_CIRCLE_SIZE = ONE_LINE_ROW_SIZE
 // Deliberately mirrors TAB_BAR_ISLAND_HEIGHT_EXPANDED (60) — the circle diameter IS the
 // expanded island height; keep in sync.
 export const BAR_CIRCLE_SIZE_EXPANDED = 60 as const
 export const BAR_OUTER_GAP = 8 as const
-// Scroll-content part of the wide top chrome: the island clearance and the extra
-// content gap live in the scroller's top padding; the safe-area strip stays outside.
-export const WIDE_TOP_CHROME_SCROLL_INSET =
-  BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP
 // Vertical gap between the floating mini-player pill and the expanded island's
 // top edge. Apple Music keeps the pill visibly detached (Issue #153), so the pill
 // floats higher above the islands row than the horizontal BAR_OUTER_GAP between
