@@ -8,6 +8,7 @@ import { useFeatureFlag } from 'entities/feature-flags'
 import { searchHistoryAtom } from 'entities/search-history'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
+import { advanceMorphFrames } from 'shared/mocks/morphFrames'
 import { showInfo } from 'shared/model/info-dialog'
 import { isBarCollapsedAtom, setBarCollapsed } from 'shared/ui/layout'
 import { INDENTS } from 'shared/ui/theme'
@@ -95,6 +96,13 @@ jest.mock('entities/listening-history', () => ({
 
 const RECENT_SEARCHES_TITLE = 'Недавние поиски'
 const SEARCH_PLACEHOLDER = 'Проповеди, проповедники, название книги'
+const READ_PLACEHOLDER = 'Раздел «Читать» скоро появится'
+const GROUP_TABS_ID = 'search-group-tabs'
+const TITLE_BLOCK_ID = 'search-title-block'
+const SCOPE_BLOCK_ID = 'search-scope-block'
+const TITLE_BLOCK_HEIGHT = 48
+const SCOPE_BLOCK_HEIGHT = 60
+const CATEGORY_ROW_HEIGHT = 44
 const CLEAR_LABEL = 'Очистить'
 const CANCEL_LABEL = 'Отмена'
 const CLEAR_DIALOG_TITLE = 'Очистить историю поиска?'
@@ -160,7 +168,7 @@ const getFieldIndex = () => findNodeIndex(node => node.props.placeholder === SEA
 
 const getScopeTabsIndex = () => findNodeIndex(node => node.props.testID === 'pill-tabs-stretch-row')
 
-const getResultsTabsIndex = () => findNodeIndex(node => node.props.testID === 'search-group-tabs')
+const getResultsTabsIndex = () => findNodeIndex(node => node.props.testID === GROUP_TABS_ID)
 
 const renderScreen = async ({
   focused = false,
@@ -187,17 +195,25 @@ const renderScreen = async ({
   const onAddToPlaylist = jest.fn()
   const onPreacherPress = jest.fn()
 
-  const result = await renderWithProviders(
+  const buildElement = () => (
     <SearchScreen
       onSermonPress={onSermonPress}
       onAddToPlaylist={onAddToPlaylist}
       onPlaylistPress={onPlaylistPress}
       onPreacherPress={onPreacherPress}
-    />,
-    { ctx },
+    />
   )
+  const result = await renderWithProviders(buildElement(), { ctx })
 
-  return { ...result, ctx, onAddToPlaylist, onPlaylistPress, onPreacherPress, onSermonPress }
+  return {
+    ...result,
+    buildElement,
+    ctx,
+    onAddToPlaylist,
+    onPlaylistPress,
+    onPreacherPress,
+    onSermonPress,
+  }
 }
 
 const historyEntry = (sermon: SermonData): { savedAt: number; sermon: AudioPlayerData } => ({
@@ -381,6 +397,115 @@ describe('<SearchScreen>', () => {
     expect(screen.getByRole('button', { name: 'Слушать' })).toBeTruthy()
   })
 
+  test('folds the page title and scope select away when the results pose takes over', async () => {
+    const { ctx } = await renderScreen({ focused: true, history: [SERMON] })
+
+    expect(screen.getByTestId(TITLE_BLOCK_ID)).toHaveStyle({
+      height: TITLE_BLOCK_HEIGHT,
+      opacity: 1,
+    })
+    expect(screen.getByTestId(SCOPE_BLOCK_ID)).toHaveStyle({
+      height: SCOPE_BLOCK_HEIGHT,
+      opacity: 1,
+    })
+    expect(screen.queryByTestId(GROUP_TABS_ID)).toBeNull()
+
+    await act(async () => {
+      searchQueryAtom(ctx, 'вера')
+    })
+
+    // The flip starts the morph; its first frame still carries the whole chrome.
+    expect(screen.getByTestId(TITLE_BLOCK_ID)).toHaveStyle({
+      height: TITLE_BLOCK_HEIGHT,
+      opacity: 1,
+    })
+
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    // Landed: the space above the field is gone and the chrome is unmounted.
+    expect(screen.queryByTestId(TITLE_BLOCK_ID)).toBeNull()
+    expect(screen.queryByTestId(SCOPE_BLOCK_ID)).toBeNull()
+    expect(screen.getByTestId(GROUP_TABS_ID)).toHaveStyle({
+      height: CATEGORY_ROW_HEIGHT,
+      opacity: 1,
+    })
+  })
+
+  test('keeps the title half folded on an intermediate morph frame', async () => {
+    const { buildElement, ctx, rerender } = await renderScreen({ focused: true })
+
+    await act(async () => {
+      searchQueryAtom(ctx, 'вера')
+    })
+    await act(async () => {
+      advanceMorphFrames(1, 50)
+    })
+    await act(async () => {
+      rerender(buildElement())
+    })
+
+    const titleStyle = StyleSheet.flatten(screen.getByTestId(TITLE_BLOCK_ID).props.style)
+
+    expect(titleStyle.height).toBeGreaterThan(0)
+    expect(titleStyle.height).toBeLessThan(TITLE_BLOCK_HEIGHT)
+  })
+
+  test('unfolds the category pills from under the field after the chrome folds', async () => {
+    const { buildElement, ctx, rerender } = await renderScreen({ focused: true })
+
+    await act(async () => {
+      searchQueryAtom(ctx, 'вера')
+    })
+
+    // First frame: categories exist below the field but are still folded away.
+    expect(screen.getByTestId(GROUP_TABS_ID)).toHaveStyle({ height: 0, opacity: 0 })
+    expect(getFieldIndex()).toBeLessThan(getResultsTabsIndex())
+
+    await act(async () => {
+      advanceMorphFrames(1, 60)
+    })
+    await act(async () => {
+      rerender(buildElement())
+    })
+
+    // The title folded first; the pills wait for it to get out of the way.
+    expect(screen.getByTestId(GROUP_TABS_ID)).toHaveStyle({ height: 0 })
+
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    expect(screen.getByTestId(GROUP_TABS_ID)).toHaveStyle({
+      height: CATEGORY_ROW_HEIGHT,
+      opacity: 1,
+    })
+  })
+
+  test('keeps the chosen scope through a fold and unfold cycle', async () => {
+    const { ctx } = await renderScreen({ focused: true, readEnabled: true })
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Читать' }))
+    await act(async () => {
+      searchQueryAtom(ctx, 'вера')
+    })
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    expect(screen.getByText(READ_PLACEHOLDER)).toBeTruthy()
+
+    await act(async () => {
+      searchQueryAtom(ctx, '')
+    })
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    expect(screen.getByRole('button', { name: 'Читать' })).toBeSelected()
+  })
+
   test('renders the group select in the results style', async () => {
     await renderScreen({ focused: true, query: 'вера' })
 
@@ -396,7 +521,7 @@ describe('<SearchScreen>', () => {
   test('adds extra space below the results select', async () => {
     await renderScreen({ focused: true, query: 'вера' })
 
-    expect(screen.getByTestId('search-group-tabs')).toHaveStyle({ marginBottom: INDENTS.medium })
+    expect(screen.getByTestId(GROUP_TABS_ID)).toHaveStyle({ marginBottom: INDENTS.medium })
   })
 
   test('explains that the read scope is unavailable when its flag is off', async () => {
@@ -531,7 +656,7 @@ describe('<SearchScreen>', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Читать' }))
 
     expect(screen.getByRole('header', { name: 'Поиск' })).toBeTruthy()
-    expect(screen.getByText('Раздел «Читать» скоро появится')).toBeTruthy()
+    expect(screen.getByText(READ_PLACEHOLDER)).toBeTruthy()
     expect(screen.queryByText(RECENT_SEARCHES_TITLE)).toBeNull()
   })
 
@@ -543,7 +668,7 @@ describe('<SearchScreen>', () => {
       searchQueryAtom(ctx, 'вера')
     })
 
-    expect(screen.getByText('Раздел «Читать» скоро появится')).toBeTruthy()
+    expect(screen.getByText(READ_PLACEHOLDER)).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Проповеди' })).toBeNull()
     expect(mockUsePagedSearch).toHaveBeenLastCalledWith('')
   })

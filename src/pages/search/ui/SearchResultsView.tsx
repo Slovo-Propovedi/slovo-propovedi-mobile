@@ -1,5 +1,6 @@
 import { type ReactElement } from 'react'
-import { StyleSheet, View } from 'react-native'
+import { StyleSheet } from 'react-native'
+import Animated, { type useAnimatedStyle } from 'react-native-reanimated'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
 import { INDENTS } from 'shared/ui/theme'
@@ -30,6 +31,7 @@ export const SearchResultsView = ({
   onSermonPress,
   paged,
   query,
+  tabsStyle,
 }: {
   group: SearchGroup
   onAddToPlaylist?: (sermon: AudioPlayerData) => void
@@ -40,9 +42,10 @@ export const SearchResultsView = ({
   onSermonPress: (sermon: SermonData) => void
   paged: PagedSearch
   query: string
+  tabsStyle?: ReturnType<typeof useAnimatedStyle>
 }) => (
   <>
-    <View style={styles.groupTabs} testID='search-group-tabs'>
+    <Animated.View testID='search-group-tabs' style={[styles.groupTabs, tabsStyle]}>
       <PillTabs
         value={group}
         variant='results'
@@ -50,7 +53,7 @@ export const SearchResultsView = ({
         wrapItem={wrapGroupPill}
         onChange={onChangeGroup}
       />
-    </View>
+    </Animated.View>
     <SearchResultsList
       group={group}
       paged={paged}
@@ -68,5 +71,6 @@ export const SearchResultsView = ({
 
 const styles = StyleSheet.create({
   // Extra gap under the results select, the only top row while a query is active.
-  groupTabs: { marginBottom: INDENTS.medium },
+  // Clipping keeps the not-yet-revealed pills under the field during the morph.
+  groupTabs: { marginBottom: INDENTS.medium, overflow: 'hidden' },
 })

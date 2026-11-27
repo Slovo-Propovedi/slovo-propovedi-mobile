@@ -5,16 +5,18 @@ import { searchQueryAtom } from 'features/sermon-search'
 import { type PlaylistData } from 'entities/playlist'
 import { isSearchHistoryLoadedAtom, loadSearchHistoryAction } from 'entities/search-history'
 import { type AudioPlayerData, type SermonData } from 'entities/sermon'
-import { EmptyState, ScreenTitleRow } from 'shared/ui'
+import { EmptyState } from 'shared/ui'
 import { INDENTS } from 'shared/ui/theme'
 import { type SearchGroup } from '../lib/searchGroup'
 import { MIN_RESULTS_VIEW_LENGTH } from '../lib/searchThresholds'
 import { usePagedSearch } from '../lib/usePagedSearch'
+import { useResultsTransition } from '../lib/useResultsTransition'
 import { useSearchResultActions } from '../lib/useSearchResultActions'
 import { RecentSearchesSection } from './RecentSearchesSection'
+import { SearchChrome } from './SearchChrome'
 import { SearchPageField } from './SearchPageField'
 import { SearchResultsView } from './SearchResultsView'
-import { type SearchScope, SearchScopeTabs } from './SearchScopeTabs'
+import { type SearchScope } from './SearchScopeTabs'
 
 const READ_PLACEHOLDER = 'Раздел «Читать» скоро появится'
 
@@ -65,43 +67,47 @@ export const SearchScreen = ({
     setGroup(toSearchGroup(key))
   }, [])
 
-  // Ruling: the results pose has no «Поиск» title — the group select takes its
-  // place, and only the results list changes with focus. The field stays above
-  // the results content until the query is cleared.
-  if (showResults)
-    return (
-      <View style={styles.container}>
-        <SearchPageField />
-        {scope === 'read' ? (
-          <EmptyState message={READ_PLACEHOLDER} />
-        ) : (
-          <SearchResultsView
-            group={group}
-            paged={paged}
-            query={query}
-            onChangeGroup={handleGroupChange}
-            onSermonPress={handleSermonPress}
-            onPlaylistPress={onPlaylistPress}
-            onAddToPlaylist={onAddToPlaylist}
-            onPreacherPress={handlePreacherPress}
-            onRemoveFromSearchHistory={handleRemoveFromSearchHistory}
-          />
-        )}
-      </View>
-    )
+  const { categoriesStyle, isResultsSettled, scopeStyle, titleStyle } =
+    useResultsTransition(showResults)
 
-  // One main page for every short query, focused or not: title, scope select,
-  // page field and recents never unmount on focus changes.
+  // Ruling: the results pose has no «Поиск» title — the group select takes its
+  // place. The field keeps one flow slot in both poses, so the chrome above it
+  // folds away (and the category pills unfold below it) instead of jumping.
+  const content = showResults ? (
+    scope === 'read' ? (
+      <EmptyState message={READ_PLACEHOLDER} />
+    ) : (
+      <SearchResultsView
+        group={group}
+        paged={paged}
+        query={query}
+        tabsStyle={categoriesStyle}
+        onChangeGroup={handleGroupChange}
+        onSermonPress={handleSermonPress}
+        onPlaylistPress={onPlaylistPress}
+        onAddToPlaylist={onAddToPlaylist}
+        onPreacherPress={handlePreacherPress}
+        onRemoveFromSearchHistory={handleRemoveFromSearchHistory}
+      />
+    )
+  ) : scope === 'read' ? (
+    <EmptyState message={READ_PLACEHOLDER} />
+  ) : (
+    <RecentSearchesSection onPress={handleSermonPress} onAddToPlaylist={onAddToPlaylist} />
+  )
+
   return (
     <View style={styles.container}>
-      <ScreenTitleRow title='Поиск' />
-      <SearchScopeTabs value={scope} onChange={handleScopeChange} />
+      <SearchChrome
+        scope={scope}
+        scopeStyle={scopeStyle}
+        titleStyle={titleStyle}
+        onChange={handleScopeChange}
+        isHidden={showResults && isResultsSettled}
+        isScopeClipped={showResults || isResultsSettled}
+      />
       <SearchPageField />
-      {scope === 'read' ? (
-        <EmptyState message={READ_PLACEHOLDER} />
-      ) : (
-        <RecentSearchesSection onPress={handleSermonPress} onAddToPlaylist={onAddToPlaylist} />
-      )}
+      {content}
     </View>
   )
 }
