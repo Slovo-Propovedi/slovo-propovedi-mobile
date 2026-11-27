@@ -104,7 +104,7 @@ export const useCapsuleTravel = ({
       return
     }
 
-    capsuleTravelDriver.travelTo(landing, Math.abs(activeIndex - previous), slotRects)
+    capsuleTravelDriver.travelTo(landing, Math.abs(activeIndex - previous))
   }, [activeIndex, isExpanded, slotRects])
 
   const activeRect = slotRects[activeIndex]

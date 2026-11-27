@@ -20,6 +20,7 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
   const hosts = new Set<MorphFrameHost>()
   const settledListeners = new Set<() => void>()
   let isRunningFlag = false
+  let lastSettledTravelId = -1
 
   // Opens a new travel generation and mirrors it into the frame state so the
   // worklet can stamp its scheduled callbacks with the id.
@@ -34,9 +35,12 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
     for (const host of hosts) host.setActive(host === primary && isRunningFlag)
   }
 
+  // Spring-back bookkeeping only: the Medium landing cue already fired on the
+  // last travel beat, not here. Stale/duplicate deliveries are dropped.
   const settle = (travelId: number) => {
-    if (!haptics.land(travelId)) return
+    if (!haptics.isCurrent(travelId) || travelId === lastSettledTravelId) return
 
+    lastSettledTravelId = travelId
     isRunningFlag = false
     syncActiveHosts()
     for (const listener of settledListeners) listener()
@@ -45,11 +49,13 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
   const frameStep = (frameInfo: FrameInfo) => {
     'worklet'
 
-    const { landed, passedSlots, travelId } = stepCapsuleFrame(state, frameInfo)
+    const { landBeat, lightBeats, settled, travelId } = stepCapsuleFrame(state, frameInfo)
 
-    for (let pass = 0; pass < passedSlots; pass++) scheduleOnRN(haptics.firePass, travelId)
+    for (let beat = 0; beat < lightBeats; beat++) scheduleOnRN(haptics.firePass, travelId)
 
-    if (landed) scheduleOnRN(settle, travelId)
+    if (landBeat) scheduleOnRN(haptics.land, travelId)
+
+    if (settled) scheduleOnRN(settle, travelId)
   }
 
   const snapTo = (landing: CapsuleLanding) => {
@@ -82,6 +88,7 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
       }
     },
     reset: () => {
+      lastSettledTravelId = -1
       haptics.reset()
       snapTo({ center: 0, width: 0 })
       for (const host of hosts) host.setActive(false)
@@ -90,12 +97,12 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
     },
     snapTo,
     travelActivity: state.travelActivity,
-    travelTo: (landing, slotDistance, slotRects) => {
+    travelTo: (landing, slotDistance) => {
       // A press starts the travel synchronously; the route-render effect then
       // reconciles with the same destination. Keep the already-running trip
       // instead of rewinding it to the current frame. No new generation here:
       // the idempotent reconcile must not invalidate the running travel's
-      // queued pass/settle events.
+      // queued beat events.
       if (isRunningFlag && state.targetCenter.value === landing.center) return
 
       if (slotDistance <= 0 || state.capsuleCenter.value === landing.center) {
@@ -105,7 +112,7 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
       }
 
       beginTravel()
-      beginCapsuleTravel(state, landing, slotDistance, slotRects)
+      beginCapsuleTravel(state, landing, slotDistance)
       isRunningFlag = true
       syncActiveHosts()
     },

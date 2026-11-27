@@ -1,6 +1,5 @@
 import { type FrameInfo, type SharedValue } from 'react-native-reanimated'
 import { type MorphFrameHost } from 'shared/lib/hooks/atomMorphClock'
-import { type CapsuleSlotRect } from '../lib/capsuleTravel'
 import { type CapsuleLanding } from '../lib/capsuleTravelState'
 
 export interface CapsuleTravelDriver {
@@ -16,9 +15,5 @@ export interface CapsuleTravelDriver {
   snapTo: (landing: CapsuleLanding) => void
   travelActivity: SharedValue<number>
   /** Glides to the landing, then overshoots along the trajectory and returns. */
-  travelTo: (
-    landing: CapsuleLanding,
-    slotDistance: number,
-    slotRects: readonly CapsuleSlotRect[],
-  ) => void
+  travelTo: (landing: CapsuleLanding, slotDistance: number) => void
 }

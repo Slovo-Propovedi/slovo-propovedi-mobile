@@ -23,6 +23,11 @@ export const createCapsuleTravelHaptics = () => {
       hapticHighlightPass()
     },
     /**
+     * Whether the id still belongs to the current travel.
+     * @param id - Travel id a scheduled callback was born under.
+     */
+    isCurrent: (id: number) => id === travelId,
+    /**
      * True only once per current travel: the landing cue may fire just once.
      * @param id - Travel id the landing frame was born under.
      */

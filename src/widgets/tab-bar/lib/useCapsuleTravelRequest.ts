@@ -35,11 +35,7 @@ export const useCapsuleTravelRequest = (
 
       if (!rect || distance === 0) return
 
-      capsuleTravelDriver.travelTo(
-        { center: rect.center, width: rect.capsuleWidth },
-        distance,
-        rects,
-      )
+      capsuleTravelDriver.travelTo({ center: rect.center, width: rect.capsuleWidth }, distance)
     },
     [currentSlotIndex],
   )

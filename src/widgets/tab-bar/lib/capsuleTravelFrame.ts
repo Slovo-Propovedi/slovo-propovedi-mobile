@@ -1,11 +1,11 @@
 import { type FrameInfo } from 'react-native-reanimated'
-import { collectSlotPasses } from './capsuleSlotPasses'
 import {
   CAPSULE_OVERSHOOT_MS,
   CAPSULE_RETURN_MS,
   easeInOutSine,
   easeOutQuad,
 } from './capsuleTravel'
+import { collectTravelBeats } from './capsuleTravelBeats'
 import {
   CAPSULE_PHASE_OVERSHOOT,
   CAPSULE_PHASE_RETURN,
@@ -18,10 +18,12 @@ import {
 const MAX_FRAME_DELTA_MS = 100
 
 interface CapsuleFrameResult {
-  /** The arrival frame: the JS surface commits its settled React state. */
-  landed: boolean
-  /** Intermediate slots whose bounds the capsule swept into this frame. */
-  passedSlots: number
+  /** The last beat of the trip: the JS surface fires the Medium landing cue. */
+  landBeat: boolean
+  /** Light beats due this frame (every beat except the last). */
+  lightBeats: number
+  /** Spring-back finished: the JS surface commits its settled React state. */
+  settled: boolean
   /** Id of the travel this frame belongs to; the JS side drops stale events. */
   travelId: number
 }
@@ -32,9 +34,11 @@ const enterPhase = (state: CapsuleFrameState, nextPhase: number) => {
   state.elapsed.value = 0
 }
 
-// One UI-thread step of the choreography. Reports the landing frame, how many
-// intermediate slots it crossed, and the travel id so the JS surface can cue
-// the right haptics and drop callbacks a newer travel superseded.
+// One UI-thread step of the choreography. Beats are scheduled optimistically
+// from the slot distance: the travel time is split evenly, the t=0 boundary is
+// silent, every intermediate beat is Light and the final one is the landing.
+// The beat cursor is owned by THIS thread: a JS travel start only bumps
+// `travelId`, so a late JS write can never rewind fired beats.
 export const stepCapsuleFrame = (
   state: CapsuleFrameState,
   frameInfo: FrameInfo,
@@ -42,24 +46,19 @@ export const stepCapsuleFrame = (
   'worklet'
   const travelId = state.travelId.value
 
-  if (!state.isRunning.value) return { landed: false, passedSlots: 0, travelId }
+  if (!state.isRunning.value) return { landBeat: false, lightBeats: 0, settled: false, travelId }
 
-  // The sweep bookkeeping is owned by THIS thread. A travel start on the JS
-  // thread only bumps `travelId`; the UI detects the new generation on its
-  // first frame and resets pass state itself, so a late JS write can never
-  // rewind a sweep the UI already advanced (phantom/dropped passes on native).
   if (state.frameTravelId.value !== travelId) {
     state.frameTravelId.value = travelId
-    state.passCrossed.value = state.passRects.value.map(() => false)
-    state.previousCenter.value = state.startCenter.value
+    state.beatsFired.value = 0
   }
 
-  const previousCenter = state.previousCenter.value
   const delta = Math.min(frameInfo.timeSincePreviousFrame ?? 0, MAX_FRAME_DELTA_MS)
   state.elapsed.value += delta
 
-  let landed = false
-  let passedSlots = 0
+  let landBeat = false
+  let lightBeats = 0
+  let settled = false
 
   if (state.phase.value === CAPSULE_PHASE_TRAVEL) {
     const progress = Math.min(1, state.elapsed.value / state.duration.value)
@@ -71,7 +70,12 @@ export const stepCapsuleFrame = (
     state.capsuleWidth.value =
       state.startWidth.value + (state.targetWidth.value - state.startWidth.value) * eased
 
-    passedSlots = collectSlotPasses(state, previousCenter)
+    // Fire every beat boundary the frame crossed. A long (clamped) frame can
+    // cross several, so each is reported exactly once.
+    const beats = collectTravelBeats(state, progress)
+
+    landBeat = beats.landBeat
+    lightBeats = beats.lightBeats
 
     if (progress >= 1) {
       state.capsuleCenter.value = state.targetCenter.value
@@ -98,13 +102,9 @@ export const stepCapsuleFrame = (
       state.arrivalPulse.value = 0
       state.travelActivity.value = 0
       state.isRunning.value = false
-      landed = true
+      settled = true
     }
   }
 
-  // Advance the swept-segment origin on EVERY frame, whatever the phase: the
-  // next frame's pass test must start where this one ended.
-  state.previousCenter.value = state.capsuleCenter.value
-
-  return { landed, passedSlots, travelId }
+  return { landBeat, lightBeats, settled, travelId }
 }

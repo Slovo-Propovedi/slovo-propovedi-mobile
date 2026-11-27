@@ -30,7 +30,7 @@ const WORKLET_HELPERS: Array<[string, string[]]> = [
     ],
   ],
   ['capsulePulse.ts', ['getSlotEmphasis', 'getTravelScale']],
-  ['capsuleSlotPasses.ts', ['collectSlotPasses']],
+  ['capsuleTravelBeats.ts', ['collectTravelBeats']],
   ['capsuleTravelFrame.ts', ['enterPhase', 'stepCapsuleFrame']],
 ]
 
