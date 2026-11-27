@@ -3,6 +3,7 @@ import { Dimensions, useWindowDimensions } from 'react-native'
 import { type SharedValue, type useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
+import { useLayoutEffectSharedValue } from 'shared/lib/hooks/useLayoutEffectSharedValue'
 import { useBarBottomPadding } from 'shared/ui/layout'
 import { type getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { type getRestingContainerStyle } from '../lib/getRestingContainerStyle'
@@ -62,6 +63,10 @@ export const useExpandAnimation = (
     screenWidth,
   })
   const tabBarHeightShared = useTabBarHeightShared(tabBarHeight)
+  // Mirrors `expanded`, not the pill's real mount flag: the pill is also
+  // unmounted at left rest, while the sheet must stay transparent only there
+  // and solid from the first expand frame (the pill unmounts with the tap).
+  const miniLayerMountedShared = useLayoutEffectSharedValue(expanded ? 1 : 0)
   const { settledExpanded, settleOnSnap } = useProgressAnimation(expanded, progress)
   useAppStateSnap(expanded, progress, settleOnSnap)
   // One authority for the wide pill's rest line: the same chrome bottom padding
@@ -81,6 +86,7 @@ export const useExpandAnimation = (
     barProgress,
     fullScreenHeightShared,
     geometryReapplyTick,
+    miniLayerMountedShared,
     progress,
     screenWidthShared,
     tabBarHeightShared,

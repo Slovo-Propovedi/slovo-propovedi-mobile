@@ -10,6 +10,8 @@ interface GeometryAnimatedStylesInput {
   fullScreenHeightShared: SharedValue<number>
   /** Alternating ±0.01dp heal tick (Issue #63), written by `forceGeometryReapply`. */
   geometryReapplyTick: SharedValue<number>
+  /** Pre-paint mirror of `expanded` (1) vs collapsed (0) for the sheet contract. */
+  miniLayerMountedShared: SharedValue<number>
   progress: SharedValue<number>
   /** Pre-paint window width channel (`useGeometrySharedValues`). */
   screenWidthShared: SharedValue<number>
@@ -34,6 +36,7 @@ interface GeometryAnimatedStylesInput {
  * @param input.barProgress - Bottom-bar morph progress (0 = expanded pill, 1 = collapsed row).
  * @param input.fullScreenHeightShared - Pre-paint full device screen height.
  * @param input.geometryReapplyTick - Alternating heal tick for the Issue #63 re-apply channel.
+ * @param input.miniLayerMountedShared - Pre-paint mirror of the expanded state (1 = expanded).
  * @param input.progress - Expand/collapse progress (0 = mini pill, 1 = fullscreen).
  * @param input.screenWidthShared - Pre-paint current window width.
  * @param input.tabBarHeightShared - Measured height of the floating tab row.
@@ -43,6 +46,7 @@ export const useGeometryAnimatedStyles = ({
   barProgress,
   fullScreenHeightShared,
   geometryReapplyTick,
+  miniLayerMountedShared,
   progress,
   screenWidthShared,
   tabBarHeightShared,
@@ -68,7 +72,11 @@ export const useGeometryAnimatedStyles = ({
       wideBottomInset,
     })
 
-    return { ...style, opacity: getContainerOpacity(progress.value), top: style.top + reapply }
+    return {
+      ...style,
+      opacity: getContainerOpacity(progress.value, miniLayerMountedShared.value === 1),
+      top: style.top + reapply,
+    }
   })
   const miniBarStyle = useAnimatedStyle(() => {
     // Same heal channel as the container: a tick write re-runs this worklet and

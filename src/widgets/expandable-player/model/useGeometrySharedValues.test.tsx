@@ -1,8 +1,9 @@
 import { act, render } from '@testing-library/react-native'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Text } from 'react-native'
 import * as Reanimated from 'react-native-reanimated'
 import { type SharedValue, useSharedValue } from 'react-native-reanimated'
+import { usePersistentSharedValue } from 'shared/mocks/usePersistentSharedValue'
 import { BAR_SIDE_INSET_EXPANDED, CONTENT_COLUMN_WIDTH } from 'shared/ui/layout'
 import { getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { useGeometrySharedValues } from './useGeometrySharedValues'
@@ -19,16 +20,6 @@ interface Observed {
   pillWidth: number
   screenWidth: number
   tick: number
-}
-
-// The shared reanimated mock rebuilds `useSharedValue` on every render, which
-// hides the real engine's persistence: a channel written only in a passive
-// effect stays stale for the commit that follows a rotation. Persisting the
-// value per hook instance reproduces that ordering.
-const usePersistentSharedValue = (initial: number) => {
-  const [holder] = useState(() => ({ value: initial }))
-
-  return holder
 }
 
 const Probe = ({

@@ -11,13 +11,15 @@ export const useOpacityStyles = (progress: SharedValue<number>) => {
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0, 0.5], [0, 0.5]),
   }))
-  // Crossfade partner of the container sheet: fully opaque while the sheet is
-  // still dissolving, gone once the opaque sheet covers the player again.
+  // Crossfade partner of the container sheet: it fades in under the still
+  // opaque sheet on collapse and is fully opaque before the sheet dissolves.
   const miniStyle = useAnimatedStyle(() => ({
     opacity: getMiniPlayerOpacity(progress.value),
   }))
+  // Fully faded out by the point the sheet starts dissolving (0.5) and fully
+  // back once it is solid again on expand; no content ghosts through the ramp.
   const fullStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0.4, 0.8], [0, 1]),
+    opacity: interpolate(progress.value, [0.5, 0.8], [0, 1]),
   }))
 
   return {

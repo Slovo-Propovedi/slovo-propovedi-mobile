@@ -9,6 +9,7 @@ import {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { useDebounce } from 'shared/lib/hooks/useDebounce'
+import { useLayoutEffectSharedValue } from 'shared/lib/hooks/useLayoutEffectSharedValue'
 
 const DOT_SIZE = 12
 const PILL_WIDTH = 110
@@ -22,7 +23,11 @@ export const useNetworkIslandAnimation = (isOnline: boolean) => {
   const expandProgress = useSharedValue(1)
   const [isExpanded, setIsExpanded] = useState(true)
 
-  const translateXCollapsed = screenWidth / 2 - DOT_SIZE / 2 - RIGHT_MARGIN
+  // Pre-paint mirror: a worklet closure capturing a window-derived value would
+  // animate the previous width for a frame after a rotation.
+  const translateXCollapsed = useLayoutEffectSharedValue(
+    screenWidth / 2 - DOT_SIZE / 2 - RIGHT_MARGIN,
+  )
 
   const collapse = useCallback(() => {
     // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value: intentional .value mutation in callback
@@ -56,7 +61,7 @@ export const useNetworkIslandAnimation = (isOnline: boolean) => {
     const width = interpolate(p, [0, 1], [DOT_SIZE, PILL_WIDTH])
     const height = interpolate(p, [0, 1], [DOT_SIZE, PILL_HEIGHT])
     const borderRadius = interpolate(p, [0, 1], [DOT_SIZE / 2, PILL_HEIGHT / 2])
-    const translateX = interpolate(p, [0, 1], [translateXCollapsed, 0])
+    const translateX = interpolate(p, [0, 1], [translateXCollapsed.value, 0])
     return { borderRadius, height, transform: [{ translateX }], width }
   })
 

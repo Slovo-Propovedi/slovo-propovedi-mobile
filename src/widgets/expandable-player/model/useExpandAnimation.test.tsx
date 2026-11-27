@@ -1,12 +1,12 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
-import { useState } from 'react'
 import { AppState, type AppStateStatus, Text } from 'react-native'
 import * as Reanimated from 'react-native-reanimated'
 import { withTiming } from 'react-native-reanimated'
 import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { advanceMorphFrames } from 'shared/mocks/morphFrames'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
+import { usePersistentSharedValue } from 'shared/mocks/usePersistentSharedValue'
 import {
   BAR_CIRCLE_SIZE,
   BAR_EXPANDED_ISLAND_TOP_MARGIN,
@@ -49,16 +49,6 @@ jest.mock('react-native/Libraries/Utilities/Dimensions', () => ({
 }))
 
 const mockListeners: Array<(state: AppStateStatus) => void> = []
-
-// The shared reanimated mock rebuilds `useSharedValue` on every render, which
-// hides the real engine's persistence: a dimension mirror written only in a
-// passive effect stays stale for the commit that follows a rotation. Persisting
-// the value per hook instance reproduces that ordering.
-const usePersistentSharedValue = (initial: number) => {
-  const [holder] = useState(() => ({ value: initial }))
-
-  return holder
-}
 
 beforeEach(() => {
   oneLineBarMorphDriver.reset()

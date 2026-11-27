@@ -2,7 +2,7 @@ import { useLayoutEffect } from 'react'
 import { type SharedValue, useSharedValue } from 'react-native-reanimated'
 
 /**
- * Mirror of a render-time value on the UI thread, written BEFORE paint.
+ * Mirror of a render-time number on the UI thread, written BEFORE paint.
  *
  * Worklet closures are re-registered in a passive phase after the commit, so a
  * value captured from render reaches the animated layer one frame late (a
@@ -12,7 +12,7 @@ import { type SharedValue, useSharedValue } from 'react-native-reanimated'
  * equal values from hopping to the UI thread.
  * @param value - Current render value to mirror.
  */
-export const useLayoutEffectSharedValue = <T>(value: T): SharedValue<T> => {
+export const useLayoutEffectSharedValue = (value: number): SharedValue<number> => {
   const sharedValue = useSharedValue(value)
 
   useLayoutEffect(() => {
