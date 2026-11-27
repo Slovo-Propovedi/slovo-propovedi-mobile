@@ -8,6 +8,7 @@ import {
   BlurBackdrop,
   createRefreshControl,
   EmptyState,
+  getRefreshTopOffset,
   PullToRefresh,
   WideTopActions,
 } from 'shared/ui'
@@ -67,7 +68,7 @@ export const AdminSectionsScreen = () => {
         <PullToRefresh
           onRefresh={reload}
           refreshing={isRefreshing}
-          topOffset={topChromeScrollInset}
+          topOffset={getRefreshTopOffset(isWide)}
         >
           <DraggableFlatList
             renderItem={renderItem}

@@ -1,5 +1,6 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native'
+import { type ReactNode } from 'react'
 import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { authUserAtom } from 'entities/auth'
@@ -12,7 +13,35 @@ import {
 } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
+import { WIDE_ACTIONS_CENTER_Y } from 'shared/ui/layout'
 import { AdminHomeScreen } from './AdminHomeScreen'
+
+const WIDE_DIMENSIONS = { fontScale: 1, height: 800, width: 1024 }
+const COMPACT_DIMENSIONS = { fontScale: 1, height: 390, width: 844 }
+
+const mockUseWindowDimensions = jest.fn(() => COMPACT_DIMENSIONS)
+
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => mockUseWindowDimensions(),
+}))
+
+// Native `PullToRefresh` is a passthrough, so the web slot offset is only
+// observable on the prop the screen passes.
+let mockPullToRefreshTopOffset: number | undefined
+
+jest.mock('shared/ui', () => {
+  const actual = jest.requireActual('shared/ui')
+
+  return {
+    ...actual,
+    PullToRefresh: ({ children, topOffset }: { children: ReactNode; topOffset?: number }) => {
+      mockPullToRefreshTopOffset = topOffset
+
+      return <>{children}</>
+    },
+  }
+})
 
 const mockSectionControllerFindAll = jest.fn()
 const mockPlaylistControllerFindAll = jest.fn()
@@ -101,6 +130,8 @@ const openUserMenu = async () => {
 describe('<AdminHomeScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockUseWindowDimensions.mockReturnValue(COMPACT_DIMENSIONS)
+    mockPullToRefreshTopOffset = undefined
     mockMeasureInWindow({ height: 44, width: 44, x: 300, y: 60 })
     mockSectionControllerFindAll.mockResolvedValue(
       sectionsMocks.getSectionControllerFindAllResponseMock({ count: SECTIONS_COUNT }),
@@ -179,6 +210,22 @@ describe('<AdminHomeScreen>', () => {
     expect(await findByText(String(SECTIONS_COUNT))).toBeTruthy()
     expect(await findByText(String(PLAYLISTS_COUNT))).toBeTruthy()
     expect(await findByText(String(SERMONS_COUNT))).toBeTruthy()
+  })
+
+  test('levels the wide refresh spinner slot with the actions row', async () => {
+    mockUseWindowDimensions.mockReturnValue(WIDE_DIMENSIONS)
+
+    await renderAdminHome('admin')
+
+    // Slot height is 40, so its top is the row centre minus half the slot.
+    expect(mockPullToRefreshTopOffset).toBe(WIDE_ACTIONS_CENTER_Y - 20)
+    expect(mockPullToRefreshTopOffset).toBe(20)
+  })
+
+  test('keeps the compact refresh spinner slot at the top', async () => {
+    await renderAdminHome('admin')
+
+    expect(mockPullToRefreshTopOffset).toBe(0)
   })
 
   test('reloads the counters when pulled to refresh', async () => {

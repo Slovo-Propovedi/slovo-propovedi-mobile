@@ -9,6 +9,7 @@ import {
   BLUR_TARGET_ROUTES,
   BlurBackdrop,
   createRefreshControl,
+  getRefreshTopOffset,
   PullToRefresh,
   WideTopActions,
 } from 'shared/ui'
@@ -59,7 +60,7 @@ export const ListenScreen = () => {
         <PullToRefresh
           onRefresh={refresh}
           refreshing={isRefreshing}
-          topOffset={topChromeScrollInset}
+          topOffset={getRefreshTopOffset(isWide)}
         >
           <Animated.ScrollView
             onScroll={onScroll}

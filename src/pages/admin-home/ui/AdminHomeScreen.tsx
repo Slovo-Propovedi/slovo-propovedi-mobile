@@ -7,6 +7,7 @@ import {
   BLUR_TARGET_ROUTES,
   BlurBackdrop,
   createRefreshControl,
+  getRefreshTopOffset,
   PullToRefresh,
   RefreshButton,
   WideTopActions,
@@ -44,7 +45,7 @@ export const AdminHomeScreen = () => {
         <PullToRefresh
           onRefresh={stats.reload}
           refreshing={stats.isRefreshing}
-          topOffset={topChromeScrollInset}
+          topOffset={getRefreshTopOffset(isWide)}
         >
           <ScrollView
             contentContainerStyle={[

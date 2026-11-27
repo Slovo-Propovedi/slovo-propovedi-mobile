@@ -2,6 +2,8 @@ import { screen } from '@testing-library/react-native'
 import { type ComponentType, type ReactNode } from 'react'
 import { StyleSheet } from 'react-native'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
+import { WIDE_ACTIONS_CENTER_Y } from '../layout/bottomBarLayout'
+import { getRefreshTopOffset, SPINNER_SLOT_HEIGHT } from './pull-to-refresh.lib'
 
 // jest-expo resolves `.native.tsx` first; the web gesture wrapper is under test.
 const { PullToRefresh } = jest.requireActual<{
@@ -29,14 +31,19 @@ const spinnerStyle = () =>
   )
 
 describe('<PullToRefresh> (web)', () => {
-  test('offsets the spinner below the floating top chrome when given a top offset', async () => {
-    await renderRefresh(96)
+  test('centres the wide spinner slot on the top-right actions row', async () => {
+    const topOffset = getRefreshTopOffset(true)
 
-    expect(spinnerStyle()?.top).toBe(96)
+    await renderRefresh(topOffset)
+
+    // The slot's middle lands on the actions row centre, not below the island.
+    expect(spinnerStyle()?.top).toBe(WIDE_ACTIONS_CENTER_Y - SPINNER_SLOT_HEIGHT / 2)
+    expect((spinnerStyle()?.top ?? 0) + SPINNER_SLOT_HEIGHT / 2).toBe(WIDE_ACTIONS_CENTER_Y)
+    expect(spinnerStyle()?.top).toBe(20)
   })
 
   test('draws the wide spinner above the scrolling content', async () => {
-    await renderRefresh(96)
+    await renderRefresh(getRefreshTopOffset(true))
 
     // Content paints at 0, the floating chrome at 10: the slot must sit between.
     expect(spinnerStyle()?.zIndex).toBe(5)

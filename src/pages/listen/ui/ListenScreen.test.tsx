@@ -9,6 +9,7 @@ import { renderWithProviders } from 'shared/mocks'
 import {
   BAR_OUTER_GAP,
   BAR_TOP_ISLAND_MARGIN,
+  WIDE_ACTIONS_CENTER_Y,
   WIDE_BAR_ROW_HEIGHT,
   WIDE_CONTENT_TOP_GAP,
   WIDE_TAB_ISLAND_HEIGHT,
@@ -33,6 +34,9 @@ const WIDE_TOP_CHROME_SCROLL_INSET =
   BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP
 
 const mockPush = jest.fn()
+// Native `PullToRefresh` is a passthrough, so the web slot offset is only
+// observable on the prop the screen passes.
+let mockPullToRefreshTopOffset: number | undefined
 
 jest.mock('shared/ui', () => {
   const actual = jest.requireActual('shared/ui')
@@ -46,6 +50,11 @@ jest.mock('shared/ui', () => {
         {children}
       </>
     ),
+    PullToRefresh: ({ children, topOffset }: { children: ReactNode; topOffset?: number }) => {
+      mockPullToRefreshTopOffset = topOffset
+
+      return <>{children}</>
+    },
   }
 })
 
@@ -212,6 +221,7 @@ const topBandHeightAboveScroller = (scrollView: TestInstance): number => {
 describe('<ListenScreen>', () => {
   beforeEach(() => {
     mockPush.mockClear()
+    mockPullToRefreshTopOffset = undefined
     mockedRestoreSession.mockClear()
     mockedRestoreSession.mockResolvedValue(null)
     mockUseWindowDimensions.mockReturnValue(WIDE_DIMENSIONS)
@@ -292,6 +302,22 @@ describe('<ListenScreen>', () => {
     const refreshControl = findRefreshControl(getByText(SECTIONS_MOCK))
 
     expect(refreshControl.props.progressViewOffset).toBe(WIDE_TOP_CHROME_SCROLL_INSET)
+  })
+
+  test('levels the wide refresh spinner slot with the actions row', async () => {
+    await renderWithProviders(<ListenScreen />, {})
+
+    // Slot height is 40, so its top is the row centre minus half the slot.
+    expect(mockPullToRefreshTopOffset).toBe(WIDE_ACTIONS_CENTER_Y - 20)
+    expect(mockPullToRefreshTopOffset).toBe(20)
+  })
+
+  test('keeps the compact refresh spinner slot at the top', async () => {
+    mockUseWindowDimensions.mockReturnValue(COMPACT_DIMENSIONS)
+
+    await renderWithProviders(<ListenScreen />, {})
+
+    expect(mockPullToRefreshTopOffset).toBe(0)
   })
 
   test('keeps the compact refresh spinner at the top', async () => {
