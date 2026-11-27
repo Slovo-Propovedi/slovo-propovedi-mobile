@@ -5,9 +5,10 @@ type TabRoutes = Parameters<
 >[0]['state']['routes']
 
 // The `/search` route is registered in the tabs navigator (it owns its nested
-// detail stack), but it is NOT a tab slot: the bar always shows the three real
-// tabs and the search pill opens that route. Counting only these slots keeps the
-// island's per-tab width correct.
+// detail stack), but the bar does not render it as a routed tab slot: search is
+// drawn as its own full tab-like slot (label, shared width, active capsule) on
+// top of the routed ones. Counting only these routed slots keeps the island's
+// per-tab width correct.
 export const SEARCH_ROUTE_NAME = 'search'
 
 export const getVisibleTabRoutes = (routes: TabRoutes) =>

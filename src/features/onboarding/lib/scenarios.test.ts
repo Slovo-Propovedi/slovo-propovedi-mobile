@@ -72,6 +72,8 @@ describe('onboarding scenario data', () => {
     })
     expect(whatsNew.steps[0].text).toContain('планшетах и десктопе')
     expect(whatsNew.steps[0].text).toContain('мини-плеер')
+    expect(whatsNew.steps[0].text).toContain('полноценной вкладкой «Поиск»')
+    expect(whatsNew.steps[0].text).toContain('дублирующие названия вкладок')
     expect(whatsNew.steps[1].text).toContain('Поле поиска')
     expect(whatsNew.steps[1].text).toContain('под полем')
   })
