@@ -9,12 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Wide layout on tablet-class screens (at least 768 pt on the long side and 600 pt on the short side), so a phone in landscape keeps the usual look: the tabs and a full search tab — its own label, equal width and the active capsule while search is open — share one island at the top, and the mini-player becomes a bottom island with the full control set — repeat, previous/play/next, favorites, sermon menu and the current playlist (a «Sermon text» button is reserved and inactive for now); the bottom island keeps the same safe-area gap as the tab-bar row (20 pt on iPad, 21 pt on iOS web) instead of hugging the screen edge, and screen content starts right under the floating top island without an extra bottom-inset-sized gap
+- Wide layout on tablet-class screens (at least 768 pt on the long side and 600 pt on the short side), so a phone in landscape keeps the usual look: text-only tabs and an icon-only search slot share one compact floating island at the top that hugs its content instead of spanning the column, and the mini-player becomes a taller bottom pill (64 pt, up to 650 pt wide) with the full control set — repeat, previous/play/next, favorites, sermon menu and the current playlist (a «Sermon text» button is reserved and inactive for now); the bottom island keeps the same safe-area gap as the tab-bar row (20 pt on iPad, 21 pt on iOS web) instead of hugging the screen edge, and screen content starts right under the floating top island without an extra bottom-inset-sized gap
+- One traveling tab highlight: the capsule glides between tabs, tinting each label it crosses and swelling 4% per slot plus an 8% arrival overshoot and return; per-slot capsules are gone, and the collapsed circle keeps its own highlight
+- The compact↔wide layout switch is animated: the tab bar slides up to the top and the mini-player slides down over 400 ms, and the same motion plays in reverse when the window returns to the compact layout
+- Wide web: the pull-to-refresh spinner fades in during the pull, sits centred under the top island and switches from gray to the accent colour at the trigger threshold
 - Search page: the field moved to the top, under the Listen/Read toggle and above the results, and takes focus when the page opens; the bar stays expanded while searching and collapses again as you scroll, folding the row back to the tab circle and the search circle
 
 ### Changed
 
-- Wide layout: page titles that duplicate the tab labels are hidden while the action buttons stay in place, and as the window narrows the mini-player hides its buttons progressively from right to left and shifts the control cluster right; phones keep the usual look
+- Wide layout: page titles that duplicate the tab labels are not rendered at all, and their actions float in a fixed top-right overlay at the island's vertical middle; the mini-player keeps its full toolbar at every width
 
 ### Fixed
 
