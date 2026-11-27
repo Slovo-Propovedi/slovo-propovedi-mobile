@@ -4,8 +4,9 @@ import { type CapsuleSlotRect } from './capsuleTravel'
 
 interface CapsuleTravelRequestContext {
   isExpanded: boolean
+  /** Route key of every slot, tabs first and the search slot last. */
+  slotKeys: readonly string[]
   slotRects: readonly CapsuleSlotRect[]
-  tabRouteKeys: readonly string[]
 }
 
 // Press-tick travel start: the tap must move the highlight before React has
@@ -15,20 +16,22 @@ export const useCapsuleTravelRequest = (
   context: CapsuleTravelRequestContext,
   currentSlotIndex: { current: number },
 ) => {
-  const { isExpanded, slotRects, tabRouteKeys } = context
-  const latest = useRef({ isExpanded, slotRects, tabRouteKeys })
+  const { isExpanded, slotKeys, slotRects } = context
+  const latest = useRef({ isExpanded, slotKeys, slotRects })
 
   useEffect(() => {
-    latest.current = { isExpanded, slotRects, tabRouteKeys }
+    latest.current = { isExpanded, slotKeys, slotRects }
   })
 
   return useCallback(
     (routeKey: string) => {
-      const { isExpanded: expanded, slotRects: rects, tabRouteKeys: keys } = latest.current
+      const { isExpanded: expanded, slotKeys: keys, slotRects: rects } = latest.current
 
       // Collapsed: the route effect snaps the capsule, no glide to start.
       if (!expanded) return
 
+      // The destination resolves through the same ordering as the start slot,
+      // so the search slot is a regular index here too (tabs, then search).
       const targetIndex = keys.indexOf(routeKey)
       const distance = Math.abs(targetIndex - currentSlotIndex.current)
       const rect = targetIndex >= 0 ? rects[targetIndex] : undefined

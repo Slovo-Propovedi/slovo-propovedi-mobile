@@ -2,8 +2,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFrameCallback } from 'react-native-reanimated'
 import { capsuleTravelDriver } from '../model/capsuleTravelDriver'
 import { createMotionFor } from './capsuleMotionFor'
-import { type CapsuleTravelMotion, getSlotRects, type SlotCapsuleMotion } from './capsuleTravel'
-import { ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
+import { type CapsuleTravelMotion, type SlotCapsuleMotion } from './capsuleTravel'
+import { getCapsuleSlotKeys, getCapsuleSlotRects } from './capsuleTravelSlots'
+import { SEARCH_ROUTE_NAME } from './getVisibleTabRoutes'
 import { useCapsuleTravelRequest } from './useCapsuleTravelRequest'
 
 interface CapsuleTravel {
@@ -45,17 +46,14 @@ export const useCapsuleTravel = ({
   tabWidth,
 }: CapsuleTravelInput): CapsuleTravel => {
   const tabCount = tabRouteKeys.length
-  const searchSlotIndex = hideSearch ? -1 : tabCount
-  const tabSlotIndex = tabRouteKeys.indexOf(activeRouteKey ?? '')
-  const activeIndex =
-    isSearchFocused && searchSlotIndex >= 0 ? searchSlotIndex : Math.max(tabSlotIndex, 0)
-  const slotRects = useMemo(() => {
-    const widths = Array.from({ length: tabCount }, () => tabWidth)
-
-    if (searchSlotIndex >= 0) widths.push(searchWidth)
-
-    return getSlotRects(widths, ISLAND_CONTENT_PADDING_HORIZONTAL)
-  }, [tabCount, tabWidth, searchWidth, searchSlotIndex])
+  // One slot ordering serves both directions: the routed tabs, then search.
+  const slotKeys = getCapsuleSlotKeys(tabRouteKeys, hideSearch)
+  const activeSlotKey = isSearchFocused ? SEARCH_ROUTE_NAME : activeRouteKey
+  const activeIndex = Math.max(slotKeys.indexOf(activeSlotKey ?? ''), 0)
+  const slotRects = useMemo(
+    () => getCapsuleSlotRects({ hideSearch, searchWidth, tabCount, tabWidth }),
+    [hideSearch, searchWidth, tabCount, tabWidth],
+  )
   // The slot the capsule visually belongs to: updated by the route effect once
   // the destination render lands.
   const currentSlotIndex = useRef(activeIndex)
@@ -70,7 +68,7 @@ export const useCapsuleTravel = ({
   })
   const frameCallback = useFrameCallback(capsuleTravelDriver.frameStep, false)
   const requestTravel = useCapsuleTravelRequest(
-    { isExpanded, slotRects, tabRouteKeys },
+    { isExpanded, slotKeys, slotRects },
     currentSlotIndex,
   )
 

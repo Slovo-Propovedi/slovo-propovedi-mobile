@@ -209,21 +209,6 @@ describe('capsuleTravelDriver', () => {
     expect(capsuleTravelDriver.capsuleWidth.value).toBe(60)
   })
 
-  test('TEMP starts on search, presses each tab', async () => {
-    const { result } = await renderTravel({
-      ...WIDE_INPUT,
-      activeRouteKey: 'listen',
-      isSearchFocused: true,
-    })
-
-    expect(capsuleTravelDriver.capsuleCenter.value).toBe(298)
-
-    result.current.requestTravel('listen')
-    await advance(10)
-
-    throw new Error(`TEMP ticks=${countTicks()} landings=${countLandings()} center=${capsuleTravelDriver.capsuleCenter.value}`)
-  })
-
   test('starts traveling synchronously from the press path, before effects', async () => {
     const { result } = await renderTravel({ ...WIDE_INPUT, activeRouteKey: 'more' })
 
@@ -426,6 +411,74 @@ describe('capsuleTravelDriver', () => {
 
     expect(countTicks()).toBe(3)
     expect(countLandings()).toBe(3)
+  })
+
+  test('starts a press-path travel to the search slot with its slot distance', async () => {
+    // The press path must resolve the search slot like any other destination:
+    // search trails the routed tabs at index n, so «Слушать» → «Поиск» is the
+    // full distance 3 (two pass ticks + the landing).
+    const { result } = await renderTravel(WIDE_INPUT)
+
+    result.current.requestTravel('search')
+    await advance(10)
+
+    expect(countTicks()).toBe(2)
+    expect(countLandings()).toBe(1)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBe(298)
+  })
+
+  test('search → «Слушать» schedules the true three-slot distance', async () => {
+    const { result } = await renderTravel({ ...WIDE_INPUT, isSearchFocused: true })
+
+    expect(capsuleTravelDriver.capsuleCenter.value).toBe(298)
+
+    result.current.requestTravel('listen')
+
+    await advance()
+    expect(countTicks()).toBe(0)
+    expect(countLandings()).toBe(0)
+
+    await advance()
+    expect(countTicks()).toBe(1)
+
+    await advance()
+    expect(countTicks()).toBe(2)
+
+    await advance()
+    expect(countTicks()).toBe(2)
+    expect(countLandings()).toBe(0)
+
+    await advance()
+    expect(countTicks()).toBe(2)
+    expect(countLandings()).toBe(1)
+  })
+
+  test('search → «Читать» schedules the true two-slot distance', async () => {
+    const { result } = await renderTravel({ ...WIDE_INPUT, isSearchFocused: true })
+
+    result.current.requestTravel('read')
+
+    await advance(2)
+    expect(countTicks()).toBe(1)
+    expect(countLandings()).toBe(0)
+
+    await advance(2)
+    expect(countTicks()).toBe(1)
+    expect(countLandings()).toBe(1)
+  })
+
+  test('search → «Ещё» is adjacent: a single landing beat', async () => {
+    const { result } = await renderTravel({ ...WIDE_INPUT, isSearchFocused: true })
+
+    result.current.requestTravel('more')
+
+    await advance(2)
+    expect(countTicks()).toBe(0)
+    expect(countLandings()).toBe(0)
+
+    await advance(1)
+    expect(countTicks()).toBe(0)
+    expect(countLandings()).toBe(1)
   })
 
   test('does not replay the landing of a travel the next press superseded', async () => {
