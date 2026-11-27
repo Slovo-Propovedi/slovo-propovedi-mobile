@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { FlatList, type GestureResponderEvent, Platform, StyleSheet } from 'react-native'
-import { SCREEN_WIDTH } from '../../config/screen-dimensions'
+import { useSliderLayoutViewport } from './lib/useSliderLayoutViewport'
 import { useWebSliderScroll } from './lib/useWebSliderScroll'
 import { SliderColumn } from './slider-column'
 import {
@@ -17,7 +17,6 @@ import {
   buildSliderSnapOffsets,
   getSliderCardLayout,
   getSliderContentWidth,
-  getSliderLayoutViewport,
   SLIDER_REST_INSET,
 } from './slider-layout.lib'
 
@@ -53,8 +52,7 @@ export const SliderFlatList = <D extends object>({
   const rows = Number.isFinite(itemsRows) && itemsRows >= 1 ? itemsRows : 1
   const columnCount = Math.ceil(items.length / rows)
 
-  const [measuredWidth, setMeasuredWidth] = useState<number | undefined>(undefined)
-  const layoutViewport = getSliderLayoutViewport(measuredWidth)
+  const { layoutViewport, measuredWidth, onMeasuredWidthChange } = useSliderLayoutViewport()
   const { cardWidth, stride } = useMemo(
     () => getSliderCardLayout(itemsSize, layoutViewport),
     [itemsSize, layoutViewport],
@@ -68,9 +66,9 @@ export const SliderFlatList = <D extends object>({
       columnCount,
       contentWidth,
       stride,
-      viewportWidth: measuredWidth ?? SCREEN_WIDTH,
+      viewportWidth: measuredWidth ?? layoutViewport,
     })
-  }, [cardWidth, columnCount, measuredWidth, stride])
+  }, [cardWidth, columnCount, layoutViewport, measuredWidth, stride])
   const maxTravelPx = MAX_FLING_TRAVEL_VIEWPORT_RATIO * (measuredWidth ?? layoutViewport)
   const { onScroll, scrollRef } = useWebSliderScroll(snapOffsets, maxTravelPx)
 
@@ -96,11 +94,11 @@ export const SliderFlatList = <D extends object>({
       ref={scrollRef}
       decelerationRate='fast'
       snapToOffsets={snapOffsets}
+      onLayout={onMeasuredWidthChange}
       showsHorizontalScrollIndicator={false}
       keyExtractor={(_, index) => String(index)}
       initialNumToRender={Math.ceil(layoutViewport / stride) + 1}
       contentContainerStyle={{ paddingHorizontal: SLIDER_REST_INSET }}
-      onLayout={event => setMeasuredWidth(event.nativeEvent.layout.width)}
       {...(onScroll === undefined ? {} : { onScroll, scrollEventThrottle: 16 })}
       getItemLayout={(_, index) => ({
         index,

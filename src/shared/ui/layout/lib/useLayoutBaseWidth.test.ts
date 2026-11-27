@@ -1,6 +1,9 @@
 import { act } from '@testing-library/react-native'
+import { Platform } from 'react-native'
 import { renderHookWithProviders } from '../../../mocks/renderWithProviders'
 import { useLayoutBaseWidth } from './useLayoutBaseWidth'
+
+const ORIGINAL_PLATFORM = Platform.OS
 
 let mockWindowHeight = 0
 let mockWindowWidth = 0
@@ -26,6 +29,10 @@ const renderAt = async (width: number, height: number) => {
 describe('useLayoutBaseWidth', () => {
   beforeEach(() => {
     setWindow(390, 844)
+  })
+
+  afterEach(() => {
+    Platform.OS = ORIGINAL_PLATFORM
   })
 
   test('is the portrait width of a phone', async () => {
@@ -87,5 +94,16 @@ describe('useLayoutBaseWidth', () => {
     const { result } = await renderAt(700, 700)
 
     expect(result.current).toBe(700)
+  })
+
+  test('web keeps the live window width so the desktop column is not narrowed to the short side', async () => {
+    // On a desktop window the short side (500) is not the layout base: the
+    // phone-style column is capped later by CONTENT_COLUMN_WIDTH, so a 1366x500
+    // window must keep a 600-wide column instead of a 500-wide one.
+    Platform.OS = 'web'
+
+    const { result } = await renderAt(1366, 500)
+
+    expect(result.current).toBe(1366)
   })
 })

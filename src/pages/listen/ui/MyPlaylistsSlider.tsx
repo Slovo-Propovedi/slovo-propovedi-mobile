@@ -18,6 +18,7 @@ import {
   getSliderLayoutViewport,
   Slider,
 } from 'shared/ui'
+import { useLayoutBaseWidth } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { useListenNavigation } from '../lib/useListenNavigation'
 import { buildMyPlaylistsItems, type MyPlaylistsItem } from './myPlaylistsSliderItems'
@@ -55,9 +56,10 @@ export const MyPlaylistsSlider = ({
     if (!settingsLoaded) void loadSettings()
   }, [loadPlaylists, loadSettings, playlistsLoaded, settingsLoaded])
 
+  const baseWidth = useLayoutBaseWidth()
   const cardWidth = getSliderCardLayout(
     mapItemsSize(settings.itemsSize),
-    getSliderLayoutViewport(),
+    getSliderLayoutViewport(baseWidth),
   ).cardWidth
   const iconSize = cardWidth * AVATAR_CONTENT_SIZE_RATIO
   const heartIcon = <Ionicons name='heart' size={iconSize} color={currentTheme.primary} />

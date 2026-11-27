@@ -10,20 +10,17 @@ import {
   SLIDER_REST_INSET,
 } from './slider-layout.lib'
 
-const MOCK_SCREEN_WIDTH = 390
-const DEFAULT_VIEWPORT = MOCK_SCREEN_WIDTH
-
-// The default layout viewport is derived from SCREEN_WIDTH at call time; the
-// width is inlined because hoisted jest.mock factories cannot reference
-// module-level constants.
-jest.mock('../../config/screen-dimensions', () => {
-  const actual = jest.requireActual('../../config/screen-dimensions')
-  return { ...actual, SCREEN_WIDTH: 390 }
-})
+const BASE_WIDTH = 390
+const DEFAULT_VIEWPORT = BASE_WIDTH
 
 describe('getSliderCardLayout', () => {
-  test('defaults to the full screen width', () => {
-    expect(getSliderLayoutViewport()).toBe(DEFAULT_VIEWPORT)
+  test('caps the layout basis passed by the owner', () => {
+    expect(getSliderLayoutViewport(BASE_WIDTH)).toBe(DEFAULT_VIEWPORT)
+  })
+
+  test('clamps the base to a narrower embedded list', () => {
+    expect(getSliderLayoutViewport(BASE_WIDTH, 300)).toBe(300)
+    expect(getSliderLayoutViewport(BASE_WIDTH, 844)).toBe(DEFAULT_VIEWPORT)
   })
 
   test.each([

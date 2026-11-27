@@ -1,4 +1,4 @@
-import { SCREEN_WIDTH } from '../../config/screen-dimensions'
+import { Dimensions } from 'react-native'
 import { FONT_SIZES, INDENTS } from '../theme/themed'
 import { SliderItemSize } from './slider-item/slider-item.types'
 
@@ -69,8 +69,25 @@ export const getSliderCardLayout = (
   return { cardWidth, stride: cardWidth + SLIDER_GAP }
 }
 
-export const getSliderLayoutViewport = (measuredWidth?: number): number =>
-  Math.min(measuredWidth ?? SCREEN_WIDTH, MAX_SLIDER_LAYOUT_BASIS)
+/**
+ * Layout basis the slider cards are sized from.
+ *
+ * Pass the frozen chrome base (`useLayoutBaseWidth`) so a rotation cannot
+ * resize the cards; the measured width only clamps an embedded narrower list.
+ * Without a base the live window's short side is read at call time (never a
+ * module-load constant, which would keep the launch width forever).
+ * @param baseWidth - Frozen layout base of the screen.
+ * @param measuredWidth - Live width of the list, used as an upper clamp.
+ */
+export const getSliderLayoutViewport = (baseWidth?: number, measuredWidth?: number): number => {
+  const { height, width } = Dimensions.get('window')
+
+  return Math.min(
+    baseWidth ?? Math.min(width, height),
+    measuredWidth ?? Number.POSITIVE_INFINITY,
+    MAX_SLIDER_LAYOUT_BASIS,
+  )
+}
 
 export const getSliderContentWidth = ({
   cardWidth,

@@ -1,5 +1,6 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import Animated from 'react-native-reanimated'
+import { useLayoutBaseWidth } from '../../layout/lib/useLayoutBaseWidth'
 import { useSkeletonPulse } from '../../skeleton/useSkeletonPulse'
 import { useTheme } from '../../theme/ThemeContext/useTheme'
 import { FONT_SIZES, INDENTS, RADIUSES } from '../../theme/themed'
@@ -27,8 +28,9 @@ export const SliderItemSkeleton = ({
 }) => {
   const { currentTheme } = useTheme()
   const { pulseStyle } = useSkeletonPulse()
+  const baseWidth = useLayoutBaseWidth()
 
-  const itemWidth = getSliderCardLayout(size, getSliderLayoutViewport()).cardWidth
+  const itemWidth = getSliderCardLayout(size, getSliderLayoutViewport(baseWidth)).cardWidth
   const radius = (borderRadius ?? true) ? RADIUSES.slider : 0
   const imageHeight = getSliderItemImageHeight(itemWidth, transform)
 

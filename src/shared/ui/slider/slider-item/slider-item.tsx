@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native'
+import { useLayoutBaseWidth } from '../../layout/lib/useLayoutBaseWidth'
 import { RADIUSES } from '../../theme/themed'
 import { TouchableButton } from '../../touchable-button/TouchableButton'
 import { SliderItemText } from '../slider-item-text/slider-item-text'
@@ -26,7 +27,9 @@ export const SliderItem = ({
   transform,
   whereIsSlideTitleLocated = WhereIsSlideTitleLocated.Under,
 }: SliderItemProps) => {
-  const conditionSize = cardWidth ?? getSliderCardLayout(size, getSliderLayoutViewport()).cardWidth
+  const baseWidth = useLayoutBaseWidth()
+  const conditionSize =
+    cardWidth ?? getSliderCardLayout(size, getSliderLayoutViewport(baseWidth)).cardWidth
   const radius = (borderRadius ?? true) ? RADIUSES.slider : 0
 
   const isTitleOnCard = whereIsSlideTitleLocated === WhereIsSlideTitleLocated.On && !!title
