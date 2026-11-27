@@ -44,6 +44,16 @@ export const stepCapsuleFrame = (
 
   if (!state.isRunning.value) return { landed: false, passedSlots: 0, travelId }
 
+  // The sweep bookkeeping is owned by THIS thread. A travel start on the JS
+  // thread only bumps `travelId`; the UI detects the new generation on its
+  // first frame and resets pass state itself, so a late JS write can never
+  // rewind a sweep the UI already advanced (phantom/dropped passes on native).
+  if (state.frameTravelId.value !== travelId) {
+    state.frameTravelId.value = travelId
+    state.passCrossed.value = state.passRects.value.map(() => false)
+    state.previousCenter.value = state.startCenter.value
+  }
+
   const previousCenter = state.previousCenter.value
   const delta = Math.min(frameInfo.timeSincePreviousFrame ?? 0, MAX_FRAME_DELTA_MS)
   state.elapsed.value += delta

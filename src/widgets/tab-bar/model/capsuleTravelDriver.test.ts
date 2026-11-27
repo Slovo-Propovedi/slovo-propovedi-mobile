@@ -1,10 +1,14 @@
 import { act } from '@testing-library/react-native'
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics'
 import { Platform } from 'react-native'
+import { type SharedValue } from 'react-native-reanimated'
 import { ctx } from 'shared/lib/reatom-ctx/ctx'
 import { advanceMorphFrames, countActiveMorphFrames } from 'shared/mocks/morphFrames'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { hapticsEnabledAtom } from 'shared/model/settings'
+import { getSlotRects } from '../lib/capsuleTravel'
+import { stepCapsuleFrame } from '../lib/capsuleTravelFrame'
+import { beginCapsuleTravel, createCapsuleFrameState } from '../lib/capsuleTravelState'
 import { useCapsuleTravel } from '../lib/useCapsuleTravel'
 import { capsuleTravelDriver } from './capsuleTravelDriver'
 
@@ -432,5 +436,109 @@ describe('capsuleTravelDriver', () => {
 
     expect(countImpacts(ImpactFeedbackStyle.Light)).toBe(2)
     expect(countImpacts(ImpactFeedbackStyle.Medium)).toBe(1)
+  })
+})
+
+// Native-like shared values: a write made from the JS thread is applied to the
+// UI thread on a later tick, so a JS travel start can land BETWEEN two UI frames
+// and clobber pass state the UI already advanced. The sweep bookkeeping must
+// therefore live on the UI thread alone.
+const createRaceState = () => {
+  const state = createCapsuleFrameState()
+  const queued: Array<() => void> = []
+  let isOnUIThread = false
+
+  const threaded = <T>(init: T): SharedValue<T> => {
+    let committed = init
+    let latest = init
+
+    return {
+      addListener: () => {},
+      get: () => (isOnUIThread ? committed : latest),
+      modify: () => {},
+      removeListener: () => {},
+      set: next => {
+        const value = typeof next === 'function' ? (next as (current: T) => T)(latest) : next
+
+        latest = value
+
+        if (!isOnUIThread) queued.push(() => (committed = value))
+      },
+      get value() {
+        return isOnUIThread ? committed : latest
+      },
+      set value(next: T) {
+        latest = next
+
+        if (isOnUIThread) {
+          committed = next
+
+          return
+        }
+
+        queued.push(() => {
+          committed = next
+        })
+      },
+    } as SharedValue<T>
+  }
+
+  state.passCrossed = threaded<readonly boolean[]>([])
+  state.previousCenter = threaded(0)
+
+  return {
+    flushJSWrites: () => {
+      for (const apply of queued.splice(0)) apply()
+    },
+    runOnUI: <T>(fn: () => T) => {
+      isOnUIThread = true
+
+      try {
+        return fn()
+      } finally {
+        isOnUIThread = false
+      }
+    },
+    state,
+  }
+}
+
+describe('capsule travel JS/UI race', () => {
+  const FRAME_INFO = { timeSinceFirstFrame: 0, timeSincePreviousFrame: 50, timestamp: 0 }
+
+  test('keeps the pass beats deterministic when JS starts a travel between frames', () => {
+    const { flushJSWrites, runOnUI, state } = createRaceState()
+    const slotRects = getSlotRects([88, 88, 88, 48], 10)
+    const frame = () => runOnUI(() => stepCapsuleFrame(state, FRAME_INFO))
+    const passesIn = (frameCount: number) =>
+      Array.from({ length: frameCount }, () => frame().passedSlots)
+
+    // Travel A: «Слушать» (54) → «Ещё» (230), one intermediate at 142.
+    state.capsuleCenter.value = 54
+    state.travelId.value = 1
+    beginCapsuleTravel(state, { center: 230, width: 100 }, 2, slotRects)
+    flushJSWrites()
+
+    expect(passesIn(4)).toEqual([1, 0, 0, 0])
+
+    // Travel B starts on the JS thread between two UI frames: only the
+    // generation bump is expected to reach the UI reliably, so the pass reset
+    // must happen on the UI thread's first frame of the new generation.
+    state.travelId.value = 2
+    beginCapsuleTravel(state, { center: 54, width: 100 }, 2, slotRects)
+
+    const first = frame().passedSlots
+    // The JS reset (old model) arrives LATE: mid-travel, after the UI already
+    // swept the slot.
+    flushJSWrites()
+    const rest = passesIn(3)
+
+    // Exactly one beat, on the first frame of B — not dropped, not replayed.
+    expect([first, ...rest]).toEqual([1, 0, 0, 0])
+
+    // The landing still fires once, after the spring back.
+    const landing = Array.from({ length: 4 }, () => frame().landed)
+
+    expect(landing.filter(Boolean)).toHaveLength(1)
   })
 })

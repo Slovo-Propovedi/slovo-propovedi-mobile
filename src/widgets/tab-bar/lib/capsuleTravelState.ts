@@ -14,6 +14,8 @@ export interface CapsuleFrameState {
   direction: SharedValue<number>
   duration: SharedValue<number>
   elapsed: SharedValue<number>
+  /** Generation the UI-thread sweep bookkeeping currently belongs to. */
+  frameTravelId: SharedValue<number>
   isRunning: SharedValue<boolean>
   overshoot: SharedValue<number>
   /** Intermediate slots crossed on the current trip, sampled frame by frame. */
@@ -43,6 +45,7 @@ export const createCapsuleFrameState = (): CapsuleFrameState => ({
   direction: makeMutable(1),
   duration: makeMutable(0),
   elapsed: makeMutable(0),
+  frameTravelId: makeMutable(0),
   isRunning: makeMutable(false),
   overshoot: makeMutable(0),
   passCrossed: makeMutable<readonly boolean[]>([]),
@@ -62,9 +65,6 @@ export const snapCapsule = (state: CapsuleFrameState, landing: CapsuleLanding) =
   state.capsuleWidth.value = landing.width
   state.arrivalPulse.value = 0
   state.travelActivity.value = 0
-  state.passRects.value = []
-  state.passCrossed.value = []
-  state.previousCenter.value = landing.center
   state.phase.value = CAPSULE_PHASE_IDLE
   state.elapsed.value = 0
   state.isRunning.value = false
@@ -87,8 +87,6 @@ export const beginCapsuleTravel = (
   state.travelActivity.value = 1
   state.elapsed.value = 0
   state.passRects.value = getPassedRects(slotRects, state.startCenter.value, landing.center)
-  state.passCrossed.value = state.passRects.value.map(() => false)
-  state.previousCenter.value = state.startCenter.value
   state.phase.value = CAPSULE_PHASE_TRAVEL
   state.isRunning.value = true
 }
