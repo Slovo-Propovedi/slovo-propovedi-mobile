@@ -320,6 +320,33 @@ describe('<CustomTabBar>', () => {
     expect(ctx.get(tabBarHeightAtom)).toBe(140)
   })
 
+  test('snaps the island to the new window width after a rotation', async () => {
+    const props = createBarProps()
+    const { rerender } = await renderWithProviders(
+      <CustomTabBar state={createMockState(0)} {...props} />,
+      { ctx: createCtx() },
+    )
+
+    // A real layout pass pins the row at the portrait width.
+    await fireLayout(BAR_ROW_MIN_HEIGHT, mockWindowWidth)
+    expect(StyleSheet.flatten(findTabIsland()?.props.style)?.width).toBe(
+      mockWindowWidth - BAR_SIDE_INSET_EXPANDED * 2,
+    )
+
+    mockWindowWidth = 844
+    mockWindowHeight = 390
+    await act(async () => {
+      rerender(<CustomTabBar state={createMockState(0)} {...props} />)
+    })
+
+    // The island width is derived from the window, never from the last
+    // onLayout report: the first post-rotation commit already paints the new
+    // column, so no frame keeps the old width beside the new-width pill.
+    expect(StyleSheet.flatten(findTabIsland()?.props.style)?.width).toBe(
+      CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2,
+    )
+  })
+
   test('caps the floating island to the 600px content column', async () => {
     await renderTabBar()
 

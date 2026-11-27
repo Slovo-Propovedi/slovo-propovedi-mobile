@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useWindowDimensions } from 'react-native'
 import {
   type SharedValue,
   useAnimatedStyle,
@@ -47,27 +48,45 @@ export const getChromeShiftTranslateY = (
  * Animated slide between the compact and the wide chrome anchors.
  *
  * The progress is seeded at the layout's rest position, so the first mount
- * never animates, and only a real layout flip schedules a timing. Rapid flips
- * retarget the same shared value, exactly like any other Reanimated timing, and
- * the translateY is derived from the CURRENT layout, so each side's entry gets
- * the matching direction (up for the top-anchored tab bar, down for the bottom
- * mini pill). The flip covers the whole anchor distance, so it runs slower than
- * the compact morph (CHROME_LAYOUT_SHIFT_DURATION_MS, user feedback 2026-11-27).
+ * never animates, and only a real layout flip schedules a timing. A flip caused
+ * by a WINDOW DIMENSION change (rotation, resize) snaps instead: every
+ * dimension-derived distance is rewritten in the same commit, and sliding one
+ * surface across the old distance leaves the chrome crooked beside the islands
+ * that already snapped. Rapid flips retarget the same shared value, exactly like
+ * any other Reanimated timing, and the translateY is derived from the CURRENT
+ * layout, so each side's entry gets the matching direction (up for the
+ * top-anchored tab bar, down for the bottom mini pill). The flip covers the whole
+ * anchor distance, so it runs slower than the compact morph
+ * (CHROME_LAYOUT_SHIFT_DURATION_MS, user feedback 2026-11-27).
  * @param options - Anchor distance and the wide anchor's vertical direction.
  * @param options.distance - Distance in dp between the two anchors.
  * @param options.wideAnchorSign - +1 when wide sits above compact, -1 when below.
  */
 export const useChromeLayoutShift = ({ distance, wideAnchorSign }: ChromeLayoutShiftOptions) => {
   const isWideLayout = useIsWideLayout()
+  const { height, width } = useWindowDimensions()
   const progress = useSharedValue(isWideLayout ? 1 : 0)
   const previousIsWideLayout = useRef(isWideLayout)
+  const previousDimensions = useRef({ height, width })
 
   useEffect(() => {
+    const dimensionsChanged =
+      previousDimensions.current.height !== height || previousDimensions.current.width !== width
+    previousDimensions.current = { height, width }
+
     if (previousIsWideLayout.current === isWideLayout) return
 
     previousIsWideLayout.current = isWideLayout
-    progress.value = withTiming(isWideLayout ? 1 : 0, { duration: CHROME_LAYOUT_SHIFT_DURATION_MS })
-  }, [isWideLayout, progress])
+    const target = isWideLayout ? 1 : 0
+
+    if (dimensionsChanged) {
+      progress.value = target
+
+      return
+    }
+
+    progress.value = withTiming(target, { duration: CHROME_LAYOUT_SHIFT_DURATION_MS })
+  }, [height, isWideLayout, progress, width])
 
   const translateY: SharedValue<number> = useDerivedValue(() =>
     getChromeShiftTranslateY(isWideLayout, progress.value, distance, wideAnchorSign),

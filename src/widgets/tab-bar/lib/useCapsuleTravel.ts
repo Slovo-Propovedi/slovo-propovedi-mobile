@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFrameCallback } from 'react-native-reanimated'
 import { capsuleTravelDriver } from '../model/capsuleTravelDriver'
 import { createMotionFor } from './capsuleMotionFor'
@@ -86,7 +86,10 @@ export const useCapsuleTravel = ({
     }
   }, [frameCallback])
 
-  useEffect(() => {
+  // Layout effect: the highlight must re-park in the SAME frame as the row it
+  // follows. A passive effect parks it after paint, so a dimension change (or
+  // any re-layout) shows the capsule at the old slot for a frame.
+  useLayoutEffect(() => {
     const previous = currentSlotIndex.current
     currentSlotIndex.current = activeIndex
     const rect = slotRects[activeIndex]

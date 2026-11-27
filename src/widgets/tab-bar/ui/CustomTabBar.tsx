@@ -34,14 +34,13 @@ export const CustomTabBar = ({
   const isSearchFocused = focusedRoute?.name === SEARCH_ROUTE_NAME
   const { width: windowWidth } = useWindowDimensions()
   const isWide = useIsWideLayout()
-  const { onLayout, rowWidth } = useTabBarMeasurement()
+  const { onLayout } = useTabBarMeasurement()
   const activeRouteKey = useActiveTabRouteKey(state.routes, state.index)
   const visibleRoutes = getVisibleTabRoutes(state.routes)
   const morph = useTabIslandMorph({
     hideSearch,
     isForceExpanded: isWide,
     routeCount: visibleRoutes.length,
-    rowWidth,
     windowWidth,
   })
   const {

@@ -25,7 +25,7 @@ import {
 } from './getIslandStyle'
 import { useTabIslandMorph } from './useTabIslandMorph'
 
-const MORPH_INPUT = { hideSearch: false, routeCount: 3, rowWidth: 390, windowWidth: 390 }
+const MORPH_INPUT = { hideSearch: false, routeCount: 3, windowWidth: 390 }
 
 describe('useTabIslandMorph', () => {
   beforeEach(() => {
@@ -159,7 +159,6 @@ describe('useTabIslandMorph', () => {
         useTabIslandMorph({
           ...MORPH_INPUT,
           isForceExpanded: true,
-          rowWidth: 1024,
           windowWidth: 1024,
         }),
       { ctx: createCtx() },
@@ -184,7 +183,7 @@ describe('useTabIslandMorph', () => {
     const ctx = createCtx()
     const { result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT), { ctx })
     const rowContentWidth =
-      Math.min(MORPH_INPUT.rowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
+      Math.min(MORPH_INPUT.windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
 
     // Compact folds the search button into the island exactly like the wide
     // layout: the island takes the whole column and every slot — including the

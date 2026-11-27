@@ -8,10 +8,10 @@ import { type getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { type getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 import { useAppStateSnap } from './useAppStateSnap'
 import { useGeometryAnimatedStyles } from './useGeometryAnimatedStyles'
-import { useGeometrySharedValues } from './useGeometrySharedValues'
 import { useOpacityStyles } from './useOpacityStyles'
 import { useProgressAnimation } from './useProgressAnimation'
 import { useRestingStyles } from './useRestingStyles'
+import { useTabBarHeightShared } from './useTabBarHeightShared'
 
 interface UseExpandAnimationResult {
   backdropStyle: ReturnType<typeof useAnimatedStyle>
@@ -47,9 +47,7 @@ export const useExpandAnimation = (
   // larger than the viewport; absolute player geometry would overshoot and spawn
   // a document-level scrollbar. Clamp to the viewport (native window == screen).
   const fullScreenHeight = Math.min(Dimensions.get('screen').height, screenHeight)
-  const { fullScreenHeightShared, screenWidthShared, tabBarHeightShared } = useGeometrySharedValues(
-    { fullScreenHeight, screenWidth, tabBarHeight },
-  )
+  const tabBarHeightShared = useTabBarHeightShared(tabBarHeight)
   const { settledExpanded, settleOnSnap } = useProgressAnimation(expanded, progress)
   useAppStateSnap(expanded, progress, settleOnSnap)
   // One authority for the wide pill's rest line: the same chrome bottom padding
@@ -67,10 +65,10 @@ export const useExpandAnimation = (
     })
   const { containerStyle, miniBarStyle } = useGeometryAnimatedStyles({
     barProgress,
-    fullScreenHeightShared,
+    fullScreenHeight,
     geometryReapplyTick,
     progress,
-    screenWidthShared,
+    screenWidth,
     tabBarHeightShared,
     wideBottomInset,
   })

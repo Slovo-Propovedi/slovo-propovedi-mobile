@@ -30,8 +30,6 @@ interface TabIslandMorphInput {
   isForceExpanded?: boolean
   /** Visible slots only: the search route is registered but never rendered as a tab. */
   routeCount: number
-  /** Row width measured via onLayout; 0 until the first layout pass. */
-  rowWidth: number
   windowWidth: number
 }
 
@@ -46,7 +44,6 @@ export const useTabIslandMorph = ({
   hideSearch,
   isForceExpanded = false,
   routeCount,
-  rowWidth,
   windowWidth,
 }: TabIslandMorphInput) => {
   const [liveIsCollapsed] = useAtom(isTabIslandCollapsedAtom)
@@ -60,9 +57,11 @@ export const useTabIslandMorph = ({
   const expandedProgress = useSharedValue(0)
 
   // The expanded island follows the expanded side inset; the collapsed circle
-  // takes its diameter from the island height and the row's padding.
-  const rowContentWidth =
-    Math.min(rowWidth || windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
+  // takes its diameter from the island height and the row's padding. The row is
+  // exactly the window width capped to the content column (`width: '100%'` in a
+  // full-width container with `maxWidth`), so it needs no onLayout round-trip:
+  // deriving it here keeps the island on the same frame as the rotated window.
+  const rowContentWidth = Math.min(windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
   // Both layouts fold search into the island: wide always, compact while
   // expanded. Wide pins the island open and hugs its per-kind slot widths
   // (Apple Music iPad pill); the search button is a slot in both.

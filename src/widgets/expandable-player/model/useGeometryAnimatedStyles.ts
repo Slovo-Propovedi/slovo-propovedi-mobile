@@ -6,11 +6,11 @@ import { getMiniBarStyle } from '../lib/getMiniBarStyle'
 
 interface GeometryAnimatedStylesInput {
   barProgress: SharedValue<number>
-  fullScreenHeightShared: SharedValue<number>
+  fullScreenHeight: number
   /** Alternating ±0.01dp heal tick (Issue #63), written by `forceGeometryReapply`. */
   geometryReapplyTick: SharedValue<number>
   progress: SharedValue<number>
-  screenWidthShared: SharedValue<number>
+  screenWidth: number
   tabBarHeightShared: SharedValue<number>
   /** The chrome's bottom padding, the wide pill's rest line. */
   wideBottomInset: number
@@ -24,21 +24,21 @@ interface GeometryAnimatedStylesInput {
  * In the wide layout the bottom-bar morph is pinned to the expanded pose: the
  * tab island is anchored to the top, so the pill never folds into a bottom row
  * (the same force the tab island applies to its own progress).
- * @param input - Shared values driving the geometry worklets.
+ * @param input - Shared values and render-time geometry driving the worklets.
  * @param input.barProgress - Bottom-bar morph progress (0 = expanded pill, 1 = collapsed row).
  * @param input.geometryReapplyTick - Alternating heal tick for the Issue #63 re-apply channel.
- * @param input.fullScreenHeightShared - Full device screen height.
+ * @param input.fullScreenHeight - Full device screen height.
  * @param input.progress - Expand/collapse progress (0 = mini pill, 1 = fullscreen).
- * @param input.screenWidthShared - Current window width.
+ * @param input.screenWidth - Current window width.
  * @param input.tabBarHeightShared - Measured height of the floating tab row.
  * @param input.wideBottomInset - The chrome's bottom padding, the wide pill's rest line.
  */
 export const useGeometryAnimatedStyles = ({
   barProgress,
-  fullScreenHeightShared,
+  fullScreenHeight,
   geometryReapplyTick,
   progress,
-  screenWidthShared,
+  screenWidth,
   tabBarHeightShared,
   wideBottomInset,
 }: GeometryAnimatedStylesInput) => {
@@ -54,10 +54,10 @@ export const useGeometryAnimatedStyles = ({
     // so expanding out of the collapsed bottom line stays continuous.
     const style = getContainerGeometryStyle({
       barProgress: isWideLayout ? 0 : barProgress.value,
-      fullScreenHeight: fullScreenHeightShared.value,
+      fullScreenHeight,
       isWideLayout,
       progress: progress.value,
-      screenWidth: screenWidthShared.value,
+      screenWidth,
       tabBarHeight: tabBarHeightShared.value,
       wideBottomInset,
     })
@@ -71,9 +71,9 @@ export const useGeometryAnimatedStyles = ({
   const miniBarStyle = useAnimatedStyle(() =>
     getMiniBarStyle({
       barProgress: isWideLayout ? 0 : barProgress.value,
-      fullScreenHeight: fullScreenHeightShared.value,
+      fullScreenHeight,
       isWideLayout,
-      screenWidth: screenWidthShared.value,
+      screenWidth,
       tabBarHeight: tabBarHeightShared.value,
       wideBottomInset,
     }),

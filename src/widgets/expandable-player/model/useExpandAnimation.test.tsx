@@ -1,6 +1,8 @@
 import { createCtx } from '@reatom/framework'
 import { act } from '@testing-library/react-native'
+import { useState } from 'react'
 import { AppState, type AppStateStatus, Text } from 'react-native'
+import * as Reanimated from 'react-native-reanimated'
 import { withTiming } from 'react-native-reanimated'
 import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { advanceMorphFrames } from 'shared/mocks/morphFrames'
@@ -13,6 +15,7 @@ import {
   BAR_ROW_MIN_HEIGHT,
   BAR_SIDE_INSET_COLLAPSED,
   BAR_SIDE_INSET_EXPANDED,
+  CONTENT_COLUMN_WIDTH,
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
@@ -28,9 +31,12 @@ const COLLAPSED_LEFT = BAR_SIDE_INSET_COLLAPSED + BAR_CIRCLE_SIZE + BAR_OUTER_GA
 
 const mockedWithTiming = withTiming as jest.Mock
 
+let mockWindowWidth = 400
+let mockWindowHeight = 800
+
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
-  default: () => ({ fontScale: 1, height: 800, width: 400 }),
+  default: () => ({ fontScale: 1, height: mockWindowHeight, width: mockWindowWidth }),
 }))
 
 jest.mock('react-native/Libraries/Utilities/Dimensions', () => ({
@@ -44,10 +50,25 @@ jest.mock('react-native/Libraries/Utilities/Dimensions', () => ({
 
 const mockListeners: Array<(state: AppStateStatus) => void> = []
 
+// The shared reanimated mock rebuilds `useSharedValue` on every render, which
+// hides the real engine's persistence: a dimension mirror written only in a
+// passive effect stays stale for the commit that follows a rotation. Persisting
+// the value per hook instance reproduces that ordering.
+const usePersistentSharedValue = (initial: number) => {
+  const [holder] = useState(() => ({ value: initial }))
+
+  return holder
+}
+
 beforeEach(() => {
   oneLineBarMorphDriver.reset()
   mockedWithTiming.mockClear()
   mockListeners.length = 0
+  mockWindowWidth = 400
+  mockWindowHeight = 800
+  jest
+    .spyOn(Reanimated, 'useSharedValue')
+    .mockImplementation(usePersistentSharedValue as unknown as typeof Reanimated.useSharedValue)
   jest
     .spyOn(AppState, 'addEventListener')
     .mockImplementation((_event: string, listener: (state: AppStateStatus) => void) => {
@@ -451,6 +472,42 @@ describe('useExpandAnimation container visibility', () => {
 
   test('keeps the collapsed container transparent so the pill glass shows the page', async () => {
     expect(await renderContainerOpacity(false)).toBe(0)
+  })
+})
+
+describe('useExpandAnimation window rotation', () => {
+  test('paints the rotated window width on the animated layer in the same commit', async () => {
+    const renders: Array<ReturnType<typeof useExpandAnimation>> = []
+
+    const Harness = () => {
+      const result = useExpandAnimation(false, TAB_BAR_HEIGHT)
+      renders.push(result)
+
+      return <Text testID='harness'>{String(result.progress.value)}</Text>
+    }
+
+    const { rerender } = await renderWithProviders(<Harness />)
+    const pillWidth = (render: ReturnType<typeof useExpandAnimation>) =>
+      (render.miniBarStyle as unknown as { width: number }).width
+    const containerWidth = (render: ReturnType<typeof useExpandAnimation>) =>
+      (render.containerStyle as unknown as { width: number }).width
+
+    expect(pillWidth(renders[renders.length - 1])).toBe(400 - BAR_SIDE_INSET_EXPANDED * 2)
+
+    mockWindowWidth = 844
+    mockWindowHeight = 390
+    await act(async () => {
+      rerender(<Harness />)
+    })
+
+    // A passive effect used to write the dimension mirrors after the commit, so
+    // the first rotated frame animated at the old window width while the
+    // committed resting layer already held the new one (crooked chrome).
+    const rotated = renders[renders.length - 1]
+    const rotatedWidth = CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2
+
+    expect(pillWidth(rotated)).toBe(rotatedWidth)
+    expect(containerWidth(rotated)).toBe(rotatedWidth)
   })
 })
 

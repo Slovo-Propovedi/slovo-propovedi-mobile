@@ -4,8 +4,15 @@ import { CHROME_LAYOUT_SHIFT_DURATION_MS } from '../bottomBarLayout'
 import { getChromeShiftTranslateY, useChromeLayoutShift } from './useChromeLayoutShift'
 
 let mockIsWideLayout = false
+let mockWindowWidth = 400
+let mockWindowHeight = 800
 
 jest.mock('./useIsWideLayout', () => ({ useIsWideLayout: () => mockIsWideLayout }))
+
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ fontScale: 1, height: mockWindowHeight, width: mockWindowWidth }),
+}))
 
 const SHIFT_DISTANCE = 320
 const mockedWithTiming = withTiming as jest.Mock
@@ -27,6 +34,8 @@ describe('useChromeLayoutShift', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockIsWideLayout = false
+    mockWindowWidth = 400
+    mockWindowHeight = 800
   })
 
   test('mounts compact at rest without scheduling an animation', async () => {
@@ -84,6 +93,35 @@ describe('useChromeLayoutShift', () => {
       [0, { duration: CHROME_LAYOUT_SHIFT_DURATION_MS }],
       [1, { duration: CHROME_LAYOUT_SHIFT_DURATION_MS }],
     ])
+  })
+
+  test('snaps the anchor move when the window dimensions change with the flip', async () => {
+    const { rerender, result } = await renderChromeShift()
+
+    // A rotation/resize rewrites every dimension-derived distance in the same
+    // commit; tweening the anchor across 400ms would leave the chrome crooked
+    // beside the already-snapped islands.
+    mockWindowWidth = 900
+    mockWindowHeight = 700
+    await rerenderInLayout(true, rerender)
+
+    expect(mockedWithTiming).not.toHaveBeenCalled()
+    expect(result.current.translateY.value).toBe(0)
+  })
+
+  test('still animates a flip that follows a dimension change', async () => {
+    const { rerender } = await renderChromeShift()
+
+    mockWindowWidth = 900
+    await act(async () => {
+      rerender(undefined)
+    })
+
+    await rerenderInLayout(true, rerender)
+
+    expect(mockedWithTiming).toHaveBeenCalledWith(1, {
+      duration: CHROME_LAYOUT_SHIFT_DURATION_MS,
+    })
   })
 })
 
