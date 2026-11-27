@@ -3,7 +3,7 @@ import { BAR_SIDE_INSET_EXPANDED, CONTENT_COLUMN_WIDTH, getColumnSideInset } fro
 import { clampProgress, getIslandHeight, interpolateSize } from './getIslandMath'
 import { ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
 
-export interface SearchButtonGeometry {
+interface SearchButtonGeometry {
   bottom: number
   height: number
   left: number

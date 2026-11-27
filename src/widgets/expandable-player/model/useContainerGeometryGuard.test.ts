@@ -90,14 +90,8 @@ describe('useContainerGeometryGuard', () => {
     })
 
     expect(onMismatch).toHaveBeenCalledTimes(1)
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'playerGeometryHeal',
-      expect.objectContaining({
-        attempt: 1,
-        expectedTop: COLLAPSED_BAR_TOP,
-        y: COLLAPSED_BAR_TOP + 24,
-      }),
-    )
+    // The heal is a silent, by-design correction: no console noise.
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
   })
 
   test('no heal when container is above expected (animation direction)', async () => {
@@ -172,10 +166,10 @@ describe('useContainerGeometryGuard', () => {
     })
 
     expect(onMismatch).toHaveBeenCalledTimes(1)
-    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
   })
 
-  test('stops after MAX_HEALS mismatches and warns only once', async () => {
+  test('stops after MAX_HEALS mismatches without logging', async () => {
     const onMismatch = jest.fn()
 
     const { result } = await renderHookWithProviders(() =>
@@ -193,7 +187,7 @@ describe('useContainerGeometryGuard', () => {
       })
 
     expect(onMismatch).toHaveBeenCalledTimes(5)
-    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
   })
 
   test('window expiry — mismatch no longer heals after 15s', async () => {
@@ -223,10 +217,10 @@ describe('useContainerGeometryGuard', () => {
 
     // Should not heal again — window expired.
     expect(onMismatch).toHaveBeenCalledTimes(1)
-    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
   })
 
-  test('heal budget resets when resting tops change, the warn does not repeat', async () => {
+  test('heal budget resets when resting tops change, reads the NEW top', async () => {
     const onMismatch = jest.fn()
 
     const { rerender, result } = await renderHookWithProviders(
@@ -253,26 +247,63 @@ describe('useContainerGeometryGuard', () => {
     })
     expect(onMismatch).toHaveBeenCalledTimes(5)
 
-    // Re-render with a new resting top — budget resets.
+    // Re-render with a new resting top — budget resets, and the flip opens a
+    // settle window during which the old layout is not judged.
     const NEW_TOP = 800
     await act(async () => {
       rerender({ barCollapsedTop: NEW_TOP })
     })
 
+    // The reported y is the pre-flip layout: inside the settle window it must
+    // not start a heal toward the new (current) expectation.
+    await act(async () => {
+      result.current.onLayout(makeEvent(NEW_TOP + 20))
+    })
+    expect(onMismatch).toHaveBeenCalledTimes(5)
+
+    ;(Date.now as jest.Mock).mockReturnValue(16_000)
+
     await act(async () => {
       result.current.onLayout(makeEvent(NEW_TOP + 20))
     })
     expect(onMismatch).toHaveBeenCalledTimes(6)
-    // One warning per session is enough to flag the recurrence in prod logs.
-    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'playerGeometryHeal',
-      expect.objectContaining({
-        attempt: 1,
-        expectedTop: COLLAPSED_BAR_TOP,
-        y: COLLAPSED_BAR_TOP + 24,
-      }),
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
+  })
+
+  test('ignores layout frames until a resting-top change settles', async () => {
+    const onMismatch = jest.fn()
+
+    const { rerender, result } = await renderHookWithProviders(
+      (props: { barExpandedTop: number }) =>
+        useContainerGeometryGuard({
+          barCollapsedTop: COLLAPSED_BAR_TOP,
+          barExpandedTop: props.barExpandedTop,
+          barProgress: makeProgress(0),
+          onMismatch,
+        }),
+      { initialProps: { barExpandedTop: EXPANDED_BAR_TOP } },
     )
+
+    // A wide↔compact flip: the expectation jumps to the new wide top while the
+    // container's measured y is still the compact one, until the chrome shift
+    // lands. Judging that frame would heal a correct layout.
+    await act(async () => {
+      rerender({ barExpandedTop: 159 })
+    })
+    await act(async () => {
+      result.current.onLayout(makeEvent(774))
+    })
+    expect(onMismatch).not.toHaveBeenCalled()
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
+
+    // Once the shift settles, a still-wrong y is a real Issue #63 signature and
+    // is healed against the CURRENT expectation.
+    ;(Date.now as jest.Mock).mockReturnValue(1_000)
+    await act(async () => {
+      result.current.onLayout(makeEvent(774))
+    })
+    expect(onMismatch).toHaveBeenCalledTimes(1)
+    expect(consoleWarnSpy).not.toHaveBeenCalled()
   })
 
   test('tolerance boundary — y === expectedTop + 1 exactly does NOT heal', async () => {

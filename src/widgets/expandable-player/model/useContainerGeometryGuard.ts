@@ -1,17 +1,14 @@
 import { useEffect, useRef } from 'react'
 import { type LayoutChangeEvent } from 'react-native'
 import { type SharedValue } from 'react-native-reanimated'
+import { CHROME_LAYOUT_SHIFT_DURATION_MS } from 'shared/ui/layout'
 
 interface UseContainerGeometryGuardInput {
   /** Resting top of the mini pill while the bar is collapsed into one row (progress 1). */
   barCollapsedTop: number
   /** Resting top of the detached mini pill while the bar is expanded (progress 0). */
   barExpandedTop: number
-  /**
-   * Live bar morph progress (0 = detached pill, 1 = collapsed bottom row).
-   * The guard derives its expectation from this value AT REST, so it can never
-   * lag behind the geometry the pill actually settled into.
-   */
+  /** Live bar morph progress (0 = detached pill, 1 = collapsed bottom row). */
   barProgress: SharedValue<number>
   /** Optional chained layout handler from the consumer. */
   onLayout?: (event: LayoutChangeEvent) => void
@@ -48,14 +45,13 @@ const resolveRestingTop = (
  * after a newer flip), which made the guard "heal" an actually-correct layout
  * toward the wrong resting top. Between the two rest points the guard evaluates
  * nothing: the container is moving by design, so mid-morph violations are
- * ignored, not queued. The 15s verification window counts from the first guarded onLayout (container
- * attach), not from hook mount. This covers late attach scenarios (for example,
- * a fresh install where the user plays at t=40s) and eliminates the
- * onLayout-before-effect race.
- * Cap (5 heals): if the bug persists beyond 5 corrections, something else is
- * wrong — we stop intervening to avoid infinite loops. The warning is emitted
- * at most once per session: it is a prod signal of recurrence, not a per-frame
- * log.
+ * ignored, not queued. The 15s window counts from the first JUDGED onLayout
+ * (container attach), not hook mount, covering late attach (fresh install, play
+ * at t=40s) and the onLayout-before-effect race. A layout flip re-derives the
+ * resting tops before the chrome settles, so frames are ignored until the shift
+ * lands (no false heal). Cap (5 heals) stops intervening if the bug persists;
+ * the correction is silent because it is by design and logging it only spammed
+ * dev consoles during flips.
  * @param root0 - Guard configuration.
  * @param root0.barCollapsedTop - Resting top when the bar is collapsed to one row.
  * @param root0.barExpandedTop - Resting top when the bar is expanded (detached pill).
@@ -73,22 +69,33 @@ export const useContainerGeometryGuard = ({
   const attachedAtRef = useRef(0)
   const hasAttachedRef = useRef(false)
   const healsRef = useRef(0)
-  const hasWarnedRef = useRef(false)
+  const previousTopsRef = useRef({
+    collapsed: barCollapsedTop,
+    expanded: barExpandedTop,
+  })
+  const settleSkipUntilRef = useRef(0)
 
   const handleLayout = (event: LayoutChangeEvent) => {
     onLayout?.(event)
-
-    // Lazy stamp: record attach time on first guarded onLayout.
-    if (!hasAttachedRef.current) {
-      hasAttachedRef.current = true
-      attachedAtRef.current = Date.now()
-    }
 
     // Mid-morph the container is between the two resting positions by design,
     // so every frame would look like a mismatch.
     const expectedTop = resolveRestingTop(barProgress.value, barExpandedTop, barCollapsedTop)
 
     if (expectedTop === null) return
+
+    // A layout flip re-derives the resting tops BEFORE the chrome finishes
+    // sliding between its anchors (the animated layer lags the new expectation),
+    // so the reported y is legitimately still the previous layout. Judging those
+    // frames would slowly "heal" a correct transition and spam the console.
+    if (Date.now() < settleSkipUntilRef.current) return
+
+    // Lazy stamp: record attach time on first JUDGED layout (after any settle
+    // window), so the verification budget starts on a frame we actually trust.
+    if (!hasAttachedRef.current) {
+      hasAttachedRef.current = true
+      attachedAtRef.current = Date.now()
+    }
 
     // Cold-start-only: skip after verification window expires.
     if (Date.now() - attachedAtRef.current > VERIFY_WINDOW_MS) return
@@ -101,27 +108,22 @@ export const useContainerGeometryGuard = ({
 
     healsRef.current += 1
 
-    // One warning per session is enough to flag a prod recurrence; repeated
-    // warns from every morph frame drowned the console in noise.
-    if (__DEV__ && !hasWarnedRef.current) {
-      hasWarnedRef.current = true
-      console.warn('playerGeometryHeal', {
-        attempt: healsRef.current,
-        expectedTop,
-        y: event.nativeEvent.layout.y,
-      })
-    }
-
     onMismatch()
   }
 
   useEffect(() => {
     // Reset heals and attach stamp when the resting tops change (e.g. two-phase
-    // tab bar measurement) — fresh budget for new geometry. The warning flag
-    // is session-wide and intentionally survives the reset.
+    // tab bar measurement or a compact↔wide flip) — fresh budget for the new
+    // geometry, and a settle window during which the old layout is not judged.
+    const previousTops = previousTopsRef.current
+    const topsChanged =
+      previousTops.collapsed !== barCollapsedTop || previousTops.expanded !== barExpandedTop
+
+    previousTopsRef.current = { collapsed: barCollapsedTop, expanded: barExpandedTop }
     healsRef.current = 0
     hasAttachedRef.current = false
     attachedAtRef.current = 0
+    settleSkipUntilRef.current = topsChanged ? Date.now() + CHROME_LAYOUT_SHIFT_DURATION_MS : 0
   }, [barCollapsedTop, barExpandedTop])
 
   return { onLayout: handleLayout }
