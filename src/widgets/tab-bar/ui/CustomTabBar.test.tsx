@@ -400,17 +400,20 @@ describe('<CustomTabBar>', () => {
     expect(findHairlineBorders(getGlassBorder(false))).toHaveLength(3)
   })
 
-  const findIslandContent = () =>
+  // The clipping wrapper (Issue #152) has no padding now: the animated inset
+  // lives on the slot row inside it, so the absolute traveling capsule shares
+  // one coordinate origin across native and web.
+  const findSlotsRow = () =>
     screen.root?.queryAll(instance => {
       const flat = StyleSheet.flatten(instance.props.style)
 
-      return flat?.flexDirection === 'row' && flat?.height === '100%'
+      return flat?.flex === 1 && flat?.flexDirection === 'row'
     })[0]
 
   test('insets the island content so the tabs clear the rounded edges', async () => {
     await renderTabBar()
 
-    expect(StyleSheet.flatten(findIslandContent()?.props.style)).toMatchObject({
+    expect(StyleSheet.flatten(findSlotsRow()?.props.style)).toMatchObject({
       paddingLeft: 10,
       paddingRight: 10,
     })
@@ -423,7 +426,7 @@ describe('<CustomTabBar>', () => {
     // pushes the 48dp active slot past the circle's right edge.
     await renderTabBar(0, { isCollapsed: true })
 
-    expect(StyleSheet.flatten(findIslandContent()?.props.style)).toMatchObject({
+    expect(StyleSheet.flatten(findSlotsRow()?.props.style)).toMatchObject({
       paddingLeft: 0,
       paddingRight: 0,
     })
@@ -541,7 +544,7 @@ describe('<CustomTabBar>', () => {
 
     // Wide slot centres are 44, 132, 220 and 288: «Ещё» rests the 100dp
     // capsule at 220 - 50.
-    expect(findTravelCapsules(island)[0]).toHaveStyle({ transform: [{ translateX: 170 }] })
+    expect(findTravelCapsules(island)[0]).toHaveStyle({ transform: [{ translateX: 180 }] })
   })
 
   test('fades the traveling capsule out while the island collapses', async () => {
@@ -763,7 +766,7 @@ describe('<CustomTabBar>', () => {
     expect(StyleSheet.flatten(findTabIsland()?.props.style)?.width).toBeGreaterThan(
       BAR_CIRCLE_SIZE_EXPANDED,
     )
-    expect(StyleSheet.flatten(findIslandContent()?.props.style)).toMatchObject({
+    expect(StyleSheet.flatten(findSlotsRow()?.props.style)).toMatchObject({
       paddingLeft: 10,
       paddingRight: 10,
     })
