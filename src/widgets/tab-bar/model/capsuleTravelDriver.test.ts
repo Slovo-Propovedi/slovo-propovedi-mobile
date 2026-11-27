@@ -91,14 +91,14 @@ describe('capsuleTravelDriver', () => {
     await advance()
     const overshootCenter = capsuleTravelDriver.capsuleCenter.value
 
-    // The capsule rides ~18% of its width past the target…
-    expect(overshootCenter).toBeGreaterThan(240)
+    // The capsule rides ~10% of its width past the target…
+    expect(overshootCenter).toBeGreaterThan(235)
     // …while the arrival pulse peaks stronger than the travel pulse.
     expect(capsuleTravelDriver.arrivalPulse.value).toBeGreaterThan(0.9)
 
     await advance()
     expect(capsuleTravelDriver.arrivalPulse.value).toBe(1)
-    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(248, 5)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(240, 5)
 
     await advance()
     expect(capsuleTravelDriver.capsuleCenter.value).toBeGreaterThan(230)

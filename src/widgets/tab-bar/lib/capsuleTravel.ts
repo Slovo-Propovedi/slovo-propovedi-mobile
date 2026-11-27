@@ -38,7 +38,7 @@ export const CAPSULE_TRAVEL_MAX_MS = 220
 export const CAPSULE_OVERSHOOT_MS = 60
 export const CAPSULE_RETURN_MS = 70
 // The capsule rides this share of its own width past the destination.
-export const CAPSULE_OVERSHOOT_RATIO = 0.18
+export const CAPSULE_OVERSHOOT_RATIO = 0.1
 // Two capsule overhangs minus the item's 4dp margin on each side, so the moving
 // capsule keeps the footprint of the old per-slot highlight.
 const CAPSULE_SLOT_BLEED = CAPSULE_HORIZONTAL_OVERHANG * 2 - 8
