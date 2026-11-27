@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Collapsing the player crossfades the fullscreen sheet into the mini-player pill, so the pill is fully visible when the sheet is gone instead of popping in at the end
 - Bottom chrome (tab island, search button, mini-player and its highlight) keeps its portrait width through a rotation instead of re-deriving a landscape one a frame behind the native relayout; the chrome is only re-centred
 - Rotation is one reflow: slider cards and the detached search circle keep their size instead of resizing and shifting after the native relayout, and the tab-bar height is derived in the same commit as the bar's bottom padding instead of settling through two Android layout passes
+- The content's top and bottom paddings settle in one commit on rotation: the bottom reserve is derived from the live safe-area insets instead of waiting for the tab-bar height atom, so the content no longer shifts vertically while the chrome settles
 
 ## [0.35.1] - 2026-11-24
 

@@ -11,7 +11,7 @@ import {
   RefreshButton,
   WideTopActions,
 } from 'shared/ui'
-import { tabBarHeightAtom, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
+import { useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminStats } from '../lib/useAdminStats'
 import { AdminHomeHeader } from './AdminHomeHeader'
@@ -23,10 +23,9 @@ import { styles } from './styles'
 export const AdminHomeScreen = () => {
   const insets = useSafeAreaInsets()
   const isWide = useIsWideLayout()
-  const { topChromeScrollInset } = useScreenChromePadding()
+  const { bottomBarHeight, topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
   const [user] = useAtom(authUserAtom)
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { currentTheme } = useTheme()
   const stats = useAdminStats()
 
@@ -45,7 +44,7 @@ export const AdminHomeScreen = () => {
           <ScrollView
             contentContainerStyle={[
               styles.content,
-              { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
+              { paddingBottom: bottomBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
             ]}
             refreshControl={createRefreshControl(
               stats.isRefreshing,

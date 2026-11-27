@@ -1,4 +1,3 @@
-import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
 import { FlatList, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -11,7 +10,7 @@ import {
   PullToRefresh,
   WideTopActions,
 } from 'shared/ui'
-import { tabBarHeightAtom, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
+import { useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminSermons } from '../lib/useAdminSermons'
 import { AdminSermonRow } from './AdminSermonRow'
@@ -29,11 +28,10 @@ const LIST_TEST_ID = 'admin-sermons-list'
 export const AdminSermonsScreen = () => {
   const insets = useSafeAreaInsets()
   const isWide = useIsWideLayout()
-  const { topChromeScrollInset: scrollInset } = useScreenChromePadding()
+  const { bottomBarHeight, topChromeScrollInset: scrollInset } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
   const { primary } = currentTheme
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const {
     isError,
     isLoading,
@@ -84,7 +82,7 @@ export const AdminSermonsScreen = () => {
             )}
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: scrollInset },
+              { paddingBottom: bottomBarHeight + INDENTS.low, paddingTop: scrollInset },
             ]}
             ListFooterComponent={
               <AdminSermonsRetryFooter

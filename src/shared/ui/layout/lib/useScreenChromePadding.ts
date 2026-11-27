@@ -1,13 +1,12 @@
-import { useAtom } from '@reatom/npm-react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PLAYER_SIZES } from '../../theme/themed'
 import {
   BAR_OUTER_GAP,
+  BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
   WIDE_BAR_ROW_HEIGHT,
   WIDE_CONTENT_TOP_GAP,
 } from '../bottomBarLayout'
-import { tabBarHeightAtom } from '../model'
 import { useBarBottomPadding } from './useBarBottomPadding'
 import { useIsWideLayout } from './useIsWideLayout'
 
@@ -21,6 +20,12 @@ import { useIsWideLayout } from './useIsWideLayout'
  * CONTENT height — the derived row also carries the bottom padding, which must
  * not inflate the top chrome.
  *
+ * The bar height is derived from the layout mode and the live insets, never from
+ * `tabBarHeightAtom`: the atom is published a React hop after the insets commit
+ * and still holds the other orientation's height right after a rotation, so
+ * reading it here would settle the content's top and bottom paddings in
+ * different commits. The atom remains the player worklet channel only.
+ *
  * `topChromeScrollInset` is the part of `topChromeHeight` that belongs to a
  * scroll container's CONTENT, not to the screen layout: the safe-area strip
  * stays outside the scroller, while the island clearance lives in the content.
@@ -28,24 +33,27 @@ import { useIsWideLayout } from './useIsWideLayout'
  * the floating glass instead of being clipped by an opaque full-width band.
  */
 export const useScreenChromePadding = (): {
+  bottomBarHeight: number
   bottomChromeHeight: number
   topChromeHeight: number
   topChromeScrollInset: number
 } => {
   const isWide = useIsWideLayout()
   const insets = useSafeAreaInsets()
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const barBottomPadding = useBarBottomPadding()
   const miniPlayerHeight = PLAYER_SIZES.miniPlayerHeight
+  const barHeight = (isWide ? WIDE_BAR_ROW_HEIGHT : BAR_ROW_MIN_HEIGHT) + barBottomPadding
 
   if (!isWide)
     return {
-      bottomChromeHeight: tabBarHeight + miniPlayerHeight,
+      bottomBarHeight: barHeight,
+      bottomChromeHeight: barHeight + miniPlayerHeight,
       topChromeHeight: 0,
       topChromeScrollInset: 0,
     }
 
   return {
+    bottomBarHeight: barHeight,
     bottomChromeHeight: PLAYER_SIZES.wideMiniPlayerHeight + barBottomPadding + BAR_OUTER_GAP,
     topChromeHeight: insets.top + BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
     topChromeScrollInset:

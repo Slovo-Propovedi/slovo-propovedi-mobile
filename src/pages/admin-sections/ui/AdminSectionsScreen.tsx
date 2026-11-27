@@ -1,4 +1,3 @@
-import { useAtom } from '@reatom/npm-react'
 import { useRouter } from 'expo-router'
 import { View } from 'react-native'
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist'
@@ -11,7 +10,7 @@ import {
   PullToRefresh,
   WideTopActions,
 } from 'shared/ui'
-import { tabBarHeightAtom, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
+import { useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { type AdminSectionListItem } from '../lib/sectionListItem'
 import { useAdminSections } from '../lib/useAdminSections'
@@ -34,10 +33,9 @@ const SectionSkeletonList = () => (
 export const AdminSectionsScreen = () => {
   const insets = useSafeAreaInsets()
   const isWide = useIsWideLayout()
-  const { topChromeScrollInset } = useScreenChromePadding()
+  const { bottomBarHeight, topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
-  const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const { isLoading, isRefreshing, isReordering, reload, reorder, sections } = useAdminSections()
 
   const openSection = (section: AdminSectionListItem) => {
@@ -76,7 +74,7 @@ export const AdminSectionsScreen = () => {
             }
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
+              { paddingBottom: bottomBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
             ]}
             refreshControl={createRefreshControl(
               isRefreshing,

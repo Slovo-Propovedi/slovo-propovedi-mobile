@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react-native'
 import { Platform } from 'react-native'
 import { getSharedTestCtx, renderHookWithProviders } from '../../../mocks/renderWithProviders'
 import { PLAYER_SIZES } from '../../theme/themed'
@@ -55,10 +56,34 @@ describe('useScreenChromePadding', () => {
     const { result } = await renderHookWithProviders(() => useScreenChromePadding())
 
     expect(result.current).toEqual({
-      bottomChromeHeight: PLAYER_SIZES.tabBarHeight + PLAYER_SIZES.miniPlayerHeight,
+      bottomBarHeight: BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN,
+      bottomChromeHeight: BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN + PLAYER_SIZES.miniPlayerHeight,
       topChromeHeight: 0,
       topChromeScrollInset: 0,
     })
+  })
+
+  test('compact: the bottom reserve follows the insets in the same render, not the atom', async () => {
+    mockWindowWidth = 390
+    mockBottomInset = 24
+    // A post-rotation atom still carries the other orientation's height; it must
+    // not pin the reserve to a stale value.
+    setTabBarHeight(getSharedTestCtx(), 200)
+
+    const { rerender, result } = await renderHookWithProviders(() => useScreenChromePadding())
+
+    expect(result.current.bottomChromeHeight).toBe(
+      BAR_ROW_MIN_HEIGHT + 24 + PLAYER_SIZES.miniPlayerHeight,
+    )
+
+    mockBottomInset = 0
+    await act(async () => {
+      await rerender(undefined)
+    })
+
+    expect(result.current.bottomChromeHeight).toBe(
+      BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN + PLAYER_SIZES.miniPlayerHeight,
+    )
   })
 
   test('wide: the island clearance and the first-content gap live in scroll content', async () => {
@@ -87,6 +112,7 @@ describe('useScreenChromePadding', () => {
     // The pill grew to 64; the screen's bottom reservation follows it.
     expect(PLAYER_SIZES.wideMiniPlayerHeight).toBe(64)
     expect(result.current).toEqual({
+      bottomBarHeight: WIDE_BAR_ROW_HEIGHT + 20,
       bottomChromeHeight: 64 + 20 + BAR_OUTER_GAP,
       topChromeHeight: mockTopInset + BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
       topChromeScrollInset:
