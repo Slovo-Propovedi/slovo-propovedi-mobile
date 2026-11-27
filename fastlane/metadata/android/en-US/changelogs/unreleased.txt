@@ -1,1 +1,7 @@
-Tablet: slim tabs+search island, taller full mini-player, no titles, top-right actions; highlight glides, layout animates. Search: field on top, folds on scroll, results morph, button detaches. Fixed: instant mini-player; collapse crossfades into pill; chrome snaps pre-paint on rotation; voice recording pauses audio, split-screen fills pane (Android); iOS web fills above Safari toolbar.
+Tablet: tabs+search top island, content under
+full mini-player, no titles, actions top-right
+highlight+haptic, layout animates
+Search: field top, folds on scroll, results morph, button detaches
+Fixed: instant mini-player, collapse crossfade to pill
+chrome snaps on rotation, recording pauses, split-screen pane (Android)
+iOS web full height, Safari toolbar/keyboard, 21px home-indicator gap
