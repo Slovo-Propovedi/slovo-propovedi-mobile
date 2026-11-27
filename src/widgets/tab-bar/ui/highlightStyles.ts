@@ -12,8 +12,8 @@ export const highlightStyles = {
     borderRadius: RADIUSES.round,
     position: 'absolute' as const,
   },
-  // The traveling capsule is inset by the same 6dp per side vertically that the
-  // slot bleed gives it horizontally, so it floats inside the island instead of
+  // The traveling capsule keeps a slimmer 4dp top/bottom inset (the horizontal
+  // slot bleed stays 6dp per side), so it floats inside the island without
   // filling its full height. It is moved horizontally by its animated translateX,
   // so left stays at 0; the pulse scale grows from this inset base.
   travelCapsule: {

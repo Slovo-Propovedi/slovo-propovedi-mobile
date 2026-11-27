@@ -10,13 +10,14 @@ const RECTS = getSlotRects([88, 88, 88, 48], 10)
 const progressValue = (value: number) => ({ value }) as unknown as SharedValue<number>
 
 // The slot bleed widens the capsule past its slot: 12 total, so 6 per side.
-// That per-side bleed is also the vertical inset the capsule must keep.
+// The vertical inset is slimmer (4) while the horizontal bleed stays 6.
 const SLOT_WIDTH = 88
 const CAPSULE_BLEED_PER_SIDE = (() => {
   const slot = getSlotRects([SLOT_WIDTH], 10)[0]
 
   return slot ? (slot.capsuleWidth - slot.slotWidth) / 2 : 0
 })()
+const CAPSULE_VERTICAL_INSET = 4
 
 const renderCapsule = async (
   progress: number,
@@ -80,15 +81,15 @@ describe('<TravelingCapsule>', () => {
     })
   })
 
-  test('insets the capsule vertically as much as its horizontal bleed per side', async () => {
+  test('keeps a slimmer vertical inset than its horizontal bleed per side', async () => {
     const capsule = await renderCapsule(0)
     const style = StyleSheet.flatten(capsule.props.style)
 
-    // Equal to the 6dp the slot bleed adds on each horizontal side, so the
-    // highlight keeps symmetric breathing room instead of filling the island.
+    // The side bleed stays 6dp per side; the top/bottom inset is 4dp, so the
+    // highlight floats above the island edge without touching it.
     expect(CAPSULE_BLEED_PER_SIDE).toBe(6)
-    expect(style.top).toBe(CAPSULE_BLEED_PER_SIDE)
-    expect(style.bottom).toBe(CAPSULE_BLEED_PER_SIDE)
+    expect(style.top).toBe(CAPSULE_VERTICAL_INSET)
+    expect(style.bottom).toBe(CAPSULE_VERTICAL_INSET)
   })
 
   test('grows past its base height on the pulse peak', async () => {

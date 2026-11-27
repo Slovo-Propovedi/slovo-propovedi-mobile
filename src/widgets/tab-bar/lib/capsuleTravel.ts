@@ -42,10 +42,10 @@ export const CAPSULE_OVERSHOOT_RATIO = 0.1
 // Two capsule overhangs minus the item's 4dp margin on each side, so the moving
 // capsule keeps the footprint of the old per-slot highlight.
 const CAPSULE_SLOT_BLEED = CAPSULE_HORIZONTAL_OVERHANG * 2 - 8
-// The same per-side inset the slot bleed gives the capsule horizontally (6dp):
-// reused as the top/bottom inset so the highlight floats inside the island
-// instead of filling it edge-to-edge. The travel pulse scales from this base.
-export const CAPSULE_VERTICAL_INSET = CAPSULE_SLOT_BLEED / 2
+// Top/bottom inset of the traveling capsule. The horizontal bleed stays 6dp per
+// side (width only); vertically the highlight sits slimmer so it floats just
+// inside the island edge. The travel pulse scales from this base.
+export const CAPSULE_VERTICAL_INSET = 4
 
 export const getTravelDuration = (slotDistance: number) => {
   'worklet'
