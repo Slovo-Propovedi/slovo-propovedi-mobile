@@ -61,6 +61,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0,
+    // Above the scrolling content (0), below the floating chrome (10): the
+    // content's own `translateY` makes it a stacking context that would
+    // otherwise cover the spinner in the wide layout.
+    zIndex: 5,
   },
   wrapper: {
     flex: 1,

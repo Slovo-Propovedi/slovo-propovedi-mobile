@@ -21,25 +21,30 @@ const renderRefresh = (topOffset?: number) =>
   )
 
 // The spinner slot is the only absolutely positioned view in the wrapper; its
-// `top` is the seam under test.
-const spinnerTop = (): number | undefined => {
-  const slot = screen.root?.queryAll(
-    node => StyleSheet.flatten(node.props.style)?.position === 'absolute',
-  )[0]
-
-  return StyleSheet.flatten(slot?.props.style)?.top
-}
+// `top` and stacking layer are the seams under test.
+const spinnerStyle = () =>
+  StyleSheet.flatten(
+    screen.root?.queryAll(node => StyleSheet.flatten(node.props.style)?.position === 'absolute')[0]
+      ?.props.style,
+  )
 
 describe('<PullToRefresh> (web)', () => {
   test('offsets the spinner below the floating top chrome when given a top offset', async () => {
     await renderRefresh(96)
 
-    expect(spinnerTop()).toBe(96)
+    expect(spinnerStyle()?.top).toBe(96)
+  })
+
+  test('draws the wide spinner above the scrolling content', async () => {
+    await renderRefresh(96)
+
+    // Content paints at 0, the floating chrome at 10: the slot must sit between.
+    expect(spinnerStyle()?.zIndex).toBe(5)
   })
 
   test('keeps the spinner at the top in the compact layout (no offset)', async () => {
     await renderRefresh()
 
-    expect(spinnerTop()).toBe(0)
+    expect(spinnerStyle()?.top).toBe(0)
   })
 })
