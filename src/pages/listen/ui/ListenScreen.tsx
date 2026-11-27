@@ -56,7 +56,11 @@ export const ListenScreen = () => {
           },
         ]}
       >
-        <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
+        <PullToRefresh
+          onRefresh={refresh}
+          refreshing={isRefreshing}
+          topOffset={topChromeScrollInset}
+        >
           <Animated.ScrollView
             onScroll={onScroll}
             ref={tourScrollableRef}
@@ -65,10 +69,15 @@ export const ListenScreen = () => {
             keyboardShouldPersistTaps='handled'
             onContentSizeChange={onContentSizeChange}
             style={[styles.scroll, { backgroundColor: currentTheme.background }]}
-            refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
             contentContainerStyle={[
               { paddingBottom: bottomChromeHeight, paddingTop: topChromeScrollInset },
             ]}
+            refreshControl={createRefreshControl(
+              isRefreshing,
+              refresh,
+              currentTheme.primary,
+              topChromeScrollInset,
+            )}
           >
             {!isWide && <ListenTopRow showAdminButton={canOpenAdminPanel} />}
             <DynamicSectionsSlider onboardingTargetId='listen.sections' />

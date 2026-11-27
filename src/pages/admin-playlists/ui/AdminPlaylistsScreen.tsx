@@ -34,9 +34,10 @@ const PlaylistSkeletonList = () => (
 export const AdminPlaylistsScreen = () => {
   const insets = useSafeAreaInsets()
   const isWide = useIsWideLayout()
-  const { topChromeScrollInset } = useScreenChromePadding()
+  const { topChromeScrollInset: scrollInset } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
+  const { primary } = currentTheme
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const {
     isError,
@@ -70,19 +71,19 @@ export const AdminPlaylistsScreen = () => {
           },
         ]}
       >
-        <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
+        <PullToRefresh onRefresh={refresh} topOffset={scrollInset} refreshing={isRefreshing}>
           <FlatList
             onEndReachedThreshold={0.5}
             keyExtractor={item => item.id}
             data={isLoading ? [] : playlists}
             onEndReached={() => void loadMore()}
-            refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
+            refreshControl={createRefreshControl(isRefreshing, refresh, primary, scrollInset)}
             renderItem={({ item }) => (
               <AdminPlaylistRow item={item} onPress={() => openPlaylist(item)} />
             )}
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
+              { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: scrollInset },
             ]}
             ListFooterComponent={
               <AdminPlaylistsRetryFooter

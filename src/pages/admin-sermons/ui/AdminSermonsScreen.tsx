@@ -29,9 +29,10 @@ const LIST_TEST_ID = 'admin-sermons-list'
 export const AdminSermonsScreen = () => {
   const insets = useSafeAreaInsets()
   const isWide = useIsWideLayout()
-  const { topChromeScrollInset } = useScreenChromePadding()
+  const { topChromeScrollInset: scrollInset } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
+  const { primary } = currentTheme
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const {
     isError,
@@ -70,20 +71,20 @@ export const AdminSermonsScreen = () => {
           { backgroundColor: currentTheme.background, paddingTop: insets.top },
         ]}
       >
-        <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
+        <PullToRefresh onRefresh={refresh} topOffset={scrollInset} refreshing={isRefreshing}>
           <FlatList
             testID={LIST_TEST_ID}
             onEndReachedThreshold={0.5}
             keyExtractor={item => item.id}
             data={isLoading ? [] : sermons}
             onEndReached={() => void loadMore()}
-            refreshControl={createRefreshControl(isRefreshing, refresh, currentTheme.primary)}
+            refreshControl={createRefreshControl(isRefreshing, refresh, primary, scrollInset)}
             renderItem={({ item }) => (
               <AdminSermonRow item={item} onPress={() => openSermon(item)} />
             )}
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
+              { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: scrollInset },
             ]}
             ListFooterComponent={
               <AdminSermonsRetryFooter

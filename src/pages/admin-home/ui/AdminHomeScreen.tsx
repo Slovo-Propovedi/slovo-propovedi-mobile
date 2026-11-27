@@ -41,17 +41,22 @@ export const AdminHomeScreen = () => {
           },
         ]}
       >
-        <PullToRefresh onRefresh={stats.reload} refreshing={stats.isRefreshing}>
+        <PullToRefresh
+          onRefresh={stats.reload}
+          refreshing={stats.isRefreshing}
+          topOffset={topChromeScrollInset}
+        >
           <ScrollView
-            refreshControl={createRefreshControl(
-              stats.isRefreshing,
-              stats.reload,
-              currentTheme.primary,
-            )}
             contentContainerStyle={[
               styles.content,
               { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
             ]}
+            refreshControl={createRefreshControl(
+              stats.isRefreshing,
+              stats.reload,
+              currentTheme.primary,
+              topChromeScrollInset,
+            )}
           >
             <AdminHomeHeader user={user} showActions={!isWide} />
 

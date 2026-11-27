@@ -10,12 +10,16 @@ import { type ColorValue, Platform, RefreshControl } from 'react-native'
  * @param refreshing - Whether the spinner is visible (controlled).
  * @param onRefresh - Called on pull; may return a promise.
  * @param tintColor - Accent color for the indicator (iOS tint / Android colors).
+ * @param progressViewOffset - Distance of the indicator from the scroll view
+ *   top, in px; wide layouts pass the floating island clearance. Works on both
+ *   Android and iOS (Fabric) in RN 0.88.
  * @returns A `RefreshControl` element on native, `undefined` on web.
  */
 export const createRefreshControl = (
   refreshing: boolean,
   onRefresh: () => Promise<void> | void,
   tintColor: ColorValue,
+  progressViewOffset = 0,
 ) =>
   Platform.OS === 'web' ? undefined : (
     <RefreshControl
@@ -23,5 +27,6 @@ export const createRefreshControl = (
       onRefresh={onRefresh}
       tintColor={tintColor}
       refreshing={refreshing}
+      progressViewOffset={progressViewOffset}
     />
   )

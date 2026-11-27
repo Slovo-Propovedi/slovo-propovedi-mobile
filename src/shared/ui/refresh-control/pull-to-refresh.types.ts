@@ -11,4 +11,11 @@ export interface PullToRefreshProps {
   children: ReactNode
   onRefresh: () => Promise<void> | void
   refreshing: boolean
+  /**
+   * Extra top offset of the web spinner slot, in px. Screens with floating top
+   * chrome pass the island clearance so the spinner appears below it. Native
+   * ignores it — the scrollable's `RefreshControl` takes its own offset.
+   * @default 0
+   */
+  topOffset?: number
 }

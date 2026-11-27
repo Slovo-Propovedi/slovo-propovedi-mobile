@@ -287,6 +287,22 @@ describe('<ListenScreen>', () => {
     expect(mockFetchAllSections).toHaveBeenCalledTimes(1)
   })
 
+  test('offsets the refresh spinner below the floating wide island', async () => {
+    const { getByText } = await renderWithProviders(<ListenScreen />, {})
+    const refreshControl = findRefreshControl(getByText(SECTIONS_MOCK))
+
+    expect(refreshControl.props.progressViewOffset).toBe(WIDE_TOP_CHROME_SCROLL_INSET)
+  })
+
+  test('keeps the compact refresh spinner at the top', async () => {
+    mockUseWindowDimensions.mockReturnValue(COMPACT_DIMENSIONS)
+
+    const { getByText } = await renderWithProviders(<ListenScreen />, {})
+    const refreshControl = findRefreshControl(getByText(SECTIONS_MOCK))
+
+    expect(refreshControl.props.progressViewOffset).toBe(0)
+  })
+
   test('does not render the admin button when unauthenticated', async () => {
     const ctx = createCtx()
     authStatusAtom(ctx, 'unauthenticated')

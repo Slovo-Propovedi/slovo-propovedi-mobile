@@ -64,14 +64,17 @@ export const AdminSectionsScreen = () => {
           },
         ]}
       >
-        <PullToRefresh onRefresh={reload} refreshing={isRefreshing}>
+        <PullToRefresh
+          onRefresh={reload}
+          refreshing={isRefreshing}
+          topOffset={topChromeScrollInset}
+        >
           <DraggableFlatList
             renderItem={renderItem}
             keyExtractor={item => item.id}
             data={isLoading ? [] : sections}
             containerStyle={styles.listContainer}
             onDragEnd={({ data }) => void reorder(data)}
-            refreshControl={createRefreshControl(isRefreshing, reload, currentTheme.primary)}
             ListEmptyComponent={
               isLoading ? <SectionSkeletonList /> : <EmptyState message='Разделов пока нет' />
             }
@@ -79,6 +82,12 @@ export const AdminSectionsScreen = () => {
               styles.listContent,
               { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
             ]}
+            refreshControl={createRefreshControl(
+              isRefreshing,
+              reload,
+              currentTheme.primary,
+              topChromeScrollInset,
+            )}
             ListFooterComponent={
               isReordering ? (
                 <View style={styles.reordering}>
