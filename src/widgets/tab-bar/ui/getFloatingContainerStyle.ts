@@ -1,6 +1,7 @@
 import {
   BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
+  type useChromeLayoutShift,
   type useKeyboardLiftStyle,
   WIDE_BAR_ROW_HEIGHT,
 } from 'shared/ui/layout'
@@ -8,14 +9,16 @@ import { type useRowInsetStyle } from '../lib/useRowInsetStyle'
 import { styles } from './styles'
 
 // Outer chrome wrapper: compact pins to the bottom edge and rides the keyboard;
-// wide floats below the safe-area top and ignores the keyboard lift.
+// wide floats below the safe-area top and ignores the keyboard lift. The
+// layout-shift layer carries the slide between the two anchors.
 export const getFloatingContainerStyle = (
   isWide: boolean,
   topInset: number,
   keyboardLiftStyle: ReturnType<typeof useKeyboardLiftStyle>,
+  shiftStyle: ReturnType<typeof useChromeLayoutShift>['shiftStyle'],
 ) =>
   isWide
-    ? [styles.floatingContainerTop, { top: topInset + BAR_TOP_ISLAND_MARGIN }]
+    ? [styles.floatingContainerTop, { top: topInset + BAR_TOP_ISLAND_MARGIN }, shiftStyle]
     : [styles.floatingContainer, keyboardLiftStyle]
 
 // Row of islands. The compact row carries the Android elevation for the island

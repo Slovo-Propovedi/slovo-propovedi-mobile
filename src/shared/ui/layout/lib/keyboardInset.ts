@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Keyboard, type KeyboardEvent, Platform } from 'react-native'
-import { makeMutable, useAnimatedStyle } from 'react-native-reanimated'
+import { makeMutable, type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 
 // WebKit on iOS may exclude the home-indicator band from
 // visualViewport.height, so `innerHeight - (height + offsetTop)` reads as a
@@ -61,10 +61,19 @@ const syncVisualViewportInset = () => {
  * Lifts a floating chrome wrapper above the on-screen keyboard. Applied to the
  * outer wrapper of every bottom-chrome layer, so the islands track the keyboard
  * frame by frame instead of being covered by it.
+ *
+ * An optional chrome-shift offset is composed into the SAME transform: a second
+ * `translateY` style entry would replace the keyboard lift on the native/web
+ * style resolution instead of adding to it.
+ * @param chromeShiftTranslateYSv - Layout-shift slide (dp) to add to the lift.
  */
-export const useKeyboardLiftStyle = () =>
+export const useKeyboardLiftStyle = (chromeShiftTranslateYSv?: SharedValue<number>) =>
   useAnimatedStyle(() => ({
-    transform: [{ translateY: -keyboardBottomInsetSv.value }],
+    transform: [
+      {
+        translateY: -keyboardBottomInsetSv.value + (chromeShiftTranslateYSv?.value ?? 0),
+      },
+    ],
   }))
 
 /**

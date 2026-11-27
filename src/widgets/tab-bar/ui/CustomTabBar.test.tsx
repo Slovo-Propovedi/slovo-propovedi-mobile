@@ -718,10 +718,23 @@ describe('<CustomTabBar>', () => {
       const container = findTopAnchoredFloatingContainer()
 
       expect(container).toBeDefined()
-      expect(StyleSheet.flatten(container?.props.style)?.transform).toBeUndefined()
+      // The layout-shift layer is the ONLY transform in wide: the keyboard lift
+      // is not applied there, so its translateY stays at the rest zero.
+      expect(StyleSheet.flatten(container?.props.style)?.transform).toEqual([{ translateY: 0 }])
     } finally {
       keyboardBottomInsetSv.value = 0
     }
+  })
+
+  test('carries the layout-shift transform into the wide floating container', async () => {
+    mockWindowWidth = 1024
+    await renderTabBar()
+
+    const container = findTopAnchoredFloatingContainer()
+
+    // The shift wrapper is present in wide and rests at zero; the slide
+    // distance and its timing are pinned by useChromeLayoutShift's own suite.
+    expect(StyleSheet.flatten(container?.props.style)?.transform).toEqual([{ translateY: 0 }])
   })
 
   // Wide needs a tablet-class shortest side (600) AND a tablet-class longest

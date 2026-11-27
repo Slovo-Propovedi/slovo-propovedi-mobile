@@ -1,6 +1,11 @@
 import { act, renderHook } from '@testing-library/react-native'
 import { Keyboard, Platform } from 'react-native'
-import { keyboardBottomInsetSv, useKeyboardBottomInsetSync } from './keyboardInset'
+import { makeMutable } from 'react-native-reanimated'
+import {
+  keyboardBottomInsetSv,
+  useKeyboardBottomInsetSync,
+  useKeyboardLiftStyle,
+} from './keyboardInset'
 
 type KeyboardListener = (event: { endCoordinates: { height: number } }) => void
 type VisualViewportListener = (event: Event) => void
@@ -215,5 +220,28 @@ describe('useKeyboardBottomInsetSync on web', () => {
       if (removeEventListenerDescriptor)
         Object.defineProperty(window, 'removeEventListener', removeEventListenerDescriptor)
     }
+  })
+})
+
+describe('useKeyboardLiftStyle', () => {
+  beforeEach(() => {
+    keyboardBottomInsetSv.value = 0
+  })
+
+  test('lifts by the keyboard height alone when no chrome shift is passed', async () => {
+    keyboardBottomInsetSv.value = 240
+
+    const { result } = await renderHook(() => useKeyboardLiftStyle())
+
+    expect(result.current).toMatchObject({ transform: [{ translateY: -240 }] })
+  })
+
+  test('composes the chrome shift into the keyboard lift transform', async () => {
+    keyboardBottomInsetSv.value = 240
+    const chromeShift = makeMutable(40)
+
+    const { result } = await renderHook(() => useKeyboardLiftStyle(chromeShift))
+
+    expect(result.current).toMatchObject({ transform: [{ translateY: -200 }] })
   })
 })

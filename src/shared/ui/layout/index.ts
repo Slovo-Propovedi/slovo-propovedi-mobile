@@ -29,6 +29,7 @@ export {
 } from './lib/keyboardInset'
 export { useBarBottomPadding } from './lib/useBarBottomPadding'
 export { useBarCollapseOnScroll } from './lib/useBarCollapseOnScroll'
+export { useChromeLayoutShift } from './lib/useChromeLayoutShift'
 export { useIsWideLayout } from './lib/useIsWideLayout'
 export { useScreenChromePadding } from './lib/useScreenChromePadding'
 export {

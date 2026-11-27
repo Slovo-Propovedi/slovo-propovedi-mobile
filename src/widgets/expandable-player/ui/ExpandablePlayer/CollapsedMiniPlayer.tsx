@@ -11,6 +11,7 @@ import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { useIsWideLayout, useKeyboardLiftStyle } from 'shared/ui/layout'
 import { type ThemeColors } from 'shared/ui/theme'
 import { MINI_PILL_TUCK_DISTANCE } from '../../lib/getMiniPlayerGeometry'
+import { useMiniPillShiftTranslateY } from '../../lib/useMiniPillShiftTranslateY'
 import { useMiniPillFade } from '../../model/useMiniPillFade'
 import { useMiniPlayerMount } from '../../model/useMiniPlayerMount'
 import { type PlaylistMenuSlot } from '../PlaylistBottomSheet/PlaylistBottomSheet'
@@ -37,6 +38,7 @@ import { createMiniStyles } from './miniStyles'
  * @param root0.playing - Whether playback is active.
  * @param root0.playlist - Current playlist, if any.
  * @param root0.playlistMenuComponent - Queue-sheet header menu injected by the app.
+ * @param root0.tabBarHeight - Measured height of the floating tab row.
  */
 export const CollapsedMiniPlayer = ({
   audio,
@@ -53,6 +55,7 @@ export const CollapsedMiniPlayer = ({
   playing,
   playlist,
   playlistMenuComponent,
+  tabBarHeight,
 }: {
   audio: AudioPlayerData
   barCollapsed: boolean
@@ -68,6 +71,7 @@ export const CollapsedMiniPlayer = ({
   playing: boolean
   playlist: null | PlaylistData
   playlistMenuComponent?: PlaylistMenuSlot
+  tabBarHeight: number
 }) => {
   const miniTargetRef = useOnboardingTargetRef('player.mini')
   const isWideLayout = useIsWideLayout()
@@ -79,8 +83,9 @@ export const CollapsedMiniPlayer = ({
     useAtomMorphDriver(searchFocusMorphDriver)
   const pillOpacity = useMiniPillFade(isHidden, focusProgress)
   const isMounted = useMiniPlayerMount(isHidden)
+  const pillShift = useMiniPillShiftTranslateY(tabBarHeight)
   const tuckStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: MINI_PILL_TUCK_DISTANCE * focusProgress.value }],
+    transform: [{ translateY: MINI_PILL_TUCK_DISTANCE * focusProgress.value + pillShift.value }],
   }))
   const fadeStyle = useAnimatedStyle(() => ({ opacity: pillOpacity.value }))
 

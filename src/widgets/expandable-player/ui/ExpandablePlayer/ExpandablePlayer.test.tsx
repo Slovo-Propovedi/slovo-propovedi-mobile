@@ -21,6 +21,7 @@ jest.mock('expo-router', () => ({
 }))
 
 const mockTogglePlay = jest.fn().mockResolvedValue(undefined)
+let mockShiftTranslateY = 0
 
 jest.mock('entities/player', () => {
   const { action, atom } = jest.requireActual('@reatom/framework')
@@ -47,6 +48,11 @@ jest.mock('shared/ui/layout', () => {
     isTabBarMeasuredAtom: atom(true, 'mockIsTabBarMeasuredAtom'),
     keyboardBottomInsetSv: { value: 0 },
     tabBarHeightAtom: atom(0, 'mockTabBarHeightAtom'),
+    useBarBottomPadding: () => 0,
+    useChromeLayoutShift: () => ({
+      shiftStyle: {},
+      translateY: { value: mockShiftTranslateY },
+    }),
     useIsWideLayout: () => false,
     useKeyboardLiftStyle: () => ({}),
   }
@@ -207,6 +213,7 @@ describe('<ExpandablePlayer>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockTogglePlay.mockResolvedValue(undefined)
+    mockShiftTranslateY = 0
     mockMiniPlayerProps.length = 0
     mockSheetHostProps.length = 0
     searchFocusMorphDriver.reset()
@@ -359,6 +366,15 @@ describe('<ExpandablePlayer>', () => {
     expect(miniPillOpacitySv.value).toBe(1)
     expect(mockMiniPlayerProps.at(-1)?.isTucked).toBe(false)
     expect(tuckTransform()).toEqual([{ translateY: 0 }])
+  })
+
+  test('composes the chrome layout shift into the pill transform', async () => {
+    mockShiftTranslateY = -40
+    await renderWithProviders(<ExpandablePlayer />, { ctx })
+
+    // The slide shares the pill's single transform owner (the tuck style):
+    // a separate style entry would replace it instead of adding to it.
+    expect(tuckTransform()).toEqual([{ translateY: -40 }])
   })
 
   test('keeps the mini player in place while the field is blurred', async () => {

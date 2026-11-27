@@ -1,11 +1,12 @@
 import { useWindowDimensions } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { GlassIsland } from 'shared/ui'
-import { useBarBottomPadding, useIsWideLayout, useKeyboardLiftStyle } from 'shared/ui/layout'
+import { useBarBottomPadding, useIsWideLayout } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getVisibleTabRoutes, SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
 import { type TabBarProps } from '../lib/tabBarTypes'
 import { useActiveTabRouteKey } from '../lib/useActiveTabRouteKey'
+import { useFloatingShiftStyles } from '../lib/useFloatingShiftStyles'
 import { useRowInsetStyle } from '../lib/useRowInsetStyle'
 import { useTabBarMeasurement } from '../lib/useTabBarMeasurement'
 import { useTabIslandMorph } from '../lib/useTabIslandMorph'
@@ -60,13 +61,13 @@ export const CustomTabBar = ({
     windowWidth,
   })
   const bottomPadding = useBarBottomPadding()
-  const keyboardLiftStyle = useKeyboardLiftStyle()
+  const { keyboardLiftStyle, shiftStyle } = useFloatingShiftStyles(insets.top)
   const { insetStyle, restingInsetStyle } = useRowInsetStyle(isWide)
 
   return (
     <Animated.View
       pointerEvents='box-none'
-      style={getFloatingContainerStyle(isWide, insets.top, keyboardLiftStyle)}
+      style={getFloatingContainerStyle(isWide, insets.top, keyboardLiftStyle, shiftStyle)}
     >
       <Animated.View
         onLayout={onLayout}
