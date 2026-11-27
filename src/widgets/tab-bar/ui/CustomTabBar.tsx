@@ -3,6 +3,7 @@ import Animated from 'react-native-reanimated'
 import { GlassIsland } from 'shared/ui'
 import { useBarBottomPadding, useIsWideLayout } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
+import { getInstantTabNavigation } from '../lib/getInstantTabNavigation'
 import { getVisibleTabRoutes, SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
 import { type TabBarProps } from '../lib/tabBarTypes'
 import { useActiveTabRouteKey } from '../lib/useActiveTabRouteKey'
@@ -18,6 +19,7 @@ import { TabIslandContent } from './TabIslandContent'
 import { useTabPress } from './useTabPress'
 
 export const CustomTabBar = ({
+  descriptors,
   emitter,
   hideSearch = false,
   insets,
@@ -69,7 +71,7 @@ export const CustomTabBar = ({
   const { handleTabPress, isTabAvailable } = useTabPress({
     emitter,
     isSearchFocused,
-    navigateToTab,
+    navigateToTab: getInstantTabNavigation({ descriptors, fallback: navigateToTab, state }),
     onTabTravel: requestTravel,
   })
   const bottomPadding = useBarBottomPadding()
