@@ -9,12 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Wide layout on tablet-class screens (at least 768 pt on the long side and 600 pt on the short side), so a phone in landscape keeps the usual look: the tabs and search button share one island at the top, and the mini-player becomes a bottom island with the full control set — repeat, previous/play/next, favorites, sermon menu and the current playlist (a «Sermon text» button is reserved and inactive for now); the bottom island keeps the same safe-area gap as the tab-bar row (20 pt on iPad, 21 pt on iOS web) instead of hugging the screen edge, and screen content starts right under the floating top island without an extra bottom-inset-sized gap
+- Wide layout on tablet-class screens (at least 768 pt on the long side and 600 pt on the short side), so a phone in landscape keeps the usual look: the tabs and a full search tab — its own label, equal width and the active capsule while search is open — share one island at the top, and the mini-player becomes a bottom island with the full control set — repeat, previous/play/next, favorites, sermon menu and the current playlist (a «Sermon text» button is reserved and inactive for now); the bottom island keeps the same safe-area gap as the tab-bar row (20 pt on iPad, 21 pt on iOS web) instead of hugging the screen edge, and screen content starts right under the floating top island without an extra bottom-inset-sized gap
 - Search page: the field moved to the top, under the Listen/Read toggle and above the results, and takes focus when the page opens; the bar stays expanded while searching and collapses again as you scroll, folding the row back to the tab circle and the search circle
 
 ### Changed
 
-- Wide layout: as the window narrows, the mini-player hides its buttons progressively from right to left and shifts the control cluster right; phones keep the usual look
+- Wide layout: page titles that duplicate the tab labels are hidden while the action buttons stay in place, and as the window narrows the mini-player hides its buttons progressively from right to left and shifts the control cluster right; phones keep the usual look
 
 ### Fixed
 
