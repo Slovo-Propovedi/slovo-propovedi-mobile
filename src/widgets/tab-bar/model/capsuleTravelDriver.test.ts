@@ -1,12 +1,17 @@
 import { act } from '@testing-library/react-native'
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics'
 import { Platform } from 'react-native'
+import { ctx } from 'shared/lib/reatom-ctx/ctx'
 import { advanceMorphFrames, countActiveMorphFrames } from 'shared/mocks/morphFrames'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
+import { hapticsEnabledAtom } from 'shared/model/settings'
 import { useCapsuleTravel } from '../lib/useCapsuleTravel'
 import { capsuleTravelDriver } from './capsuleTravelDriver'
 
 const mockedImpactAsync = impactAsync as jest.MockedFunction<typeof impactAsync>
+
+const countImpacts = (style: ImpactFeedbackStyle) =>
+  mockedImpactAsync.mock.calls.filter(([callStyle]) => callStyle === style).length
 
 // Wide: [Слушать][Читать][Ещё][Поиск] — slot centres 54, 142, 230, 298.
 const WIDE_INPUT = {
@@ -197,33 +202,67 @@ describe('capsuleTravelDriver', () => {
     // Four 50ms frames finish the 200ms travel into the overshoot; the spring
     // back is still in flight, so arrival must stay silent.
     await advance(4)
-    expect(mockedImpactAsync).not.toHaveBeenCalled()
+    expect(countImpacts(ImpactFeedbackStyle.Medium)).toBe(0)
 
     // The return lands the capsule on the destination: one medium impact,
     // independent of when the route switch reaches React.
     await advance(4)
-    expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
-    expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Medium)
+    expect(countImpacts(ImpactFeedbackStyle.Medium)).toBe(1)
   })
 
-  test('fires one medium impact on landing, never while passing slots', async () => {
+  test('fires one light impact as the highlight crosses the single intermediate tab, then medium on landing', async () => {
+    const { rerender } = await renderTravel(WIDE_INPUT)
+
+    await act(async () => {
+      rerender({ ...WIDE_INPUT, activeRouteKey: 'more' })
+    })
+    // The 200ms travel sweeps «Слушать» → «Ещё» across «Читать».
+    await advance(4)
+
+    expect(countImpacts(ImpactFeedbackStyle.Light)).toBe(1)
+    expect(countImpacts(ImpactFeedbackStyle.Medium)).toBe(0)
+
+    await advance(4)
+
+    // The pass does not repeat on the spring-back; the medium lands once.
+    expect(countImpacts(ImpactFeedbackStyle.Light)).toBe(1)
+    expect(countImpacts(ImpactFeedbackStyle.Medium)).toBe(1)
+  })
+
+  test('fires one light impact per crossed tab, then one medium on landing', async () => {
     const { rerender } = await renderTravel(WIDE_INPUT)
 
     await act(async () => {
       rerender({ ...WIDE_INPUT, activeRouteKey: 'listen', isSearchFocused: true })
     })
-    // Five 50ms frames finish the clamped 220ms travel, the next two cover the
-    // overshoot — crossing «Читать» and «Ещё» must stay silent.
-    await advance(7)
-    expect(mockedImpactAsync).not.toHaveBeenCalled()
+    // «Читать» and «Ещё» sit between «Слушать» and «Поиск»: two distinct passes
+    // inside the clamped 220ms travel.
+    await advance(5)
 
-    // The spring-back lands on the target: exactly one medium impact.
-    await advance(2)
-    expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
-    expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Medium)
+    expect(countImpacts(ImpactFeedbackStyle.Light)).toBe(2)
+    expect(countImpacts(ImpactFeedbackStyle.Medium)).toBe(0)
 
-    await advance(3)
-    expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
+    // The spring-back lands on the target without re-crossing a passed slot.
+    await advance(6)
+
+    expect(countImpacts(ImpactFeedbackStyle.Light)).toBe(2)
+    expect(countImpacts(ImpactFeedbackStyle.Medium)).toBe(1)
+  })
+
+  test('stays silent when the haptics setting is off', async () => {
+    hapticsEnabledAtom(ctx, false)
+    try {
+      const { rerender } = await renderTravel(WIDE_INPUT)
+
+      await act(async () => {
+        rerender({ ...WIDE_INPUT, activeRouteKey: 'listen', isSearchFocused: true })
+      })
+      await advance(10)
+
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
+    } finally {
+      hapticsEnabledAtom(ctx, true)
+    }
   })
 
   test('stays silent on web where expo-haptics has no native implementation', async () => {

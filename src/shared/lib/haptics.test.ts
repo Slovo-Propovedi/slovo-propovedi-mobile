@@ -6,7 +6,13 @@ import {
   selectionAsync,
 } from 'expo-haptics'
 import { Platform } from 'react-native'
-import { hapticLanding, hapticLight, hapticTick, isWebVibrationSupported } from './haptics'
+import {
+  hapticHighlightPass,
+  hapticLanding,
+  hapticLight,
+  hapticTick,
+  isWebVibrationSupported,
+} from './haptics'
 import { ctx } from './reatom-ctx/ctx'
 
 jest.mock('./reatom-ctx/ctx', () => ({
@@ -262,6 +268,85 @@ describe('hapticLanding', () => {
     try {
       mockedCtxGet.mockReturnValue(false)
       hapticLanding()
+
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      mockedCtxGet.mockReturnValue(true)
+    }
+  })
+})
+
+describe('hapticHighlightPass', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  test('triggers a light impact on iOS', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+    try {
+      hapticHighlightPass()
+
+      expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Light)
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('triggers the system Virtual_Key haptic on Android', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
+    try {
+      hapticHighlightPass()
+
+      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Virtual_Key)
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('fires every pass instead of throttling like a press pulse', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+    try {
+      // Two intermediate slots fall well inside the 200ms press-throttle window;
+      // each pass is a distinct beat, so both must be felt.
+      hapticHighlightPass()
+      hapticHighlightPass()
+
+      expect(mockedImpactAsync).toHaveBeenCalledTimes(2)
+      expect(mockedImpactAsync).toHaveBeenNthCalledWith(1, ImpactFeedbackStyle.Light)
+      expect(mockedImpactAsync).toHaveBeenNthCalledWith(2, ImpactFeedbackStyle.Light)
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('is a silent no-op on web even with the Vibration API', () => {
+    const originalNavigator = globalThis.navigator
+    const vibrate = jest.fn()
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { vibrate } })
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      hapticHighlightPass()
+
+      expect(vibrate).not.toHaveBeenCalled()
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      Object.defineProperty(globalThis, 'navigator', {
+        configurable: true,
+        value: originalNavigator,
+      })
+    }
+  })
+
+  test('is a no-op when haptics are disabled', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+    try {
+      mockedCtxGet.mockReturnValue(false)
+      hapticHighlightPass()
 
       expect(mockedImpactAsync).not.toHaveBeenCalled()
     } finally {

@@ -1,7 +1,8 @@
 import { type FrameInfo, type SharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { hapticLanding } from 'shared/lib/haptics'
+import { hapticHighlightPass, hapticLanding } from 'shared/lib/haptics'
 import { type MorphFrameHost } from 'shared/lib/hooks/atomMorphClock'
+import { type CapsuleSlotRect } from '../lib/capsuleTravel'
 import { stepCapsuleFrame } from '../lib/capsuleTravelFrame'
 import {
   beginCapsuleTravel,
@@ -23,7 +24,11 @@ export interface CapsuleTravelDriver {
   snapTo: (landing: CapsuleLanding) => void
   travelActivity: SharedValue<number>
   /** Glides to the landing, then overshoots along the trajectory and returns. */
-  travelTo: (landing: CapsuleLanding, slotDistance: number) => void
+  travelTo: (
+    landing: CapsuleLanding,
+    slotDistance: number,
+    slotRects: readonly CapsuleSlotRect[],
+  ) => void
 }
 
 // Frame-driven choreography instead of wall-clock `withTiming`: the travel
@@ -52,7 +57,11 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
   const frameStep = (frameInfo: FrameInfo) => {
     'worklet'
 
-    if (stepCapsuleFrame(state, frameInfo)) scheduleOnRN(settle)
+    const { landed, passedSlots } = stepCapsuleFrame(state, frameInfo)
+
+    for (let pass = 0; pass < passedSlots; pass++) scheduleOnRN(hapticHighlightPass)
+
+    if (landed) scheduleOnRN(settle)
   }
 
   const snapTo = (landing: CapsuleLanding) => {
@@ -91,7 +100,7 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
     },
     snapTo,
     travelActivity: state.travelActivity,
-    travelTo: (landing, slotDistance) => {
+    travelTo: (landing, slotDistance, slotRects) => {
       // A press starts the travel synchronously; the route-render effect then
       // reconciles with the same destination. Keep the already-running trip
       // instead of rewinding it to the current frame.
@@ -103,7 +112,7 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
         return
       }
 
-      beginCapsuleTravel(state, landing, slotDistance)
+      beginCapsuleTravel(state, landing, slotDistance, slotRects)
       isRunningFlag = true
       syncActiveHosts()
     },

@@ -44,17 +44,21 @@ const vibrateWeb = (durationMs: number): void => {
   navigator.vibrate(durationMs)
 }
 
-// Fire-and-forget press feedback: light impact on iOS (system Taptic Engine),
-// system haptic on Android, Vibration API pulse on web (a silent no-op where the
-// API is unavailable). Gated by the global «Виброотклик» toggle
-// (hapticsEnabledAtom) — when the user disables haptics, both button presses and
-// the seek tick go silent. Cosmetic by design — a haptic must never crash the
-// app, so the rejected promise is swallowed intentionally.
-// Android uses the system haptic engine (performAndroidHapticsAsync →
-// View.performHapticFeedback, VIRTUAL_KEY), so the response follows the device's
-// system settings (short/strong as configured by the user); known trade-off —
-// when the system vibration feedback is disabled (typical on MIUI), no vibration
-// happens inside the app.
+const fireImpact = (androidHaptic: AndroidHaptics, iosStyle: ImpactFeedbackStyle): void => {
+  if (Platform.OS === 'android') {
+    void performAndroidHapticsAsync(androidHaptic).catch(() => {})
+    return
+  }
+
+  void impactAsync(iosStyle).catch(() => {})
+}
+
+// Fire-and-forget press feedback: light impact on iOS, system haptic on Android,
+// Vibration API pulse on web (silent no-op where unsupported). Gated by the global
+// «Виброотклик» toggle (hapticsEnabledAtom) — disabling it silences presses and
+// seek ticks. Cosmetic by design: a rejected promise is swallowed, never thrown.
+// Android follows the device's system settings (VIRTUAL_KEY); when system vibration
+// feedback is disabled (typical on MIUI), nothing vibrates inside the app.
 export const hapticLight = (): void => {
   if (!ctx.get(hapticsEnabledAtom)) return
 
@@ -67,12 +71,7 @@ export const hapticLight = (): void => {
 
   if (isThrottled()) return
 
-  if (Platform.OS === 'android') {
-    void performAndroidHapticsAsync(AndroidHaptics.Virtual_Key).catch(() => {})
-    return
-  }
-
-  void impactAsync(ImpactFeedbackStyle.Light).catch(() => {})
+  fireImpact(AndroidHaptics.Virtual_Key, ImpactFeedbackStyle.Light)
 }
 
 // Landing cue for the liquid tab highlight: one medium impact when the capsule
@@ -88,12 +87,19 @@ export const hapticLanding = (): void => {
 
   if (Platform.OS === 'web') return
 
-  if (Platform.OS === 'android') {
-    void performAndroidHapticsAsync(AndroidHaptics.Confirm).catch(() => {})
-    return
-  }
+  fireImpact(AndroidHaptics.Confirm, ImpactFeedbackStyle.Medium)
+}
 
-  void impactAsync(ImpactFeedbackStyle.Medium).catch(() => {})
+// Light cue for the traveling highlight crossing an intermediate slot: one pulse
+// per passed tab. Deliberately NOT throttled — consecutive slots land inside the
+// press-throttle window, yet each pass is a distinct beat, not a repeat tap.
+// Gated by «Виброотклик»; web has no analogue for a gliding highlight (silent).
+export const hapticHighlightPass = (): void => {
+  if (!ctx.get(hapticsEnabledAtom)) return
+
+  if (Platform.OS === 'web') return
+
+  fireImpact(AndroidHaptics.Virtual_Key, ImpactFeedbackStyle.Light)
 }
 
 // Perceptible tick for continuous value scrubbing (seek slider): iOS uses
