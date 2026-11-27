@@ -1,4 +1,4 @@
-import { WIDE_ACTIONS_CENTER_Y } from '../layout/bottomBarLayout'
+import { WIDE_TOP_CHROME_SCROLL_INSET } from '../layout/bottomBarLayout'
 
 /** Rubber-band factor applied to the raw finger delta, so a pull feels elastic. */
 const PULL_RESISTANCE = 0.4
@@ -12,16 +12,18 @@ export const REFRESH_MIN_INTERVAL_MS = 2000
 export const RESTING_DURATION_MS = 200
 
 /**
- * Top offset of the web spinner slot.
+ * Top offset of the web spinner slot inside the scroll content.
  *
- * In the wide layout the slot centres on the fixed top-right actions row, so the
- * spinner sits level with the help/admin buttons instead of below the floating
- * island. The compact layout keeps the slot flush with the content top.
+ * The slot fills the bottom part of the island-clearance inset, so at rest it
+ * sits right below the floating island and its bottom edge meets the first
+ * content row. It is a child of the translated content wrapper, so it scrolls
+ * away with the list. The compact layout keeps the slot flush with the content
+ * top.
  * @param isWide - Whether the wide layout is active.
  * @returns The spinner slot top offset in pixels.
  */
 export const getRefreshTopOffset = (isWide: boolean): number =>
-  isWide ? WIDE_ACTIONS_CENTER_Y - SPINNER_SLOT_HEIGHT / 2 : 0
+  isWide ? WIDE_TOP_CHROME_SCROLL_INSET - SPINNER_SLOT_HEIGHT : 0
 
 /**
  * Converts a raw downward finger delta into the visible pull distance.
@@ -36,16 +38,19 @@ export const computeDisplayedPull = (rawDeltaY: number, maxDistance = TRIGGER_DI
   Math.min(maxDistance, Math.max(0, rawDeltaY * PULL_RESISTANCE))
 
 /**
- * Vertical offset that centers the spinner slot inside the freed top gap.
+ * Vertical translate that centres the spinner slot inside the freed top gap.
  *
- * The gap equals the content's translate; the slot is `SPINNER_SLOT_HEIGHT`
- * tall, so the offset is half the leftover space. Never negative — a gap
- * shorter than the slot leaves the spinner pinned at the top.
+ * The slot lives inside the translated content wrapper, so its own translate
+ * first cancels the wrapper's shift and then re-centres it in the gap above the
+ * content. `scrollTop` lifts it with the scrolled content, so the slot scrolls
+ * away like any other flow row instead of hovering over the list. Never centres
+ * the slot above the content top — a gap shorter than the slot keeps it flush.
  * @param contentTranslate - Current content translateY in pixels.
+ * @param scrollTop - Current scroll offset of the content container.
  * @returns The spinner slot translateY in pixels.
  */
-export const computeSpinnerTranslate = (contentTranslate: number): number =>
-  Math.max(0, (contentTranslate - SPINNER_SLOT_HEIGHT) / 2)
+export const computeSpinnerTranslate = (contentTranslate: number, scrollTop = 0): number =>
+  Math.max(0, (contentTranslate - SPINNER_SLOT_HEIGHT) / 2) - contentTranslate - scrollTop
 
 /**
  * True when the pull is past the trigger threshold and the debounce has elapsed.

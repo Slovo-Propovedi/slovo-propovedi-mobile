@@ -5,7 +5,7 @@ import {
   BAR_OUTER_GAP,
   BAR_TOP_ISLAND_MARGIN,
   WIDE_BAR_ROW_HEIGHT,
-  WIDE_CONTENT_TOP_GAP,
+  WIDE_TOP_CHROME_SCROLL_INSET,
 } from '../bottomBarLayout'
 import { tabBarHeightAtom } from '../model'
 import { useBarBottomPadding } from './useBarBottomPadding'
@@ -48,7 +48,6 @@ export const useScreenChromePadding = (): {
   return {
     bottomChromeHeight: PLAYER_SIZES.wideMiniPlayerHeight + barBottomPadding + BAR_OUTER_GAP,
     topChromeHeight: insets.top + BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
-    topChromeScrollInset:
-      BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP,
+    topChromeScrollInset: WIDE_TOP_CHROME_SCROLL_INSET,
   }
 }

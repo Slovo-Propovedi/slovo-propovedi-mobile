@@ -13,7 +13,7 @@ import {
 } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
-import { WIDE_ACTIONS_CENTER_Y } from 'shared/ui/layout'
+import { WIDE_TOP_CHROME_SCROLL_INSET } from 'shared/ui/layout'
 import { AdminHomeScreen } from './AdminHomeScreen'
 
 const WIDE_DIMENSIONS = { fontScale: 1, height: 800, width: 1024 }
@@ -212,14 +212,14 @@ describe('<AdminHomeScreen>', () => {
     expect(await findByText(String(SERMONS_COUNT))).toBeTruthy()
   })
 
-  test('levels the wide refresh spinner slot with the actions row', async () => {
+  test('puts the wide refresh spinner slot in the island-clearance zone', async () => {
     mockUseWindowDimensions.mockReturnValue(WIDE_DIMENSIONS)
 
     await renderAdminHome('admin')
 
-    // Slot height is 40, so its top is the row centre minus half the slot.
-    expect(mockPullToRefreshTopOffset).toBe(WIDE_ACTIONS_CENTER_Y - 20)
-    expect(mockPullToRefreshTopOffset).toBe(20)
+    // The 40 px slot ends where the first content row starts, below the island.
+    expect(mockPullToRefreshTopOffset).toBe(WIDE_TOP_CHROME_SCROLL_INSET - 40)
+    expect(mockPullToRefreshTopOffset).toBe(56)
   })
 
   test('keeps the compact refresh spinner slot at the top', async () => {

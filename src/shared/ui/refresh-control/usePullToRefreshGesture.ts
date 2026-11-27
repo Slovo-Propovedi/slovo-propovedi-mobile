@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Platform } from 'react-native'
-import { isDomNode, settle } from './pull-to-refresh.dom'
+import { dragTo, isDomNode, isElementLike, settle, setTransition } from './pull-to-refresh.dom'
 import { attachPullGesture } from './pull-to-refresh.gesture'
 import { TRIGGER_DISTANCE } from './pull-to-refresh.lib'
 import { type PullToRefreshProps } from './pull-to-refresh.types'
@@ -33,6 +33,7 @@ export const usePullToRefreshGesture = ({
   const lastTriggerAtRef = useRef(0)
   const onRefreshRef = useRef(onRefresh)
   const activeRef = useRef(false)
+  const scrollTopRef = useRef(0)
 
   // Latest-ref pattern: event handlers read the current values without being
   // re-created (and without touching refs during render).
@@ -60,8 +61,35 @@ export const usePullToRefreshGesture = ({
       spinnerNodeRef.current,
       isActive ? TRIGGER_DISTANCE : 0,
       isActive ? 1 : 0,
+      scrollTopRef.current,
     )
   }, [isPending, refreshing, wrapperNode])
+
+  // The spinner is anchored to the scroll content top, so it must follow the
+  // scroller like any flow row. Scroll events do not bubble, hence capture.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !wrapperNode) return
+
+    const handleScroll = (event: Event) => {
+      const target = event.target
+      if (!isElementLike(target) || target.scrollHeight <= target.clientHeight) return
+
+      scrollTopRef.current = target.scrollTop
+      if (!activeRef.current || draggingRef.current) return
+
+      setTransition(contentNodeRef.current, spinnerNodeRef.current, 0)
+      dragTo(
+        contentNodeRef.current,
+        spinnerNodeRef.current,
+        TRIGGER_DISTANCE,
+        1,
+        scrollTopRef.current,
+      )
+    }
+
+    wrapperNode.addEventListener('scroll', handleScroll, true)
+    return () => wrapperNode.removeEventListener('scroll', handleScroll, true)
+  }, [wrapperNode])
 
   useEffect(() => {
     if (Platform.OS !== 'web' || !wrapperNode) return

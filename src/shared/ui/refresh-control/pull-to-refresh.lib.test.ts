@@ -1,7 +1,9 @@
+import { WIDE_TOP_CHROME_SCROLL_INSET } from '../layout/bottomBarLayout'
 import {
   computeDisplayedPull,
   computeSpinnerTranslate,
   findVerticalScrollableAncestor,
+  getRefreshTopOffset,
   REFRESH_MIN_INTERVAL_MS,
   shouldTriggerRefresh,
   SPINNER_SLOT_HEIGHT,
@@ -41,18 +43,34 @@ describe('computeDisplayedPull', () => {
 })
 
 describe('computeSpinnerTranslate', () => {
-  test('centers the spinner in the freed gap', () => {
+  test('cancels the content shift and centres the spinner in the freed gap', () => {
     expect(computeSpinnerTranslate(TRIGGER_DISTANCE)).toBe(
-      (TRIGGER_DISTANCE - SPINNER_SLOT_HEIGHT) / 2,
+      (TRIGGER_DISTANCE - SPINNER_SLOT_HEIGHT) / 2 - TRIGGER_DISTANCE,
     )
   })
 
-  test('keeps the spinner at the top when the gap is shorter than the slot', () => {
-    expect(computeSpinnerTranslate(SPINNER_SLOT_HEIGHT - 1)).toBe(0)
+  test('lifts the spinner with the scrolled content', () => {
+    expect(computeSpinnerTranslate(TRIGGER_DISTANCE, 40)).toBe(
+      (TRIGGER_DISTANCE - SPINNER_SLOT_HEIGHT) / 2 - TRIGGER_DISTANCE - 40,
+    )
   })
 
-  test('never returns a negative offset', () => {
+  test('keeps the spinner at the content top when the gap is shorter than the slot', () => {
+    expect(computeSpinnerTranslate(SPINNER_SLOT_HEIGHT - 1)).toBe(-(SPINNER_SLOT_HEIGHT - 1))
+  })
+
+  test('never centres the spinner above the content top', () => {
     expect(computeSpinnerTranslate(0)).toBe(0)
+  })
+})
+
+describe('getRefreshTopOffset', () => {
+  test('puts the wide slot in the island-clearance zone of the content top', () => {
+    expect(getRefreshTopOffset(true)).toBe(WIDE_TOP_CHROME_SCROLL_INSET - SPINNER_SLOT_HEIGHT)
+  })
+
+  test('keeps the compact slot at the content top', () => {
+    expect(getRefreshTopOffset(false)).toBe(0)
   })
 })
 
