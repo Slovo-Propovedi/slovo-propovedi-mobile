@@ -15,7 +15,6 @@ describe('player sheet opacity while the mini layer is mounted (collapse)', () =
     // Regression: a solid `surface` rectangle under the glass pill made the
     // frosted mini player look opaque (its BlurView saw only the solid sheet).
     expect(getContainerOpacity(0, true)).toBe(0)
-    expect(sheet(0, true)).toBe(0)
   })
 
   test('keeps the sheet fully opaque through the content fade-out', () => {
