@@ -1,4 +1,3 @@
-import { screen } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 import { type SharedValue } from 'react-native-reanimated'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
@@ -10,31 +9,63 @@ const RECTS = getSlotRects([88, 88, 88, 48], 10)
 
 const progressValue = (value: number) => ({ value }) as unknown as SharedValue<number>
 
-const findCapsule = () =>
-  screen.root?.queryAll(
-    instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === CAPSULE_COLOR,
-  )[0]
+// The slot bleed widens the capsule past its slot: 12 total, so 6 per side.
+// That per-side bleed is also the vertical inset the capsule must keep.
+const SLOT_WIDTH = 88
+const CAPSULE_BLEED_PER_SIDE = (() => {
+  const slot = getSlotRects([SLOT_WIDTH], 10)[0]
 
-const renderCapsule = async (progress: number, restingLeft = 4) => {
-  await renderWithProviders(
+  return slot ? (slot.capsuleWidth - slot.slotWidth) / 2 : 0
+})()
+
+const renderCapsule = async (
+  progress: number,
+  pulse: { arrivalPulse?: number; travelActivity?: number } = {},
+) => {
+  const { root } = await renderWithProviders(
     <TravelingCapsule
+      resting={{ left: 4, width: 100 }}
       progress={progressValue(progress)}
-      resting={{ left: restingLeft, width: 100 }}
       motion={{
-        arrivalPulse: progressValue(0),
+        arrivalPulse: progressValue(pulse.arrivalPulse ?? 0),
         capsuleCenter: progressValue(54),
         capsuleWidth: progressValue(100),
         slotRects: RECTS,
-        travelActivity: progressValue(0),
+        travelActivity: progressValue(pulse.travelActivity ?? 0),
       }}
     />,
   )
 
-  const capsule = findCapsule()
+  const capsule = root?.queryAll(
+    instance => StyleSheet.flatten(instance.props.style)?.backgroundColor === CAPSULE_COLOR,
+  )[0]
 
   if (!capsule) throw new Error('capsule not found')
 
   return capsule
+}
+
+interface StyleEntry {
+  transform?: readonly unknown[]
+}
+
+const collectStyles = (style: unknown): StyleEntry[] => {
+  if (Array.isArray(style)) return style.flatMap(collectStyles)
+
+  return typeof style === 'object' && style !== null ? ([style] as StyleEntry[]) : []
+}
+
+const readTravelScale = (capsule: Awaited<ReturnType<typeof renderCapsule>>) => {
+  // The mock flattens style arrays, so the committed resting twin (last) would
+  // shadow the animated transform. Read the animated travel entry directly.
+  const scales = collectStyles(capsule.props.style)
+    .flatMap(entry => entry.transform ?? [])
+    .filter(
+      (entry): entry is { scale: number } =>
+        typeof entry === 'object' && entry !== null && 'scale' in entry,
+    )
+
+  return scales[0]?.scale ?? 1
 }
 
 describe('<TravelingCapsule>', () => {
@@ -47,6 +78,25 @@ describe('<TravelingCapsule>', () => {
       transform: [{ translateX: 4 }],
       width: 100,
     })
+  })
+
+  test('insets the capsule vertically as much as its horizontal bleed per side', async () => {
+    const capsule = await renderCapsule(0)
+    const style = StyleSheet.flatten(capsule.props.style)
+
+    // Equal to the 6dp the slot bleed adds on each horizontal side, so the
+    // highlight keeps symmetric breathing room instead of filling the island.
+    expect(CAPSULE_BLEED_PER_SIDE).toBe(6)
+    expect(style.top).toBe(CAPSULE_BLEED_PER_SIDE)
+    expect(style.bottom).toBe(CAPSULE_BLEED_PER_SIDE)
+  })
+
+  test('grows past its base height on the pulse peak', async () => {
+    const rest = await renderCapsule(0)
+    const peak = await renderCapsule(0, { arrivalPulse: 1, travelActivity: 1 })
+
+    expect(readTravelScale(rest)).toBe(1)
+    expect(readTravelScale(peak)).toBeGreaterThan(readTravelScale(rest))
   })
 
   test('is inert while the island is collapsed', async () => {

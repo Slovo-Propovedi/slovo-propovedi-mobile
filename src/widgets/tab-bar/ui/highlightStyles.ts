@@ -1,4 +1,5 @@
 import { RADIUSES } from 'shared/ui/theme'
+import { CAPSULE_VERTICAL_INSET } from '../lib/capsuleTravel'
 import { WIDE_TAB_LABEL_SIZE } from '../lib/getIslandStyle'
 
 // Active-highlight and wide-layout styles shared by the capsule element, the
@@ -11,13 +12,15 @@ export const highlightStyles = {
     borderRadius: RADIUSES.round,
     position: 'absolute' as const,
   },
-  // The traveling capsule fills the island content box top-to-bottom and is
-  // moved horizontally by its animated translateX, so left stays at 0.
+  // The traveling capsule is inset by the same 6dp per side vertically that the
+  // slot bleed gives it horizontally, so it floats inside the island instead of
+  // filling its full height. It is moved horizontally by its animated translateX,
+  // so left stays at 0; the pulse scale grows from this inset base.
   travelCapsule: {
-    bottom: 0,
+    bottom: CAPSULE_VERTICAL_INSET,
     left: 0,
     position: 'absolute' as const,
-    top: 0,
+    top: CAPSULE_VERTICAL_INSET,
   },
   // Wide has no stacked label to make room for, so the icon keeps an explicit
   // zero lift. Dropping the animated style instead would freeze the compact -8
