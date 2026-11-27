@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Web (iOS): the bottom chrome rides above the auto-hiding Safari toolbar and the keyboard via live visual-viewport tracking
 - Android split-screen/multi-window: the app resizes to the pane instead of shrinking into a letterboxed portrait window with black side bars
 - The mini-player appears on the first frame after launch instead of waiting for the tab bar measurement and the offline startup chain
+- Collapsing the player crossfades the fullscreen sheet into the mini-player pill, so the pill is fully visible when the sheet is gone instead of popping in at the end
 - Bottom chrome (tab island, search button, mini-player and its highlight) snaps to the new geometry on rotation instead of keeping the old width for a frame
 
 ## [0.35.1] - 2026-11-24
