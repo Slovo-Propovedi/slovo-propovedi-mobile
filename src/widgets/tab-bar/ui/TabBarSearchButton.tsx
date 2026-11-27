@@ -66,9 +66,10 @@ export const TabBarSearchButton = ({
   const screenWidthShared = useLayoutEffectSharedValue(screenWidth)
   const { isLight } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
-  // The circle's bottom derives from the measured row; a re-measure must move
-  // it in the same commit as its width and left, not through a worklet closure
-  // re-registered after the commit. Same pre-paint mirror the player uses.
+  // The circle's bottom derives from the row height; a derived-height update
+  // (or a floor-guard raise) must move it in the same commit as its width and
+  // left, not through a worklet closure re-registered after the commit. Same
+  // pre-paint mirror the player uses.
   const tabBarHeightShared = useLayoutEffectSharedValue(tabBarHeight)
   const openSearch = useOpenSearch()
   const { buttonStyle, capsuleStyle, glassStyle } = useSearchSeparation({

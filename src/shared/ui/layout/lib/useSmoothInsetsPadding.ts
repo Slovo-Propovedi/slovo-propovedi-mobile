@@ -5,7 +5,6 @@ import {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import { useLayoutEffectSharedValue } from '../../../lib/hooks/useLayoutEffectSharedValue'
 
 // Safe-area paddings GLIDE on an inset change instead of jumping: around a
 // rotation Android hides and then restores the status/gesture bars, so the
@@ -20,28 +19,26 @@ export const INSETS_GLIDE_MS = 250 as const
  * a side sends the lateral insets the same way (the content briefly draws under
  * the cutout).
  *
- * The mirror channel is written before paint, so the tween starts in the same
- * commit that carries the new inset. The FIRST delivery (mount/hydration) is
- * assigned directly: there is no previous value to animate from.
+ * The layout effect runs before paint, so the tween starts in the same commit
+ * that carries the new inset. The FIRST delivery (mount/hydration) is assigned
+ * directly: there is no previous value to animate from.
  * @param inset - Inset-derived size in dp (safe-area padding or chrome reserve).
  * @returns Shared value the animated style reads on the UI thread.
  */
 const useGlidedInset = (inset: number): SharedValue<number> => {
-  const target = useLayoutEffectSharedValue(inset)
   const glide = useSharedValue(inset)
   const isFirstDelivery = useRef(true)
 
   useLayoutEffect(() => {
     if (isFirstDelivery.current) {
       isFirstDelivery.current = false
-      glide.value = target.value
+      glide.value = inset
 
       return
     }
 
-    glide.value = withTiming(target.value, { duration: INSETS_GLIDE_MS })
-    // `inset` is the trigger; the pre-paint mirror is what the tween reads.
-  }, [glide, inset, target])
+    glide.value = withTiming(inset, { duration: INSETS_GLIDE_MS })
+  }, [glide, inset])
 
   return glide
 }

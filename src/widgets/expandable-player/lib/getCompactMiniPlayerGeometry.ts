@@ -31,12 +31,12 @@ interface CompactMiniPlayerGeometryInput {
  * row is uniform at the mini player height.
  *
  * Worklet-safe: called from React resting styles and Reanimated animated styles.
- * @param input - Morph progress, the chrome column and the measured row.
+ * @param input - Morph progress, the chrome column and the row height.
  * @param input.barProgress - 0 = detached pill, 1 = pill in the collapsed row.
  * @param input.columnWidth - Width the pill is sized in.
  * @param input.fullScreenHeight - Full device screen height.
  * @param input.rowLeft - Left offset of the column inside the live window.
- * @param input.tabBarHeight - Measured height of the floating tab row.
+ * @param input.tabBarHeight - Height of the floating tab row, derived from its content box plus the chrome's bottom padding.
  */
 export const getCompactMiniPlayerGeometry = ({
   barProgress,
@@ -53,7 +53,7 @@ export const getCompactMiniPlayerGeometry = ({
   // up with the row's inner edges on every width and in every bar state.
   const sideInset = getBarSideInset(progress)
   const innerWidth = columnWidth - sideInset * 2
-  // The measured row height includes the bottom safe-area padding and its fixed
+  // The derived row height includes the bottom safe-area padding and its fixed
   // BAR_ROW_MIN_HEIGHT content box, with the islands anchored to the box's
   // bottom edge (the safe-area line). The expanded pill therefore rests one
   // pill-row gap above the expanded island's top edge — visibly detached, the

@@ -34,11 +34,7 @@ export { useChromeLayoutShift } from './lib/useChromeLayoutShift'
 export { useIsWideLayout } from './lib/useIsWideLayout'
 export { useLayoutBaseWidth } from './lib/useLayoutBaseWidth'
 export { useScreenChromePadding } from './lib/useScreenChromePadding'
-export {
-  INSETS_GLIDE_MS,
-  useSmoothInsetsPadding,
-  useSmoothInsetsSpace,
-} from './lib/useSmoothInsetsPadding'
+export { INSETS_GLIDE_MS, useSmoothInsetsPadding } from './lib/useSmoothInsetsPadding'
 export {
   isBarCollapsedAtom,
   isTabBarMeasuredAtom,

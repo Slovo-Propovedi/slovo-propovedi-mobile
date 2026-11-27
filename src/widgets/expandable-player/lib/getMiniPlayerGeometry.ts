@@ -66,10 +66,9 @@ interface MiniPlayerGeometryInput {
 /**
  * Resting geometry of the mini-player pill at a given bar-morph progress.
  *
- * Compact screens lay the pill out in the chrome column — the orientation-
- * independent layout base, capped by the content column — while its position
- * follows the live window, so a phone rotation changes no size at all. The wide
- * layout keeps live, content-driven widths (tablets are not rotation-frozen).
+ * Both layouts size the pill on the layout base (`contentWidth`) — the
+ * orientation-independent short side — capped by their own column, while its
+ * position follows the live window, so a phone rotation changes no size at all.
  *
  * Worklet-safe: called from React resting styles and Reanimated animated styles.
  * @param input - Geometry inputs and morph progress.
@@ -78,7 +77,7 @@ interface MiniPlayerGeometryInput {
  * @param input.fullScreenHeight - Full device screen height.
  * @param input.isWideLayout - Whether the wide layout applies.
  * @param input.screenWidth - Current window width.
- * @param input.tabBarHeight - Measured height of the floating tab row.
+ * @param input.tabBarHeight - Height of the floating tab row, derived from its content box plus the chrome's bottom padding.
  * @param input.wideBottomInset - The chrome's bottom padding, the wide pill's rest line.
  */
 export const getMiniPlayerGeometry = ({

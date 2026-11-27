@@ -1,5 +1,5 @@
-Tablet: top tab+search island; full mini-player, no titles, actions right; haptic
+Tablet: top tab+search island; full mini-player, no titles, actions right; haptic, layout animates
 Search: field top, folds on scroll, results morph, button detaches
-Fixed: instant pill/collapse, rotation sizes and safe-area pads glide (no jump),
-recording pause, split-screen; search circle tap; pill rotation; playlist header height; wide flip
+Fixed: instant pill/collapse, rotation sizes, gliding safe-area pads,
+recording pause, split-screen; search circle tap; pill rotation; playlist header; wide flip
 iOS web: full height, Safari toolbar/keyboard, 21px home gap
