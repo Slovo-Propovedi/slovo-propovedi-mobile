@@ -1,3 +1,4 @@
+import { capsuleWorkletLog } from './capsuleTravelDebug'
 import { type CapsuleFrameState } from './capsuleTravelState'
 
 interface TravelBeats {
@@ -21,6 +22,12 @@ export const collectTravelBeats = (state: CapsuleFrameState, progress: number): 
     if (progress < beat / beatCount) break
 
     state.beatsFired.value = beat
+
+    capsuleWorkletLog(
+      `due gen=${state.travelId.value} beat=${beat}/${beatCount} kind=${
+        beat === beatCount ? 'landing' : 'light'
+      } center=${state.capsuleCenter.value.toFixed(1)}`,
+    )
 
     if (beat === beatCount) landBeat = true
     else lightBeats += 1

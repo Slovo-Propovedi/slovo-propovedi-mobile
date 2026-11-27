@@ -1,6 +1,7 @@
 import { type FrameInfo } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { type MorphFrameHost } from 'shared/lib/hooks/atomMorphClock'
+import { capsuleLog } from '../lib/capsuleTravelDebug'
 import { stepCapsuleFrame } from '../lib/capsuleTravelFrame'
 import {
   beginCapsuleTravel,
@@ -43,6 +44,7 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
     lastSettledTravelId = travelId
     isRunningFlag = false
     syncActiveHosts()
+    capsuleLog(`settle gen=${travelId}`)
     for (const listener of settledListeners) listener()
   }
 
@@ -70,11 +72,13 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
     attachFrameHost: host => {
       hosts.add(host)
       syncActiveHosts()
+      capsuleLog(`host+ n=${hosts.size}`)
 
       return () => {
         hosts.delete(host)
         host.setActive(false)
         syncActiveHosts()
+        capsuleLog(`host- n=${hosts.size}`)
       }
     },
     capsuleCenter: state.capsuleCenter,
@@ -103,7 +107,11 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
       // instead of rewinding it to the current frame. No new generation here:
       // the idempotent reconcile must not invalidate the running travel's
       // queued beat events.
-      if (isRunningFlag && state.targetCenter.value === landing.center) return
+      if (isRunningFlag && state.targetCenter.value === landing.center) {
+        capsuleLog(`dedupe gen=${state.travelId.value} target=${landing.center.toFixed(1)}`)
+
+        return
+      }
 
       if (slotDistance <= 0 || state.capsuleCenter.value === landing.center) {
         snapTo(landing)

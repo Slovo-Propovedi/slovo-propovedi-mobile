@@ -6,6 +6,7 @@ import {
   easeOutQuad,
 } from './capsuleTravel'
 import { collectTravelBeats } from './capsuleTravelBeats'
+import { capsuleWorkletLog } from './capsuleTravelDebug'
 import {
   CAPSULE_PHASE_OVERSHOOT,
   CAPSULE_PHASE_RETURN,
@@ -105,6 +106,12 @@ export const stepCapsuleFrame = (
       settled = true
     }
   }
+
+  capsuleWorkletLog(
+    `frame gen=${travelId} phase=${state.phase.value} center=${state.capsuleCenter.value.toFixed(
+      1,
+    )} elapsed=${state.elapsed.value.toFixed(0)}`,
+  )
 
   return { landBeat, lightBeats, settled, travelId }
 }

@@ -53,8 +53,7 @@ const fireImpact = (androidHaptic: AndroidHaptics, iosStyle: ImpactFeedbackStyle
   void impactAsync(iosStyle).catch(() => {})
 }
 
-// Softest native tick: iOS selection / Android Context_Click. Shared by the
-// scrub tick (also pulses on web) and the travel-pass tick (silent on web).
+// Softest native tick: iOS selection / Android Context_Click (silent on web).
 const fireSelectionTick = (): void => {
   if (Platform.OS === 'android') {
     void performAndroidHapticsAsync(AndroidHaptics.Context_Click).catch(() => {})
@@ -85,11 +84,15 @@ export const hapticLight = (): void => {
   fireImpact(AndroidHaptics.Virtual_Key, ImpactFeedbackStyle.Light)
 }
 
-// Landing cue for the liquid tab highlight: the Light tap-level pulse (iOS
-// `impactAsync(Light)`, Android a single Virtual_Key haptic) when the capsule
-// reaches its tab. NOT throttled — a distinct event, not a repeat tap.
-// Native only: web stays silent, there is no analogue for a gliding highlight.
+// TEMPORARY capsule diagnostics (remove with the travel-haptics fix).
+const logCapsuleHaptic = (kind: string): void => {
+  if (globalThis.__CAPSULE_DEBUG__ === true) console.log(`[CAPSULE] haptic ${kind}`)
+}
+
+// Light landing pulse when the capsule reaches its tab; silent on web.
 export const hapticLanding = (): void => {
+  logCapsuleHaptic('landing')
+
   if (!ctx.get(hapticsEnabledAtom)) return
 
   if (Platform.OS === 'web') return
@@ -97,10 +100,10 @@ export const hapticLanding = (): void => {
   fireImpact(AndroidHaptics.Virtual_Key, ImpactFeedbackStyle.Light)
 }
 
-// Softest cue for a travel pass: one selection tick per passed tab, lighter
-// than the Light landing. NOT throttled — each pass is a distinct beat. Gated
-// by «Виброотклик»; silent on web (no analogue for a gliding highlight).
+// Softest cue for a travel pass: one selection tick per passed tab.
 export const hapticHighlightPass = (): void => {
+  logCapsuleHaptic('pass')
+
   if (!ctx.get(hapticsEnabledAtom)) return
 
   if (Platform.OS === 'web') return
@@ -109,14 +112,10 @@ export const hapticHighlightPass = (): void => {
 }
 
 // Perceptible tick for continuous value scrubbing (seek slider): iOS uses
-// UISelectionFeedbackGenerator (selectionAsync) — a light selection tick;
-// Android uses Context_Click via performAndroidHapticsAsync, because the
-// selectionAsync default (CLOCK_TICK) is imperceptible on MIUI; web uses a short
-// Vibration API pulse. No throttle: scrub ticks are >=1s apart by design. Gated
-// by the same global «Виброотклик» toggle (hapticsEnabledAtom) as press
-// feedback — disabling it silences both.
-// Cosmetic like hapticLight — rejected promise is swallowed so it can never
-// crash the app; silent no-op where the Vibration API is unavailable.
+// UISelectionFeedbackGenerator (selectionAsync); Android uses Context_Click via
+// performAndroidHapticsAsync (the selectionAsync default is imperceptible on
+// MIUI); web pulses the Vibration API. No throttle: ticks are >=1s apart. Gated
+// by «Виброотклик»; cosmetic like hapticLight — the rejection is swallowed.
 export const hapticTick = (): void => {
   if (!ctx.get(hapticsEnabledAtom)) return
 

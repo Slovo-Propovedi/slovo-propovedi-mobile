@@ -3,6 +3,7 @@ import { useFrameCallback } from 'react-native-reanimated'
 import { capsuleTravelDriver } from '../model/capsuleTravelDriver'
 import { createMotionFor } from './capsuleMotionFor'
 import { type CapsuleTravelMotion, type SlotCapsuleMotion } from './capsuleTravel'
+import { capsuleLog, syncCapsuleDebugFlag } from './capsuleTravelDebug'
 import { getCapsuleSlotKeys, getCapsuleSlotRects } from './capsuleTravelSlots'
 import { SEARCH_ROUTE_NAME } from './getVisibleTabRoutes'
 import { useCapsuleTravelRequest } from './useCapsuleTravelRequest'
@@ -88,9 +89,13 @@ export const useCapsuleTravel = ({
   // follows. A passive effect parks it after paint, so a dimension change (or
   // any re-layout) shows the capsule at the old slot for a frame.
   useLayoutEffect(() => {
+    syncCapsuleDebugFlag()
+
     const previous = currentSlotIndex.current
     currentSlotIndex.current = activeIndex
     const rect = slotRects[activeIndex]
+
+    capsuleLog(`route active=${activeIndex} prev=${previous} expanded=${isExpanded}`)
 
     if (!rect) return
 

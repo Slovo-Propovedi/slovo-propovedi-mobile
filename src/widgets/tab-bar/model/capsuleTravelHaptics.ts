@@ -1,4 +1,5 @@
 import { hapticHighlightPass, hapticLanding } from 'shared/lib/haptics'
+import { capsuleLog } from '../lib/capsuleTravelDebug'
 
 // Guards the UI→JS haptic callbacks: a pass or landing scheduled by a frame
 // carries the travel id it was born under. If a newer travel (press tick, snap)
@@ -18,8 +19,13 @@ export const createCapsuleTravelHaptics = () => {
       return travelId
     },
     firePass: (id: number) => {
-      if (id !== travelId) return
+      if (id !== travelId) {
+        capsuleLog(`drop gen=${id} current=${travelId} kind=light`)
 
+        return
+      }
+
+      capsuleLog(`fire gen=${id} kind=light ts=${Date.now()}`)
       hapticHighlightPass()
     },
     /**
@@ -32,9 +38,14 @@ export const createCapsuleTravelHaptics = () => {
      * @param id - Travel id the landing frame was born under.
      */
     land: (id: number) => {
-      if (id !== travelId || id === settledTravelId) return false
+      if (id !== travelId || id === settledTravelId) {
+        capsuleLog(`drop gen=${id} current=${travelId} kind=landing`)
+
+        return false
+      }
 
       settledTravelId = id
+      capsuleLog(`fire gen=${id} kind=landing ts=${Date.now()}`)
       hapticLanding()
 
       return true

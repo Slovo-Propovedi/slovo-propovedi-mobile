@@ -1,5 +1,6 @@
 import { makeMutable, type SharedValue } from 'react-native-reanimated'
 import { CAPSULE_OVERSHOOT_RATIO, getTravelDuration } from './capsuleTravel'
+import { capsuleLog, syncCapsuleDebugFlag } from './capsuleTravelDebug'
 
 const CAPSULE_PHASE_IDLE = 0
 export const CAPSULE_PHASE_TRAVEL = 1
@@ -59,6 +60,7 @@ export const createCapsuleFrameState = (): CapsuleFrameState => ({
 })
 
 export const snapCapsule = (state: CapsuleFrameState, landing: CapsuleLanding) => {
+  syncCapsuleDebugFlag()
   state.capsuleCenter.value = landing.center
   state.capsuleWidth.value = landing.width
   state.arrivalPulse.value = 0
@@ -66,6 +68,7 @@ export const snapCapsule = (state: CapsuleFrameState, landing: CapsuleLanding) =
   state.phase.value = CAPSULE_PHASE_IDLE
   state.elapsed.value = 0
   state.isRunning.value = false
+  capsuleLog(`snap gen=${state.travelId.value} center=${landing.center.toFixed(1)}`)
 }
 
 export const beginCapsuleTravel = (
@@ -73,6 +76,7 @@ export const beginCapsuleTravel = (
   landing: CapsuleLanding,
   slotDistance: number,
 ) => {
+  syncCapsuleDebugFlag()
   state.startCenter.value = state.capsuleCenter.value
   state.startWidth.value = state.capsuleWidth.value
   state.targetCenter.value = landing.center
@@ -88,4 +92,7 @@ export const beginCapsuleTravel = (
   state.elapsed.value = 0
   state.phase.value = CAPSULE_PHASE_TRAVEL
   state.isRunning.value = true
+  capsuleLog(
+    `start gen=${state.travelId.value} from=${state.startCenter.value.toFixed(1)} to=${landing.center.toFixed(1)} dist=${slotDistance} beats=${state.beatCount.value} dur=${state.duration.value}`,
+  )
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { capsuleTravelDriver } from '../model/capsuleTravelDriver'
 import { type CapsuleSlotRect } from './capsuleTravel'
+import { capsuleLog, syncCapsuleDebugFlag } from './capsuleTravelDebug'
 
 interface CapsuleTravelRequestContext {
   isExpanded: boolean
@@ -25,6 +26,8 @@ export const useCapsuleTravelRequest = (
 
   return useCallback(
     (routeKey: string) => {
+      syncCapsuleDebugFlag()
+
       const { isExpanded: expanded, slotKeys: keys, slotRects: rects } = latest.current
 
       // Collapsed: the route effect snaps the capsule, no glide to start.
@@ -37,6 +40,8 @@ export const useCapsuleTravelRequest = (
       const rect = targetIndex >= 0 ? rects[targetIndex] : undefined
 
       if (!rect || distance === 0) return
+
+      capsuleLog(`request key=${routeKey} from=${currentSlotIndex.current} to=${targetIndex}`)
 
       capsuleTravelDriver.travelTo({ center: rect.center, width: rect.capsuleWidth }, distance)
     },
