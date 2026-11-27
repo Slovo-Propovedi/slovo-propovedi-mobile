@@ -4,18 +4,19 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated'
-import { useTheme, withAlpha } from 'shared/ui/theme'
+import { useTheme } from 'shared/ui/theme'
 import { TouchableButton } from 'shared/ui/touchable-button'
 import { getTabItemStyle } from '../lib/getBarMorphStyles'
 import { getCapsuleOpacity, getTabIconOffset } from '../lib/getTabItemStyle'
+import { ActiveTabCapsule } from './ActiveTabCapsule'
 import { styles } from './styles'
 import { TabIcon } from './TabIcon'
 import { getTabLabel } from './tabLabels'
 
-const ACTIVE_CAPSULE_ALPHA = 0.18
 const AnimatedText = Animated.createAnimatedComponent(Text)
 
 export const TabButton = ({
+  accessibilityLabel,
   collapseProgress,
   isActive,
   isBarVisuallyCollapsed = false,
@@ -25,6 +26,8 @@ export const TabButton = ({
   routeKey,
   routeName,
 }: {
+  /** Explicit control name; otherwise it is derived from the icon + label. */
+  accessibilityLabel?: string
   // Shared 0..1 bar-morph progress: labels fade out as the island becomes a circle.
   collapseProgress?: SharedValue<number>
   isActive: boolean
@@ -62,21 +65,13 @@ export const TabButton = ({
     <TouchableButton
       key={routeKey}
       onPress={onPress}
+      accessibilityLabel={accessibilityLabel}
       activeOpacity={isActive ? 1 : undefined}
       hapticDisabled={isActive && !isBarVisuallyCollapsed}
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
     >
       <Animated.View style={[styles.tabItem, itemStyle]}>
-        {isActive && (
-          <Animated.View
-            pointerEvents='none'
-            style={[
-              styles.capsule,
-              { backgroundColor: withAlpha(currentTheme.primary, ACTIVE_CAPSULE_ALPHA) },
-              capsuleStyle,
-            ]}
-          />
-        )}
+        {isActive && <ActiveTabCapsule style={capsuleStyle} />}
         <Animated.View style={iconStyle}>
           <TabIcon color={color} isActive={isActive} routeName={routeName} />
         </Animated.View>

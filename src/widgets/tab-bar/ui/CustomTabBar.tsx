@@ -1,6 +1,5 @@
 import { useWindowDimensions } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { OnboardingTarget } from 'features/onboarding'
 import { GlassIsland } from 'shared/ui'
 import { useBarBottomPadding, useIsWideLayout, useKeyboardLiftStyle } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
@@ -13,9 +12,8 @@ import { useTabIslandMorph } from '../lib/useTabIslandMorph'
 import { getFloatingContainerStyle, getIslandsRowStyle } from './getFloatingContainerStyle'
 import { styles } from './styles'
 import { TabBarSearchCircle } from './TabBarSearchCircle'
-import { TabButton } from './TabButton'
+import { TabBarTab } from './TabBarTab'
 import { TabIslandSearchSlot } from './TabIslandSearchSlot'
-import { TabSlot } from './TabSlot'
 import { useTabPress } from './useTabPress'
 
 export const CustomTabBar = ({
@@ -29,7 +27,8 @@ export const CustomTabBar = ({
   hideSearch?: boolean
 } & TabBarProps) => {
   const { isLight } = useTheme()
-  const isSearchFocused = state.routes[state.index]?.name === SEARCH_ROUTE_NAME
+  const focusedRoute = state.routes[state.index]
+  const isSearchFocused = focusedRoute?.name === SEARCH_ROUTE_NAME
   const { handleTabPress, isTabAvailable } = useTabPress({
     emitter,
     isSearchFocused,
@@ -82,38 +81,35 @@ export const CustomTabBar = ({
         >
           <Animated.View style={[styles.islandContent, contentStyle, restingContentStyle]}>
             {visibleRoutes.map(route => {
-              const isActive = route.key === activeRouteKey
+              // The fallback tab owns the collapsed circle while search is
+              // focused, but search is the active destination: the tab is not
+              // highlighted and search carries the active capsule.
+              const isActiveSlot = route.key === activeRouteKey
 
               return (
-                <TabSlot
+                <TabBarTab
                   key={route.key}
-                  isActive={isActive}
                   progress={progress}
-                  isCollapsed={isCollapsed}
+                  routeKey={route.key}
+                  routeName={route.name}
+                  isActiveSlot={isActiveSlot}
+                  isBarCollapsed={isCollapsed}
                   expandedWidth={expandedTabWidth}
-                  oneLineProgress={oneLineProgress}
                   isSettledOneLine={settledOneLine}
+                  oneLineProgress={oneLineProgress}
                   isSettledCollapsed={settledCollapsed}
-                >
-                  <OnboardingTarget id={`tab.${route.name}`} style={styles.tabButton}>
-                    <TabButton
-                      isActive={isActive}
-                      routeKey={route.key}
-                      routeName={route.name}
-                      collapseProgress={progress}
-                      oneLineProgress={oneLineProgress}
-                      isBarVisuallyCollapsed={isCollapsed}
-                      isDisabled={!isTabAvailable(route.name)}
-                      onPress={() => handleTabPress(route, isActive)}
-                    />
-                  </OnboardingTarget>
-                </TabSlot>
+                  isDisabled={!isTabAvailable(route.name)}
+                  isHighlighted={isActiveSlot && !isSearchFocused}
+                  onPress={() => handleTabPress(route, isActiveSlot)}
+                />
               )
             })}
             {!hideSearch && (
               <TabIslandSearchSlot
                 progress={progress}
                 isCollapsed={isCollapsed}
+                isActive={isSearchFocused}
+                expandedWidth={expandedTabWidth}
                 isSettledOneLine={settledOneLine}
                 oneLineProgress={oneLineProgress}
                 isSettledCollapsed={settledCollapsed}
@@ -122,7 +118,7 @@ export const CustomTabBar = ({
           </Animated.View>
         </GlassIsland>
       </Animated.View>
-      {!hideSearch && !isWide && <TabBarSearchCircle />}
+      {!hideSearch && !isWide && <TabBarSearchCircle isActive={isSearchFocused} />}
     </Animated.View>
   )
 }

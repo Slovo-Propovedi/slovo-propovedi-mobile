@@ -13,6 +13,7 @@ const ICON_SIZE = 28
 const IONICONS_ICONS: Record<string, IconSet<IoniconsName>> = {
   book: { active: 'book', inactive: 'book-outline' },
   index: { active: 'home', inactive: 'home-outline' },
+  search: { active: 'search', inactive: 'search' },
   sections: { active: 'grid', inactive: 'grid-outline' },
   sermons: { active: 'mic', inactive: 'mic-outline' },
 }

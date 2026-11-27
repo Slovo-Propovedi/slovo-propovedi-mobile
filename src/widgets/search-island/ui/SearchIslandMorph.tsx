@@ -1,20 +1,21 @@
 import { useAtom } from '@reatom/npm-react'
-import { useMemo } from 'react'
 import { useWindowDimensions } from 'react-native'
 import { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
+import { ActiveTabCapsule } from 'widgets/tab-bar/@x/activeCapsule'
 import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { useCloseSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
-import { getSearchIslandRestingStyles } from '../lib/getSearchIslandRestingStyles'
 import { useSearchFocusMorph } from '../lib/useSearchFocusMorph'
+import { useSearchIslandRestingStyles } from '../lib/useSearchIslandRestingStyles'
 import { searchFocusMorphDriver } from '../model/searchFocusDriver'
 import { searchOpenMorphDriver } from '../model/searchOpenDriver'
 import { SearchIslandCloseSlot } from './SearchIslandCloseSlot'
 import { SearchIslandContent } from './SearchIslandContent'
 import { SearchIslandFrame } from './SearchIslandFrame'
 import { SearchIslandMagnifier } from './SearchIslandMagnifier'
+import { styles } from './SearchIslandMorph.styles'
 
 // One glass frame for the whole search affordance. Closed it is the search
 // circle; opened it morphs into the pill. The frame is mounted for the whole
@@ -27,11 +28,14 @@ import { SearchIslandMagnifier } from './SearchIslandMagnifier'
 // the folded-row affordance, faded out while the island is expanded.
 export const SearchIslandMorph = ({
   collapseProgress,
+  isActive = false,
   isCollapsed,
   isSettledCollapsed,
 }: {
   /** Shape axis of the tab island: 0 = expanded row, 1 = folded circle. */
   collapseProgress?: SharedValue<number>
+  /** Search owns the active route: the circle paints the active-tab capsule. */
+  isActive?: boolean
   /** Live collapse flag: gates touches on the flip, not when the fade lands. */
   isCollapsed?: boolean
   /** Settled collapse flag: feeds the committed resting opacity. */
@@ -73,32 +77,17 @@ export const SearchIslandMorph = ({
   // the wide layout keep the circle permanently visible.
   const isFoldedAway = isCollapsed === false
 
-  // Plain restatement of the settled frame, applied after the animated style:
-  // the glass theme remount re-commits first-render shadow-tree values, so the
-  // pill must not fall back to its launch geometry (Issue #63). The settled flags
-  // lag their morphs, so mid-morph this layer carries the START frame instead of
-  // painting the destination a frame early.
-  const { closeSlotRestingStyle, restingFrameStyle } = useMemo(
-    () =>
-      getSearchIslandRestingStyles({
-        screenWidth,
-        settledClose,
-        settledFocused,
-        settledIslandCollapsed: isSettledCollapsed,
-        settledOneLine,
-        settledOpen,
-        tabBarHeight,
-      }),
-    [
-      isSettledCollapsed,
-      settledClose,
-      settledFocused,
-      settledOneLine,
-      settledOpen,
-      screenWidth,
-      tabBarHeight,
-    ],
-  )
+  // Plain restatement of the settled frame, applied after the animated style
+  // (the glass theme remount re-commits first-render shadow-tree values).
+  const { closeSlotRestingStyle, restingFrameStyle } = useSearchIslandRestingStyles({
+    screenWidth,
+    settledClose,
+    settledFocused,
+    settledIslandCollapsed: isSettledCollapsed,
+    settledOneLine,
+    settledOpen,
+    tabBarHeight,
+  })
 
   return (
     <>
@@ -106,6 +95,7 @@ export const SearchIslandMorph = ({
         isFoldedAway={isFoldedAway}
         animatedStyle={[frameStyle, restingFrameStyle]}
       >
+        {isActive && <ActiveTabCapsule style={styles.activeCapsule} />}
         <SearchIslandMagnifier />
         <SearchIslandContent
           onOpenSearch={openSearch}

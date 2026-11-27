@@ -15,7 +15,6 @@ import {
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
 } from 'shared/ui/layout'
-import { MIN_TOUCH_TARGET } from 'shared/ui/theme'
 import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
 import { ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
@@ -148,7 +147,7 @@ describe('useTabIslandMorph', () => {
     )
   })
 
-  test('fills the column and reserves the in-island search slot in the wide layout', async () => {
+  test('fills the column and shares it equally between the tabs and the search tab in the wide layout', async () => {
     // Fresh ctx: the shared test context may carry focus from an earlier test.
     const { result } = await renderHookWithProviders(
       () => useTabIslandMorph({ ...MORPH_INPUT, isForceExpanded: true }),
@@ -160,24 +159,25 @@ describe('useTabIslandMorph', () => {
     // The wide search button lives INSIDE the island, so the island takes the
     // whole column instead of yielding a circle and gap to a separate island.
     expect(result.current.restingIslandStyle.width).toBe(rowContentWidth)
-    // The tabs share what the row padding and the trailing search slot leave.
+    // The search button is a full tab slot now: three tabs + search split the
+    // row padding share equally, with no fixed trailing reservation.
     expect(result.current.expandedTabWidth).toBe(
-      (rowContentWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2 - MIN_TOUCH_TARGET) / 3,
+      (rowContentWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2) / 4,
     )
   })
 
-  test('reserves the in-island search slot in the compact layout', async () => {
+  test('shares the compact island equally between the tabs and the search tab', async () => {
     const ctx = createCtx()
     const { result } = await renderHookWithProviders(() => useTabIslandMorph(MORPH_INPUT), { ctx })
     const rowContentWidth =
       Math.min(MORPH_INPUT.rowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
 
     // Compact folds the search button into the island exactly like the wide
-    // layout: the island takes the whole column and the tabs share what the
-    // row padding and the trailing search slot leave.
+    // layout: the island takes the whole column and every slot — including the
+    // search tab — gets the same share of the row padding.
     expect(result.current.restingIslandStyle.width).toBe(rowContentWidth)
     expect(result.current.expandedTabWidth).toBe(
-      (rowContentWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2 - MIN_TOUCH_TARGET) / 3,
+      (rowContentWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2) / 4,
     )
 
     // The collapsed target still shrinks to the active-tab circle.

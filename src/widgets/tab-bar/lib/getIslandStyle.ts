@@ -14,10 +14,6 @@ interface TabSlotLayout {
 // the tab labels close to the pill ends like the Apple Music bar while staying
 // visually balanced with the 4dp vertical item margin (Issue #153).
 export const ISLAND_CONTENT_PADDING_HORIZONTAL = 10
-// Fixed width of the search button that trails the tabs INSIDE the island in the
-// wide layout. One minimum touch target keeps the magnifier comfortably tappable
-// without stealing a tab's share of the row.
-export const TAB_ISLAND_SEARCH_SLOT_WIDTH = MIN_TOUCH_TARGET
 // The active capsule is wider than its slot (the reference capsule is wider
 // than one tab pitch), so it bleeds into the gap instead of hugging the label.
 export const CAPSULE_HORIZONTAL_OVERHANG = 10

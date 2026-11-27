@@ -1,76 +1,78 @@
-import { Ionicons } from '@expo/vector-icons'
+import { View } from 'react-native'
 import { type SharedValue } from 'react-native-reanimated'
 import { OnboardingTarget } from 'features/onboarding'
 import { useOpenSearch } from 'features/sermon-search'
-import { useTheme } from 'shared/ui/theme'
-import { TouchableButton } from 'shared/ui/touchable-button'
-import { TAB_ISLAND_SEARCH_SLOT_WIDTH } from '../lib/getIslandStyle'
+import { SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
+import { styles } from './styles'
+import { TabButton } from './TabButton'
 import { TabSlot } from './TabSlot'
 
-const SEARCH_LABEL = 'Поиск'
 // Same onboarding target as the compact search circle: the slot carries it
 // while the bar is expanded and the circle takes it over once the bar folds, so
 // the id is registered by exactly one affordance at a time.
 const SEARCH_TARGET_ID = 'listen.search-toggle'
-const MAGNIFIER_SIZE = 32
+const SEARCH_LABEL = 'Поиск'
 
-// Search affordance folded INTO the tab island as a trailing slot (Apple Music
-// iPad style). Wide always shows it; compact renders it while the bar is
-// expanded and hands the row over to the separate circle when the bar folds.
-// The slot morphs with the tabs, fading to zero width and opacity.
+// Search affordance folded INTO the tab island as a full-width trailing tab
+// (Apple Music iPad style). Wide always shows it; compact renders it while the
+// bar is expanded and hands the row over to the separate circle when the bar
+// folds. The slot morphs with the tabs and shares their width, icon and label.
 export const TabIslandSearchSlot = ({
+  expandedWidth,
+  isActive,
   isCollapsed,
   isSettledCollapsed,
   isSettledOneLine,
   oneLineProgress,
   progress,
 }: {
+  expandedWidth: number
+  /** The search route is focused: paint the active-tab capsule on the slot. */
+  isActive: boolean
   isCollapsed: boolean
   isSettledCollapsed: boolean
   isSettledOneLine: boolean
   oneLineProgress: SharedValue<number>
   progress: SharedValue<number>
 }) => {
-  const { currentTheme } = useTheme()
   const openSearch = useOpenSearch()
 
   return (
     <TabSlot
+      // The search tab never owns the collapsed circle: the folded row gives
+      // that circle to the fallback «Слушать» tab and shows search in its own
+      // separate circle.
       isActive={false}
       progress={progress}
       isCollapsed={isCollapsed}
+      expandedWidth={expandedWidth}
       oneLineProgress={oneLineProgress}
       isSettledOneLine={isSettledOneLine}
       isSettledCollapsed={isSettledCollapsed}
-      expandedWidth={TAB_ISLAND_SEARCH_SLOT_WIDTH}
     >
-      <OnboardingTarget style={styles.slot} id={isSettledCollapsed ? undefined : SEARCH_TARGET_ID}>
-        <TouchableButton
-          onPress={openSearch}
-          style={styles.button}
-          accessibilityRole='button'
-          accessibilityLabel={SEARCH_LABEL}
-          // The slot stays mounted while folded (it fades with the island), so
-          // assistive tech must not reach the invisible duplicate button.
-          accessibilityElementsHidden={isSettledCollapsed}
-          importantForAccessibility={isSettledCollapsed ? 'no-hide-descendants' : 'auto'}
+      <View
+        style={styles.tabButton}
+        // The slot stays mounted while folded (it fades with the island), so
+        // assistive tech must not reach the invisible duplicate button.
+        accessibilityElementsHidden={isSettledCollapsed}
+        importantForAccessibility={isSettledCollapsed ? 'no-hide-descendants' : 'auto'}
+      >
+        <OnboardingTarget
+          style={styles.tabButton}
+          id={isSettledCollapsed ? undefined : SEARCH_TARGET_ID}
         >
-          <Ionicons name='search' size={MAGNIFIER_SIZE} color={currentTheme.text} />
-        </TouchableButton>
-      </OnboardingTarget>
+          <TabButton
+            isActive={isActive}
+            onPress={openSearch}
+            collapseProgress={progress}
+            routeKey={SEARCH_ROUTE_NAME}
+            routeName={SEARCH_ROUTE_NAME}
+            accessibilityLabel={SEARCH_LABEL}
+            oneLineProgress={oneLineProgress}
+            isBarVisuallyCollapsed={isCollapsed}
+          />
+        </OnboardingTarget>
+      </View>
     </TabSlot>
   )
-}
-
-const styles = {
-  button: {
-    alignItems: 'center' as const,
-    height: '100%' as const,
-    justifyContent: 'center' as const,
-    width: TAB_ISLAND_SEARCH_SLOT_WIDTH,
-  },
-  slot: {
-    height: '100%' as const,
-    width: TAB_ISLAND_SEARCH_SLOT_WIDTH,
-  },
 }

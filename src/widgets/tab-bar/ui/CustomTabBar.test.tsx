@@ -1,6 +1,7 @@
 import { createCtx } from '@reatom/framework'
 import { act, fireEvent, screen, within } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
+import { type TestInstance } from 'test-renderer'
 import {
   searchCloseMorphDriver,
   searchFocusMorphDriver,
@@ -128,6 +129,9 @@ const renderTabBar = async (
   )
 }
 
+const TAB_ISLAND_NOT_FOUND = 'tab island not found'
+const SEARCH_FRAME_NOT_FOUND = 'search morph frame not found'
+
 describe('<CustomTabBar>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -229,9 +233,12 @@ describe('<CustomTabBar>', () => {
   const findInIslandSearchSlot = () => {
     const island = findTabIsland()
 
-    if (!island) throw new Error('tab island not found')
+    if (!island) throw new Error(TAB_ISLAND_NOT_FOUND)
 
-    let node = within(island).getByLabelText('Поиск', { includeHiddenElements: true }).parent
+    let node = within(island).getByRole('button', {
+      includeHiddenElements: true,
+      name: 'Поиск',
+    }).parent
 
     while (node !== null && StyleSheet.flatten(node.props.style)?.minWidth === undefined)
       node = node.parent
@@ -439,7 +446,7 @@ describe('<CustomTabBar>', () => {
     expect(islandsRow?.props.pointerEvents).toBe('box-none')
   })
 
-  test('renders a slot only for the three visible tabs, never for the search route', async () => {
+  test('renders the registered search route as one search tab, never as a routed slot', async () => {
     const routeNames = ['listen', 'search', 'read', 'more', 'history', 'share']
     const state = {
       ...createMockState(0),
@@ -447,7 +454,7 @@ describe('<CustomTabBar>', () => {
       routes: routeNames.map(name => ({ key: name, name, path: `/${name}` })),
     }
 
-    const { getByText, queryByText } = await renderWithProviders(
+    const { getByText } = await renderWithProviders(
       <CustomTabBar
         state={state}
         descriptors={{}}
@@ -458,9 +465,10 @@ describe('<CustomTabBar>', () => {
       { ctx: createCtx() },
     )
 
-    // Search is registered as a navigator route (it owns its detail stack) but
-    // the bar never renders it as a tab slot.
-    expect(queryByText('Поиск')).toBeNull()
+    // Search is registered as a navigator route (it owns its detail stack) and
+    // now renders exactly one «Поиск» tab affordance; the remaining routes keep
+    // their regular slots.
+    expect(getByText('Поиск')).toBeTruthy()
     expect(getByText('Слушать')).toBeTruthy()
     expect(getByText('Читать')).toBeTruthy()
     expect(getByText('Ещё')).toBeTruthy()
@@ -485,7 +493,7 @@ describe('<CustomTabBar>', () => {
     const { getByRole } = await renderTabBar()
     const island = findTabIsland()
 
-    if (!island) throw new Error('tab island not found')
+    if (!island) throw new Error(TAB_ISLAND_NOT_FOUND)
 
     // The expanded row reads as one island: the search button sits in the same
     // glass subtree as the tabs.
@@ -525,7 +533,7 @@ describe('<CustomTabBar>', () => {
     await renderTabBar(0, { isCollapsed: true })
     const frame = findSearchMorphFrame()
 
-    if (!frame) throw new Error('search morph frame not found')
+    if (!frame) throw new Error(SEARCH_FRAME_NOT_FOUND)
 
     // The circle is the same always-mounted morph container, not a handoff
     // button: it leaves the accessibility tree but is never unmounted.
@@ -757,40 +765,91 @@ describe('<CustomTabBar>', () => {
     navigateToTab: mockNavigate,
   })
 
+  // Tab slots are the only morphed nodes carrying both a numeric width and a
+  // minWidth: the always-mounted close button also has minWidth, but its width
+  // is a percentage.
   const findTabSlots = () =>
-    screen.root?.queryAll(
-      instance => StyleSheet.flatten(instance.props.style)?.minWidth !== undefined,
-    ) ?? []
+    screen.root?.queryAll(instance => {
+      const flat = StyleSheet.flatten(instance.props.style)
 
-  const findActiveCapsules = () =>
-    screen.root?.queryAll(
-      instance =>
-        StyleSheet.flatten(instance.props.style)?.backgroundColor === 'rgba(241, 96, 49, 0.18)',
-    ) ?? []
+      return flat?.minWidth !== undefined && typeof flat?.width === 'number'
+    }) ?? []
 
-  test('keeps the tab the user came from active while the filtered search route is focused', async () => {
-    // `/search` is a navigator route but not a bar slot, so the focused route key
-    // matches no rendered tab. HEAD kept the underlying tab active; the route model
-    // must remember the last visible tab or the collapsed circle renders empty.
+  const CAPSULE_COLOR = 'rgba(241, 96, 49, 0.18)'
+
+  // A capsule is only a highlight while it is actually painted: the collapsed
+  // tab slot still mounts its capsule element at opacity 0.
+  const isVisibleCapsuleNode = (instance: TestInstance) => {
+    const flat = StyleSheet.flatten(instance.props.style)
+
+    return flat?.backgroundColor === CAPSULE_COLOR && flat?.opacity !== 0
+  }
+
+  test('renders the search tab with the shared tab-label style and an equal slot width', async () => {
+    const { getByText } = await renderTabBar()
+    const widths = findTabSlots().map(slot => StyleSheet.flatten(slot.props.style)?.width)
+
+    expect(widths).toHaveLength(4)
+    expect(new Set(widths).size).toBe(1)
+    expect(getByText('Поиск')).toHaveStyle({ fontSize: 12, fontWeight: '500' })
+  })
+
+  test('moves the active capsule to the search tab while the search route is focused', async () => {
+    const { getByText } = await renderWithProviders(
+      <CustomTabBar state={createMockState(1)} {...createBarProps()} />,
+      { ctx: createCtx() },
+    )
+    const island = findTabIsland()
+
+    if (!island) throw new Error(TAB_ISLAND_NOT_FOUND)
+
+    expect(getByText('Поиск')).toHaveStyle({ color: '#f16031' })
+    expect(getByText('Слушать')).not.toHaveStyle({ color: '#f16031' })
+    expect(island.queryAll(isVisibleCapsuleNode)).toHaveLength(1)
+  })
+
+  test('splits the collapsed row into an inactive «Слушать» circle and an active search circle', async () => {
     const ctx = createCtx()
-    isSearchOpenAtom(ctx, true)
-    const props = createBarProps()
-    const { getByText, rerender } = await renderWithProviders(
-      <CustomTabBar state={createMockState(0)} {...props} />,
-      { ctx },
-    )
+    await renderWithProviders(<CustomTabBar state={createMockState(1)} {...createBarProps()} />, {
+      ctx,
+    })
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames()
+    })
 
-    await rerender(<CustomTabBar state={createMockState(1)} {...props} />)
+    const island = findTabIsland()
+    const frame = findSearchMorphFrame()
 
-    expect(getByText('Слушать')).toHaveStyle({ color: '#f16031' })
-    expect(findActiveCapsules()).toHaveLength(1)
-    // Collapsed to the active circle, exactly that slot keeps its content visible
-    // (opacity 1); an unmarked tab would render an empty 60px circle.
-    const activeSlots = findTabSlots().filter(
-      slot => StyleSheet.flatten(slot.props.style)?.opacity === 1,
-    )
-    expect(activeSlots).toHaveLength(1)
-    expect(within(activeSlots[0]).getByText('Слушать')).toBeTruthy()
+    if (!island || !frame) throw new Error('tab chrome not found')
+
+    // The fallback tab fills the circle but is not the active destination: it
+    // keeps the default tint and no capsule.
+    expect(within(island).getByText('Слушать')).not.toHaveStyle({ color: '#f16031' })
+    expect(island.queryAll(isVisibleCapsuleNode)).toHaveLength(0)
+    // Search owns the active capsule on its own circle.
+    expect(frame.queryAll(isVisibleCapsuleNode)).toHaveLength(1)
+  })
+
+  test('leaves the search circle plain while a normal tab is active', async () => {
+    const ctx = createCtx()
+    await renderWithProviders(<CustomTabBar state={createMockState(0)} {...createBarProps()} />, {
+      ctx,
+    })
+    await act(async () => {
+      setBarCollapsed(ctx, true)
+    })
+    await act(async () => {
+      advanceMorphFrames()
+    })
+
+    const frame = findSearchMorphFrame()
+
+    if (!frame) throw new Error(SEARCH_FRAME_NOT_FOUND)
+
+    expect(frame.queryAll(isVisibleCapsuleNode)).toHaveLength(0)
   })
 
   test('sizes the active item from the one-line axis so the icon centers in the search-open circle', async () => {
@@ -806,7 +865,7 @@ describe('<CustomTabBar>', () => {
     expect(screen.getByText('Слушать').parent).toHaveStyle({ height: 52 })
   })
 
-  test('remembered active tab follows the last real tab switch', async () => {
+  test('drops the previously active tab highlight once search owns the row', async () => {
     const props = createBarProps()
     const { getByText, rerender } = await renderWithProviders(
       <CustomTabBar state={createMockState(3)} {...props} />,
@@ -815,24 +874,23 @@ describe('<CustomTabBar>', () => {
 
     await rerender(<CustomTabBar state={createMockState(1)} {...props} />)
 
-    expect(getByText('Ещё')).toHaveStyle({ color: '#f16031' })
+    expect(getByText('Поиск')).toHaveStyle({ color: '#f16031' })
+    expect(getByText('Ещё')).not.toHaveStyle({ color: '#f16031' })
     expect(getByText('Слушать')).not.toHaveStyle({ color: '#f16031' })
-    // Expanded bar: the remembered tab still owns the visible capsule.
-    const capsules = findActiveCapsules()
-    expect(capsules).toHaveLength(1)
-    expect(StyleSheet.flatten(capsules[0].props.style)?.opacity).toBe(1)
   })
 
-  test('a deep link straight to search falls back to the first visible tab', async () => {
+  test('a deep link straight to search shows the fallback tab without a capsule', async () => {
     const { getByText } = await renderWithProviders(
       <CustomTabBar state={createMockState(1)} {...createBarProps()} />,
       { ctx: createCtx() },
     )
 
-    expect(getByText('Слушать')).toHaveStyle({ color: '#f16031' })
+    expect(getByText('Слушать')).toBeTruthy()
+    expect(getByText('Слушать')).not.toHaveStyle({ color: '#f16031' })
+    expect(getByText('Поиск')).toHaveStyle({ color: '#f16031' })
   })
 
-  test('pressing the remembered active tab leaves the search route', async () => {
+  test('pressing the fallback tab leaves the search route', async () => {
     const ctx = createCtx()
     isSearchOpenAtom(ctx, true)
     const { getByText } = await renderWithProviders(

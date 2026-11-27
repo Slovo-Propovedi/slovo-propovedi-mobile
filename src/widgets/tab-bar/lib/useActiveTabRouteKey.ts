@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { SEARCH_ROUTE_NAME } from './getVisibleTabRoutes'
 
 interface TabRoute {
@@ -6,31 +5,31 @@ interface TabRoute {
   name: string
 }
 
+// The fallback tab that fills the collapsed circle while `/search` owns the
+// navigator: search is a separate circle in the split row, so the tab circle
+// shows the default section. «Слушать» is the app's home tab.
+const LISTEN_ROUTE_NAME = 'listen'
+
 /**
- * Key of the tab that owns the active capsule and the collapsed circle.
+ * Key of the tab that fills the collapsed circle.
  *
  * `/search` is registered in the tabs navigator (it owns its detail stack) but
- * the bar never renders it as a slot, so while it is focused `state.index`
- * points at a route with no button. HEAD kept the underlying tab active (search
- * was an overlay); the route model remembers the last visible tab so opening
- * search never blanks the active circle. A deep link straight to `/search` has
- * no previous tab and falls back to the first visible one — the tab that
- * `backBehavior: 'firstRoute'` would return to.
+ * it is not an ordinary tab slot in the route model. The collapsed compact row
+ * splits into the tab circle and the search circle, so while search is focused
+ * the tab circle falls back to the «Слушать» tab — the first visible tab when
+ * the layout has no listen route. That circle renders INACTIVE: search owns the
+ * active capsule on its own circle and in the in-island search slot.
  * @param routes - Navigator routes, including the filtered search route.
  * @param index - Index of the focused route.
  */
 export const useActiveTabRouteKey = (routes: readonly TabRoute[], index: number) => {
   const focusedRoute = routes[index]
-  const focusedTab = focusedRoute?.name === SEARCH_ROUTE_NAME ? undefined : focusedRoute
-  const [lastVisibleKey, setLastVisibleKey] = useState<null | string>(() => focusedTab?.key ?? null)
 
-  // Adjusting state during render is the sanctioned way to remember the previous
-  // tab: React re-renders immediately, before children, so the key is ready when
-  // `/search` focuses instead of a frame later in an effect.
-  if (focusedTab !== undefined && focusedTab.key !== lastVisibleKey)
-    setLastVisibleKey(focusedTab.key)
+  if (focusedRoute === undefined) return routes.find(route => route.name !== SEARCH_ROUTE_NAME)?.key
 
-  return (
-    focusedTab?.key ?? lastVisibleKey ?? routes.find(route => route.name !== SEARCH_ROUTE_NAME)?.key
-  )
+  if (focusedRoute.name !== SEARCH_ROUTE_NAME) return focusedRoute.key
+
+  const visibleRoutes = routes.filter(route => route.name !== SEARCH_ROUTE_NAME)
+
+  return (visibleRoutes.find(route => route.name === LISTEN_ROUTE_NAME) ?? visibleRoutes[0])?.key
 }

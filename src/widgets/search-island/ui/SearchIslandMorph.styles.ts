@@ -2,6 +2,16 @@ import { StyleSheet } from 'react-native'
 import { INDENTS } from 'shared/ui/theme'
 
 export const styles = StyleSheet.create({
+  // Active-destination highlight of the closed circle: it fills the circle with
+  // a small inset like the tab capsule fills its item, and sits behind the
+  // magnifier. Inset by child order (first child), not by pointer/z tricks.
+  activeCapsule: {
+    bottom: 4,
+    left: 4,
+    position: 'absolute' as const,
+    right: 4,
+    top: 4,
+  },
   // One always-mounted frame: the search circle when closed, the search pill
   // when open. It owns the row's single shadow for its whole lifetime; only its
   // geometry animates.

@@ -12,11 +12,7 @@ import { isTabIslandCollapsedAtom } from '../model/barMorph'
 import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
 import { getIslandContentStyle } from './getBarMorphStyles'
-import {
-  getIslandStyle,
-  ISLAND_CONTENT_PADDING_HORIZONTAL,
-  TAB_ISLAND_SEARCH_SLOT_WIDTH,
-} from './getIslandStyle'
+import { getIslandStyle, ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
 import { getTabIslandRestingStyles } from './getTabIslandRestingStyles'
 
 interface TabIslandMorphInput {
@@ -65,10 +61,10 @@ export const useTabIslandMorph = ({
   // Every layout folds the search button into the island: wide always, compact
   // while expanded. Compact's separate circle only fades in as the island
   // collapses, so the expanded row reads as one island and takes the whole
-  // content column.
-  const hasInIslandSearch = !hideSearch
+  // content column. The search button is a full tab slot and takes an equal
+  // share next to the tabs.
+  const expandedSlotCount = routeCount + (hideSearch ? 0 : 1)
   const expandedIslandWidth = Math.max(BAR_CIRCLE_SIZE_EXPANDED, rowContentWidth)
-  const inIslandSearchWidth = hasInIslandSearch ? TAB_ISLAND_SEARCH_SLOT_WIDTH : 0
 
   const islandStyle = useAnimatedStyle(() =>
     getIslandStyle(
@@ -101,10 +97,11 @@ export const useTabIslandMorph = ({
 
   return {
     contentStyle,
-    // The slots own the island width minus its padding and trailing search slot.
+    // Every slot — the tabs and the search tab — gets an equal share of the
+    // island width minus its padding.
     expandedTabWidth:
-      (expandedIslandWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2 - inIslandSearchWidth) /
-      Math.max(routeCount, 1),
+      (expandedIslandWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2) /
+      Math.max(expandedSlotCount, 1),
     // Target shape of the morph: hidden slots must stop receiving touches as
     // soon as the island is collapsing, not when their width animation lands.
     isCollapsed: isForceExpanded ? false : liveIsCollapsed,
