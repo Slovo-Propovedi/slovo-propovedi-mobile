@@ -23,9 +23,12 @@ export const ReadScreen = () => {
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.read}>
       <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]}>
         <View style={styles.body}>
-          <ScreenTitleRow title='Читать' hideTitle={isWide}>
-            {isWide ? null : <HelpHeaderButton />}
-          </ScreenTitleRow>
+          {/* Wide drops the row: the island inset is the gap, actions float above. */}
+          {!isWide && (
+            <ScreenTitleRow title='Читать'>
+              <HelpHeaderButton />
+            </ScreenTitleRow>
+          )}
           <ScrollView
             ref={tourScrollableRef}
             style={[styles.content, { backgroundColor: currentTheme.background }]}

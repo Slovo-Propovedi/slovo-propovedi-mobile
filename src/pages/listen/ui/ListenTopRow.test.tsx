@@ -16,14 +16,8 @@ jest.mock('./AdminShieldButton', () => ({ AdminShieldButton: () => null }))
 
 describe('<ListenTopRow>', () => {
   test('renders the large screen title', async () => {
-    await renderWithProviders(<ListenTopRow isWide={false} showAdminButton={false} />)
+    await renderWithProviders(<ListenTopRow showAdminButton={false} />)
 
     expect(screen.getByRole('header', { name: 'Слушать' })).toBeTruthy()
-  })
-
-  test('renders the spacer instead of the title in the wide layout', async () => {
-    await renderWithProviders(<ListenTopRow isWide showAdminButton={false} />)
-
-    expect(screen.queryByRole('header', { name: 'Слушать' })).toBeNull()
   })
 })

@@ -30,6 +30,7 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 }))
 
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+const TITLE_ROW_TEST_ID = 'screen-title-row'
 
 const findContentScrollView = () =>
   screen.root?.queryAll(
@@ -37,6 +38,13 @@ const findContentScrollView = () =>
       SCROLL_HOST_TYPES.has(String(instance.type)) &&
       instance.props.contentContainerStyle !== undefined,
   )[0]
+
+// Text of the first content block inside the scroll container. In wide the
+// empty title row is gone, so the app name must own the top of the content.
+const firstScrollContentText = (): null | string => {
+  const [firstText] = findContentScrollView()?.queryAll(node => node.type === 'Text') ?? []
+  return firstText ? String(firstText.props.children) : null
+}
 
 // Total layout padding between the scroll host and the screen root. Any value
 // here is an opaque band that clips the list and swallows drags over it.
@@ -129,18 +137,22 @@ describe('<MoreScreen>', () => {
     expect(getByText('Приложение для прослушивания и чтения проповедей')).toBeTruthy()
   })
 
-  test('hides the tab-duplicate title in the wide layout', async () => {
-    const { queryByRole } = await renderWithProviders(<MoreScreen />)
+  test('drops the title row in the wide layout', async () => {
+    const { queryByRole, queryByTestId } = await renderWithProviders(<MoreScreen />)
 
     expect(queryByRole('header', { name: 'Ещё' })).toBeNull()
+    // The row is not rendered at all: no empty spacer above the app name.
+    expect(queryByTestId(TITLE_ROW_TEST_ID)).toBeNull()
+    expect(firstScrollContentText()).toBe('TestApp')
   })
 
-  test('renders the title in the compact layout', async () => {
+  test('renders the title row in the compact layout', async () => {
     mockUseWindowDimensions.mockReturnValue(COMPACT_DIMENSIONS)
 
-    const { getByRole } = await renderWithProviders(<MoreScreen />)
+    const { getByRole, getByTestId } = await renderWithProviders(<MoreScreen />)
 
     expect(getByRole('header', { name: 'Ещё' })).toBeTruthy()
+    expect(getByTestId(TITLE_ROW_TEST_ID)).toBeTruthy()
   })
 
   test('exposes the page content as the /more blur backdrop', async () => {

@@ -49,14 +49,13 @@ export const MoreScreen = () => {
             ref={tourScrollableRef}
             contentContainerStyle={{ paddingTop: topChromeScrollInset }}
           >
-            <ScreenTitleRow title='Ещё' hideTitle={isWide}>
-              {isWide ? null : (
-                <>
-                  {canOpenAdminPanel && <AdminPanelButton />}
-                  <HelpHeaderButton />
-                </>
-              )}
-            </ScreenTitleRow>
+            {/* Wide drops the row: the island inset is the gap, actions float above. */}
+            {!isWide && (
+              <ScreenTitleRow title='Ещё'>
+                {canOpenAdminPanel && <AdminPanelButton />}
+                <HelpHeaderButton />
+              </ScreenTitleRow>
+            )}
             <View style={styles.headerTexts}>
               <Text style={[styles.appName, { color: currentTheme.text }]}>{APP_NAME}</Text>
               <Text style={styles.appVersion}>v{APP_VERSION}</Text>

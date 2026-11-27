@@ -70,7 +70,7 @@ export const ListenScreen = () => {
               { paddingBottom: bottomChromeHeight, paddingTop: topChromeScrollInset },
             ]}
           >
-            <ListenTopRow isWide={isWide} showAdminButton={canOpenAdminPanel} />
+            {!isWide && <ListenTopRow showAdminButton={canOpenAdminPanel} />}
             <DynamicSectionsSlider onboardingTargetId='listen.sections' />
             <MyPlaylistsSlider
               onboardingTargetId='listen.my-playlists'

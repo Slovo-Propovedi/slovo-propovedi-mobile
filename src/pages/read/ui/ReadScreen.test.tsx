@@ -22,6 +22,7 @@ jest.mock('expo-router', () => ({
 
 const WIDE_DIMENSIONS = { fontScale: 1, height: 800, width: 1024 }
 const COMPACT_DIMENSIONS = { fontScale: 1, height: 390, width: 844 }
+const TITLE_ROW_TEST_ID = 'screen-title-row'
 
 const mockUseWindowDimensions = jest.fn(() => WIDE_DIMENSIONS)
 
@@ -159,18 +160,21 @@ describe('<ReadScreen>', () => {
     expect(getByText(TOPICAL_TITLE)).toBeTruthy()
   })
 
-  test('hides the tab-duplicate title in the wide layout', async () => {
-    const { queryByRole } = await renderWithProviders(<ReadScreen />)
+  test('drops the title row in the wide layout', async () => {
+    const { queryByRole, queryByTestId } = await renderWithProviders(<ReadScreen />)
 
     expect(queryByRole('header', { name: 'Читать' })).toBeNull()
+    // The row is not rendered at all: no empty band above the first slider.
+    expect(queryByTestId(TITLE_ROW_TEST_ID)).toBeNull()
   })
 
-  test('renders the title in the compact layout', async () => {
+  test('renders the title row in the compact layout', async () => {
     mockUseWindowDimensions.mockReturnValue(COMPACT_DIMENSIONS)
 
-    const { getByRole } = await renderWithProviders(<ReadScreen />)
+    const { getByRole, getByTestId } = await renderWithProviders(<ReadScreen />)
 
     expect(getByRole('header', { name: 'Читать' })).toBeTruthy()
+    expect(getByTestId(TITLE_ROW_TEST_ID)).toBeTruthy()
   })
 
   test('exposes the page content as the /read blur backdrop', async () => {
