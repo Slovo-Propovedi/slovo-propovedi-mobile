@@ -4,7 +4,7 @@ import { type SharedValue, type useAnimatedStyle, useSharedValue } from 'react-n
 import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
 import { useLayoutEffectSharedValue } from 'shared/lib/hooks/useLayoutEffectSharedValue'
-import { useBarBottomPadding } from 'shared/ui/layout'
+import { useBarBottomPadding, useLayoutBaseWidth } from 'shared/ui/layout'
 import { type getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { type getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 import { useAppStateSnap } from './useAppStateSnap'
@@ -45,17 +45,24 @@ export const useExpandAnimation = (
     useAtomMorphDriver(oneLineBarMorphDriver)
   const geometryReapplyTick = useSharedValue(0)
   const { height: screenHeight, width: screenWidth } = useWindowDimensions()
+  // The compact pill is sized from the orientation-independent layout base, so
+  // a phone rotation moves it without resizing it. `screenWidth` stays live: it
+  // centres the pill and spans the fullscreen sheet.
+  const contentWidth = useLayoutBaseWidth()
   // On web `Dimensions.get('screen')` is the physical `window.screen.height`,
   // larger than the viewport; absolute player geometry would overshoot and spawn
   // a document-level scrollbar. Clamp to the viewport (native window == screen).
   const fullScreenHeight = Math.min(Dimensions.get('screen').height, screenHeight)
   // Pre-paint window channels: the animated worklets must not run on a closure
   // that is re-registered after the commit (one stale frame after a rotation).
-  const { fullScreenHeightShared, screenWidthShared } = useGeometrySharedValues({
-    fullScreenHeight,
-    geometryReapplyTick,
-    screenWidth,
-  })
+  const { contentWidthShared, fullScreenHeightShared, screenWidthShared } = useGeometrySharedValues(
+    {
+      contentWidth,
+      fullScreenHeight,
+      geometryReapplyTick,
+      screenWidth,
+    },
+  )
   const tabBarHeightShared = useTabBarHeightShared(tabBarHeight)
   // Mirrors `expanded` (1 = expanded, 0 = collapsed), not the pill's real mount
   // flag: on expand the pill unmounts with the tap, while the sheet must stay
@@ -70,6 +77,7 @@ export const useExpandAnimation = (
   const { barCollapsedTop, barExpandedTop, miniBarRestingStyle, restingContainerStyle } =
     useRestingStyles({
       barCollapsed: settledCollapsed,
+      contentWidth,
       expanded: settledExpanded,
       fullScreenHeight,
       screenWidth,
@@ -78,6 +86,7 @@ export const useExpandAnimation = (
     })
   const { containerStyle, miniBarStyle } = useGeometryAnimatedStyles({
     barProgress,
+    contentWidthShared,
     expandedShared,
     fullScreenHeightShared,
     geometryReapplyTick,

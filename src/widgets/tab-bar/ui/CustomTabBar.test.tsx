@@ -278,12 +278,16 @@ describe('<CustomTabBar>', () => {
     })[0]
   }
 
+  // The chrome lays out in the orientation-independent base (the window's short
+  // side, capped by the content column), never the live width.
+  const layoutBase = () => Math.min(mockWindowWidth, mockWindowHeight)
+
   // In-island slot rect of the compact expanded row: the oracle the detached
   // button must start from. The row is centred in the content column with the
   // expanded side inset and the inner content padding.
   const expandedSlotRect = () => {
     const rowContentWidth =
-      Math.min(mockWindowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
+      Math.min(layoutBase(), CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
     const slotWidth = (rowContentWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2) / 4
 
     return {
@@ -300,7 +304,7 @@ describe('<CustomTabBar>', () => {
       TAB_BAR_ISLAND_HEIGHT +
       (TAB_BAR_ISLAND_HEIGHT_EXPANDED - TAB_BAR_ISLAND_HEIGHT) * (1 - oneLine)
 
-    return { height, left: sideInset + mockWindowWidth - sideInset * 2 - height, width: height }
+    return { height, left: sideInset + layoutBase() - sideInset * 2 - height, width: height }
   }
 
   test('ignores a zero-height layout report', async () => {
@@ -320,7 +324,9 @@ describe('<CustomTabBar>', () => {
     expect(ctx.get(tabBarHeightAtom)).toBe(140)
   })
 
-  test('snaps the island to the new window width after a rotation', async () => {
+  test('holds the portrait chrome width through a rotation', async () => {
+    mockWindowWidth = 390
+    mockWindowHeight = 844
     const props = createBarProps()
     const { rerender } = await renderWithProviders(
       <CustomTabBar state={createMockState(0)} {...props} />,
@@ -329,9 +335,11 @@ describe('<CustomTabBar>', () => {
 
     // A real layout pass pins the row at the portrait width.
     await fireLayout(BAR_ROW_MIN_HEIGHT, mockWindowWidth)
-    expect(StyleSheet.flatten(findTabIsland()?.props.style)?.width).toBe(
-      mockWindowWidth - BAR_SIDE_INSET_EXPANDED * 2,
-    )
+
+    const portraitWidth = layoutBase() - BAR_SIDE_INSET_EXPANDED * 2
+
+    expect(portraitWidth).toBe(340)
+    expect(StyleSheet.flatten(findTabIsland()?.props.style)?.width).toBe(portraitWidth)
 
     mockWindowWidth = 844
     mockWindowHeight = 390
@@ -339,12 +347,24 @@ describe('<CustomTabBar>', () => {
       rerender(<CustomTabBar state={createMockState(0)} {...props} />)
     })
 
-    // The island width is derived from the window, never from the last
-    // onLayout report: the first post-rotation commit already paints the new
-    // column, so no frame keeps the old width beside the new-width pill.
-    expect(StyleSheet.flatten(findTabIsland()?.props.style)?.width).toBe(
-      CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2,
-    )
+    // The width base is the window's short side, so a rotation changes no size:
+    // the island keeps the portrait width and only its (native) centring moves.
+    // Re-deriving the width from the live landscape window would make every
+    // JS-derived piece of chrome chase the native relayout for a frame.
+    expect(StyleSheet.flatten(findTabIsland()?.props.style)?.width).toBe(portraitWidth)
+    // The row is the base-wide canvas: it is centred by the full-width
+    // container's native layout, not by a JS-computed offset.
+    expect(StyleSheet.flatten(findIslandsRow()?.props.style)?.maxWidth).toBe(layoutBase())
+    expect(StyleSheet.flatten(findFloatingContainer()?.props.style)?.alignItems).toBe('center')
+
+    // Rotating back changes nothing either.
+    mockWindowWidth = 390
+    mockWindowHeight = 844
+    await act(async () => {
+      rerender(<CustomTabBar state={createMockState(0)} {...props} />)
+    })
+
+    expect(StyleSheet.flatten(findTabIsland()?.props.style)?.width).toBe(portraitWidth)
   })
 
   test('caps the floating island to the 600px content column', async () => {

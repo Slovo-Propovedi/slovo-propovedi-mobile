@@ -32,6 +32,7 @@ export { useBarBottomPadding } from './lib/useBarBottomPadding'
 export { useBarCollapseOnScroll } from './lib/useBarCollapseOnScroll'
 export { useChromeLayoutShift } from './lib/useChromeLayoutShift'
 export { useIsWideLayout } from './lib/useIsWideLayout'
+export { useLayoutBaseWidth } from './lib/useLayoutBaseWidth'
 export { useScreenChromePadding } from './lib/useScreenChromePadding'
 export {
   isBarCollapsedAtom,

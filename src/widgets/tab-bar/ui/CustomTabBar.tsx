@@ -1,7 +1,6 @@
-import { useWindowDimensions } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { GlassIsland } from 'shared/ui'
-import { useBarBottomPadding, useIsWideLayout } from 'shared/ui/layout'
+import { useBarBottomPadding, useIsWideLayout, useLayoutBaseWidth } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { getInstantTabNavigation } from '../lib/getInstantTabNavigation'
 import { getVisibleTabRoutes, SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
@@ -32,7 +31,9 @@ export const CustomTabBar = ({
   const { isLight } = useTheme()
   const focusedRoute = state.routes[state.index]
   const isSearchFocused = focusedRoute?.name === SEARCH_ROUTE_NAME
-  const { width: windowWidth } = useWindowDimensions()
+  // Orientation-independent base: the island is a portrait-width canvas in both
+  // orientations, so a rotation re-centres it (native flex) without resizing it.
+  const layoutBaseWidth = useLayoutBaseWidth()
   const isWide = useIsWideLayout()
   const { onLayout } = useTabBarMeasurement()
   const activeRouteKey = useActiveTabRouteKey(state.routes, state.index)
@@ -41,7 +42,7 @@ export const CustomTabBar = ({
     hideSearch,
     isForceExpanded: isWide,
     routeCount: visibleRoutes.length,
-    windowWidth,
+    windowWidth: layoutBaseWidth,
   })
   const {
     contentStyle,
@@ -74,7 +75,7 @@ export const CustomTabBar = ({
   })
   const bottomPadding = useBarBottomPadding()
   const { keyboardLiftStyle, shiftStyle } = useFloatingShiftStyles(insets.top)
-  const { insetStyle, restingInsetStyle } = useRowInsetStyle(isWide)
+  const rowInsets = useRowInsetStyle(isWide)
 
   return (
     <Animated.View
@@ -84,7 +85,7 @@ export const CustomTabBar = ({
       <Animated.View
         onLayout={onLayout}
         pointerEvents='box-none'
-        style={getIslandsRowStyle(isWide, bottomPadding, { insetStyle, restingInsetStyle })}
+        style={getIslandsRowStyle(isWide, bottomPadding, layoutBaseWidth, rowInsets)}
       >
         {/* Pass-through host: drags on its padding/gaps reach the list; inert while focused. */}
         <GlassIsland

@@ -5,7 +5,7 @@ import { OnboardingTarget } from 'features/onboarding'
 import { useOpenSearch } from 'features/sermon-search'
 import { useLayoutEffectSharedValue } from 'shared/lib/hooks/useLayoutEffectSharedValue'
 import { GlassSurface } from 'shared/ui'
-import { tabBarHeightAtom } from 'shared/ui/layout'
+import { tabBarHeightAtom, useLayoutBaseWidth } from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
 import { type SlotCapsuleMotion } from '../lib/capsuleTravel'
 import { SEARCH_ROUTE_NAME } from '../lib/getVisibleTabRoutes'
@@ -53,15 +53,21 @@ export const TabBarSearchButton = ({
 }) => {
   const { expandedSearchWidth, expandedTabWidth, isCollapsed, oneLineProgress, progress } = morph
   const { width: screenWidth } = useWindowDimensions()
+  // Sizes (slots, circle anchor) come from the frozen layout base; the live
+  // window only centres the row, so a rotation moves the chrome without
+  // resizing any JS-derived geometry.
+  const contentWidth = useLayoutBaseWidth()
   // The button's rect is derived from the window at render; the animated style
-  // reads pre-paint channels so a rotation never animates the previous width.
+  // reads pre-paint channels so a real resize never animates the previous width.
   const expandedSearchWidthShared = useLayoutEffectSharedValue(expandedSearchWidth)
   const expandedTabWidthShared = useLayoutEffectSharedValue(expandedTabWidth)
+  const contentWidthShared = useLayoutEffectSharedValue(contentWidth)
   const screenWidthShared = useLayoutEffectSharedValue(screenWidth)
   const { isLight } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const openSearch = useOpenSearch()
   const { buttonStyle, capsuleStyle, glassStyle } = useSearchSeparation({
+    contentWidth: contentWidthShared,
     expandedSearchWidth: expandedSearchWidthShared,
     expandedTabWidth: expandedTabWidthShared,
     oneLineProgress,

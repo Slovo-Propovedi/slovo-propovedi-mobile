@@ -2,6 +2,8 @@ import { getMiniPlayerGeometry } from './getMiniPlayerGeometry'
 
 interface ContainerGeometryInput {
   barProgress: number
+  /** Chrome content width the resting pill is sized from; defaults to `screenWidth`. */
+  contentWidth?: number
   fullScreenHeight: number
   isWideLayout?: boolean
   /** Expand/collapse progress: 0 = mini pill, 1 = fullscreen. */
@@ -20,6 +22,7 @@ interface ContainerGeometryInput {
  * Worklet-safe: used directly by the container's animated style.
  * @param input - Morph progress, expand progress and screen geometry.
  * @param input.barProgress - Bottom-bar morph progress (0 = expanded pill, 1 = collapsed row).
+ * @param input.contentWidth - Width the resting pill is sized from; defaults to `screenWidth`.
  * @param input.fullScreenHeight - Full device screen height.
  * @param input.isWideLayout - Whether the wide layout applies.
  * @param input.progress - Expand/collapse progress (0 = mini pill, 1 = fullscreen).
@@ -29,6 +32,7 @@ interface ContainerGeometryInput {
  */
 export const getContainerGeometryStyle = ({
   barProgress,
+  contentWidth,
   fullScreenHeight,
   isWideLayout = false,
   progress,
@@ -40,6 +44,7 @@ export const getContainerGeometryStyle = ({
   const expand = Math.min(Math.max(progress, 0), 1)
   const rest = getMiniPlayerGeometry({
     barProgress,
+    contentWidth,
     fullScreenHeight,
     isWideLayout,
     screenWidth,
@@ -55,6 +60,8 @@ export const getContainerGeometryStyle = ({
     bottom: rest.bottom * (1 - expand),
     left: rest.left * (1 - expand),
     top: rest.top * (1 - expand),
+    // The fullscreen sheet spans the LIVE window: only the squeezed mini pill
+    // is sized from the frozen chrome base.
     width: rest.width + (screenWidth - rest.width) * expand,
   }
 }

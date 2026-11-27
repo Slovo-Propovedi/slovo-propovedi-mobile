@@ -15,6 +15,12 @@ interface SearchIslandGeometry {
 interface SearchIslandGeometryInput {
   /** 0 = no external close circle, 1 = the pill yields a full circle + gap to it. */
   closeProgress?: number
+  /**
+   * Chrome content width the pill is SIZED from (the frozen layout base on
+   * phones); position still centres inside the live `screenWidth`. Defaults to
+   * `screenWidth`.
+   */
+  contentWidth?: number
   /** 0 = active-tab circle still shown, 1 = field focused and the pill owns the row. */
   focusProgress?: number
   /** 0 = expanded bar, 1 = bar collapsed to one line (compact chip + wider outer inset). */

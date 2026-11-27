@@ -41,6 +41,7 @@ const ICON_SIZE = 32
  * Worklet-safe: called from the morph's Reanimated animated styles.
  * @param input - Screen geometry, morph progress and focus progress.
  * @param input.closeProgress - 0..1 presence of the external close circle.
+ * @param input.contentWidth - Width the pill is sized from; defaults to `screenWidth`.
  * @param input.focusProgress - 0..1 retraction of the active-tab circle.
  * @param input.oneLineProgress - 0 = expanded bar, 1 = one-line bar (morphs the height and the outer inset).
  * @param input.openProgress - 0 = collapsed onto the search circle, 1 = full slot.
@@ -49,6 +50,7 @@ const ICON_SIZE = 32
  */
 export const getSearchIslandGeometry = ({
   closeProgress = 0,
+  contentWidth,
   focusProgress = 0,
   oneLineProgress,
   openProgress,
@@ -60,15 +62,17 @@ export const getSearchIslandGeometry = ({
   const close = Math.min(Math.max(closeProgress, 0), 1)
   const focus = Math.min(Math.max(focusProgress, 0), 1)
   const oneLine = Math.min(Math.max(oneLineProgress, 0), 1)
-  // The islands row is capped to the content column and centered; absolute
-  // offsets must follow the column, not the raw viewport edges. The outer side
-  // inset morphs with the one-line state of the bar, not with the island axis:
-  // an open field always sits on the expanded inset.
+  // The pill is SIZED from the chrome column (the frozen layout base, capped by
+  // the content column) but ORIGINS inside the live window: a rotation moves the
+  // column without resizing it. The outer side inset morphs with the one-line
+  // state of the bar, not with the island axis: an open field always sits on the
+  // expanded inset.
   const sideInset = getBarSideInset(oneLine)
-  const rowLeft = getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH)
+  const columnWidth = Math.min(contentWidth ?? screenWidth, CONTENT_COLUMN_WIDTH)
+  const rowLeft = getColumnSideInset(screenWidth, 0, columnWidth)
   const rowInnerLeft = rowLeft + sideInset
   // Inner row width: the span the expanded island/search pill can occupy.
-  const rowInnerWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH) - sideInset * 2
+  const rowInnerWidth = columnWidth - sideInset * 2
   // The closed pill is the bar state's search chip: the compact 48 circle only
   // in the one-line row, the expanded 60 otherwise. It must follow the one-line
   // axis rather than the island's shape axis, because opening the field also

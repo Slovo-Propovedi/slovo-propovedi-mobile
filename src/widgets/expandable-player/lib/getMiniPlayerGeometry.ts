@@ -1,17 +1,8 @@
-import {
-  BAR_CIRCLE_SIZE,
-  BAR_EXPANDED_ISLAND_TOP_MARGIN,
-  BAR_OUTER_GAP,
-  BAR_PILL_ROW_GAP,
-  BAR_ROW_MIN_HEIGHT,
-  BAR_SIDE_INSET_EXPANDED,
-  CONTENT_COLUMN_WIDTH,
-  getBarSideInset,
-  getColumnSideInset,
-  getWideChromeWidth,
-  WIDE_MINI_PLAYER_MAX_WIDTH,
-} from 'shared/ui/layout'
+import { BAR_OUTER_GAP, CONTENT_COLUMN_WIDTH, getColumnSideInset } from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
+import { getCompactMiniPlayerGeometry } from './getCompactMiniPlayerGeometry'
+import { type MiniPlayerGeometry } from './getMiniPlayerGeometry.types'
+import { getWideMiniPlayerGeometry } from './getWideMiniPlayerGeometry'
 
 /**
  * Slide-down distance that tucks the pill behind the focused search row: its
@@ -19,18 +10,15 @@ import { PLAYER_SIZES } from 'shared/ui/theme'
  */
 export const MINI_PILL_TUCK_DISTANCE = PLAYER_SIZES.miniPlayerHeight + BAR_OUTER_GAP * 2
 
-interface MiniPlayerGeometry {
-  bottom: number
-  height: number
-  left: number
-  radius: number
-  top: number
-  width: number
-}
-
 interface MiniPlayerGeometryInput {
   /** 0 = detached pill above the tab row, 1 = pill in the collapsed bottom line. */
   barProgress: number
+  /**
+   * Chrome content width the compact pill is SIZED from (the window's short
+   * side on phones). Position still centres inside the live window, so a
+   * rotation moves the pill without resizing it. Defaults to `screenWidth`.
+   */
+  contentWidth?: number
   fullScreenHeight: number
   /**
    * Wide layout (>= 768 wide and >= 600 shortest side). The tab island lives at
@@ -47,21 +35,15 @@ interface MiniPlayerGeometryInput {
 /**
  * Resting geometry of the mini-player pill at a given bar-morph progress.
  *
- * Compact — expanded (0): a detached pill above the tab row, spanning the row's
- * inner content edges (column width minus the side insets), so its left/right
- * edges line up with the tab island and the search circle. Collapsed (1): a
- * narrower pill inside the row, right of the active-tab circle and left of the
- * search circle, bottom-aligned with the islands. The pill never grows: the
- * one-line row is uniform at the mini player height.
- *
- * Wide — no tab row at the bottom (the island is anchored to the top), so the
- * pill rests on the chrome's bottom padding (`wideBottomInset`) and spans the top
- * island's content column. The one-line morph does not exist there: the expanded
- * pose is forced and `tabBarHeight` is ignored.
+ * Compact screens lay the pill out in the chrome column — the orientation-
+ * independent layout base, capped by the content column — while its position
+ * follows the live window, so a phone rotation changes no size at all. The wide
+ * layout keeps live, content-driven widths (tablets are not rotation-frozen).
  *
  * Worklet-safe: called from React resting styles and Reanimated animated styles.
  * @param input - Geometry inputs and morph progress.
  * @param input.barProgress - 0 = detached pill, 1 = pill in the collapsed row.
+ * @param input.contentWidth - Width the compact pill is sized from; defaults to `screenWidth`.
  * @param input.fullScreenHeight - Full device screen height.
  * @param input.isWideLayout - Whether the wide layout applies.
  * @param input.screenWidth - Current window width.
@@ -70,6 +52,7 @@ interface MiniPlayerGeometryInput {
  */
 export const getMiniPlayerGeometry = ({
   barProgress,
+  contentWidth,
   fullScreenHeight,
   isWideLayout = false,
   screenWidth,
@@ -77,54 +60,19 @@ export const getMiniPlayerGeometry = ({
   wideBottomInset,
 }: MiniPlayerGeometryInput): MiniPlayerGeometry => {
   'worklet'
-  const height = isWideLayout ? PLAYER_SIZES.wideMiniPlayerHeight : PLAYER_SIZES.miniPlayerHeight
-  const rowLeft = getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH)
-  const rowContentWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH)
+  if (isWideLayout)
+    return getWideMiniPlayerGeometry({ fullScreenHeight, screenWidth, wideBottomInset })
 
-  if (isWideLayout) {
-    // The pill is the only bottom chrome: centered, with its own wider cap.
-    const bottom = wideBottomInset
+  // The compact pill lays out in the chrome column but is centred in the LIVE
+  // window, so a rotation only moves it.
+  const columnWidth = Math.min(contentWidth ?? screenWidth, CONTENT_COLUMN_WIDTH)
+  const rowLeft = getColumnSideInset(screenWidth, 0, columnWidth)
 
-    return {
-      bottom,
-      height,
-      left: getColumnSideInset(screenWidth, BAR_SIDE_INSET_EXPANDED, WIDE_MINI_PLAYER_MAX_WIDTH),
-      radius: height / 2,
-      top: fullScreenHeight - bottom - height,
-      width: getWideChromeWidth(screenWidth, WIDE_MINI_PLAYER_MAX_WIDTH),
-    }
-  }
-
-  const progress = Math.min(Math.max(barProgress, 0), 1)
-  // The islands row is capped to the content column and padded by the side
-  // inset, which morphs with the one-line state of the bar; the pill must line
-  // up with the row's inner edges on every width and in every bar state.
-  const sideInset = getBarSideInset(progress)
-  const contentWidth = rowContentWidth - sideInset * 2
-  // The measured row height includes the bottom safe-area padding and its fixed
-  // BAR_ROW_MIN_HEIGHT content box, with the islands anchored to the box's
-  // bottom edge (the safe-area line). The expanded pill therefore rests one
-  // pill-row gap above the expanded island's top edge — visibly detached, the
-  // Apple Music floating pair (Issue #153).
-  const expandedBottom = tabBarHeight - BAR_EXPANDED_ISLAND_TOP_MARGIN + BAR_PILL_ROW_GAP
-  // The collapsed pill joins the islands on the row's bottom edge.
-  const collapsedBottom = tabBarHeight - BAR_ROW_MIN_HEIGHT
-  const expandedLeft = rowLeft + sideInset
-  const collapsedLeft = rowLeft + sideInset + BAR_CIRCLE_SIZE + BAR_OUTER_GAP
-  const expandedWidth = contentWidth
-  const collapsedWidth = screenWidth - collapsedLeft * 2
-  // The pill keeps the compact mini height in every bar state: folded into the
-  // row it fills the uniform one-line slot without growing.
-  const bottom = expandedBottom + (collapsedBottom - expandedBottom) * progress
-  const left = expandedLeft + (collapsedLeft - expandedLeft) * progress
-  const width = expandedWidth + (collapsedWidth - expandedWidth) * progress
-
-  return {
-    bottom,
-    height,
-    left,
-    radius: height / 2,
-    top: fullScreenHeight - bottom - height,
-    width,
-  }
+  return getCompactMiniPlayerGeometry({
+    barProgress,
+    columnWidth,
+    fullScreenHeight,
+    rowLeft,
+    tabBarHeight,
+  })
 }

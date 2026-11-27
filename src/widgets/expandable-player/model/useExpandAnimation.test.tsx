@@ -15,7 +15,6 @@ import {
   BAR_ROW_MIN_HEIGHT,
   BAR_SIDE_INSET_COLLAPSED,
   BAR_SIDE_INSET_EXPANDED,
-  CONTENT_COLUMN_WIDTH,
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
@@ -534,7 +533,7 @@ describe('useExpandAnimation geometry heal channel', () => {
 })
 
 describe('useExpandAnimation window rotation', () => {
-  test('publishes the rotated window to the animated layer before paint', async () => {
+  test('keeps the portrait pill width through a rotation', async () => {
     // The pre-paint channels are the persistent shared values the geometry hook
     // creates for the worklets; the assertion reads them at their source instead
     // of widening the hook's public result for tests.
@@ -548,15 +547,20 @@ describe('useExpandAnimation window rotation', () => {
       return <Text testID='harness'>{String(result.progress.value)}</Text>
     }
 
+    mockWindowWidth = 390
+    mockWindowHeight = 844
     const { rerender } = await renderWithProviders(<Harness />)
-    // The committed resting layer is the render-time surface: it already carries
-    // the rotated window in this commit.
+    // The committed resting layer is the render-time surface: it carries the
+    // frozen portrait geometry in this commit.
     const restingPillWidth = (render: ReturnType<typeof useExpandAnimation>) =>
       render.miniBarRestingStyle.width
     const restingContainerWidth = (render: ReturnType<typeof useExpandAnimation>) =>
       render.restingContainerStyle.width
+    const portraitWidth = 390 - BAR_SIDE_INSET_EXPANDED * 2
 
-    expect(restingPillWidth(renders[renders.length - 1])).toBe(400 - BAR_SIDE_INSET_EXPANDED * 2)
+    expect(portraitWidth).toBe(340)
+    expect(restingPillWidth(renders[renders.length - 1])).toBe(portraitWidth)
+    expect(restingContainerWidth(renders[renders.length - 1])).toBe(portraitWidth)
 
     mockWindowWidth = 844
     mockWindowHeight = 390
@@ -564,22 +568,23 @@ describe('useExpandAnimation window rotation', () => {
       rerender(<Harness />)
     })
 
-    // The animated worklets read pre-paint shared values, not a closure that is
-    // re-registered after the commit (that animated the old window for a frame
-    // while the resting layer already held the new one — crooked chrome).
+    // The compact pill is sized from the layout base (the short side), so a
+    // rotation moves it without resizing it — no JS-derived width can lag the
+    // native relayout. The LIVE window still feeds the centring offset and the
+    // fullscreen sheet.
     const rotated = renders[renders.length - 1]
-    const rotatedWidth = CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2
 
-    expect(restingPillWidth(rotated)).toBe(rotatedWidth)
-    expect(restingContainerWidth(rotated)).toBe(rotatedWidth)
+    expect(restingPillWidth(rotated)).toBe(portraitWidth)
+    expect(restingContainerWidth(rotated)).toBe(portraitWidth)
 
     const rotatedChannels = geometrySpy.mock.results.at(-1)?.value
     const rotatedTick = geometrySpy.mock.calls.at(-1)?.[0].geometryReapplyTick
 
     expect(rotatedChannels?.screenWidthShared.value).toBe(844)
     expect(rotatedChannels?.fullScreenHeightShared.value).toBe(390)
-    // A dimension change also bumps the heal tick in the same layout effect, so
-    // cached no-diff worklets re-derive the rotated numbers.
+    expect(rotatedChannels?.contentWidthShared.value).toBe(390)
+    // A live-dimension change still bumps the heal tick in the same layout
+    // effect, so cached no-diff worklets re-derive the re-centred geometry.
     expect(rotatedTick?.value).toBe(1)
   })
 })

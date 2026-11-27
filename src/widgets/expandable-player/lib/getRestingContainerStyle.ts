@@ -3,6 +3,8 @@ import { getMiniPlayerGeometry } from './getMiniPlayerGeometry'
 interface RestingContainerStyleInput {
   /** Whether the bottom bar is collapsed into a single row. */
   barCollapsed: boolean
+  /** Chrome content width the resting pill is sized from; defaults to `screenWidth`. */
+  contentWidth?: number
   expanded: boolean
   fullScreenHeight: number
   isWideLayout?: boolean
@@ -20,6 +22,7 @@ interface RestingContainerStyleInput {
  * restated for the collapsed bottom line too).
  * @param root0 - Input geometry parameters.
  * @param root0.barCollapsed - Whether the bottom bar is collapsed to one row.
+ * @param root0.contentWidth - Width the resting pill is sized from; defaults to `screenWidth`.
  * @param root0.expanded - Whether the player is expanded to fullscreen.
  * @param root0.fullScreenHeight - Full device screen height.
  * @param root0.isWideLayout - Whether the wide layout applies.
@@ -29,6 +32,7 @@ interface RestingContainerStyleInput {
  */
 export const getRestingContainerStyle = ({
   barCollapsed,
+  contentWidth,
   expanded,
   fullScreenHeight,
   isWideLayout = false,
@@ -45,11 +49,13 @@ export const getRestingContainerStyle = ({
       bottom: 0,
       left: 0,
       top: 0,
+      // The fullscreen sheet always spans the LIVE window, never the base.
       width: screenWidth,
     }
 
   const geometry = getMiniPlayerGeometry({
     barProgress: barCollapsed ? 1 : 0,
+    contentWidth,
     fullScreenHeight,
     isWideLayout,
     screenWidth,

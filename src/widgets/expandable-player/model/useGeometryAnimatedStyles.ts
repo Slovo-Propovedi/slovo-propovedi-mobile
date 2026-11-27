@@ -6,6 +6,8 @@ import { getMiniBarStyle } from '../lib/getMiniBarStyle'
 
 interface GeometryAnimatedStylesInput {
   barProgress: SharedValue<number>
+  /** Pre-paint chrome content width the compact pill is sized from (the layout base). */
+  contentWidthShared: SharedValue<number>
   /** Pre-paint mirror of `expanded` (1) vs collapsed (0); the pill is mounted at 0. */
   expandedShared: SharedValue<number>
   /** Pre-paint full screen height channel (`useGeometrySharedValues`). */
@@ -34,6 +36,7 @@ interface GeometryAnimatedStylesInput {
  * (the same force the tab island applies to its own progress).
  * @param input - Shared values and render-time geometry driving the worklets.
  * @param input.barProgress - Bottom-bar morph progress (0 = expanded pill, 1 = collapsed row).
+ * @param input.contentWidthShared - Pre-paint chrome content width (frozen layout base).
  * @param input.expandedShared - Pre-paint mirror of `expanded` (1 = expanded, 0 = collapsed).
  * @param input.fullScreenHeightShared - Pre-paint full device screen height.
  * @param input.geometryReapplyTick - Alternating heal tick for the Issue #63 re-apply channel.
@@ -44,6 +47,7 @@ interface GeometryAnimatedStylesInput {
  */
 export const useGeometryAnimatedStyles = ({
   barProgress,
+  contentWidthShared,
   expandedShared,
   fullScreenHeightShared,
   geometryReapplyTick,
@@ -64,6 +68,7 @@ export const useGeometryAnimatedStyles = ({
     // so expanding out of the collapsed bottom line stays continuous.
     const style = getContainerGeometryStyle({
       barProgress: isWideLayout ? 0 : barProgress.value,
+      contentWidth: contentWidthShared.value,
       fullScreenHeight: fullScreenHeightShared.value,
       isWideLayout,
       progress: progress.value,
@@ -88,6 +93,7 @@ export const useGeometryAnimatedStyles = ({
     const reapply = geometryReapplyTick.value % 2 === 1 ? 0.01 : -0.01
     const style = getMiniBarStyle({
       barProgress: isWideLayout ? 0 : barProgress.value,
+      contentWidth: contentWidthShared.value,
       fullScreenHeight: fullScreenHeightShared.value,
       isWideLayout,
       screenWidth: screenWidthShared.value,

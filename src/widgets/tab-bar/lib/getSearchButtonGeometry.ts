@@ -11,6 +11,8 @@ interface SearchButtonGeometry {
 }
 
 interface SearchButtonGeometryInput {
+  /** Chrome content width the slots are sized from; defaults to `screenWidth`. */
+  contentWidth?: number
   /** Expanded width of the search slot inside the compact island. */
   expandedSearchWidth: number
   /** Expanded width of one routed tab slot (the search slot trails them). */
@@ -38,6 +40,7 @@ interface SearchButtonGeometryInput {
  * @param input - Layout anchors, morph axes and screen geometry.
  * @param input.expandedSearchWidth - Expanded width of the search slot.
  * @param input.expandedTabWidth - Expanded width of one routed tab slot.
+ * @param input.contentWidth - Width the slots are sized from; defaults to `screenWidth`.
  * @param input.oneLineProgress - 0 = expanded bar, 1 = one-line bar (circle diameter).
  * @param input.routeCount - Visible routed tabs before the search slot.
  * @param input.screenWidth - Current viewport width.
@@ -45,6 +48,7 @@ interface SearchButtonGeometryInput {
  * @param input.tabBarHeight - Measured height of the floating tab row.
  */
 export const getSearchButtonGeometry = ({
+  contentWidth,
   expandedSearchWidth,
   expandedTabWidth,
   oneLineProgress,
@@ -56,9 +60,10 @@ export const getSearchButtonGeometry = ({
   'worklet'
   const separation = clampProgress(separationProgress)
   const oneLine = clampProgress(oneLineProgress)
+  const columnWidth = Math.min(contentWidth ?? screenWidth, CONTENT_COLUMN_WIDTH)
   // The expanded slot sits in the island's content box: the centred column,
   // its expanded side inset, the island content padding and the routed tabs.
-  const rowLeft = getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH)
+  const rowLeft = getColumnSideInset(screenWidth, 0, columnWidth)
   const slotLeft =
     rowLeft +
     BAR_SIDE_INSET_EXPANDED +
@@ -67,6 +72,7 @@ export const getSearchButtonGeometry = ({
   const slotHeight = getIslandHeight(oneLine)
   const circle = getSearchIslandGeometry({
     closeProgress: 0,
+    contentWidth,
     focusProgress: 0,
     oneLineProgress: oneLine,
     openProgress: 0,

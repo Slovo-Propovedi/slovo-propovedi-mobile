@@ -2,6 +2,6 @@ Tablet: tabs+search top island, content under
 full mini-player, no titles, actions top-right
 highlight+haptic, layout animates
 Search: field top, folds on scroll, results morph, button detaches
-Fixed: instant mini-player, collapse crossfade to pill
-chrome snaps on rotation, recording pauses, split-screen pane (Android)
+Fixed: instant pill, collapse crossfade
+chrome width frozen on rotation, recording, split-screen pane (Android)
 iOS web full height, Safari toolbar/keyboard, 21px home-indicator gap

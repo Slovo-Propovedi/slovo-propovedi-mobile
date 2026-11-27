@@ -10,6 +10,8 @@ interface MiniRestingTopsInput extends Omit<UseRestingStylesInput, 'barCollapsed
 interface UseRestingStylesInput {
   /** Bar state the morph has settled into (see `useAtomMorphDriver(oneLineBarMorphDriver)`). */
   barCollapsed: boolean
+  /** Chrome content width the compact mini pill is sized from (the layout base). */
+  contentWidth: number
   expanded: boolean
   fullScreenHeight: number
   screenWidth: number
@@ -19,6 +21,7 @@ interface UseRestingStylesInput {
 }
 
 const getMiniRestingTops = ({
+  contentWidth,
   fullScreenHeight,
   isWideLayout,
   screenWidth,
@@ -28,6 +31,7 @@ const getMiniRestingTops = ({
   const restingTop = (barCollapsed: boolean) =>
     getRestingContainerStyle({
       barCollapsed,
+      contentWidth,
       expanded: false,
       fullScreenHeight,
       isWideLayout,
@@ -56,14 +60,16 @@ const getMiniRestingTops = ({
  * tab island is anchored to the top, so the pill never folds into a bottom row.
  * @param input - Player state and screen geometry.
  * @param input.barCollapsed - Bar state whose morph has already completed (the start state mid-morph).
+ * @param input.contentWidth - Width the compact mini pill is sized from (the frozen layout base).
  * @param input.expanded - Whether the player is expanded to fullscreen.
  * @param input.fullScreenHeight - Full device screen height.
- * @param input.screenWidth - Current window width.
+ * @param input.screenWidth - Current window width (position and the fullscreen sheet).
  * @param input.tabBarHeight - Measured height of the floating tab row.
  * @param input.wideBottomInset - The chrome's bottom padding, the wide pill's rest line.
  */
 export const useRestingStyles = ({
   barCollapsed,
+  contentWidth,
   expanded,
   fullScreenHeight,
   screenWidth,
@@ -73,57 +79,45 @@ export const useRestingStyles = ({
   const isWideLayout = useIsWideLayout()
   // Wide has no bottom row to fold into: the expanded pose is the only pose.
   const restingBarCollapsed = isWideLayout ? false : barCollapsed
-  const restingContainerStyle = useMemo(
-    () =>
-      getRestingContainerStyle({
-        barCollapsed: restingBarCollapsed,
-        expanded,
-        fullScreenHeight,
-        isWideLayout,
-        screenWidth,
-        tabBarHeight,
-        wideBottomInset,
-      }),
-    [
+
+  return useMemo(() => {
+    const restingContainerStyle = getRestingContainerStyle({
+      barCollapsed: restingBarCollapsed,
+      contentWidth,
       expanded,
       fullScreenHeight,
       isWideLayout,
       screenWidth,
-      restingBarCollapsed,
       tabBarHeight,
       wideBottomInset,
-    ],
-  )
-  const { collapsed: barCollapsedTop, expanded: barExpandedTop } = useMemo(
-    () =>
-      getMiniRestingTops({
-        fullScreenHeight,
-        isWideLayout,
-        screenWidth,
-        tabBarHeight,
-        wideBottomInset,
-      }),
-    [fullScreenHeight, isWideLayout, screenWidth, tabBarHeight, wideBottomInset],
-  )
-  const miniBarRestingStyle = useMemo(
-    () =>
-      getMiniBarStyle({
-        barProgress: restingBarCollapsed ? 1 : 0,
-        fullScreenHeight,
-        isWideLayout,
-        screenWidth,
-        tabBarHeight,
-        wideBottomInset,
-      }),
-    [
+    })
+    const { collapsed: barCollapsedTop, expanded: barExpandedTop } = getMiniRestingTops({
+      contentWidth,
       fullScreenHeight,
       isWideLayout,
       screenWidth,
-      restingBarCollapsed,
       tabBarHeight,
       wideBottomInset,
-    ],
-  )
+    })
+    const miniBarRestingStyle = getMiniBarStyle({
+      barProgress: restingBarCollapsed ? 1 : 0,
+      contentWidth,
+      fullScreenHeight,
+      isWideLayout,
+      screenWidth,
+      tabBarHeight,
+      wideBottomInset,
+    })
 
-  return { barCollapsedTop, barExpandedTop, miniBarRestingStyle, restingContainerStyle }
+    return { barCollapsedTop, barExpandedTop, miniBarRestingStyle, restingContainerStyle }
+  }, [
+    contentWidth,
+    expanded,
+    fullScreenHeight,
+    isWideLayout,
+    restingBarCollapsed,
+    screenWidth,
+    tabBarHeight,
+    wideBottomInset,
+  ])
 }

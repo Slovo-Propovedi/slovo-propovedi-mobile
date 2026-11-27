@@ -3,6 +3,8 @@ import { clampProgress } from './getIslandMath'
 import { getSearchButtonGeometry } from './getSearchButtonGeometry'
 
 interface SearchSeparationInput {
+  /** Pre-paint chrome content width the slots are sized from (the layout base). */
+  contentWidth: SharedValue<number>
   /** Expanded width of the search slot inside the compact island. */
   expandedSearchWidth: SharedValue<number>
   /** Expanded width of one routed tab slot. */
@@ -27,6 +29,7 @@ interface SearchSeparationInput {
 // Separation IS the tab island's shape progress, so both motions stay frame
 // synced without a second clock.
 export const useSearchSeparation = ({
+  contentWidth,
   expandedSearchWidth,
   expandedTabWidth,
   oneLineProgress,
@@ -37,6 +40,7 @@ export const useSearchSeparation = ({
 }: SearchSeparationInput) => {
   const buttonStyle = useAnimatedStyle(() =>
     getSearchButtonGeometry({
+      contentWidth: contentWidth.value,
       expandedSearchWidth: expandedSearchWidth.value,
       expandedTabWidth: expandedTabWidth.value,
       oneLineProgress: oneLineProgress.value,

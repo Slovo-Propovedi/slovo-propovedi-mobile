@@ -1,6 +1,7 @@
 import {
   BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
+  CONTENT_COLUMN_WIDTH,
   type useChromeLayoutShift,
   type useKeyboardLiftStyle,
   WIDE_BAR_ROW_HEIGHT,
@@ -24,12 +25,18 @@ export const getFloatingContainerStyle = (
 // Row of islands. The compact row carries the Android elevation for the island
 // AND the separate search circle; the wide row stays flat so the raised shadow
 // follows the floating pill (floatingIslandElevated), not a full-width band.
+// The row is exactly the layout base: on a rotated phone it is the portrait
+// canvas, centred by the full-width container's native flex — the rotation
+// moves it without any JS-derived width change (wide always has a base >= the
+// content column, so the cap below is the column there).
 export const getIslandsRowStyle = (
   isWide: boolean,
   bottomPadding: number,
+  contentWidth: number,
   insets: ReturnType<typeof useRowInsetStyle>,
 ) => [
   styles.islandsRow,
+  { maxWidth: Math.min(contentWidth, CONTENT_COLUMN_WIDTH) },
   // Wide hugs the island: the row only centers the narrow pill instead of
   // spreading content across the column.
   isWide && { justifyContent: 'center' as const },

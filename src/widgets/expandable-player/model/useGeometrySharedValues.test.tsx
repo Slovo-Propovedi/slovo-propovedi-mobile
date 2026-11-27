@@ -4,7 +4,7 @@ import { Text } from 'react-native'
 import * as Reanimated from 'react-native-reanimated'
 import { type SharedValue, useSharedValue } from 'react-native-reanimated'
 import { usePersistentSharedValue } from 'shared/mocks/usePersistentSharedValue'
-import { BAR_SIDE_INSET_EXPANDED, CONTENT_COLUMN_WIDTH } from 'shared/ui/layout'
+import { BAR_SIDE_INSET_EXPANDED } from 'shared/ui/layout'
 import { getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { useGeometrySharedValues } from './useGeometrySharedValues'
 
@@ -16,6 +16,7 @@ interface Dimensions {
 }
 
 interface Observed {
+  contentWidth: number
   fullScreenHeight: number
   pillWidth: number
   screenWidth: number
@@ -23,11 +24,13 @@ interface Observed {
 }
 
 const Probe = ({
+  contentWidthShared,
   fullScreenHeightShared,
   onObserved,
   screenWidthShared,
   tick,
 }: {
+  contentWidthShared: SharedValue<number>
   fullScreenHeightShared: SharedValue<number>
   onObserved: (observed: Observed) => void
   screenWidthShared: SharedValue<number>
@@ -37,9 +40,11 @@ const Probe = ({
   // whatever it observes here was already visible during the layout phase.
   useEffect(() => {
     onObserved({
+      contentWidth: contentWidthShared.value,
       fullScreenHeight: fullScreenHeightShared.value,
       pillWidth: getMiniBarStyle({
         barProgress: 0,
+        contentWidth: contentWidthShared.value,
         fullScreenHeight: fullScreenHeightShared.value,
         screenWidth: screenWidthShared.value,
         tabBarHeight: TAB_BAR_HEIGHT,
@@ -61,17 +66,23 @@ const Harness = ({
   onObserved: (observed: Observed) => void
 }) => {
   const geometryReapplyTick = useSharedValue(0)
-  const { fullScreenHeightShared, screenWidthShared } = useGeometrySharedValues({
-    fullScreenHeight: dimensions.fullScreenHeight,
-    geometryReapplyTick,
-    screenWidth: dimensions.screenWidth,
-  })
+  // The chrome content width is the window's short side (the layout base).
+  const contentWidth = Math.min(dimensions.screenWidth, dimensions.fullScreenHeight)
+  const { contentWidthShared, fullScreenHeightShared, screenWidthShared } = useGeometrySharedValues(
+    {
+      contentWidth,
+      fullScreenHeight: dimensions.fullScreenHeight,
+      geometryReapplyTick,
+      screenWidth: dimensions.screenWidth,
+    },
+  )
 
   return (
     <Probe
       onObserved={onObserved}
       tick={geometryReapplyTick}
       screenWidthShared={screenWidthShared}
+      contentWidthShared={contentWidthShared}
       fullScreenHeightShared={fullScreenHeightShared}
     />
   )
@@ -106,16 +117,31 @@ describe('useGeometrySharedValues', () => {
 
   test('publishes rotated dimensions to worklets before the passive phase', async () => {
     const { observed } = await rotate(
-      { fullScreenHeight: 800, screenWidth: 400 },
+      { fullScreenHeight: 390, screenWidth: 844 },
+      { fullScreenHeight: 844, screenWidth: 390 },
+    )
+    const latest = observed[observed.length - 1]
+
+    // The live window moves (centring + fullscreen sheet) while the chrome
+    // content width stays the short side, so the pill is not resized.
+    expect(latest.screenWidth).toBe(390)
+    expect(latest.fullScreenHeight).toBe(844)
+    expect(latest.contentWidth).toBe(390)
+    // The geometry helpers size the pill from the frozen base, so the same
+    // update already derives the portrait pill width instead of chasing the
+    // native relayout with a landscape one.
+    expect(latest.pillWidth).toBe(390 - BAR_SIDE_INSET_EXPANDED * 2)
+  })
+
+  test('keeps the pill content width through a phone rotation', async () => {
+    const { observed } = await rotate(
+      { fullScreenHeight: 844, screenWidth: 390 },
       { fullScreenHeight: 390, screenWidth: 844 },
     )
     const latest = observed[observed.length - 1]
 
-    expect(latest.screenWidth).toBe(844)
-    expect(latest.fullScreenHeight).toBe(390)
-    // The geometry helpers read those channels, so the same update already
-    // derives the rotated pill width instead of the previous one.
-    expect(latest.pillWidth).toBe(CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2)
+    expect(latest.contentWidth).toBe(390)
+    expect(latest.pillWidth).toBe(390 - BAR_SIDE_INSET_EXPANDED * 2)
   })
 
   test('bumps the heal tick in the same pre-paint update', async () => {

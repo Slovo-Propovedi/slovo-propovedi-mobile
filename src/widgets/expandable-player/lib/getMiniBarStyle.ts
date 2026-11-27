@@ -2,6 +2,8 @@ import { getMiniPlayerGeometry } from './getMiniPlayerGeometry'
 
 interface MiniBarStyleInput {
   barProgress: number
+  /** Chrome content width the pill is sized from; defaults to `screenWidth`. */
+  contentWidth?: number
   fullScreenHeight: number
   isWideLayout?: boolean
   screenWidth: number
