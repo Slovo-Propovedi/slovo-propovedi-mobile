@@ -32,8 +32,8 @@ export interface SlotCapsuleMotion {
 
 // Travel timings: one slot is a 210ms glide, every further slot adds 70ms up to
 // a 280ms ceiling. Arrival is an 80ms overshoot followed by an 80ms return.
-export const CAPSULE_TRAVEL_BASE_MS = 140
-export const CAPSULE_TRAVEL_PER_SLOT_MS = 70
+const CAPSULE_TRAVEL_BASE_MS = 140
+const CAPSULE_TRAVEL_PER_SLOT_MS = 70
 export const CAPSULE_TRAVEL_MAX_MS = 280
 export const CAPSULE_OVERSHOOT_MS = 80
 export const CAPSULE_RETURN_MS = 80

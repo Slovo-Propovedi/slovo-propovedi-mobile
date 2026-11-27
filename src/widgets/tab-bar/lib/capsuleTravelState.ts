@@ -1,7 +1,7 @@
 import { makeMutable, type SharedValue } from 'react-native-reanimated'
 import { CAPSULE_OVERSHOOT_RATIO, getTravelDuration } from './capsuleTravel'
 
-export const CAPSULE_PHASE_IDLE = 0
+const CAPSULE_PHASE_IDLE = 0
 export const CAPSULE_PHASE_TRAVEL = 1
 export const CAPSULE_PHASE_OVERSHOOT = 2
 export const CAPSULE_PHASE_RETURN = 3
