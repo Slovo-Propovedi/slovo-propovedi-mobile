@@ -8,9 +8,9 @@ declare global {
 // once at module init; the shared mirror lets the dev console flip it after load
 // and reach the UI-thread worklets (synced on every JS-side travel entry point).
 const debugAtInit = globalThis.__CAPSULE_DEBUG__ === true
-export const capsuleDebugFlag = makeMutable(debugAtInit)
+const capsuleDebugFlag = makeMutable(debugAtInit)
 
-export const isCapsuleDebug = (): boolean => debugAtInit || globalThis.__CAPSULE_DEBUG__ === true
+const isCapsuleDebug = (): boolean => debugAtInit || globalThis.__CAPSULE_DEBUG__ === true
 
 export const syncCapsuleDebugFlag = (): void => {
   capsuleDebugFlag.value = isCapsuleDebug()
