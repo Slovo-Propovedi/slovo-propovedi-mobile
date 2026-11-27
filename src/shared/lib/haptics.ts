@@ -75,6 +75,27 @@ export const hapticLight = (): void => {
   void impactAsync(ImpactFeedbackStyle.Light).catch(() => {})
 }
 
+// Landing cue for the liquid tab highlight: one medium impact when the capsule
+// settles on its destination tab. Deliberately NOT throttled — it arrives a full
+// travel (150–220ms) after the press pulse and is a distinct event, not a repeat
+// tap. Native only: the web Vibration API has no meaningful analogue for a
+// gliding highlight, so the trip stays silent there even where it exists.
+// Android keeps the system haptic engine (Confirm — the strong confirmation cue)
+// so the response follows the device's settings like hapticLight. Cosmetic like
+// its siblings: the rejected promise is swallowed so it can never crash the app.
+export const hapticLanding = (): void => {
+  if (!ctx.get(hapticsEnabledAtom)) return
+
+  if (Platform.OS === 'web') return
+
+  if (Platform.OS === 'android') {
+    void performAndroidHapticsAsync(AndroidHaptics.Confirm).catch(() => {})
+    return
+  }
+
+  void impactAsync(ImpactFeedbackStyle.Medium).catch(() => {})
+}
+
 // Perceptible tick for continuous value scrubbing (seek slider): iOS uses
 // UISelectionFeedbackGenerator (selectionAsync) — a light selection tick;
 // Android uses Context_Click via performAndroidHapticsAsync, because the

@@ -33,7 +33,9 @@ export const stepCapsuleFrame = (state: CapsuleFrameState, frameInfo: FrameInfo)
 
   if (state.phase.value === CAPSULE_PHASE_TRAVEL) {
     const progress = Math.min(1, state.elapsed.value / state.duration.value)
-    const eased = easeInOutSine(progress)
+    // Fast-start ease: the highlight leaves the pressed tab immediately and
+    // decelerates into the destination (easeInOutSine felt like a delay).
+    const eased = easeOutQuad(progress)
     state.capsuleCenter.value =
       state.startCenter.value + (state.targetCenter.value - state.startCenter.value) * eased
     state.capsuleWidth.value =

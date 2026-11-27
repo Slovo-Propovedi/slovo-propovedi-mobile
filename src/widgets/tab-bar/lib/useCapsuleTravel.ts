@@ -1,14 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrameCallback } from 'react-native-reanimated'
 import { capsuleTravelDriver } from '../model/capsuleTravelDriver'
+import { createMotionFor } from './capsuleMotionFor'
 import { type CapsuleTravelMotion, getSlotRects, type SlotCapsuleMotion } from './capsuleTravel'
 import { ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
+import { useCapsuleTravelRequest } from './useCapsuleTravelRequest'
 
 interface CapsuleTravel {
   /** Values the traveling capsule element reads. */
   motion: CapsuleTravelMotion
   /** Per-slot geometry, or undefined for an index outside the row. */
   motionFor: (slotIndex: number) => SlotCapsuleMotion | undefined
+  /**
+   * Starts the travel on the press tick, before the route re-render. The route
+   * effect later reconciles with the same destination and leaves it running.
+   */
+  requestTravel: (routeKey: string) => void
   /** Resting geometry committed after the animated style (Issue #63 remount). */
   resting: { left: number; width: number }
 }
@@ -49,7 +56,9 @@ export const useCapsuleTravel = ({
 
     return getSlotRects(widths, ISLAND_CONTENT_PADDING_HORIZONTAL)
   }, [tabCount, tabWidth, searchWidth, searchSlotIndex])
-  const previousIndex = useRef(activeIndex)
+  // The slot the capsule visually belongs to: updated by the route effect once
+  // the destination render lands.
+  const currentSlotIndex = useRef(activeIndex)
   // The first render must already paint the capsule on the active slot: parking
   // it in an effect would flash it at the row start for a frame.
   const [, setTravelCount] = useState(() => {
@@ -60,6 +69,10 @@ export const useCapsuleTravel = ({
     return 0
   })
   const frameCallback = useFrameCallback(capsuleTravelDriver.frameStep, false)
+  const requestTravel = useCapsuleTravelRequest(
+    { isExpanded, slotRects, tabRouteKeys },
+    currentSlotIndex,
+  )
 
   useEffect(() => {
     const detachSettled = capsuleTravelDriver.registerSettledListener(() =>
@@ -74,8 +87,8 @@ export const useCapsuleTravel = ({
   }, [frameCallback])
 
   useEffect(() => {
-    const previous = previousIndex.current
-    previousIndex.current = activeIndex
+    const previous = currentSlotIndex.current
+    currentSlotIndex.current = activeIndex
     const rect = slotRects[activeIndex]
 
     if (!rect) return
@@ -101,20 +114,8 @@ export const useCapsuleTravel = ({
       slotRects,
       travelActivity: capsuleTravelDriver.travelActivity,
     },
-    motionFor: slotIndex => {
-      const rect = slotRects[slotIndex]
-
-      if (!rect) return undefined
-
-      return {
-        arrivalPulse: capsuleTravelDriver.arrivalPulse,
-        capsuleCenter: capsuleTravelDriver.capsuleCenter,
-        isTravelTarget: slotIndex === activeIndex,
-        slotCenter: rect.center,
-        slotWidth: rect.slotWidth,
-        travelActivity: capsuleTravelDriver.travelActivity,
-      }
-    },
+    motionFor: createMotionFor(slotRects, activeIndex),
+    requestTravel,
     resting: {
       left: activeRect ? activeRect.center - activeRect.capsuleWidth / 2 : 0,
       width: activeRect?.capsuleWidth ?? 0,

@@ -18,12 +18,19 @@ interface UseTabPressParams {
   /** Whether the filtered `/search` route currently owns the tabs navigator. */
   isSearchFocused: boolean
   navigateToTab: NavigateToTab
+  /** Starts the capsule's glide on the press tick, before the route re-render. */
+  onTabTravel?: (routeKey: string) => void
 }
 
 export const UNAVAILABLE_TAB_TITLE = 'Скоро будет доступно'
 export const UNAVAILABLE_TAB_MESSAGE = 'Этот раздел будет реализован в будущих обновлениях'
 
-export const useTabPress = ({ emitter, isSearchFocused, navigateToTab }: UseTabPressParams) => {
+export const useTabPress = ({
+  emitter,
+  isSearchFocused,
+  navigateToTab,
+  onTabTravel,
+}: UseTabPressParams) => {
   // Таб «Читать» открывается по фича-флагу. Пока флаги не загружены, доступ
   // закрыт (useFeatureFlag → false), то есть поведение сохраняется прежним.
   const isReadEnabled = useFeatureFlag('read')
@@ -53,7 +60,10 @@ export const useTabPress = ({ emitter, isSearchFocused, navigateToTab }: UseTabP
         type: 'tabPress',
       })
 
-      if (!searchEvent.defaultPrevented) navigateToTab(route.key)
+      if (!searchEvent.defaultPrevented) {
+        onTabTravel?.(route.key)
+        navigateToTab(route.key)
+      }
 
       return
     }
@@ -71,7 +81,10 @@ export const useTabPress = ({ emitter, isSearchFocused, navigateToTab }: UseTabP
       type: 'tabPress',
     })
 
-    if (!isActive && !event.defaultPrevented) navigateToTab(route.key)
+    if (!isActive && !event.defaultPrevented) {
+      onTabTravel?.(route.key)
+      navigateToTab(route.key)
+    }
   }
 
   return { handleTabPress, isTabAvailable }

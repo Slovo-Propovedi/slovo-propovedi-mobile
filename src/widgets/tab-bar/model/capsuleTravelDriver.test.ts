@@ -1,8 +1,12 @@
 import { act } from '@testing-library/react-native'
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics'
+import { Platform } from 'react-native'
 import { advanceMorphFrames, countActiveMorphFrames } from 'shared/mocks/morphFrames'
 import { renderHookWithProviders } from 'shared/mocks/renderWithProviders'
 import { useCapsuleTravel } from '../lib/useCapsuleTravel'
 import { capsuleTravelDriver } from './capsuleTravelDriver'
+
+const mockedImpactAsync = impactAsync as jest.MockedFunction<typeof impactAsync>
 
 // Wide: [Слушать][Читать][Ещё][Поиск] — slot centres 54, 142, 230, 298.
 const WIDE_INPUT = {
@@ -36,6 +40,7 @@ const renderTravel = async (input: typeof WIDE_INPUT) =>
 describe('capsuleTravelDriver', () => {
   beforeEach(() => {
     capsuleTravelDriver.reset()
+    jest.clearAllMocks()
   })
 
   test('seeds the capsule on the active slot without animating', async () => {
@@ -60,19 +65,20 @@ describe('capsuleTravelDriver', () => {
     await advance()
     const first = capsuleTravelDriver.capsuleCenter.value
 
+    // Fast-start ease: the first quarter of the 200ms travel already covers
+    // ~44% of the distance, so the tap response reads as instant.
+    expect(first - 54).toBeCloseTo(77, 5)
+
     await advance()
     const middle = capsuleTravelDriver.capsuleCenter.value
 
-    // Half of the 200ms two-slot travel lands exactly on «Читать»'s centre.
-    expect(first).toBeGreaterThan(54)
-    expect(first).toBeLessThan(142)
-    expect(middle).toBeCloseTo(142, 5)
+    // Half the time puts the capsule three quarters of the way.
+    expect(middle).toBeCloseTo(186, 5)
 
     await advance()
     const last = capsuleTravelDriver.capsuleCenter.value
 
-    expect(last).toBeGreaterThan(142)
-    expect(last).toBeLessThan(230)
+    expect(last).toBeCloseTo(219, 5)
   })
 
   test('overshoots past the target and springs back on arrival', async () => {
@@ -134,8 +140,9 @@ describe('capsuleTravelDriver', () => {
     await advance()
     await advance()
 
-    // Same 200ms choreography puts the capsule on «Читать»'s compact centre.
-    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(148.75, 5)
+    // Fast-start ease: half the 200ms choreography already covers three
+    // quarters of the compact pitch to «Читать».
+    expect(capsuleTravelDriver.capsuleCenter.value).toBeCloseTo(195, 5)
   })
 
   test('lands the search slot as a valid destination', async () => {
@@ -148,5 +155,73 @@ describe('capsuleTravelDriver', () => {
 
     expect(capsuleTravelDriver.capsuleCenter.value).toBe(298)
     expect(capsuleTravelDriver.capsuleWidth.value).toBe(60)
+  })
+
+  test('starts traveling synchronously from the press path, before effects', async () => {
+    const { result } = await renderTravel({ ...WIDE_INPUT, activeRouteKey: 'more' })
+
+    expect(capsuleTravelDriver.capsuleCenter.value).toBe(230)
+
+    // A tab press calls requestTravel in the same tick: the frame state flips
+    // immediately, without waiting for the route re-render effect.
+    result.current.requestTravel('listen')
+
+    expect(capsuleTravelDriver.travelActivity.value).toBe(1)
+    expect(capsuleTravelDriver.capsuleCenter.value).toBe(230)
+  })
+
+  test('does not restart a press-started travel when the route effect catches up', async () => {
+    const { rerender, result } = await renderTravel(WIDE_INPUT)
+
+    result.current.requestTravel('more')
+    await advance(2)
+    const halfway = capsuleTravelDriver.capsuleCenter.value
+
+    expect(halfway).toBeCloseTo(186, 5)
+
+    await act(async () => {
+      rerender({ ...WIDE_INPUT, activeRouteKey: 'more' })
+    })
+    // The effect reconciles without a second start: the remaining 100ms finishes
+    // the same trip instead of replaying it from the halfway point.
+    await advance(2)
+
+    expect(capsuleTravelDriver.capsuleCenter.value).toBe(230)
+  })
+
+  test('fires one medium impact on landing, never while passing slots', async () => {
+    const { rerender } = await renderTravel(WIDE_INPUT)
+
+    await act(async () => {
+      rerender({ ...WIDE_INPUT, activeRouteKey: 'listen', isSearchFocused: true })
+    })
+    // Five 50ms frames finish the clamped 220ms travel, the next two cover the
+    // overshoot — crossing «Читать» and «Ещё» must stay silent.
+    await advance(7)
+    expect(mockedImpactAsync).not.toHaveBeenCalled()
+
+    // The spring-back lands on the target: exactly one medium impact.
+    await advance(2)
+    expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
+    expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Medium)
+
+    await advance(3)
+    expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
+  })
+
+  test('stays silent on web where expo-haptics has no native implementation', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      const { rerender } = await renderTravel(WIDE_INPUT)
+
+      await act(async () => {
+        rerender({ ...WIDE_INPUT, activeRouteKey: 'listen', isSearchFocused: true })
+      })
+      await advance(10)
+
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+    }
   })
 })

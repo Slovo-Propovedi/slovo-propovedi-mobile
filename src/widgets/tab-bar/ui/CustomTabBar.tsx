@@ -30,11 +30,6 @@ export const CustomTabBar = ({
   const { isLight } = useTheme()
   const focusedRoute = state.routes[state.index]
   const isSearchFocused = focusedRoute?.name === SEARCH_ROUTE_NAME
-  const { handleTabPress, isTabAvailable } = useTabPress({
-    emitter,
-    isSearchFocused,
-    navigateToTab,
-  })
   const { width: windowWidth } = useWindowDimensions()
   const isWide = useIsWideLayout()
   const { onLayout, rowWidth } = useTabBarMeasurement()
@@ -60,7 +55,7 @@ export const CustomTabBar = ({
     rowWidth,
     windowWidth,
   })
-  const { motion, motionFor, resting } = useCapsuleTravel({
+  const { motion, motionFor, requestTravel, resting } = useCapsuleTravel({
     activeRouteKey,
     hideSearch,
     isExpanded: !isCollapsed,
@@ -68,6 +63,14 @@ export const CustomTabBar = ({
     searchWidth: expandedSearchWidth,
     tabRouteKeys: visibleRoutes.map(route => route.key),
     tabWidth: expandedTabWidth,
+  })
+  // The press path starts the capsule on the tap tick; the travel hook's route
+  // effect then reconciles with the same destination (no double start).
+  const { handleTabPress, isTabAvailable } = useTabPress({
+    emitter,
+    isSearchFocused,
+    navigateToTab,
+    onTabTravel: requestTravel,
   })
   const bottomPadding = useBarBottomPadding()
   const { keyboardLiftStyle, shiftStyle } = useFloatingShiftStyles(insets.top)

@@ -167,4 +167,38 @@ describe('useTabPress', () => {
 
     expect(navigateToTab).not.toHaveBeenCalled()
   })
+
+  test('starts the highlight travel before navigating to the pressed tab', async () => {
+    const emitter = createEmitter()
+    const navigateToTab = createNavigateToTab()
+    const onTabTravel = jest.fn()
+    const { result } = await renderHookWithProviders(() =>
+      useTabPress({ emitter, isSearchFocused: false, navigateToTab, onTabTravel }),
+    )
+
+    result.current.handleTabPress({ key: 'more', name: 'more' }, false)
+
+    expect(onTabTravel).toHaveBeenCalledWith('more')
+    expect(navigateToTab).toHaveBeenCalledWith('more')
+    expect(onTabTravel.mock.invocationCallOrder[0]).toBeLessThan(
+      (navigateToTab as jest.Mock).mock.invocationCallOrder[0],
+    )
+  })
+
+  test('does not start a travel for an unavailable or prevented press', async () => {
+    const emitter = { emit: jest.fn(() => ({ defaultPrevented: true })) }
+    const onTabTravel = jest.fn()
+    const { result } = await renderHookWithProviders(() =>
+      useTabPress({
+        emitter: emitter as never,
+        isSearchFocused: false,
+        navigateToTab: createNavigateToTab(),
+        onTabTravel,
+      }),
+    )
+
+    result.current.handleTabPress({ key: 'more', name: 'more' }, false)
+
+    expect(onTabTravel).not.toHaveBeenCalled()
+  })
 })

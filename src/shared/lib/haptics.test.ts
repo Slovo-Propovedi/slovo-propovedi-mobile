@@ -6,7 +6,7 @@ import {
   selectionAsync,
 } from 'expo-haptics'
 import { Platform } from 'react-native'
-import { hapticLight, hapticTick, isWebVibrationSupported } from './haptics'
+import { hapticLanding, hapticLight, hapticTick, isWebVibrationSupported } from './haptics'
 import { ctx } from './reatom-ctx/ctx'
 
 jest.mock('./reatom-ctx/ctx', () => ({
@@ -200,6 +200,70 @@ describe('hapticTick', () => {
 
       expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
       expect(mockedSelectionAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      mockedCtxGet.mockReturnValue(true)
+    }
+  })
+})
+
+describe('hapticLanding', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  test('triggers a medium impact on iOS', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+    try {
+      hapticLanding()
+
+      expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
+      expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Medium)
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('triggers the system Confirm haptic on Android', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android')
+    try {
+      hapticLanding()
+
+      expect(mockedPerformAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Confirm)
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+    }
+  })
+
+  test('is a silent no-op on web even with the Vibration API', () => {
+    const originalNavigator = globalThis.navigator
+    const vibrate = jest.fn()
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { vibrate } })
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web')
+    try {
+      hapticLanding()
+
+      expect(vibrate).not.toHaveBeenCalled()
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
+      expect(mockedPerformAndroidHapticsAsync).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+      Object.defineProperty(globalThis, 'navigator', {
+        configurable: true,
+        value: originalNavigator,
+      })
+    }
+  })
+
+  test('is a no-op when haptics are disabled', () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+    try {
+      mockedCtxGet.mockReturnValue(false)
+      hapticLanding()
+
+      expect(mockedImpactAsync).not.toHaveBeenCalled()
     } finally {
       restorePlatform.restore()
       mockedCtxGet.mockReturnValue(true)

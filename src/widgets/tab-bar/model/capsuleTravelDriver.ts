@@ -1,5 +1,6 @@
 import { type FrameInfo, type SharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
+import { hapticLanding } from 'shared/lib/haptics'
 import { type MorphFrameHost } from 'shared/lib/hooks/atomMorphClock'
 import { stepCapsuleFrame } from '../lib/capsuleTravelFrame'
 import {
@@ -44,6 +45,7 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
   const settle = () => {
     isRunningFlag = false
     syncActiveHosts()
+    hapticLanding()
     for (const listener of settledListeners) listener()
   }
 
@@ -90,6 +92,11 @@ const createCapsuleTravelDriver = (): CapsuleTravelDriver => {
     snapTo,
     travelActivity: state.travelActivity,
     travelTo: (landing, slotDistance) => {
+      // A press starts the travel synchronously; the route-render effect then
+      // reconciles with the same destination. Keep the already-running trip
+      // instead of rewinding it to the current frame.
+      if (isRunningFlag && state.targetCenter.value === landing.center) return
+
       if (slotDistance <= 0 || state.capsuleCenter.value === landing.center) {
         snapTo(landing)
 
