@@ -90,7 +90,9 @@ export const TabButton = ({
       <Animated.View style={[styles.tabItem, itemStyle]}>
         {isActive && <ActiveTabCapsule style={capsuleStyle} />}
         {!isWideTab && (
-          <Animated.View style={iconStyle}>
+          // Wide has no stacked label to make room for, so the icon drops the
+          // compact -8 lift and stays centred in the slim slot.
+          <Animated.View style={isWideLayout ? undefined : iconStyle}>
             <TabIcon color={color} isActive={isActive} routeName={routeName} />
           </Animated.View>
         )}

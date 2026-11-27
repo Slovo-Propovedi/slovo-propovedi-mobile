@@ -854,6 +854,26 @@ describe('<CustomTabBar>', () => {
     expect(within(searchSlot).queryByText('Поиск')).toBeNull()
   })
 
+  test('centers the wide search icon vertically instead of lifting it for a label', async () => {
+    mockWindowWidth = 1024
+    await renderTabBar()
+
+    const searchSlot = findTabSlots()[3]
+    const icon = searchSlot.queryAll(
+      instance => StyleSheet.flatten(instance.props.style)?.fontSize === 28,
+    )[0]
+    const iconContainer = icon?.parent
+
+    if (!iconContainer) throw new Error('icon container not found')
+
+    // No label below it in wide, so the icon must not keep the compact -8 lift
+    // that makes room for the stacked label; the item's centering holds it.
+    expect(StyleSheet.flatten(iconContainer.props.style)?.transform).toBeUndefined()
+    expect(StyleSheet.flatten(iconContainer.parent?.props.style)).toMatchObject({
+      justifyContent: 'center',
+    })
+  })
+
   const CAPSULE_COLOR = 'rgba(241, 96, 49, 0.18)'
 
   // A capsule is only a highlight while it is actually painted: the collapsed
