@@ -63,10 +63,10 @@ export const useExpandAnimation = (
     screenWidth,
   })
   const tabBarHeightShared = useTabBarHeightShared(tabBarHeight)
-  // Mirrors `expanded`, not the pill's real mount flag: the pill is also
-  // unmounted at left rest, while the sheet must stay transparent only there
-  // and solid from the first expand frame (the pill unmounts with the tap).
-  const miniLayerMountedShared = useLayoutEffectSharedValue(expanded ? 1 : 0)
+  // Mirrors `expanded` (1 = expanded, 0 = collapsed), not the pill's real mount
+  // flag: on expand the pill unmounts with the tap, while the sheet must stay
+  // transparent only at collapsed rest and solid from the first expand frame.
+  const expandedShared = useLayoutEffectSharedValue(expanded ? 1 : 0)
   const { settledExpanded, settleOnSnap } = useProgressAnimation(expanded, progress)
   useAppStateSnap(expanded, progress, settleOnSnap)
   // One authority for the wide pill's rest line: the same chrome bottom padding
@@ -84,9 +84,9 @@ export const useExpandAnimation = (
     })
   const { containerStyle, miniBarStyle } = useGeometryAnimatedStyles({
     barProgress,
+    expandedShared,
     fullScreenHeightShared,
     geometryReapplyTick,
-    miniLayerMountedShared,
     progress,
     screenWidthShared,
     tabBarHeightShared,

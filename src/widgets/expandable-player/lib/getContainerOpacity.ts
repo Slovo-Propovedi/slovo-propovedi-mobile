@@ -2,9 +2,9 @@
 // layer is mounted underneath it.
 //
 // Expand: the pill unmounts in the same commit the tap flips the expand state,
-// so nothing is painted under the sheet and it must be binary — invisible only
-// at exact rest, solid from the first animated frame. A tail ramp here left a
-// transparent hole on the tap/flick until progress reached the ramp start.
+// so nothing is painted under the sheet and it must be binary — solid on every
+// frame of the expand, including the tap/flick flip frame at progress 0. A tail
+// ramp here left a transparent hole until progress reached the ramp start.
 //
 // Collapse: the pill mounts underneath and crossfades with the sheet. The sheet
 // keeps its solid `surface` opaque through the content fade-out, then dissolves
@@ -24,15 +24,15 @@ const PILL_FADE_TO = 0.75
 /**
  * Opacity of the fullscreen container sheet at an expand/collapse progress.
  * On expand the mini layer is unmounted: nothing is painted underneath, so the
- * sheet is binary (transparent at exact rest, solid from the first frame). On
- * collapse the pill is mounted and the sheet crossfades with it over its tail.
+ * sheet is solid on every frame, the tap/flick flip frame included. On collapse
+ * the pill is mounted and the sheet crossfades with it over its tail.
  * Worklet-safe: used directly by the container's animated style.
  * @param progress - Expand/collapse progress (0 = mini pill, 1 = fullscreen).
  * @param isMiniLayerMounted - Whether the pill is mounted under the sheet (collapse, not expand).
  */
-export const getContainerOpacity = (progress: number, isMiniLayerMounted = true): number => {
+export const getContainerOpacity = (progress: number, isMiniLayerMounted: boolean): number => {
   'worklet'
-  if (!isMiniLayerMounted) return progress > 0 ? 1 : 0
+  if (!isMiniLayerMounted) return 1
 
   const ramp = (progress - SHEET_FADE_FROM) / (SHEET_OPAQUE_FROM - SHEET_FADE_FROM)
 

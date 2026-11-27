@@ -14,7 +14,7 @@ describe('player sheet opacity while the mini layer is mounted (collapse)', () =
   test('hides the solid container while the player rests collapsed', () => {
     // Regression: a solid `surface` rectangle under the glass pill made the
     // frosted mini player look opaque (its BlurView saw only the solid sheet).
-    expect(getContainerOpacity(0)).toBe(0)
+    expect(getContainerOpacity(0, true)).toBe(0)
     expect(sheet(0, true)).toBe(0)
   })
 
@@ -40,10 +40,11 @@ describe('player sheet opacity while the mini layer is mounted (collapse)', () =
 })
 
 describe('player sheet opacity while the mini layer is unmounted (expand)', () => {
-  test('keeps the sheet transparent at exact rest', () => {
-    // The expanded state at rest is progress 1, so this pair is never shown;
-    // keeping it transparent preserves the glass rule for the collapsed rest.
-    expect(sheet(0, false)).toBe(0)
+  test('keeps the sheet solid on the tap/flick flip frame', () => {
+    // The flip frame still has progress 0 while the pill is already unmounted;
+    // a transparent frame there is the hole the user complained about. The
+    // collapsed REST is the mounted branch, not this one.
+    expect(sheet(0, false)).toBe(1)
   })
 
   test('keeps the sheet fully solid from the first expand frame', () => {
@@ -59,10 +60,6 @@ describe('no frame with both player layers transparent', () => {
       for (let step = 0; step <= STEPS; step++) {
         const progress = progressAt(step)
         const pill = isMiniLayerMounted ? getMiniPlayerOpacity(progress) : 0
-
-        // Exact rest with the mini layer unmounted intentionally paints nothing
-        // (the expanded rest is progress 1); every animated frame must cover.
-        if (progress === 0 && !isMiniLayerMounted) continue
 
         expect(sheet(progress, isMiniLayerMounted) + pill).toBeGreaterThanOrEqual(1)
       }

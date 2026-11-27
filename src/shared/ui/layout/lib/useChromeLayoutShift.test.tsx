@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react-native'
-import { useState } from 'react'
 import * as Reanimated from 'react-native-reanimated'
 import { withTiming } from 'react-native-reanimated'
+import { usePersistentSharedValue } from '../../../mocks/usePersistentSharedValue'
 import { CHROME_LAYOUT_SHIFT_DURATION_MS } from '../bottomBarLayout'
 import { getChromeShiftTranslateY, useChromeLayoutShift } from './useChromeLayoutShift'
 
@@ -18,15 +18,6 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 
 const SHIFT_DISTANCE = 320
 const mockedWithTiming = withTiming as jest.Mock
-
-// The shared reanimated mock rebuilds `useSharedValue` on every render, which
-// hides the real engine's persistence. Persisting per hook instance lets the
-// snap test see an in-flight slide survive across a re-render.
-const usePersistentSharedValue = (initial: number) => {
-  const [holder] = useState(() => ({ value: initial }))
-
-  return holder
-}
 
 const renderChromeShift = () =>
   renderHook(() => useChromeLayoutShift({ distance: SHIFT_DISTANCE, wideAnchorSign: 1 }))

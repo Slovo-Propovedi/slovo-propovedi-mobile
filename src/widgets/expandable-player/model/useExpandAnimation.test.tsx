@@ -440,35 +440,60 @@ describe('useExpandAnimation first committed frame', () => {
 })
 
 describe('useExpandAnimation container visibility', () => {
-  const renderContainerOpacity = async (expanded: boolean) => {
+  const renderContainerOpacity = async (expanded: boolean, progressValue = 0) => {
     const captured: { current: null | ReturnType<typeof useExpandAnimation> } = { current: null }
 
     const Harness = ({
-      onResult,
+      onCapture,
+      revision,
     }: {
-      onResult: (result: ReturnType<typeof useExpandAnimation>) => void
+      onCapture: (result: ReturnType<typeof useExpandAnimation>) => void
+      revision: number
     }) => {
       const result = useExpandAnimation(expanded, TAB_BAR_HEIGHT)
-      onResult(result)
-      return <Text testID='harness'>{String(result.progress.value)}</Text>
+      onCapture(result)
+      return <Text testID='harness'>{String(revision)}</Text>
     }
 
-    await renderWithProviders(
+    const renderHarness = (revision: number) => (
       <Harness
-        onResult={result => {
+        revision={revision}
+        onCapture={result => {
           captured.current = result
         }}
-      />,
+      />
     )
 
+    const { rerender } = await renderWithProviders(renderHarness(0))
     const result = captured.current
     if (!result) throw new Error('useExpandAnimation did not render')
 
-    return (result.containerStyle as unknown as { opacity: number }).opacity
+    // The animated style is evaluated at render time in the reanimated mock, so
+    // a shared-value write only becomes observable on the next render.
+    await act(async () => {
+      result.progress.value = progressValue
+    })
+    await rerender(renderHarness(1))
+
+    const observed = captured.current
+    if (!observed) throw new Error('useExpandAnimation did not re-render')
+
+    return (observed.containerStyle as unknown as { opacity: number }).opacity
   }
 
   test('keeps the collapsed container transparent so the pill glass shows the page', async () => {
     expect(await renderContainerOpacity(false)).toBe(0)
+  })
+
+  // Regression for 24edb98: the expanded channel was wired inverted, so expanding
+  // took the crossfade ramp (a transparent hole on the tap/flick) and collapsing
+  // took the binary rule (undoing 109c1bc).
+  test('keeps the expanding container binary at the first animated frame', async () => {
+    expect(await renderContainerOpacity(true, 0.05)).toBe(1)
+  })
+
+  test('crossfades the collapsing container from the first animated frame', async () => {
+    expect(await renderContainerOpacity(false, 0.05)).toBe(0)
   })
 })
 
