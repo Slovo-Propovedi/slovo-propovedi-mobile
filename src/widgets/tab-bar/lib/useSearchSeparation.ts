@@ -4,14 +4,15 @@ import { getSearchButtonGeometry } from './getSearchButtonGeometry'
 
 interface SearchSeparationInput {
   /** Expanded width of the search slot inside the compact island. */
-  expandedSearchWidth: number
+  expandedSearchWidth: SharedValue<number>
   /** Expanded width of one routed tab slot. */
-  expandedTabWidth: number
+  expandedTabWidth: SharedValue<number>
   /** Height axis of the bar (the button height follows the island height). */
   oneLineProgress: SharedValue<number>
   /** Visible routed tabs before the search slot. */
   routeCount: number
-  screenWidth: number
+  /** Pre-paint window width channel (written before paint on rotation). */
+  screenWidth: SharedValue<number>
   /** Shape axis: 0 = in-island slot, 1 = detached search circle. */
   separation: SharedValue<number>
   tabBarHeight: number
@@ -36,11 +37,11 @@ export const useSearchSeparation = ({
 }: SearchSeparationInput) => {
   const buttonStyle = useAnimatedStyle(() =>
     getSearchButtonGeometry({
-      expandedSearchWidth,
-      expandedTabWidth,
+      expandedSearchWidth: expandedSearchWidth.value,
+      expandedTabWidth: expandedTabWidth.value,
       oneLineProgress: oneLineProgress.value,
       routeCount,
-      screenWidth,
+      screenWidth: screenWidth.value,
       separation: separation.value,
       tabBarHeight,
     }),

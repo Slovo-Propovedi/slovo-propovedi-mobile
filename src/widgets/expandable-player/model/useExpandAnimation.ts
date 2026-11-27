@@ -8,6 +8,7 @@ import { type getMiniBarStyle } from '../lib/getMiniBarStyle'
 import { type getRestingContainerStyle } from '../lib/getRestingContainerStyle'
 import { useAppStateSnap } from './useAppStateSnap'
 import { useGeometryAnimatedStyles } from './useGeometryAnimatedStyles'
+import { useGeometrySharedValues } from './useGeometrySharedValues'
 import { useOpacityStyles } from './useOpacityStyles'
 import { useProgressAnimation } from './useProgressAnimation'
 import { useRestingStyles } from './useRestingStyles'
@@ -23,7 +24,11 @@ interface UseExpandAnimationResult {
   containerStyle: ReturnType<typeof useAnimatedStyle>
   /** Stable reference — forces containerStyle worklet to re-run on the UI thread. */
   forceGeometryReapply: () => void
+  /** Pre-paint full screen height channel read by the geometry worklets. */
+  fullScreenHeightShared: SharedValue<number>
   fullStyle: ReturnType<typeof useAnimatedStyle>
+  /** Alternating ±0.01dp heal tick (Issue #63). */
+  geometryReapplyTick: SharedValue<number>
   miniBarRestingStyle: ReturnType<typeof getMiniBarStyle>
   miniBarStyle: ReturnType<typeof useAnimatedStyle>
   miniStyle: ReturnType<typeof useAnimatedStyle>
@@ -31,6 +36,8 @@ interface UseExpandAnimationResult {
   restingContainerStyle: ReturnType<typeof getRestingContainerStyle>
   screenHeight: number
   screenWidth: number
+  /** Pre-paint window width channel read by the geometry worklets. */
+  screenWidthShared: SharedValue<number>
 }
 
 export const useExpandAnimation = (
@@ -47,6 +54,13 @@ export const useExpandAnimation = (
   // larger than the viewport; absolute player geometry would overshoot and spawn
   // a document-level scrollbar. Clamp to the viewport (native window == screen).
   const fullScreenHeight = Math.min(Dimensions.get('screen').height, screenHeight)
+  // Pre-paint window channels: the animated worklets must not run on a closure
+  // that is re-registered after the commit (one stale frame after a rotation).
+  const { fullScreenHeightShared, screenWidthShared } = useGeometrySharedValues({
+    fullScreenHeight,
+    geometryReapplyTick,
+    screenWidth,
+  })
   const tabBarHeightShared = useTabBarHeightShared(tabBarHeight)
   const { settledExpanded, settleOnSnap } = useProgressAnimation(expanded, progress)
   useAppStateSnap(expanded, progress, settleOnSnap)
@@ -65,10 +79,10 @@ export const useExpandAnimation = (
     })
   const { containerStyle, miniBarStyle } = useGeometryAnimatedStyles({
     barProgress,
-    fullScreenHeight,
+    fullScreenHeightShared,
     geometryReapplyTick,
     progress,
-    screenWidth,
+    screenWidthShared,
     tabBarHeightShared,
     wideBottomInset,
   })
@@ -93,7 +107,9 @@ export const useExpandAnimation = (
     barExpandedTop,
     containerStyle,
     forceGeometryReapply,
+    fullScreenHeightShared,
     fullStyle,
+    geometryReapplyTick,
     miniBarRestingStyle,
     miniBarStyle,
     miniStyle,
@@ -101,5 +117,6 @@ export const useExpandAnimation = (
     restingContainerStyle,
     screenHeight,
     screenWidth,
+    screenWidthShared,
   }
 }

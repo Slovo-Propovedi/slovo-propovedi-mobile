@@ -3,6 +3,7 @@ import { useWindowDimensions, View } from 'react-native'
 import Animated, { type SharedValue } from 'react-native-reanimated'
 import { OnboardingTarget } from 'features/onboarding'
 import { useOpenSearch } from 'features/sermon-search'
+import { useLayoutEffectSharedValue } from 'shared/lib/hooks/useLayoutEffectSharedValue'
 import { GlassSurface } from 'shared/ui'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { RADIUSES, useTheme } from 'shared/ui/theme'
@@ -52,15 +53,20 @@ export const TabBarSearchButton = ({
 }) => {
   const { expandedSearchWidth, expandedTabWidth, isCollapsed, oneLineProgress, progress } = morph
   const { width: screenWidth } = useWindowDimensions()
+  // The button's rect is derived from the window at render; the animated style
+  // reads pre-paint channels so a rotation never animates the previous width.
+  const expandedSearchWidthShared = useLayoutEffectSharedValue(expandedSearchWidth)
+  const expandedTabWidthShared = useLayoutEffectSharedValue(expandedTabWidth)
+  const screenWidthShared = useLayoutEffectSharedValue(screenWidth)
   const { isLight } = useTheme()
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const openSearch = useOpenSearch()
   const { buttonStyle, capsuleStyle, glassStyle } = useSearchSeparation({
-    expandedSearchWidth,
-    expandedTabWidth,
+    expandedSearchWidth: expandedSearchWidthShared,
+    expandedTabWidth: expandedTabWidthShared,
     oneLineProgress,
     routeCount,
-    screenWidth,
+    screenWidth: screenWidthShared,
     separation: progress,
     tabBarHeight,
   })

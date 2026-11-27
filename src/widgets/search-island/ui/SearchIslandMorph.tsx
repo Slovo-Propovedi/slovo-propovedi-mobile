@@ -5,6 +5,7 @@ import { ActiveTabCapsule } from 'widgets/tab-bar/@x/activeCapsule'
 import { oneLineBarMorphDriver } from 'widgets/tab-bar/@x/morph'
 import { useCloseSearch, useIsSearchFieldVisible, useOpenSearch } from 'features/sermon-search'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
+import { useLayoutEffectSharedValue } from 'shared/lib/hooks/useLayoutEffectSharedValue'
 import { tabBarHeightAtom } from 'shared/ui/layout'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
 import { useSearchFocusMorph } from '../lib/useSearchFocusMorph'
@@ -42,6 +43,9 @@ export const SearchIslandMorph = ({
   isSettledCollapsed?: boolean
 }) => {
   const { width: screenWidth } = useWindowDimensions()
+  // Pre-paint window width: the frame worklet must follow a rotated window in
+  // the same commit instead of waiting for the passive closure re-registration.
+  const screenWidthShared = useLayoutEffectSharedValue(screenWidth)
   const [tabBarHeight] = useAtom(tabBarHeightAtom)
   const isSearchFieldVisible = useIsSearchFieldVisible()
   const openSearch = useOpenSearch()
@@ -65,7 +69,7 @@ export const SearchIslandMorph = ({
       focusProgress: focusProgress.value,
       oneLineProgress: oneLineProgress.value,
       openProgress: openProgress.value,
-      screenWidth,
+      screenWidth: screenWidthShared.value,
       tabBarHeight,
     })
     // Layered on the frame's own drivers: only the tab-bar collapse hides it.

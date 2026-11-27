@@ -43,7 +43,7 @@ jest.mock('react-native/Libraries/Utilities/Dimensions', () => ({
   __esModule: true,
   default: {
     addEventListener: jest.fn(),
-    get: () => ({ height: 800, width: 400 }),
+    get: () => ({ height: mockWindowHeight, width: mockWindowWidth }),
     removeEventListener: jest.fn(),
   },
 }))
@@ -518,7 +518,7 @@ describe('useExpandAnimation geometry heal channel', () => {
 })
 
 describe('useExpandAnimation window rotation', () => {
-  test('paints the rotated window width on the animated layer in the same commit', async () => {
+  test('publishes the rotated window to the animated layer before paint', async () => {
     const renders: Array<ReturnType<typeof useExpandAnimation>> = []
 
     const Harness = () => {
@@ -529,12 +529,14 @@ describe('useExpandAnimation window rotation', () => {
     }
 
     const { rerender } = await renderWithProviders(<Harness />)
-    const pillWidth = (render: ReturnType<typeof useExpandAnimation>) =>
-      (render.miniBarStyle as unknown as { width: number }).width
-    const containerWidth = (render: ReturnType<typeof useExpandAnimation>) =>
-      (render.containerStyle as unknown as { width: number }).width
+    // The committed resting layer is the render-time surface: it already carries
+    // the rotated window in this commit.
+    const restingPillWidth = (render: ReturnType<typeof useExpandAnimation>) =>
+      render.miniBarRestingStyle.width
+    const restingContainerWidth = (render: ReturnType<typeof useExpandAnimation>) =>
+      render.restingContainerStyle.width
 
-    expect(pillWidth(renders[renders.length - 1])).toBe(400 - BAR_SIDE_INSET_EXPANDED * 2)
+    expect(restingPillWidth(renders[renders.length - 1])).toBe(400 - BAR_SIDE_INSET_EXPANDED * 2)
 
     mockWindowWidth = 844
     mockWindowHeight = 390
@@ -542,14 +544,19 @@ describe('useExpandAnimation window rotation', () => {
       rerender(<Harness />)
     })
 
-    // A passive effect used to write the dimension mirrors after the commit, so
-    // the first rotated frame animated at the old window width while the
-    // committed resting layer already held the new one (crooked chrome).
+    // The animated worklets read pre-paint shared values, not a closure that is
+    // re-registered after the commit (that animated the old window for a frame
+    // while the resting layer already held the new one — crooked chrome).
     const rotated = renders[renders.length - 1]
     const rotatedWidth = CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2
 
-    expect(pillWidth(rotated)).toBe(rotatedWidth)
-    expect(containerWidth(rotated)).toBe(rotatedWidth)
+    expect(restingPillWidth(rotated)).toBe(rotatedWidth)
+    expect(restingContainerWidth(rotated)).toBe(rotatedWidth)
+    expect(rotated.screenWidthShared.value).toBe(844)
+    expect(rotated.fullScreenHeightShared.value).toBe(390)
+    // A dimension change also bumps the heal tick in the same layout effect, so
+    // cached no-diff worklets re-derive the rotated numbers.
+    expect(rotated.geometryReapplyTick.value).toBe(1)
   })
 })
 

@@ -3,22 +3,13 @@ import { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { searchFocusMorphDriver } from 'widgets/search-island/@x/morphDrivers'
 import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
-import {
-  BAR_CIRCLE_SIZE_EXPANDED,
-  BAR_SIDE_INSET_EXPANDED,
-  CONTENT_COLUMN_WIDTH,
-} from 'shared/ui/layout'
+import { useLayoutEffectSharedValue } from 'shared/lib/hooks/useLayoutEffectSharedValue'
 import { isTabIslandCollapsedAtom } from '../model/barMorph'
 import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
 import { getIslandContentStyle } from './getBarMorphStyles'
-import {
-  getIslandStyle,
-  getWideIslandWidth,
-  ISLAND_CONTENT_PADDING_HORIZONTAL,
-  WIDE_SEARCH_SLOT_WIDTH,
-  WIDE_TAB_SLOT_WIDTH,
-} from './getIslandStyle'
+import { getIslandStyle, WIDE_SEARCH_SLOT_WIDTH, WIDE_TAB_SLOT_WIDTH } from './getIslandStyle'
+import { getTabIslandMetrics } from './getTabIslandMetrics'
 import { getTabIslandRestingStyles } from './getTabIslandRestingStyles'
 
 interface TabIslandMorphInput {
@@ -56,26 +47,23 @@ export const useTabIslandMorph = ({
   // Wide pins both axes for the slots too: consumers read this zero progress.
   const expandedProgress = useSharedValue(0)
 
-  // The expanded island follows the expanded side inset; the collapsed circle
-  // takes its diameter from the island height and the row's padding. The row is
-  // exactly the window width capped to the content column (`width: '100%'` in a
-  // full-width container with `maxWidth`), so it needs no onLayout round-trip:
-  // deriving it here keeps the island on the same frame as the rotated window.
-  const rowContentWidth = Math.min(windowWidth, CONTENT_COLUMN_WIDTH) - BAR_SIDE_INSET_EXPANDED * 2
-  // Both layouts fold search into the island: wide always, compact while
-  // expanded. Wide pins the island open and hugs its per-kind slot widths
-  // (Apple Music iPad pill); the search button is a slot in both.
-  const expandedSlotCount = routeCount + (hideSearch ? 0 : 1)
-  const expandedIslandWidth = isForceExpanded
-    ? getWideIslandWidth(routeCount, !hideSearch)
-    : Math.max(BAR_CIRCLE_SIZE_EXPANDED, rowContentWidth)
-  const compactSlotWidth =
-    (expandedIslandWidth - ISLAND_CONTENT_PADDING_HORIZONTAL * 2) / Math.max(expandedSlotCount, 1)
+  const { compactSlotWidth, expandedIslandWidth } = getTabIslandMetrics({
+    hideSearch,
+    isForceExpanded,
+    routeCount,
+    windowWidth,
+  })
+
+  // Pre-paint mirror of the render-derived width: worklet closures re-register
+  // after the commit, so a rotation would otherwise animate the island at the
+  // previous window width for one frame while the resting layer already has
+  // the new one.
+  const expandedIslandWidthShared = useLayoutEffectSharedValue(expandedIslandWidth)
 
   const islandStyle = useAnimatedStyle(() =>
     getIslandStyle(
       isForceExpanded ? 0 : progress.value,
-      { expandedWidth: expandedIslandWidth },
+      { expandedWidth: expandedIslandWidthShared.value },
       focusProgress.value,
       isForceExpanded ? 0 : oneLineProgress.value,
       isForceExpanded,

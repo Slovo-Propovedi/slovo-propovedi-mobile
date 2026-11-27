@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { type ViewStyle } from 'react-native'
 import { type SharedValue, useAnimatedStyle } from 'react-native-reanimated'
+import { useLayoutEffectSharedValue } from 'shared/lib/hooks/useLayoutEffectSharedValue'
 import { GlassIsland } from 'shared/ui'
 import { useTheme } from 'shared/ui/theme'
 import { getSearchIslandGeometry } from '../lib/getSearchIslandGeometry'
@@ -52,6 +53,9 @@ export const SearchIslandCloseSlot = ({
   tabBarHeight,
 }: SearchIslandCloseSlotProps) => {
   const { isLight } = useTheme()
+  // Pre-paint window width channel for the geometry worklet (rotation parity
+  // with the rest of the chrome).
+  const screenWidthShared = useLayoutEffectSharedValue(screenWidth)
   const [isPointerGraceActive, setIsPointerGraceActive] = useState(false)
   const hasBeenVisibleRef = useRef(isVisible)
   const graceTimerRef = useRef<null | ReturnType<typeof setTimeout>>(null)
@@ -83,7 +87,7 @@ export const SearchIslandCloseSlot = ({
     const { bottom, closeRight, height } = getSearchIslandGeometry({
       oneLineProgress: oneLineProgress.value,
       openProgress: openProgress.value,
-      screenWidth,
+      screenWidth: screenWidthShared.value,
       tabBarHeight,
     })
 
