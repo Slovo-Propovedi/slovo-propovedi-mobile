@@ -13,9 +13,11 @@ import {
   MINI_CONTENT_SIDE_INSET,
   MINI_EXPANDED_TRANSPORT_RIGHT_INSET,
   MINI_PLAY_HIT_SLOP,
+  MINI_WIDE_ARTWORK_SIZE,
 } from './miniStyles'
 
 const styles = createMiniStyles(LightTheme)
+const wideStyles = createMiniStyles(LightTheme, true)
 
 describe('mini player horizontal alignment', () => {
   test('expanded bar: the transport glyph shares the search circle axis', () => {
@@ -95,5 +97,19 @@ describe('mini player typography', () => {
     const textBlock = 2 * FONT_SIZES.lg * 1.2 + styles.miniPlaylistName.marginTop
 
     expect(textBlock).toBeLessThanOrEqual(PLAYER_SIZES.miniPlayerHeight)
+  })
+})
+
+describe('wide mini player styles', () => {
+  test('the wide pill is taller than the compact one', () => {
+    expect(PLAYER_SIZES.wideMiniPlayerHeight).toBe(60)
+    expect(wideStyles.miniContainer.height).toBe(PLAYER_SIZES.wideMiniPlayerHeight)
+  })
+
+  test('the wide artwork grows with the taller pill so it does not look sparse', () => {
+    expect(MINI_WIDE_ARTWORK_SIZE).toBe(44)
+    expect(wideStyles.miniCover.width).toBe(MINI_WIDE_ARTWORK_SIZE)
+    expect(wideStyles.miniCover.height).toBe(MINI_WIDE_ARTWORK_SIZE)
+    expect(wideStyles.miniCover.width).toBeGreaterThan(MINI_ARTWORK_SIZE)
   })
 })

@@ -2,6 +2,7 @@ import {
   BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
   type useKeyboardLiftStyle,
+  WIDE_BAR_ROW_HEIGHT,
 } from 'shared/ui/layout'
 import { type useRowInsetStyle } from '../lib/useRowInsetStyle'
 import { styles } from './styles'
@@ -30,7 +31,10 @@ export const getIslandsRowStyle = (
   // spreading content across the column.
   isWide && { justifyContent: 'center' as const },
   !isWide && styles.islandsRowElevated,
-  { height: BAR_ROW_MIN_HEIGHT + bottomPadding, paddingBottom: bottomPadding },
+  {
+    height: (isWide ? WIDE_BAR_ROW_HEIGHT : BAR_ROW_MIN_HEIGHT) + bottomPadding,
+    paddingBottom: bottomPadding,
+  },
   // Wide hugs the island: the column insets would pad a full-width row around a
   // narrow pill, so the row only centers it.
   !isWide && insets.insetStyle,

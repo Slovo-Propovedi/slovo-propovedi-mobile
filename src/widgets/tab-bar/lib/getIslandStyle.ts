@@ -43,11 +43,12 @@ export const getIslandStyle = (
   layout: IslandLayout,
   focusProgress = 0,
   oneLineProgress = 0,
+  isWideLayout = false,
 ) => {
   'worklet'
   const clamped = clampProgress(progress)
   const focus = clampProgress(focusProgress)
-  const height = getIslandHeight(clampProgress(oneLineProgress))
+  const height = getIslandHeight(clampProgress(oneLineProgress), isWideLayout)
 
   return {
     height,
@@ -64,10 +65,15 @@ export const getIslandStyle = (
 // shape axis: beside an open search field the island is a 60 circle on a
 // collapsed shape, and a slot sized from the 48 one-line row would centre its
 // item 6dp above the circle centre.
-export const getTabSlotStyle = (progress: number, layout: TabSlotLayout, oneLineProgress = 0) => {
+export const getTabSlotStyle = (
+  progress: number,
+  layout: TabSlotLayout,
+  oneLineProgress = 0,
+  isWideLayout = false,
+) => {
   'worklet'
   const clamped = clampProgress(progress)
-  const islandHeight = getIslandHeight(clampProgress(oneLineProgress))
+  const islandHeight = getIslandHeight(clampProgress(oneLineProgress), isWideLayout)
 
   return {
     // Fades to 0 together with the inactive slots so a zero-width collapsed slot

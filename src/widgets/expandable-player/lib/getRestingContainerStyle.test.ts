@@ -144,6 +144,8 @@ describe('getRestingContainerStyle', () => {
 })
 
 describe('getRestingContainerStyle wide layout', () => {
+  const WIDE_PILL_RADIUS = PLAYER_SIZES.wideMiniPlayerHeight / 2
+
   test.each([{ bottom: BAR_BOTTOM_INSET_MIN }, { bottom: 20 }, { bottom: 25 }])(
     'rests in the centered column on the chrome bottom inset ($bottom)',
     ({ bottom }) => {
@@ -162,13 +164,13 @@ describe('getRestingContainerStyle wide layout', () => {
       })
 
       expect(style).toEqual({
-        borderBottomLeftRadius: PILL_RADIUS,
-        borderBottomRightRadius: PILL_RADIUS,
-        borderTopLeftRadius: PILL_RADIUS,
-        borderTopRightRadius: PILL_RADIUS,
+        borderBottomLeftRadius: WIDE_PILL_RADIUS,
+        borderBottomRightRadius: WIDE_PILL_RADIUS,
+        borderTopLeftRadius: WIDE_PILL_RADIUS,
+        borderTopRightRadius: WIDE_PILL_RADIUS,
         bottom,
         left: columnInset + BAR_SIDE_INSET_EXPANDED,
-        top: 800 - bottom - PLAYER_SIZES.miniPlayerHeight,
+        top: 800 - bottom - PLAYER_SIZES.wideMiniPlayerHeight,
         width: CONTENT_COLUMN_WIDTH - BAR_SIDE_INSET_EXPANDED * 2,
       })
     },

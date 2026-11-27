@@ -3,6 +3,7 @@ import { getIslandStyle } from './getIslandStyle'
 
 interface TabIslandRestingInput {
   expandedWidth: number
+  isWideLayout?: boolean
   settledFocused: boolean
   settledIsCollapsed: boolean
   settledOneLine: boolean
@@ -26,6 +27,7 @@ interface TabIslandRestingInput {
 // both layers agree.
 export const getTabIslandRestingStyles = ({
   expandedWidth,
+  isWideLayout = false,
   settledFocused,
   settledIsCollapsed,
   settledOneLine,
@@ -39,6 +41,7 @@ export const getTabIslandRestingStyles = ({
       { expandedWidth },
       settledFocused ? 1 : 0,
       settledOneLine ? 1 : 0,
+      isWideLayout,
     ),
   }
 }

@@ -76,7 +76,7 @@ export const getMiniPlayerGeometry = ({
   wideBottomInset,
 }: MiniPlayerGeometryInput): MiniPlayerGeometry => {
   'worklet'
-  const height = PLAYER_SIZES.miniPlayerHeight
+  const height = isWideLayout ? PLAYER_SIZES.wideMiniPlayerHeight : PLAYER_SIZES.miniPlayerHeight
   const rowLeft = getColumnSideInset(screenWidth, 0, CONTENT_COLUMN_WIDTH)
   const rowContentWidth = Math.min(screenWidth, CONTENT_COLUMN_WIDTH)
 

@@ -26,6 +26,8 @@ import {
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
   tabBarHeightAtom,
+  WIDE_BAR_ROW_HEIGHT,
+  WIDE_TAB_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
 import { RADIUSES, themeModeAtom } from 'shared/ui/theme'
 import { ISLAND_CONTENT_PADDING_HORIZONTAL, TAB_SLOT_NATURAL_WIDTH } from '../lib/getIslandStyle'
@@ -149,13 +151,18 @@ describe('<CustomTabBar>', () => {
     searchCloseMorphDriver.reset()
   })
 
-  const findIslandsRow = () =>
-    screen.root?.queryAll(
+  const findIslandsRow = () => {
+    const contentHeights = [
+      BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN,
+      WIDE_BAR_ROW_HEIGHT + BAR_BOTTOM_INSET_MIN,
+    ]
+
+    return screen.root?.queryAll(
       instance =>
         typeof instance.props.onLayout === 'function' &&
-        StyleSheet.flatten(instance.props.style)?.height ===
-          BAR_ROW_MIN_HEIGHT + BAR_BOTTOM_INSET_MIN,
+        contentHeights.includes(StyleSheet.flatten(instance.props.style)?.height),
     )[0]
+  }
 
   const findIslandsRowAtHeight = (rowHeight: number) =>
     screen.root?.queryAll(
@@ -685,7 +692,7 @@ describe('<CustomTabBar>', () => {
     await renderTabBar(0, { isCollapsed: true })
 
     expect(StyleSheet.flatten(findTabIsland()?.props.style)).toMatchObject({
-      height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      height: WIDE_TAB_ISLAND_HEIGHT,
     })
     expect(StyleSheet.flatten(findTabIsland()?.props.style)?.width).toBeGreaterThan(
       BAR_CIRCLE_SIZE_EXPANDED,

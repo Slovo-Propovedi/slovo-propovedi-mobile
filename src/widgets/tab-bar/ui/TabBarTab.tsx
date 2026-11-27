@@ -14,6 +14,7 @@ export const TabBarTab = ({
   isHighlighted,
   isSettledCollapsed,
   isSettledOneLine,
+  isWideLayout,
   oneLineProgress,
   onPress,
   progress,
@@ -28,6 +29,8 @@ export const TabBarTab = ({
   isHighlighted: boolean
   isSettledCollapsed: boolean
   isSettledOneLine: boolean
+  /** Wide layout: the island and its slots read the slim constant height. */
+  isWideLayout: boolean
   oneLineProgress: SharedValue<number>
   onPress: () => void
   progress: SharedValue<number>
@@ -37,6 +40,7 @@ export const TabBarTab = ({
   <TabSlot
     progress={progress}
     isActive={isActiveSlot}
+    isWideLayout={isWideLayout}
     isCollapsed={isBarCollapsed}
     expandedWidth={expandedWidth}
     oneLineProgress={oneLineProgress}
@@ -50,6 +54,7 @@ export const TabBarTab = ({
         routeName={routeName}
         isDisabled={isDisabled}
         isActive={isHighlighted}
+        isWideLayout={isWideLayout}
         collapseProgress={progress}
         oneLineProgress={oneLineProgress}
         isBarVisuallyCollapsed={isBarCollapsed}

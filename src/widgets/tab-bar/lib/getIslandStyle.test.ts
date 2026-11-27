@@ -1,4 +1,8 @@
-import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
+import {
+  TAB_BAR_ISLAND_HEIGHT,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  WIDE_TAB_ISLAND_HEIGHT,
+} from 'shared/ui/layout'
 import { getIslandContentPadding, getIslandStyle, getTabSlotStyle } from './getIslandStyle'
 import {
   getCapsuleOpacity,
@@ -118,6 +122,17 @@ describe('getIslandStyle', () => {
       width: 0,
     })
   })
+
+  test('wide: the pinned expanded island rests at the slim wide height', () => {
+    // Wide pins the shape axis to expanded but reads a dedicated 48dp height,
+    // so the top island is slimmer than the compact expanded island (60).
+    expect(WIDE_TAB_ISLAND_HEIGHT).toBe(48)
+    expect(getIslandStyle(0, LAYOUT, 0, 0, true)).toEqual({
+      height: WIDE_TAB_ISLAND_HEIGHT,
+      opacity: 1,
+      width: 584,
+    })
+  })
 })
 
 describe('getTabSlotStyle', () => {
@@ -202,6 +217,12 @@ describe('getTabSlotStyle', () => {
   test('every expanded slot keeps at least the 48dp touch target', () => {
     expect(getTabSlotStyle(0, { ...TAB_LAYOUT, isActive: false }).minWidth).toBe(48)
   })
+
+  test('wide: the slot height matches the slim wide island height', () => {
+    expect(getTabSlotStyle(0, { ...TAB_LAYOUT, isActive: true }, 0, true).height).toBe(
+      WIDE_TAB_ISLAND_HEIGHT,
+    )
+  })
 })
 
 describe('getIslandContentPadding', () => {
@@ -257,6 +278,10 @@ describe('getTabItemHeight', () => {
     )
     expect(getTabItemHeight(-1)).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED - 4 * 2)
     expect(getTabItemHeight(2)).toBe(TAB_BAR_ISLAND_HEIGHT - 4 * 2)
+  })
+
+  test('wide: the item fills the slim wide island between its margins', () => {
+    expect(getTabItemHeight(0, true)).toBe(WIDE_TAB_ISLAND_HEIGHT - 4 * 2)
   })
 })
 

@@ -11,6 +11,7 @@ export const TabSlot = ({
   isCollapsed,
   isSettledCollapsed,
   isSettledOneLine,
+  isWideLayout = false,
   oneLineProgress,
   progress,
 }: PropsWithChildren<{
@@ -21,12 +22,19 @@ export const TabSlot = ({
   isSettledCollapsed: boolean
   /** Settled (lagged) one-line state: owns the circle's diameter (60 or 48). */
   isSettledOneLine: boolean
+  /** Wide layout: the slot height matches the slim constant island height. */
+  isWideLayout?: boolean
   /** One-line axis: the collapsed slot width equals the island's current height. */
   oneLineProgress: SharedValue<number>
   progress: SharedValue<number>
 }>) => {
   const animatedStyle = useAnimatedStyle(() =>
-    getTabSlotStyle(progress.value, { expandedWidth, isActive }, oneLineProgress.value),
+    getTabSlotStyle(
+      progress.value,
+      { expandedWidth, isActive },
+      oneLineProgress.value,
+      isWideLayout,
+    ),
   )
 
   // Non-animated resting geometry committed as the LAST style after the
@@ -40,6 +48,7 @@ export const TabSlot = ({
     isSettledCollapsed ? 1 : 0,
     { expandedWidth, isActive },
     isSettledOneLine ? 1 : 0,
+    isWideLayout,
   )
 
   // Collapsed, an inactive slot is zero-width but its pressable children still

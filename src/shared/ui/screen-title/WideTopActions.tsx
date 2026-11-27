@@ -1,9 +1,9 @@
 import { type ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native'
 import {
-  BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
-  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  WIDE_BAR_ROW_HEIGHT,
+  WIDE_TAB_ISLAND_HEIGHT,
 } from '../layout/bottomBarLayout'
 import { useIsWideLayout } from '../layout/lib/useIsWideLayout'
 import { INDENTS } from '../theme/themed'
@@ -13,7 +13,7 @@ const TEST_ID = 'wide-top-actions'
 // The wide island is bottom-anchored inside the chrome row, so its top edge sits
 // the row's leftover height below the row top. The actions centre on the island's
 // own height, not the taller row, so they land exactly on its middle line.
-const ACTIONS_TOP = BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED
+const ACTIONS_TOP = BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT - WIDE_TAB_ISLAND_HEIGHT
 
 /**
  * Fixed top-right actions slot for the wide layout. It mirrors the floating top
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: INDENTS.low,
-    height: TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+    height: WIDE_TAB_ISLAND_HEIGHT,
     position: 'absolute',
     right: INDENTS.low,
     top: ACTIONS_TOP,

@@ -1,4 +1,8 @@
-import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
+import {
+  TAB_BAR_ISLAND_HEIGHT,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  WIDE_TAB_ISLAND_HEIGHT,
+} from 'shared/ui/layout'
 
 // Morph math shared by the island style helpers. Declared as worklets so the
 // animated styles can call them on the UI thread.
@@ -13,7 +17,12 @@ export const interpolateSize = (expanded: number, collapsed: number, progress: n
   return collapsed + (expanded - collapsed) * (1 - progress)
 }
 
-export const getIslandHeight = (progress: number) => {
+// The wide layout pins the island open but reads its own slim height: the top
+// bar stays thinner than the compact expanded island (60) and the mini pill (60).
+export const getIslandHeight = (progress: number, isWideLayout = false) => {
   'worklet'
+
+  if (isWideLayout) return WIDE_TAB_ISLAND_HEIGHT
+
   return interpolateSize(TAB_BAR_ISLAND_HEIGHT_EXPANDED, TAB_BAR_ISLAND_HEIGHT, progress)
 }

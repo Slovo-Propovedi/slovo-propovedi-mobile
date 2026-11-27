@@ -13,7 +13,7 @@ import { type AudioPlayerData, toAudioPlayerData } from 'entities/sermon'
 import { renderWithProviders } from 'shared/mocks'
 import { mockMeasureInWindow } from 'shared/mocks/measure'
 import { isOnlineAtom } from 'shared/model'
-import { BAR_OUTER_GAP, BAR_ROW_MIN_HEIGHT, BAR_TOP_ISLAND_MARGIN } from 'shared/ui/layout'
+import { BAR_OUTER_GAP, BAR_TOP_ISLAND_MARGIN, WIDE_BAR_ROW_HEIGHT } from 'shared/ui/layout'
 import { PlaylistScreen } from './PlaylistScreen'
 
 /* ── Mocks ─────────────────────────────────────────────────────────── */
@@ -376,7 +376,7 @@ describe('<PlaylistScreen>', () => {
     expect(lists).toHaveLength(1)
     // Test insets are zero, so the top chrome is the island row plus its gaps.
     expect(lists[0].props.contentContainerStyle.paddingTop).toBe(
-      BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+      BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
     )
   })
 

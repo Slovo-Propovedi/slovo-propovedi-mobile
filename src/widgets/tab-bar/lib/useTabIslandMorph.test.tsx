@@ -14,6 +14,7 @@ import {
   setBarCollapsed,
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  WIDE_TAB_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
 import { oneLineBarMorphDriver } from '../model/oneLineBarMorphDriver'
 import { tabIslandMorphDriver } from '../model/tabIslandMorphDriver'
@@ -166,6 +167,8 @@ describe('useTabIslandMorph', () => {
     // paddings: the wide island is a narrow pill, not the full column.
     expect(naturalWidth).toBe(372)
     expect(result.current.restingIslandStyle.width).toBe(naturalWidth)
+    // The wide island is permanently pinned to the slim 48dp height.
+    expect(result.current.restingIslandStyle.height).toBe(WIDE_TAB_ISLAND_HEIGHT)
     expect(naturalWidth).toBeLessThan(rowContentWidth)
     // Every slot (search included) gets the same natural width.
     expect(result.current.expandedTabWidth).toBe(TAB_SLOT_NATURAL_WIDTH)

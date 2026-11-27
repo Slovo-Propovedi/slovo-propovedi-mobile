@@ -1,12 +1,22 @@
-import { TAB_BAR_ISLAND_HEIGHT, TAB_BAR_ISLAND_HEIGHT_EXPANDED } from 'shared/ui/layout'
+import {
+  TAB_BAR_ISLAND_HEIGHT,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  WIDE_TAB_ISLAND_HEIGHT,
+} from 'shared/ui/layout'
 import { ISLAND_CONTENT_PADDING_HORIZONTAL } from './getIslandStyle'
 import { getTabIslandRestingStyles } from './getTabIslandRestingStyles'
 
 const EXPANDED_WIDTH = 584
 
-const getStyles = (settledIsCollapsed: boolean, settledFocused = false, settledOneLine = false) =>
+const getStyles = (
+  settledIsCollapsed: boolean,
+  settledFocused = false,
+  settledOneLine = false,
+  isWideLayout = false,
+) =>
   getTabIslandRestingStyles({
     expandedWidth: EXPANDED_WIDTH,
+    isWideLayout,
     settledFocused,
     settledIsCollapsed,
     settledOneLine,
@@ -65,6 +75,14 @@ describe('getTabIslandRestingStyles', () => {
       height: TAB_BAR_ISLAND_HEIGHT,
       opacity: 0,
       width: 0,
+    })
+  })
+
+  test('wide: the pinned expanded island rests at the slim wide height', () => {
+    expect(getStyles(false, false, false, true).island).toEqual({
+      height: WIDE_TAB_ISLAND_HEIGHT,
+      opacity: 1,
+      width: EXPANDED_WIDTH,
     })
   })
 })

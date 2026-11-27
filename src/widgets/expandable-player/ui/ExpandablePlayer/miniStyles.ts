@@ -14,6 +14,9 @@ import {
 // keeps generous air before the artwork and after the transport.
 export const MINI_CONTENT_SIDE_INSET = INDENTS.medium
 export const MINI_ARTWORK_SIZE = 36
+// The wide pill is taller (60), so its artwork grows with it and keeps the same
+// generous air instead of looking sparse inside the roomier glass.
+export const MINI_WIDE_ARTWORK_SIZE = 44
 // The transport occupies the same visual box as the artwork; hitSlop restores the
 // ≥48dp touch target the icon needs.
 const MINI_PLAY_BOX_SIZE = MINI_ARTWORK_SIZE
@@ -28,8 +31,13 @@ export const MINI_EXPANDED_TRANSPORT_RIGHT_INSET =
 // as one toolbar, wide enough to keep the 36dp visual boxes distinct.
 export const MINI_WIDE_CONTROL_GAP = INDENTS.lowest
 
-export const createMiniStyles = (theme: ThemeColors) =>
-  StyleSheet.create({
+export const createMiniStyles = (theme: ThemeColors, isWideLayout = false) => {
+  const artworkSize = isWideLayout ? MINI_WIDE_ARTWORK_SIZE : MINI_ARTWORK_SIZE
+  const pillHeight = isWideLayout
+    ? PLAYER_SIZES.wideMiniPlayerHeight
+    : PLAYER_SIZES.miniPlayerHeight
+
+  return StyleSheet.create({
     downloadFill: {
       height: '100%',
     },
@@ -48,7 +56,7 @@ export const createMiniStyles = (theme: ThemeColors) =>
       alignItems: 'center',
       borderRadius: RADIUSES.round,
       flexDirection: 'row',
-      height: PLAYER_SIZES.miniPlayerHeight,
+      height: pillHeight,
       overflow: 'hidden',
       paddingLeft: MINI_CONTENT_SIDE_INSET,
       paddingRight: MINI_EXPANDED_TRANSPORT_RIGHT_INSET,
@@ -76,8 +84,8 @@ export const createMiniStyles = (theme: ThemeColors) =>
     },
     miniCover: {
       borderRadius: RADIUSES.low,
-      height: MINI_ARTWORK_SIZE,
-      width: MINI_ARTWORK_SIZE,
+      height: artworkSize,
+      width: artworkSize,
     },
     miniPlayButton: {
       height: MINI_PLAY_BOX_SIZE,
@@ -113,3 +121,4 @@ export const createMiniStyles = (theme: ThemeColors) =>
       fontWeight: '600',
     },
   })
+}

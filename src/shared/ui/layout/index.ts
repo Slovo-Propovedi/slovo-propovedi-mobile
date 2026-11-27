@@ -15,7 +15,9 @@ export {
   getWideChromeWidth,
   TAB_BAR_ISLAND_HEIGHT,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  WIDE_BAR_ROW_HEIGHT,
   WIDE_CONTENT_TOP_GAP,
+  WIDE_TAB_ISLAND_HEIGHT,
 } from './bottomBarLayout'
 export { nextBarCollapsedState } from './lib/barCollapseScroll'
 export {

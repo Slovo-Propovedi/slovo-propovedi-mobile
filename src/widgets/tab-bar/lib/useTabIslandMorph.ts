@@ -54,8 +54,7 @@ export const useTabIslandMorph = ({
     useAtomMorphDriver(oneLineBarMorphDriver)
   const { progress: focusProgress, settled: settledFocused } =
     useAtomMorphDriver(searchFocusMorphDriver)
-  // Wide layout pins both axes to expanded for the slots too: the drivers still
-  // follow the atoms, but every consumer reads this zero-valued progress.
+  // Wide pins both axes for the slots too: consumers read this zero progress.
   const expandedProgress = useSharedValue(0)
 
   // The expanded island follows the expanded side inset; the collapsed circle
@@ -78,6 +77,7 @@ export const useTabIslandMorph = ({
       { expandedWidth: expandedIslandWidth },
       focusProgress.value,
       isForceExpanded ? 0 : oneLineProgress.value,
+      isForceExpanded,
     ),
   )
 
@@ -92,10 +92,10 @@ export const useTabIslandMorph = ({
   // render, so without it the island reverts to its launch shape (Issue #63).
   // The resting layer carries the START geometry mid-morph (`settledCollapsed`
   // and `settledOneLine` lag the atoms until the morph lands) — recomputing it
-  // from the live atoms would paint the destination a frame early. Pointer gating
-  // still uses the live `isCollapsed`.
+  // from the live atoms would paint the destination early; live `isCollapsed` gates taps.
   const { content: restingContentStyle, island: restingIslandStyle } = getTabIslandRestingStyles({
     expandedWidth: expandedIslandWidth,
+    isWideLayout: isForceExpanded,
     settledFocused,
     settledIsCollapsed: isForceExpanded ? false : settledCollapsed,
     settledOneLine: isForceExpanded ? false : settledOneLine,

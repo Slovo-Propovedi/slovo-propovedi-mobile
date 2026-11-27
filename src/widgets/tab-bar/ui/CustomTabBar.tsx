@@ -91,6 +91,7 @@ export const CustomTabBar = ({
                   key={route.key}
                   progress={progress}
                   routeKey={route.key}
+                  isWideLayout={isWide}
                   routeName={route.name}
                   isActiveSlot={isActiveSlot}
                   isBarCollapsed={isCollapsed}
@@ -107,6 +108,7 @@ export const CustomTabBar = ({
             {!hideSearch && (
               <TabIslandSearchSlot
                 progress={progress}
+                isWideLayout={isWide}
                 isCollapsed={isCollapsed}
                 isActive={isSearchFocused}
                 expandedWidth={expandedTabWidth}

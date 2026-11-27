@@ -8,8 +8,8 @@ import { authMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import {
   BAR_OUTER_GAP,
-  BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
+  WIDE_BAR_ROW_HEIGHT,
   WIDE_CONTENT_TOP_GAP,
 } from 'shared/ui/layout'
 import { MoreScreen } from './MoreScreen'
@@ -17,7 +17,7 @@ import { MoreScreen } from './MoreScreen'
 // The floating top island occupies this much of the scroll content in wide,
 // plus the extra clearance that keeps the first section header clear of it.
 const WIDE_TOP_CHROME_SCROLL_INSET =
-  BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP
+  BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP
 
 const WIDE_DIMENSIONS = { fontScale: 1, height: 800, width: 1024 }
 const COMPACT_DIMENSIONS = { fontScale: 1, height: 390, width: 844 }

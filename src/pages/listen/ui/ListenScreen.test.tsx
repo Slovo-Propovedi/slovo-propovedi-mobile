@@ -8,10 +8,10 @@ import { authMocks, sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import {
   BAR_OUTER_GAP,
-  BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
-  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  WIDE_BAR_ROW_HEIGHT,
   WIDE_CONTENT_TOP_GAP,
+  WIDE_TAB_ISLAND_HEIGHT,
 } from 'shared/ui/layout'
 import { ListenScreen } from './ListenScreen'
 
@@ -30,7 +30,7 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 // The floating top island occupies this much of the scroll content in wide,
 // plus the extra clearance that keeps the first section header clear of it.
 const WIDE_TOP_CHROME_SCROLL_INSET =
-  BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP
+  BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP
 
 const mockPush = jest.fn()
 
@@ -326,7 +326,7 @@ describe('<ListenScreen>', () => {
     // in the chrome row, so its top is the row's leftover height below the row top).
     expect(overlayStyle.position).toBe('absolute')
     expect(overlayStyle.top).toBe(
-      BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+      BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT - WIDE_TAB_ISLAND_HEIGHT,
     )
     expect(within(overlay).getByLabelText(HELP_BUTTON_LABEL)).toBeTruthy()
     // Fixed overlay: the actions no longer scroll with the sections.

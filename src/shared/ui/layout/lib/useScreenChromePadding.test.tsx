@@ -6,6 +6,7 @@ import {
   BAR_OUTER_GAP,
   BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
+  WIDE_BAR_ROW_HEIGHT,
   WIDE_CONTENT_TOP_GAP,
 } from '../bottomBarLayout'
 import { setTabBarHeight } from '../model'
@@ -69,10 +70,10 @@ describe('useScreenChromePadding', () => {
     // scroller is gone, so content scrolls and takes taps under the glass. The
     // extra gap pushes the first section header clear of the island's bottom edge.
     expect(result.current.topChromeScrollInset).toBe(
-      BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP,
+      BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP,
     )
     expect(result.current.topChromeHeight).toBe(
-      mockTopInset + BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+      mockTopInset + BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
     )
   })
 
@@ -84,10 +85,10 @@ describe('useScreenChromePadding', () => {
     const { result } = await renderHookWithProviders(() => useScreenChromePadding())
 
     expect(result.current).toEqual({
-      bottomChromeHeight: PLAYER_SIZES.miniPlayerHeight + 20 + BAR_OUTER_GAP,
-      topChromeHeight: mockTopInset + BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+      bottomChromeHeight: PLAYER_SIZES.wideMiniPlayerHeight + 20 + BAR_OUTER_GAP,
+      topChromeHeight: mockTopInset + BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
       topChromeScrollInset:
-        BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP,
+        BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP,
     })
   })
 
@@ -101,7 +102,7 @@ describe('useScreenChromePadding', () => {
     const { result } = await renderHookWithProviders(() => useScreenChromePadding())
 
     expect(result.current.topChromeHeight).toBe(
-      mockTopInset + BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+      mockTopInset + BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
     )
   })
 
@@ -112,7 +113,7 @@ describe('useScreenChromePadding', () => {
     const { result } = await renderHookWithProviders(() => useScreenChromePadding())
 
     expect(result.current.bottomChromeHeight).toBe(
-      PLAYER_SIZES.miniPlayerHeight + BAR_BOTTOM_INSET_MIN + BAR_OUTER_GAP,
+      PLAYER_SIZES.wideMiniPlayerHeight + BAR_BOTTOM_INSET_MIN + BAR_OUTER_GAP,
     )
   })
 
@@ -123,7 +124,7 @@ describe('useScreenChromePadding', () => {
     const { result } = await renderHookWithProviders(() => useScreenChromePadding())
 
     expect(result.current.bottomChromeHeight).toBe(
-      PLAYER_SIZES.miniPlayerHeight + WEB_BOTTOM_INSET + BAR_OUTER_GAP,
+      PLAYER_SIZES.wideMiniPlayerHeight + WEB_BOTTOM_INSET + BAR_OUTER_GAP,
     )
   })
 
@@ -135,7 +136,7 @@ describe('useScreenChromePadding', () => {
     const { result } = await renderHookWithProviders(() => useScreenChromePadding())
 
     expect(result.current.bottomChromeHeight).toBe(
-      PLAYER_SIZES.miniPlayerHeight + 34 + BAR_OUTER_GAP,
+      PLAYER_SIZES.wideMiniPlayerHeight + 34 + BAR_OUTER_GAP,
     )
   })
 })

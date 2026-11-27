@@ -43,11 +43,11 @@ export const getTabIconOffset = (progress: number) => {
 // axis: 52 in the 60 island (expanded bar and search-open circle), 40 in the 48
 // compact row. Reading the shape axis instead left the search-open item 40 tall
 // inside a 60 circle, resting above its centre.
-export const getTabItemHeight = (oneLineProgress: number) => {
+export const getTabItemHeight = (oneLineProgress: number, isWideLayout = false) => {
   'worklet'
   const clamped = clampProgress(oneLineProgress)
 
-  return getIslandHeight(clamped) - getTabItemVerticalMargin(clamped) * 2
+  return getIslandHeight(clamped, isWideLayout) - getTabItemVerticalMargin(clamped) * 2
 }
 
 // The primary capsule belongs to the expanded bar only: the collapsed circle

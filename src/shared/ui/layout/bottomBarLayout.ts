@@ -11,12 +11,22 @@ export const BAR_ROW_MIN_HEIGHT = 68 as const
 const ONE_LINE_ROW_SIZE = PLAYER_SIZES.miniPlayerHeight
 export const TAB_BAR_ISLAND_HEIGHT = ONE_LINE_ROW_SIZE
 export const TAB_BAR_ISLAND_HEIGHT_EXPANDED = 60 as const
+// The wide layout anchors the tab island to the TOP of the screen and pins it
+// permanently open, so it does not need the compact expanded height (60): the
+// slim 48 keeps it at the minimum touch target and visibly thinner than the
+// taller mini pill below it (user feedback 2026-11-27). Constant, never morphed.
+export const WIDE_TAB_ISLAND_HEIGHT = 48 as const
 // The expanded island's top edge sits this far below the row's top edge: the
 // islands are anchored to the row's bottom edge (the safe-area line), so the
 // gap is the unused space above the expanded island. The row's measured height
 // already includes the bottom safe-area padding, which keeps the offset valid
 // for any inset.
 export const BAR_EXPANDED_ISLAND_TOP_MARGIN = BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED
+// Wide row content height: the slim wide island plus the same bottom-anchor
+// slack the compact row keeps above its expanded island. The row height is a
+// CONSTANT in wide (the island never morphs), so the measured tab-bar height
+// stays stable; the measured bottom padding is added by the row itself.
+export const WIDE_BAR_ROW_HEIGHT = WIDE_TAB_ISLAND_HEIGHT + BAR_EXPANDED_ISLAND_TOP_MARGIN
 // Top margin of the floating chrome in the wide layout, where the tab-bar island
 // floats at the top of the screen: a small gap below the safe-area line that
 // matches the islands' outer gap.

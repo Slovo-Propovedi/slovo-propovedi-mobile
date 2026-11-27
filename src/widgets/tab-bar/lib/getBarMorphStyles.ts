@@ -27,13 +27,17 @@ export const getIslandContentStyle = (progress: number) => {
 // following the shape axis (progress): they fade out so the circle's item fills
 // it width-wise. Both axes are required so a caller cannot silently couple the
 // height to the shape progress.
-export const getTabItemStyle = (progress: number, oneLineProgress: number) => {
+export const getTabItemStyle = (
+  progress: number,
+  oneLineProgress: number,
+  isWideLayout = false,
+) => {
   'worklet'
   const horizontal = getTabItemHorizontalMargin(progress)
   const vertical = getTabItemVerticalMargin(progress)
 
   return {
-    height: getTabItemHeight(oneLineProgress),
+    height: getTabItemHeight(oneLineProgress, isWideLayout),
     marginBottom: vertical,
     marginLeft: horizontal,
     marginRight: horizontal,

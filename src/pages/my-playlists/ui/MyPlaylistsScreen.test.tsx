@@ -8,7 +8,7 @@ import {
   sectionSettingsAtom,
 } from 'entities/playlist'
 import { renderWithProviders } from 'shared/mocks'
-import { BAR_OUTER_GAP, BAR_ROW_MIN_HEIGHT, BAR_TOP_ISLAND_MARGIN } from 'shared/ui/layout'
+import { BAR_OUTER_GAP, BAR_TOP_ISLAND_MARGIN, WIDE_BAR_ROW_HEIGHT } from 'shared/ui/layout'
 import { INDENTS } from 'shared/ui/theme'
 import { MyPlaylistsScreen } from './MyPlaylistsScreen'
 
@@ -345,7 +345,7 @@ describe('<MyPlaylistsScreen>', () => {
     expect(lists).toHaveLength(1)
     // Test insets are zero, so the top chrome is the island row plus its gaps.
     expect(lists[0].props.contentContainerStyle).toMatchObject({
-      paddingTop: BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+      paddingTop: BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT + BAR_OUTER_GAP,
     })
   })
 

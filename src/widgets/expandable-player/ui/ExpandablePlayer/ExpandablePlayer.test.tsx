@@ -47,6 +47,7 @@ jest.mock('shared/ui/layout', () => {
     isTabBarMeasuredAtom: atom(true, 'mockIsTabBarMeasuredAtom'),
     keyboardBottomInsetSv: { value: 0 },
     tabBarHeightAtom: atom(0, 'mockTabBarHeightAtom'),
+    useIsWideLayout: () => false,
     useKeyboardLiftStyle: () => ({}),
   }
 })

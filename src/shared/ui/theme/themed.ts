@@ -32,6 +32,9 @@ export const PLAYER_SIZES = {
   progressThumbSize: 12,
   // Approximation used only until the real height is measured (see shared/ui/layout)
   tabBarHeight: 80,
+  // The wide layout keeps the mini pill as the only bottom chrome, so it grows
+  // to balance the slimmer 48dp top island (user feedback 2026-11-27).
+  wideMiniPlayerHeight: 60,
 } as const
 
 export const RADIUSES = {

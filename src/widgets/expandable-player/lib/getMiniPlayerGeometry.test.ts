@@ -166,7 +166,7 @@ describe('getMiniPlayerGeometry wide layout', () => {
       })
 
       expect(bottom).toBe(wideBottomInset)
-      expect(top).toBe(SCREEN_HEIGHT - wideBottomInset - PLAYER_SIZES.miniPlayerHeight)
+      expect(top).toBe(SCREEN_HEIGHT - wideBottomInset - PLAYER_SIZES.wideMiniPlayerHeight)
     },
   )
 
@@ -185,10 +185,13 @@ describe('getMiniPlayerGeometry wide layout', () => {
     expect(folded).toEqual(expanded)
   })
 
-  test('keeps the mini height and the pill radius', () => {
+  test('keeps the wide mini height and the tall pill radius', () => {
     const { height, radius } = wideGeometryAt({ screenWidth: 768, tabBarHeight: 98 })
 
-    expect(height).toBe(PLAYER_SIZES.miniPlayerHeight)
-    expect(radius).toBe(PLAYER_SIZES.miniPlayerHeight / 2)
+    // The wide pill is the only bottom chrome: it is taller than the compact
+    // 48dp one-line pill so it balances the slimmer 48dp top island.
+    expect(PLAYER_SIZES.wideMiniPlayerHeight).toBe(60)
+    expect(height).toBe(PLAYER_SIZES.wideMiniPlayerHeight)
+    expect(radius).toBe(PLAYER_SIZES.wideMiniPlayerHeight / 2)
   })
 })

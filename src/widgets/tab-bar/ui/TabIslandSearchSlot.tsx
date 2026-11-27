@@ -23,6 +23,7 @@ export const TabIslandSearchSlot = ({
   isCollapsed,
   isSettledCollapsed,
   isSettledOneLine,
+  isWideLayout,
   oneLineProgress,
   progress,
 }: {
@@ -32,6 +33,8 @@ export const TabIslandSearchSlot = ({
   isCollapsed: boolean
   isSettledCollapsed: boolean
   isSettledOneLine: boolean
+  /** Wide layout: the search slot matches the slim constant island height. */
+  isWideLayout: boolean
   oneLineProgress: SharedValue<number>
   progress: SharedValue<number>
 }) => {
@@ -45,6 +48,7 @@ export const TabIslandSearchSlot = ({
       isActive={false}
       progress={progress}
       isCollapsed={isCollapsed}
+      isWideLayout={isWideLayout}
       expandedWidth={expandedWidth}
       oneLineProgress={oneLineProgress}
       isSettledOneLine={isSettledOneLine}
@@ -65,6 +69,7 @@ export const TabIslandSearchSlot = ({
             isActive={isActive}
             onPress={openSearch}
             collapseProgress={progress}
+            isWideLayout={isWideLayout}
             routeKey={SEARCH_ROUTE_NAME}
             routeName={SEARCH_ROUTE_NAME}
             accessibilityLabel={SEARCH_LABEL}

@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react-native'
 import { StyleSheet, Text } from 'react-native'
 import {
-  BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
-  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  WIDE_BAR_ROW_HEIGHT,
+  WIDE_TAB_ISLAND_HEIGHT,
 } from '../layout/bottomBarLayout'
 import { INDENTS } from '../theme/themed'
 import { WideTopActions } from './WideTopActions'
@@ -21,7 +21,7 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 
 // The island is bottom-anchored inside the chrome row, so its top edge sits the
 // row's leftover height below the row top.
-const ISLAND_TOP = BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED
+const ISLAND_TOP = BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT - WIDE_TAB_ISLAND_HEIGHT
 
 describe('<WideTopActions>', () => {
   afterEach(() => {
@@ -42,7 +42,7 @@ describe('<WideTopActions>', () => {
     expect(style.position).toBe('absolute')
     expect(style.right).toBe(INDENTS.low)
     expect(style.top).toBe(ISLAND_TOP)
-    expect(style.height).toBe(TAB_BAR_ISLAND_HEIGHT_EXPANDED)
+    expect(style.height).toBe(WIDE_TAB_ISLAND_HEIGHT)
     // The empty slot passes touches through to the scrolling content below.
     expect(overlay.props.pointerEvents).toBe('box-none')
   })

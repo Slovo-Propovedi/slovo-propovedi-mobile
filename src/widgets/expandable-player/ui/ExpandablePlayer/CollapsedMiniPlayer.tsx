@@ -8,7 +8,7 @@ import { isSearchFieldFocusedAtom } from 'features/sermon-search/@x/barMorph'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { useAtomMorphDriver } from 'shared/lib/hooks/useAtomMorphDriver'
-import { useKeyboardLiftStyle } from 'shared/ui/layout'
+import { useIsWideLayout, useKeyboardLiftStyle } from 'shared/ui/layout'
 import { type ThemeColors } from 'shared/ui/theme'
 import { MINI_PILL_TUCK_DISTANCE } from '../../lib/getMiniPlayerGeometry'
 import { useMiniPillFade } from '../../model/useMiniPillFade'
@@ -70,7 +70,8 @@ export const CollapsedMiniPlayer = ({
   playlistMenuComponent?: PlaylistMenuSlot
 }) => {
   const miniTargetRef = useOnboardingTargetRef('player.mini')
-  const miniStyles = createMiniStyles(currentTheme)
+  const isWideLayout = useIsWideLayout()
+  const miniStyles = createMiniStyles(currentTheme, isWideLayout)
   const keyboardLiftStyle = useKeyboardLiftStyle()
   const [isHidden] = useAtom(isSearchFieldFocusedAtom)
   // Same shared value the search frame reads.
