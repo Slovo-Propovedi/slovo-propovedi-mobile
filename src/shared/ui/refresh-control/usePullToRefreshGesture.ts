@@ -14,14 +14,18 @@ import { type PullToRefreshProps } from './pull-to-refresh.types'
  * `refreshing` is the source of truth for the resting spinner; a local pending
  * flag bridges the gap until the parent flips `refreshing` on.
  * @param root0 - Gesture options.
+ * @param root0.onProgress - Receives the live 0..1 pull progress for the overlay.
  * @param root0.onRefresh - Reload callback fired when a pull passes the threshold.
  * @param root0.refreshing - Controlled spinner state owned by the parent.
  * @returns Refs for the wrapper/content/spinner plus the armed flag.
  */
 export const usePullToRefreshGesture = ({
+  onProgress,
   onRefresh,
   refreshing,
-}: Pick<PullToRefreshProps, 'onRefresh' | 'refreshing'>) => {
+}: Pick<PullToRefreshProps, 'onRefresh' | 'refreshing'> & {
+  onProgress: (progress: number) => void
+}) => {
   const [isArmed, setIsArmed] = useState(false)
   const [isPending, setIsPending] = useState(false)
   const [wrapperNode, setWrapperNode] = useState<HTMLElement | null>(null)
@@ -55,13 +59,16 @@ export const usePullToRefreshGesture = ({
     if (draggingRef.current) return
 
     const isActive = refreshing || isPending
+    // The overlay reads the same progress: full while the refresh is active,
+    // otherwise back to zero (a cancelled pull sits at 0 already).
+    onProgress(isActive ? 1 : 0)
     settle(
       contentNodeRef.current,
       spinnerNodeRef.current,
       isActive ? TRIGGER_DISTANCE : 0,
       isActive ? 1 : 0,
     )
-  }, [isPending, refreshing, wrapperNode])
+  }, [isPending, onProgress, refreshing, wrapperNode])
 
   useEffect(() => {
     if (Platform.OS !== 'web' || !wrapperNode) return
@@ -74,10 +81,11 @@ export const usePullToRefreshGesture = ({
       lastTriggerAt: lastTriggerAtRef,
       onArm: setIsArmed,
       onPending: setIsPending,
+      onProgress,
       onRefresh: onRefreshRef,
       spinner: spinnerNodeRef,
     })
-  }, [wrapperNode])
+  }, [onProgress, wrapperNode])
 
   return { contentRef, isArmed: isArmed || refreshing, spinnerRef, wrapperRef }
 }

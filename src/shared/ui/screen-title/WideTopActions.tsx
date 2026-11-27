@@ -1,5 +1,6 @@
 import { type ReactNode, useContext } from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import {
   WIDE_ACTIONS_CENTER_Y,
   WIDE_ACTIONS_TOP,
@@ -20,27 +21,39 @@ const SPINNER_ID = 'wide-top-actions-spinner'
  * padded body (the same origin the floating chrome measures from): `top` is
  * relative to that body, so no safe-area inset is added twice.
  *
- * It is also the single host of the wide refresh spinner: while the nearest
- * `PullToRefresh` reports `refreshing`, a full-width band pins itself to both
- * body edges so its centred content sits on the horizontal centre of the
- * screen. Its vertical centre is level with the actions row.
+ * It is also the single host of the wide refresh spinner: a full-width band
+ * pinned to both body edges so its centred content sits on the horizontal centre
+ * of the screen, level with the actions row. Its opacity follows the nearest
+ * `PullToRefresh` pull (fading in before release) and stays at 1 while the
+ * refresh is running.
  * @param root0 - Component props.
  * @param root0.children - Action buttons rendered in the slot.
  */
 export const WideTopActions = ({ children }: { children: ReactNode }) => {
   const isWide = useIsWideLayout()
-  const isRefreshing = useContext(RefreshContext)?.refreshing ?? false
+  const context = useContext(RefreshContext)
+  const isRefreshing = context?.refreshing ?? false
+  const fallbackProgress = useSharedValue(0)
+  const pullProgress = context?.pullProgress ?? fallbackProgress
   const { currentTheme } = useTheme()
+
+  // The slot stays mounted so the shared pull value can fade it in without a
+  // re-render per touch move; a running refresh pins it fully visible.
+  const spinnerStyle = useAnimatedStyle(() => ({
+    opacity: isRefreshing ? 1 : Math.min(Math.max(pullProgress.value, 0), 1),
+  }))
 
   if (!isWide) return null
 
   return (
     <>
-      {isRefreshing ? (
-        <View testID={SPINNER_ID} pointerEvents='none' style={styles.spinner}>
-          <ActivityIndicator color={currentTheme.primary} />
-        </View>
-      ) : null}
+      <Animated.View
+        testID={SPINNER_ID}
+        pointerEvents='none'
+        style={[styles.spinner, spinnerStyle]}
+      >
+        <ActivityIndicator color={currentTheme.primary} />
+      </Animated.View>
       <View testID={TEST_ID} pointerEvents='box-none' style={styles.container}>
         {children}
       </View>

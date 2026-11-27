@@ -20,11 +20,18 @@ jest.mock('../layout/lib/useIsWideLayout', () => ({ useIsWideLayout: jest.fn() }
 const mockUseIsWideLayout = useIsWideLayout as jest.MockedFunction<typeof useIsWideLayout>
 
 const WIRED_TEXT = 'refresh-wired'
+const PROGRESS_TEXT = 'has-pull-progress'
 
 const ContextProbe = () => {
   const context = useContext(RefreshContext)
 
   return <Text>{context ? WIRED_TEXT : 'no-refresh'}</Text>
+}
+
+const ProgressProbe = () => {
+  const context = useContext(RefreshContext)
+
+  return <Text>{context?.pullProgress ? PROGRESS_TEXT : 'no-pull-progress'}</Text>
 }
 
 const renderRefresh = (children: ReactNode = <></>) =>
@@ -63,6 +70,12 @@ describe('<PullToRefresh> (web)', () => {
     await renderRefresh(<ContextProbe />)
 
     expect(screen.getByText(WIRED_TEXT)).toBeTruthy()
+  })
+
+  test('exposes the live pull progress to the wide overlay', async () => {
+    await renderRefresh(<ProgressProbe />)
+
+    expect(screen.getByText(PROGRESS_TEXT)).toBeTruthy()
   })
 
   test('keeps the spinner at the top in the compact layout (no offset)', async () => {

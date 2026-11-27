@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import { useSharedValue } from 'react-native-reanimated'
 import { useIsWideLayout } from '../layout/lib/useIsWideLayout'
 import { useTheme } from '../theme/ThemeContext/useTheme'
 import { SPINNER_SLOT_HEIGHT } from './pull-to-refresh.lib'
@@ -25,11 +26,24 @@ import { usePullToRefreshGesture } from './usePullToRefreshGesture'
 export const PullToRefresh = ({ children, onRefresh, refreshing }: PullToRefreshProps) => {
   const { currentTheme } = useTheme()
   const isWide = useIsWideLayout()
+  // Live gesture progress shared with the wide overlay spinner: a shared value
+  // avoids a re-render on every touch move.
+  const pullProgress = useSharedValue(0)
+  const handleProgress = useCallback(
+    (progress: number) => {
+      pullProgress.set(progress)
+    },
+    [pullProgress],
+  )
   const { contentRef, isArmed, spinnerRef, wrapperRef } = usePullToRefreshGesture({
+    onProgress: handleProgress,
     onRefresh,
     refreshing,
   })
-  const refreshContext = useMemo(() => ({ onRefresh, refreshing }), [onRefresh, refreshing])
+  const refreshContext = useMemo(
+    () => ({ onRefresh, pullProgress, refreshing }),
+    [onRefresh, pullProgress, refreshing],
+  )
 
   return (
     <RefreshContext.Provider value={refreshContext}>

@@ -15,6 +15,8 @@ interface PullGestureRefs {
   lastTriggerAt: { current: number }
   onArm: (armed: boolean) => void
   onPending: (pending: boolean) => void
+  /** Live 0..1 pull progress for the wide overlay spinner. */
+  onProgress: (progress: number) => void
   onRefresh: { current: () => Promise<void> | void }
   spinner: { current: HTMLElement | null }
 }
@@ -55,6 +57,7 @@ export const attachPullGesture = (node: HTMLElement, refs: PullGestureRefs) => {
     if (!tracking || !scrollable) return
     if (scrollable.scrollTop > 0) {
       stopTracking()
+      refs.onProgress(0)
       dragTo(refs.content.current, refs.spinner.current, 0, 0)
       return
     }
@@ -64,15 +67,17 @@ export const attachPullGesture = (node: HTMLElement, refs: PullGestureRefs) => {
       if (!refs.dragging.current) return
       refs.dragging.current = false
       refs.displayedPull.current = 0
+      refs.onProgress(0)
       dragTo(refs.content.current, refs.spinner.current, 0, 0)
       return
     }
 
     refs.dragging.current = true
     const displayed = computeDisplayedPull(deltaY)
-    const spinnerOpacity = Math.min(displayed / TRIGGER_DISTANCE, 1)
+    const progress = Math.min(displayed / TRIGGER_DISTANCE, 1)
     refs.displayedPull.current = displayed
-    dragTo(refs.content.current, refs.spinner.current, displayed, spinnerOpacity)
+    refs.onProgress(progress)
+    dragTo(refs.content.current, refs.spinner.current, displayed, progress)
     refs.onArm(displayed >= TRIGGER_DISTANCE)
   }
 
@@ -91,11 +96,13 @@ export const attachPullGesture = (node: HTMLElement, refs: PullGestureRefs) => {
       shouldTriggerRefresh(displayed, Date.now() - refs.lastTriggerAt.current)
     if (!canTrigger) {
       refs.onArm(false)
+      refs.onProgress(0)
       settle(refs.content.current, refs.spinner.current, 0, 0)
       return
     }
 
     refs.lastTriggerAt.current = Date.now()
+    refs.onProgress(1)
     refs.onPending(true)
     settle(refs.content.current, refs.spinner.current, TRIGGER_DISTANCE, 1)
     void Promise.resolve()

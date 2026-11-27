@@ -53,14 +53,24 @@ const ZERO_TRANSFORM = 'translateY(0px)'
 
 const renderGesture = async (onRefresh: () => Promise<void> | void, refreshing = false) => {
   let gesture: Gesture | null = null
+  let progress = 0
   const Harness = () => {
-    gesture = usePullToRefreshGesture({ onRefresh, refreshing })
+    gesture = usePullToRefreshGesture({
+      onProgress: value => {
+        progress = value
+      },
+      onRefresh,
+      refreshing,
+    })
     return null
   }
   await render(<Harness />)
-  return () => {
-    if (!gesture) throw new Error('gesture not captured')
-    return gesture
+  return {
+    getGesture: () => {
+      if (!gesture) throw new Error('gesture not captured')
+      return gesture
+    },
+    getProgress: () => progress,
   }
 }
 
@@ -101,7 +111,7 @@ describe('usePullToRefreshGesture', () => {
           resolveRefresh = resolve
         }),
     )
-    const getGesture = await renderGesture(onRefresh)
+    const { getGesture } = await renderGesture(onRefresh)
     const wrapper = createFakeWrapper()
     const content = createStyleNode()
     const spinner = createStyleNode()
@@ -137,7 +147,7 @@ describe('usePullToRefreshGesture', () => {
 
   test('does not trigger below the threshold', async () => {
     const onRefresh = jest.fn()
-    const getGesture = await renderGesture(onRefresh)
+    const { getGesture } = await renderGesture(onRefresh)
     const wrapper = createFakeWrapper()
     const content = createStyleNode()
     await attachNodes(getGesture(), wrapper, content, createStyleNode())
@@ -161,7 +171,7 @@ describe('usePullToRefreshGesture', () => {
 
   test('ignores a pull when the scroll container is not at the top', async () => {
     const onRefresh = jest.fn()
-    const getGesture = await renderGesture(onRefresh)
+    const { getGesture } = await renderGesture(onRefresh)
     const wrapper = createFakeWrapper()
     const content = createStyleNode()
     await attachNodes(getGesture(), wrapper, content, createStyleNode())
@@ -189,7 +199,7 @@ describe('usePullToRefreshGesture', () => {
 
   test('debounces repeated pulls within the minimum interval', async () => {
     const onRefresh = jest.fn().mockResolvedValue(undefined)
-    const getGesture = await renderGesture(onRefresh)
+    const { getGesture } = await renderGesture(onRefresh)
     const wrapper = createFakeWrapper()
     const content = createStyleNode()
     await attachNodes(getGesture(), wrapper, content, createStyleNode())
@@ -211,7 +221,7 @@ describe('usePullToRefreshGesture', () => {
   })
 
   test('centers the spinner in the freed gap while refreshing', async () => {
-    const getGesture = await renderGesture(jest.fn(), true)
+    const { getGesture } = await renderGesture(jest.fn(), true)
     const wrapper = createFakeWrapper()
     const content = createStyleNode()
     const spinner = createStyleNode()
@@ -224,9 +234,51 @@ describe('usePullToRefreshGesture', () => {
     )
   })
 
+  test('publishes the pull progress and resets it on cancel', async () => {
+    const { getGesture, getProgress } = await renderGesture(jest.fn())
+    const wrapper = createFakeWrapper()
+    await attachNodes(getGesture(), wrapper, createStyleNode(), createStyleNode())
+
+    const target = createTouchTarget(createScrollable())
+    await act(async () => {
+      wrapper.dispatch('touchstart', touch(target, 100))
+    })
+    await act(async () => {
+      // 80 raw px -> 32 displayed (0.4 resistance) -> 0.5 of the 64 trigger.
+      wrapper.dispatch('touchmove', touch(target, 180))
+    })
+    expect(getProgress()).toBe(0.5)
+
+    await act(async () => {
+      wrapper.dispatch('touchcancel', touch(target, 180))
+    })
+    expect(getProgress()).toBe(0)
+  })
+
+  test('keeps the pull progress at full while the refresh is armed', async () => {
+    // Never resolves: the pull stays pending, so the indicator must stay full.
+    const onRefresh = jest.fn(() => new Promise<void>(() => {}))
+    const { getGesture, getProgress } = await renderGesture(onRefresh)
+    const wrapper = createFakeWrapper()
+    await attachNodes(getGesture(), wrapper, createStyleNode(), createStyleNode())
+
+    const target = createTouchTarget(createScrollable())
+    await act(async () => {
+      wrapper.dispatch('touchstart', touch(target, 100))
+    })
+    await act(async () => {
+      wrapper.dispatch('touchmove', touch(target, 300))
+    })
+    await act(async () => {
+      wrapper.dispatch('touchend', touch(target, 300))
+    })
+
+    expect(getProgress()).toBe(1)
+  })
+
   test('touchcancel does not trigger a refresh', async () => {
     const onRefresh = jest.fn()
-    const getGesture = await renderGesture(onRefresh)
+    const { getGesture } = await renderGesture(onRefresh)
     const wrapper = createFakeWrapper()
     await attachNodes(getGesture(), wrapper, createStyleNode(), createStyleNode())
 
@@ -248,7 +300,11 @@ describe('usePullToRefreshGesture', () => {
     const wrapper = createFakeWrapper()
     let gesture: Gesture | null = null
     const Harness = () => {
-      gesture = usePullToRefreshGesture({ onRefresh: jest.fn(), refreshing: false })
+      gesture = usePullToRefreshGesture({
+        onProgress: jest.fn(),
+        onRefresh: jest.fn(),
+        refreshing: false,
+      })
       return null
     }
     const { unmount } = await render(<Harness />)

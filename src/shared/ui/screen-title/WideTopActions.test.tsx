@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import { StyleSheet, Text } from 'react-native'
+import { type SharedValue } from 'react-native-reanimated'
 import { renderWithProviders } from '../../mocks/renderWithProviders'
 import {
   BAR_TOP_ISLAND_MARGIN,
@@ -27,14 +28,24 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 // row's leftover height below the row top.
 const ISLAND_TOP = BAR_TOP_ISLAND_MARGIN + WIDE_BAR_ROW_HEIGHT - WIDE_TAB_ISLAND_HEIGHT
 
-const renderOverlay = (refreshing: boolean | null, children: ReactNode = <Text>action</Text>) =>
-  renderWithProviders(
-    <RefreshContext.Provider
-      value={refreshing === null ? null : { onRefresh: jest.fn(), refreshing }}
-    >
-      <WideTopActions>{children}</WideTopActions>
-    </RefreshContext.Provider>,
-  )
+const progressValue = (value: number) => ({ value }) as unknown as SharedValue<number>
+
+const overlayElement = (
+  refreshing: boolean | null,
+  progress: SharedValue<number>,
+  children: ReactNode = <Text>action</Text>,
+) => (
+  <RefreshContext.Provider
+    value={
+      refreshing === null ? null : { onRefresh: jest.fn(), pullProgress: progress, refreshing }
+    }
+  >
+    <WideTopActions>{children}</WideTopActions>
+  </RefreshContext.Provider>
+)
+
+const renderOverlay = (refreshing: boolean | null, progress = progressValue(0)) =>
+  renderWithProviders(overlayElement(refreshing, progress))
 
 describe('<WideTopActions>', () => {
   afterEach(() => {
@@ -71,6 +82,28 @@ describe('<WideTopActions>', () => {
     expect(style.height).toBe(MIN_TOUCH_TARGET)
     // Its vertical centre is level with the actions row.
     expect(style.top).toBe(WIDE_ACTIONS_CENTER_Y - MIN_TOUCH_TARGET / 2)
+    // A settled refresh keeps the spinner fully visible.
+    expect(style.opacity).toBe(1)
+  })
+
+  test('fades the spinner in with the pull progress before the release', async () => {
+    const { getByTestId } = await renderOverlay(false, progressValue(0.5))
+
+    // The spinner is already visible mid-gesture, so a user can see the refresh
+    // coming and cancel; its opacity tracks the pull.
+    expect(StyleSheet.flatten(getByTestId(SPINNER_ID).props.style)?.opacity).toBe(0.5)
+  })
+
+  test('hides the spinner again when the pull is cancelled', async () => {
+    const progress = progressValue(0.6)
+    const { getByTestId, rerender } = await renderOverlay(false, progress)
+
+    expect(StyleSheet.flatten(getByTestId(SPINNER_ID).props.style)?.opacity).toBe(0.6)
+
+    progress.value = 0
+    await rerender(overlayElement(false, progress))
+
+    expect(StyleSheet.flatten(getByTestId(SPINNER_ID).props.style)?.opacity).toBe(0)
   })
 
   test('keeps the spinner out of the actions row', async () => {
@@ -80,9 +113,11 @@ describe('<WideTopActions>', () => {
   })
 
   test('hides the refresh spinner when idle', async () => {
-    const { queryByTestId } = await renderOverlay(false)
+    const { getByTestId } = await renderOverlay(false)
 
-    expect(queryByTestId(SPINNER_ID)).toBeNull()
+    // The slot stays mounted so the shared pull value can fade it in without a
+    // re-render; at rest it is fully transparent.
+    expect(StyleSheet.flatten(getByTestId(SPINNER_ID).props.style)?.opacity).toBe(0)
   })
 
   test('renders nothing in the compact layout', async () => {
