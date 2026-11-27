@@ -867,8 +867,12 @@ describe('<CustomTabBar>', () => {
     if (!iconContainer) throw new Error('icon container not found')
 
     // No label below it in wide, so the icon must not keep the compact -8 lift
-    // that makes room for the stacked label; the item's centering holds it.
-    expect(StyleSheet.flatten(iconContainer.props.style)?.transform).toBeUndefined()
+    // that makes room for the stacked label. The zero is an explicit static
+    // transform rather than dropping the animated style: Reanimated writes
+    // transforms straight to the web DOM, and a style frozen from the compact
+    // first frame (window dimensions land after mount) would otherwise keep the
+    // magnifier pressed to the top of the 48dp slot (Issue #152 pattern).
+    expect(StyleSheet.flatten(iconContainer.props.style)?.transform).toEqual([{ translateY: 0 }])
     expect(StyleSheet.flatten(iconContainer.parent?.props.style)).toMatchObject({
       justifyContent: 'center',
     })

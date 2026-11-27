@@ -22,6 +22,15 @@ const wideLabelStyle = StyleSheet.create({
   label: { fontSize: WIDE_TAB_LABEL_SIZE, fontWeight: '500', textAlign: 'center' },
 })
 
+// The wide search slot is icon-only. Its icon must carry an explicit zero lift
+// instead of merely dropping the compact animated style: Reanimated writes
+// transforms straight to the web DOM, and a transform frozen from the compact
+// first frame (window dimensions land after mount) would keep the compact -8
+// and pin the magnifier to the top of the 48dp slot (Issue #152 pattern).
+const wideIconStyle = StyleSheet.create({
+  centered: { transform: [{ translateY: 0 }] },
+})
+
 export const TabButton = ({
   accessibilityLabel,
   collapseProgress,
@@ -90,9 +99,9 @@ export const TabButton = ({
       <Animated.View style={[styles.tabItem, itemStyle]}>
         {isActive && <ActiveTabCapsule style={capsuleStyle} />}
         {!isWideTab && (
-          // Wide has no stacked label to make room for, so the icon drops the
-          // compact -8 lift and stays centred in the slim slot.
-          <Animated.View style={isWideLayout ? undefined : iconStyle}>
+          // Wide has no stacked label to make room for, so the icon keeps an
+          // explicit zero lift and stays centred in the slim slot.
+          <Animated.View style={isWideLayout ? wideIconStyle.centered : iconStyle}>
             <TabIcon color={color} isActive={isActive} routeName={routeName} />
           </Animated.View>
         )}
