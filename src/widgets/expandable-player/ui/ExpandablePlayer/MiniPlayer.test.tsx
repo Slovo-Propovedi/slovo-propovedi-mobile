@@ -409,6 +409,21 @@ describe('<MiniPlayer>', () => {
     })
   })
 
+  test('wide bar: the scroll-collapsed state keeps the expanded insets', async () => {
+    mockIsWideLayout.value = true
+
+    const { getByRole } = await renderMiniPlayer({ barCollapsed: true })
+
+    const row = getByRole('button', { name: new RegExp(WIDE_ROW_TEXT) })
+
+    // Wide geometry is pinned to the expanded pose, so the scroll-driven
+    // bar-collapse atom must not fold the pill's right inset back either.
+    expect(StyleSheet.flatten(row.props.style)).toMatchObject({
+      paddingLeft: MINI_CONTENT_SIDE_INSET,
+      paddingRight: MINI_EXPANDED_TRANSPORT_RIGHT_INSET,
+    })
+  })
+
   test('shows the play icon when paused and the pause icon when playing', async () => {
     const paused = await renderMiniPlayer({ playing: false })
     expect(paused.getByRole('button', { name: PLAY_LABEL })).toBeTruthy()

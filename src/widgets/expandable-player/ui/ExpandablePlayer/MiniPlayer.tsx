@@ -79,11 +79,6 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
           isLight={isLight}
           blurTarget={pageBlurTarget}
           accessibilityRole={ROW_ACCESSIBILITY_ROLE}
-          hostStyle={[
-            miniStyles.miniContainer,
-            barCollapsed && miniStyles.miniContainerCollapsed,
-            isTucked && miniStyles.miniContainerTucked,
-          ]}
           animatedStyle={[
             miniStyle,
             // Animated geometry wins at the native level; the React resting style
@@ -91,6 +86,13 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
             miniBarStyle,
             miniBarRestingStyle,
             tuckStyle,
+          ]}
+          hostStyle={[
+            miniStyles.miniContainer,
+            // Wide geometry is pinned to the expanded pose, so the scroll-driven
+            // collapse must only fold the compact pill's inset.
+            !isWideLayout && barCollapsed && miniStyles.miniContainerCollapsed,
+            isTucked && miniStyles.miniContainerTucked,
           ]}
         >
           {isWideLayout ? (
