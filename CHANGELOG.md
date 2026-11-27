@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Web (iOS): the floating bottom chrome keeps a guaranteed 21 px gap above the screen bottom that vertically centers the home indicator, even when the safe-area probe reports zero — in the browser and the installed PWA alike
 - Web (iOS): the bottom chrome rides above the auto-hiding Safari toolbar and the keyboard via live visual-viewport tracking
 - Android split-screen/multi-window: the app resizes to the pane instead of shrinking into a letterboxed portrait window with black side bars
+- The mini-player appears on the first frame after launch instead of waiting for the tab bar measurement and the offline startup chain
+- Bottom chrome (tab island, search button, mini-player and its highlight) snaps to the new geometry on rotation instead of keeping the old width for a frame
 
 ## [0.35.1] - 2026-11-24
 
