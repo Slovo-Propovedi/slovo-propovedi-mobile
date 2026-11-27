@@ -2,9 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, TextInput, View } from 'react-native'
 import { type APITypes } from 'shared/api'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
-import { AdminSelect, type AdminSelectOption, RefreshButton } from 'shared/ui'
+import { AdminSelect, type AdminSelectOption } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
+import { AdminPlaylistsTopActions } from './AdminPlaylistsTopActions'
 import { styles } from './styles'
 
 const SORT_OPTIONS: AdminSelectOption<APITypes.PlaylistControllerFindAllSort>[] = [
@@ -22,6 +23,7 @@ export const AdminPlaylistsHeader = ({
   onSortChange,
   order,
   search,
+  showActions,
   sort,
 }: {
   count: number
@@ -31,6 +33,7 @@ export const AdminPlaylistsHeader = ({
   onSortChange: (sort: APITypes.PlaylistControllerFindAllSort) => void
   order: APITypes.PlaylistControllerFindAllOrder
   search: string
+  showActions: boolean
   sort: APITypes.PlaylistControllerFindAllSort
 }) => {
   const { currentTheme } = useTheme()
@@ -44,12 +47,7 @@ export const AdminPlaylistsHeader = ({
             {`Всего: ${count}`}
           </Text>
         </View>
-        <RefreshButton />
-        <IconButton
-          onPress={onCreate}
-          accessibilityLabel='Создать плейлист'
-          Icon={<Ionicons size={24} name='add-outline' color={currentTheme.primary} />}
-        />
+        {showActions && <AdminPlaylistsTopActions onCreate={onCreate} />}
       </View>
       <TextInput
         value={search}

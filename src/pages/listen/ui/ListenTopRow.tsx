@@ -1,28 +1,16 @@
-import { HelpHeaderButton, OnboardingTarget } from 'features/onboarding'
-import { useHasFinePointer } from 'shared/lib/hooks/useHasFinePointer'
-import { RefreshButton, ScreenTitleRow } from 'shared/ui'
-import { AdminShieldButton } from './AdminShieldButton'
+import { ScreenTitleRow } from 'shared/ui'
+import { ListenTopActions } from './ListenTopActions'
 
 export const ListenTopRow = ({
-  hideTitle,
+  isWide,
   showAdminButton,
 }: {
-  hideTitle: boolean
+  isWide: boolean
   showAdminButton: boolean
-}) => {
-  // The tour target wraps the button only when it is shown (mouse), so on touch
-  // devices the «Что нового» step finds no target and is skipped.
-  const hasFinePointer = useHasFinePointer()
-
-  return (
-    <ScreenTitleRow title='Слушать' hideTitle={hideTitle}>
-      {hasFinePointer && (
-        <OnboardingTarget id='listen.refresh-button'>
-          <RefreshButton />
-        </OnboardingTarget>
-      )}
-      {showAdminButton && <AdminShieldButton />}
-      <HelpHeaderButton />
-    </ScreenTitleRow>
-  )
-}
+}) => (
+  // Compact keeps the actions in the title row; wide floats them in the fixed
+  // top-right overlay (WideTopActions), so the row keeps only its spacer.
+  <ScreenTitleRow title='Слушать' hideTitle={isWide}>
+    {isWide ? null : <ListenTopActions showAdminButton={showAdminButton} />}
+  </ScreenTitleRow>
+)

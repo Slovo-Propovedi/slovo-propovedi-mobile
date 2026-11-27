@@ -14,6 +14,9 @@ export const styles = StyleSheet.create({
   appVersion: {
     fontSize: FONT_SIZES.sm,
   },
+  body: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },

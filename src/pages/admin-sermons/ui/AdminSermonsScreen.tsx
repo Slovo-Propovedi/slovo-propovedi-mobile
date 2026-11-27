@@ -9,24 +9,26 @@ import {
   createRefreshControl,
   EmptyState,
   PullToRefresh,
+  WideTopActions,
 } from 'shared/ui'
-import { tabBarHeightAtom, useScreenChromePadding } from 'shared/ui/layout'
+import { tabBarHeightAtom, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
 import { useAdminSermons } from '../lib/useAdminSermons'
 import { AdminSermonRow } from './AdminSermonRow'
 import { AdminSermonsHeader } from './AdminSermonsHeader'
 import { AdminSermonSkeletonList } from './AdminSermonSkeletonList'
+import { AdminSermonsRetryFooter } from './AdminSermonsRetryFooter'
+import { AdminSermonsTopActions } from './AdminSermonsTopActions'
 import { styles } from './styles'
 
 const CREATE_ROUTE = '/admin/sermons/create'
 const LOAD_ERROR_MESSAGE = 'Не удалось загрузить проповеди'
-const LOAD_MORE_FAILED_LABEL = 'Повторить загрузку'
 const EMPTY_MESSAGE = 'Проповедей пока нет'
 const LIST_TEST_ID = 'admin-sermons-list'
 
 export const AdminSermonsScreen = () => {
   const insets = useSafeAreaInsets()
+  const isWide = useIsWideLayout()
   const { topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
@@ -83,6 +85,13 @@ export const AdminSermonsScreen = () => {
               styles.listContent,
               { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
             ]}
+            ListFooterComponent={
+              <AdminSermonsRetryFooter
+                isLoadingMore={isLoadingMore}
+                loadMoreFailed={loadMoreFailed}
+                onRetry={() => void loadMore()}
+              />
+            }
             ListEmptyComponent={
               isLoading ? (
                 <AdminSermonSkeletonList />
@@ -99,6 +108,7 @@ export const AdminSermonsScreen = () => {
                 sort={sort}
                 order={order}
                 search={search}
+                showActions={!isWide}
                 count={sermons.length}
                 onOrderChange={onOrderChange}
                 onSortChange={handleSortChange}
@@ -106,21 +116,10 @@ export const AdminSermonsScreen = () => {
                 onCreate={() => router.push(CREATE_ROUTE)}
               />
             }
-            ListFooterComponent={
-              isLoadingMore ? (
-                <AdminSermonRow.Skeleton />
-              ) : loadMoreFailed ? (
-                <TouchableItem
-                  onPress={() => void loadMore()}
-                  style={[styles.retry, { backgroundColor: currentTheme.surface }]}
-                >
-                  <Text style={[styles.retryText, { color: currentTheme.primary }]}>
-                    {LOAD_MORE_FAILED_LABEL}
-                  </Text>
-                </TouchableItem>
-              ) : undefined
-            }
           />
+          <WideTopActions>
+            <AdminSermonsTopActions onCreate={() => router.push(CREATE_ROUTE)} />
+          </WideTopActions>
         </PullToRefresh>
       </View>
     </BlurBackdrop>

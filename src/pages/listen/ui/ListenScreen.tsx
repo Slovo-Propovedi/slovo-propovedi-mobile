@@ -5,12 +5,19 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTourScrollable } from 'features/onboarding'
 import { useIsBarCollapseSuspended } from 'features/sermon-search/@x/suspension'
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
-import { BLUR_TARGET_ROUTES, BlurBackdrop, createRefreshControl, PullToRefresh } from 'shared/ui'
+import {
+  BLUR_TARGET_ROUTES,
+  BlurBackdrop,
+  createRefreshControl,
+  PullToRefresh,
+  WideTopActions,
+} from 'shared/ui'
 import { useBarCollapseOnScroll, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { usePullToRefresh } from '../lib/usePullToRefresh'
 import { DynamicSectionsSlider } from './DynamicSectionsSlider'
 import { styles } from './ListenScreen.styles'
+import { ListenTopActions } from './ListenTopActions'
 import { ListenTopRow } from './ListenTopRow'
 import { MyPlaylistsSlider } from './MyPlaylistsSlider'
 
@@ -63,13 +70,16 @@ export const ListenScreen = () => {
               { paddingBottom: bottomChromeHeight, paddingTop: topChromeScrollInset },
             ]}
           >
-            <ListenTopRow hideTitle={isWide} showAdminButton={canOpenAdminPanel} />
+            <ListenTopRow isWide={isWide} showAdminButton={canOpenAdminPanel} />
             <DynamicSectionsSlider onboardingTargetId='listen.sections' />
             <MyPlaylistsSlider
               onboardingTargetId='listen.my-playlists'
               titleOnboardingTargetId='listen.my-playlists-title'
             />
           </Animated.ScrollView>
+          <WideTopActions>
+            <ListenTopActions showAdminButton={canOpenAdminPanel} />
+          </WideTopActions>
         </PullToRefresh>
       </SafeAreaView>
     </BlurBackdrop>

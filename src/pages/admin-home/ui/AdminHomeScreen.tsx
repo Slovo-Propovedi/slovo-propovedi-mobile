@@ -3,8 +3,15 @@ import { useRouter } from 'expo-router'
 import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { authUserAtom } from 'entities/auth'
-import { BLUR_TARGET_ROUTES, BlurBackdrop, createRefreshControl, PullToRefresh } from 'shared/ui'
-import { tabBarHeightAtom, useScreenChromePadding } from 'shared/ui/layout'
+import {
+  BLUR_TARGET_ROUTES,
+  BlurBackdrop,
+  createRefreshControl,
+  PullToRefresh,
+  RefreshButton,
+  WideTopActions,
+} from 'shared/ui'
+import { tabBarHeightAtom, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminStats } from '../lib/useAdminStats'
 import { AdminHomeHeader } from './AdminHomeHeader'
@@ -15,6 +22,7 @@ import { styles } from './styles'
 
 export const AdminHomeScreen = () => {
   const insets = useSafeAreaInsets()
+  const isWide = useIsWideLayout()
   const { topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
   const [user] = useAtom(authUserAtom)
@@ -45,7 +53,7 @@ export const AdminHomeScreen = () => {
               { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
             ]}
           >
-            <AdminHomeHeader user={user} />
+            <AdminHomeHeader user={user} showActions={!isWide} />
 
             <View style={styles.cards}>
               <AdminStatCard
@@ -80,6 +88,9 @@ export const AdminHomeScreen = () => {
             <AdminQuickActions />
             <AdminMoreActions user={user} />
           </ScrollView>
+          <WideTopActions>
+            <RefreshButton />
+          </WideTopActions>
         </PullToRefresh>
       </View>
     </BlurBackdrop>

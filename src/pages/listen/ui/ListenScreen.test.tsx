@@ -1,12 +1,17 @@
 import { createCtx } from '@reatom/framework'
-import { act, fireEvent, screen } from '@testing-library/react-native'
+import { act, fireEvent, screen, within } from '@testing-library/react-native'
 import { type ReactNode } from 'react'
 import { StyleSheet } from 'react-native'
 import { type TestInstance } from 'test-renderer'
 import { authStatusAtom, authUserAtom, restoreSession } from 'entities/auth'
 import { authMocks, sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
-import { BAR_OUTER_GAP, BAR_ROW_MIN_HEIGHT, BAR_TOP_ISLAND_MARGIN } from 'shared/ui/layout'
+import {
+  BAR_OUTER_GAP,
+  BAR_ROW_MIN_HEIGHT,
+  BAR_TOP_ISLAND_MARGIN,
+  TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+} from 'shared/ui/layout'
 import { ListenScreen } from './ListenScreen'
 
 const WIDE_DIMENSIONS = { fontScale: 1, height: 800, width: 1024 }
@@ -136,6 +141,8 @@ jest.mock('./DynamicSectionsSlider', () => {
 const SECTIONS_MOCK = 'SECTIONS_MOCK'
 const MY_PLAYLISTS_TITLE = 'Мои плейлисты'
 const ADMIN_BUTTON_LABEL = 'Админка'
+const WIDE_TOP_ACTIONS_TEST_ID = 'wide-top-actions'
+const HELP_BUTTON_LABEL = 'Онбординг и помощь'
 const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
 
 // A pinned element (the search bar) must not have any scroll container between
@@ -294,15 +301,43 @@ describe('<ListenScreen>', () => {
   })
 
   test('renders the admin button for a moderator user', async () => {
+    mockUseWindowDimensions.mockReturnValue(COMPACT_DIMENSIONS)
     const ctx = createCtx()
     setAuthenticatedUser(ctx, 'moderator')
 
     const { getByLabelText } = await renderWithProviders(<ListenScreen />, { ctx })
 
     expect(getByLabelText(ADMIN_BUTTON_LABEL)).toBeTruthy()
-    // The shield is an in-flow sibling of the magnifier inside the scroll
-    // content: it shares the top row and scrolls with the sections.
+    // Compact keeps the shield an in-flow sibling of the magnifier inside the
+    // scroll content: it shares the top row and scrolls with the sections.
     expect(hasScrollAncestor(getByLabelText(ADMIN_BUTTON_LABEL))).toBe(true)
+  })
+
+  test('floats the header actions in a fixed top-right slot in the wide layout', async () => {
+    const { getByLabelText, getByTestId } = await renderWithProviders(<ListenScreen />, {})
+
+    const overlay = getByTestId(WIDE_TOP_ACTIONS_TEST_ID)
+    const overlayStyle = StyleSheet.flatten(overlay.props.style)
+
+    // The slot mirrors the floating island's middle (the island is bottom-anchored
+    // in the chrome row, so its top is the row's leftover height below the row top).
+    expect(overlayStyle.position).toBe('absolute')
+    expect(overlayStyle.top).toBe(
+      BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+    )
+    expect(within(overlay).getByLabelText(HELP_BUTTON_LABEL)).toBeTruthy()
+    // Fixed overlay: the actions no longer scroll with the sections.
+    expect(hasScrollAncestor(overlay)).toBe(false)
+    expect(hasScrollAncestor(getByLabelText(HELP_BUTTON_LABEL))).toBe(false)
+  })
+
+  test('keeps the header actions in the title row in the compact layout', async () => {
+    mockUseWindowDimensions.mockReturnValue(COMPACT_DIMENSIONS)
+
+    const { getByLabelText, queryByTestId } = await renderWithProviders(<ListenScreen />, {})
+
+    expect(queryByTestId(WIDE_TOP_ACTIONS_TEST_ID)).toBeNull()
+    expect(hasScrollAncestor(getByLabelText(HELP_BUTTON_LABEL))).toBe(true)
   })
 
   test('reserves the wide top island inside the scroll content, not as a band above it', async () => {

@@ -1,17 +1,17 @@
-import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, View } from 'react-native'
-import { RefreshButton } from 'shared/ui'
-import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
+import { AdminSectionsTopActions } from './AdminSectionsTopActions'
 import { styles } from './styles'
 
 // Шапка списка разделов: заголовок и кнопка создания.
 export const AdminSectionsHeader = ({
   count,
   onCreate,
+  showActions,
 }: {
   count: number
   onCreate: () => void
+  showActions: boolean
 }) => {
   const { currentTheme } = useTheme()
 
@@ -23,12 +23,7 @@ export const AdminSectionsHeader = ({
           {count > 0 ? 'Слайдеры главной страницы сайта' : 'Разделов пока нет'}
         </Text>
       </View>
-      <RefreshButton />
-      <IconButton
-        onPress={onCreate}
-        accessibilityLabel='Создать раздел'
-        Icon={<Ionicons size={24} name='add-outline' color={currentTheme.primary} />}
-      />
+      {showActions && <AdminSectionsTopActions onCreate={onCreate} />}
     </View>
   )
 }

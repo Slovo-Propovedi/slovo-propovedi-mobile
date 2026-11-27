@@ -9,13 +9,15 @@ import {
   createRefreshControl,
   EmptyState,
   PullToRefresh,
+  WideTopActions,
 } from 'shared/ui'
-import { tabBarHeightAtom, useScreenChromePadding } from 'shared/ui/layout'
+import { tabBarHeightAtom, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { type AdminSectionListItem } from '../lib/sectionListItem'
 import { useAdminSections } from '../lib/useAdminSections'
 import { AdminSectionRow } from './AdminSectionRow'
 import { AdminSectionsHeader } from './AdminSectionsHeader'
+import { AdminSectionsTopActions } from './AdminSectionsTopActions'
 import { styles } from './styles'
 
 const CREATE_ROUTE = '/admin/sections/create'
@@ -31,6 +33,7 @@ const SectionSkeletonList = () => (
 
 export const AdminSectionsScreen = () => {
   const insets = useSafeAreaInsets()
+  const isWide = useIsWideLayout()
   const { topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
@@ -76,12 +79,6 @@ export const AdminSectionsScreen = () => {
               styles.listContent,
               { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
             ]}
-            ListHeaderComponent={
-              <AdminSectionsHeader
-                count={sections.length}
-                onCreate={() => router.push(CREATE_ROUTE)}
-              />
-            }
             ListFooterComponent={
               isReordering ? (
                 <View style={styles.reordering}>
@@ -89,7 +86,17 @@ export const AdminSectionsScreen = () => {
                 </View>
               ) : undefined
             }
+            ListHeaderComponent={
+              <AdminSectionsHeader
+                showActions={!isWide}
+                count={sections.length}
+                onCreate={() => router.push(CREATE_ROUTE)}
+              />
+            }
           />
+          <WideTopActions>
+            <AdminSectionsTopActions onCreate={() => router.push(CREATE_ROUTE)} />
+          </WideTopActions>
         </PullToRefresh>
       </View>
     </BlurBackdrop>

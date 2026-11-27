@@ -8,18 +8,19 @@ import {
   createRefreshControl,
   EmptyState,
   PullToRefresh,
+  WideTopActions,
 } from 'shared/ui'
-import { tabBarHeightAtom, useScreenChromePadding } from 'shared/ui/layout'
+import { tabBarHeightAtom, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
-import { TouchableItem } from 'shared/ui/touchable-item'
 import { type AdminPlaylistsListItem } from '../lib/playlistListItem'
 import { useAdminPlaylists } from '../lib/useAdminPlaylists'
 import { AdminPlaylistRow } from './AdminPlaylistRow'
 import { AdminPlaylistsHeader } from './AdminPlaylistsHeader'
+import { AdminPlaylistsRetryFooter } from './AdminPlaylistsRetryFooter'
+import { AdminPlaylistsTopActions } from './AdminPlaylistsTopActions'
 import { styles } from './styles'
 
 const CREATE_ROUTE = '/admin/playlists/create'
-const LOAD_MORE_FAILED_LABEL = 'Повторить загрузку'
 const SKELETON_ROWS = 6
 
 const PlaylistSkeletonList = () => (
@@ -32,6 +33,7 @@ const PlaylistSkeletonList = () => (
 
 export const AdminPlaylistsScreen = () => {
   const insets = useSafeAreaInsets()
+  const isWide = useIsWideLayout()
   const { topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
   const { currentTheme } = useTheme()
@@ -82,6 +84,13 @@ export const AdminPlaylistsScreen = () => {
               styles.listContent,
               { paddingBottom: tabBarHeight + INDENTS.low, paddingTop: topChromeScrollInset },
             ]}
+            ListFooterComponent={
+              <AdminPlaylistsRetryFooter
+                isLoadingMore={isLoadingMore}
+                loadMoreFailed={loadMoreFailed}
+                onRetry={() => void loadMore()}
+              />
+            }
             ListEmptyComponent={
               isLoading ? (
                 <PlaylistSkeletonList />
@@ -98,6 +107,7 @@ export const AdminPlaylistsScreen = () => {
                 sort={sort}
                 order={order}
                 search={search}
+                showActions={!isWide}
                 count={playlists.length}
                 onSortChange={onSortChange}
                 onOrderChange={onOrderChange}
@@ -105,21 +115,10 @@ export const AdminPlaylistsScreen = () => {
                 onCreate={() => router.push(CREATE_ROUTE)}
               />
             }
-            ListFooterComponent={
-              isLoadingMore ? (
-                <AdminPlaylistRow.Skeleton />
-              ) : loadMoreFailed ? (
-                <TouchableItem
-                  onPress={() => void loadMore()}
-                  style={[styles.retry, { backgroundColor: currentTheme.surface }]}
-                >
-                  <Text style={[styles.retryText, { color: currentTheme.primary }]}>
-                    {LOAD_MORE_FAILED_LABEL}
-                  </Text>
-                </TouchableItem>
-              ) : undefined
-            }
           />
+          <WideTopActions>
+            <AdminPlaylistsTopActions onCreate={() => router.push(CREATE_ROUTE)} />
+          </WideTopActions>
         </PullToRefresh>
       </View>
     </BlurBackdrop>

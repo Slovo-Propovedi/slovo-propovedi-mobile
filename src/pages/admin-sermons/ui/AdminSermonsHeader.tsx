@@ -2,9 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { Text, TextInput, View } from 'react-native'
 import { type APITypes } from 'shared/api'
 import { INPUT_LIMITS } from 'shared/lib/validation/inputLimits'
-import { AdminSelect, type AdminSelectOption, RefreshButton } from 'shared/ui'
+import { AdminSelect, type AdminSelectOption } from 'shared/ui'
 import { IconButton } from 'shared/ui/icon-button'
 import { useTheme } from 'shared/ui/theme'
+import { AdminSermonsTopActions } from './AdminSermonsTopActions'
 import { styles } from './styles'
 
 const SORT_OPTIONS: AdminSelectOption<APITypes.SermonControllerFindAllSort>[] = [
@@ -24,6 +25,7 @@ export const AdminSermonsHeader = ({
   onSortChange,
   order,
   search,
+  showActions,
   sort,
 }: {
   count: number
@@ -33,6 +35,7 @@ export const AdminSermonsHeader = ({
   onSortChange: (sort: APITypes.SermonControllerFindAllSort) => void
   order: APITypes.SermonControllerFindAllOrder
   search: string
+  showActions: boolean
   sort: APITypes.SermonControllerFindAllSort
 }) => {
   const { currentTheme } = useTheme()
@@ -46,12 +49,7 @@ export const AdminSermonsHeader = ({
             {`Всего: ${count}`}
           </Text>
         </View>
-        <RefreshButton />
-        <IconButton
-          onPress={onCreate}
-          accessibilityLabel='Загрузить проповедь'
-          Icon={<Ionicons size={24} name='add-outline' color={currentTheme.primary} />}
-        />
+        {showActions && <AdminSermonsTopActions onCreate={onCreate} />}
       </View>
       <TextInput
         value={search}

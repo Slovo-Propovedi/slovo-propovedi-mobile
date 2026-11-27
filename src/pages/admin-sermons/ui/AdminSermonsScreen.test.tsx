@@ -1,4 +1,5 @@
-import { act, fireEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, waitFor, within } from '@testing-library/react-native'
+import { type TestInstance } from 'test-renderer'
 import { sermonsMocks } from 'shared/api/generated'
 import { renderWithProviders } from 'shared/mocks'
 import { AdminSermonsScreen } from './AdminSermonsScreen'
@@ -38,6 +39,28 @@ const PAGE_SIZE = 20
 const LIST_TEST_ID = 'admin-sermons-list'
 const RETRY_LABEL = 'Повторить загрузку'
 const CREATE_BUTTON_LABEL = 'Загрузить проповедь'
+const WIDE_TOP_ACTIONS_TEST_ID = 'wide-top-actions'
+const SCROLL_HOST_TYPES = new Set(['RCTScrollView', 'ScrollView'])
+const WIDE_DIMENSIONS = { fontScale: 1, height: 800, width: 1024 }
+const COMPACT_DIMENSIONS = { fontScale: 1, height: 390, width: 844 }
+
+const mockUseWindowDimensions = jest.fn(() => WIDE_DIMENSIONS)
+
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => mockUseWindowDimensions(),
+}))
+
+const hasScrollAncestor = (element: TestInstance): boolean => {
+  let current: null | TestInstance = element.parent
+
+  while (current !== null) {
+    if (SCROLL_HOST_TYPES.has(String(current.type))) return true
+    current = current.parent
+  }
+
+  return false
+}
 
 // One faker sample is enough per page: generating a fresh DTO per row is slow.
 const buildSermons = (count: number, prefix: string) => {
@@ -53,6 +76,7 @@ const buildSermons = (count: number, prefix: string) => {
 describe('<AdminSermonsScreen>', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockUseWindowDimensions.mockReturnValue(WIDE_DIMENSIONS)
   })
 
   test('renders sermons with the preacher subtitle and media badges', async () => {
@@ -225,5 +249,26 @@ describe('<AdminSermonsScreen>', () => {
     const { findByRole } = await renderWithProviders(<AdminSermonsScreen />)
 
     expect(await findByRole('button', { name: CREATE_BUTTON_LABEL })).toBeTruthy()
+  })
+
+  test('floats the create action in the fixed top-right slot in the wide layout', async () => {
+    mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
+
+    const { getByLabelText, getByTestId } = await renderWithProviders(<AdminSermonsScreen />)
+
+    const overlay = getByTestId(WIDE_TOP_ACTIONS_TEST_ID)
+
+    expect(within(overlay).getByLabelText(CREATE_BUTTON_LABEL)).toBeTruthy()
+    expect(hasScrollAncestor(getByLabelText(CREATE_BUTTON_LABEL))).toBe(false)
+  })
+
+  test('keeps the create action in the list header in the compact layout', async () => {
+    mockUseWindowDimensions.mockReturnValue(COMPACT_DIMENSIONS)
+    mockFindAll.mockResolvedValue({ count: 0, nextCursor: null, sermons: [] })
+
+    const { getByLabelText, queryByTestId } = await renderWithProviders(<AdminSermonsScreen />)
+
+    expect(queryByTestId(WIDE_TOP_ACTIONS_TEST_ID)).toBeNull()
+    expect(hasScrollAncestor(getByLabelText(CREATE_BUTTON_LABEL))).toBe(true)
   })
 })

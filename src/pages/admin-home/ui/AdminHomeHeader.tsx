@@ -8,7 +8,13 @@ import { useTheme } from 'shared/ui/theme'
 import { AdminHomeUserMenu } from './AdminHomeUserMenu'
 import { styles } from './styles'
 
-export const AdminHomeHeader = ({ user }: { user: APITypes.UserResponse | null }) => {
+export const AdminHomeHeader = ({
+  showActions,
+  user,
+}: {
+  showActions: boolean
+  user: APITypes.UserResponse | null
+}) => {
   const router = useRouter()
   const { currentTheme } = useTheme()
 
@@ -25,7 +31,7 @@ export const AdminHomeHeader = ({ user }: { user: APITypes.UserResponse | null }
         Интерфейс администратора
       </Text>
       <AdminHomeUserMenu user={user} />
-      <RefreshButton />
+      {showActions && <RefreshButton />}
     </View>
   )
 }
