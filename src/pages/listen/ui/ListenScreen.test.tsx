@@ -11,6 +11,7 @@ import {
   BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
   TAB_BAR_ISLAND_HEIGHT_EXPANDED,
+  WIDE_CONTENT_TOP_GAP,
 } from 'shared/ui/layout'
 import { ListenScreen } from './ListenScreen'
 
@@ -26,8 +27,10 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   default: () => mockUseWindowDimensions(),
 }))
 
-// The floating top island occupies this much of the scroll content in wide.
-const WIDE_TOP_CHROME_SCROLL_INSET = BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP
+// The floating top island occupies this much of the scroll content in wide,
+// plus the extra clearance that keeps the first section header clear of it.
+const WIDE_TOP_CHROME_SCROLL_INSET =
+  BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP
 
 const mockPush = jest.fn()
 

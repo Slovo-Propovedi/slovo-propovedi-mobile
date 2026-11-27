@@ -6,6 +6,7 @@ import {
   BAR_OUTER_GAP,
   BAR_ROW_MIN_HEIGHT,
   BAR_TOP_ISLAND_MARGIN,
+  WIDE_CONTENT_TOP_GAP,
 } from '../bottomBarLayout'
 import { setTabBarHeight } from '../model'
 import { useScreenChromePadding } from './useScreenChromePadding'
@@ -59,17 +60,20 @@ describe('useScreenChromePadding', () => {
     })
   })
 
-  test('wide: the island clearance lives in scroll content, the safe area in the layout', async () => {
+  test('wide: the island clearance and the first-content gap live in scroll content', async () => {
     mockWindowWidth = 1024
 
     const { result } = await renderHookWithProviders(() => useScreenChromePadding())
 
     // The screen root keeps only the safe-area strip: the island band above the
-    // scroller is gone, so content scrolls and takes taps under the glass.
+    // scroller is gone, so content scrolls and takes taps under the glass. The
+    // extra gap pushes the first section header clear of the island's bottom edge.
     expect(result.current.topChromeScrollInset).toBe(
-      BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+      BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP,
     )
-    expect(result.current.topChromeHeight - result.current.topChromeScrollInset).toBe(mockTopInset)
+    expect(result.current.topChromeHeight).toBe(
+      mockTopInset + BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+    )
   })
 
   test('wide native: the mini pill rests on the real safe-area line (iPad 20)', async () => {
@@ -82,7 +86,8 @@ describe('useScreenChromePadding', () => {
     expect(result.current).toEqual({
       bottomChromeHeight: PLAYER_SIZES.miniPlayerHeight + 20 + BAR_OUTER_GAP,
       topChromeHeight: mockTopInset + BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
-      topChromeScrollInset: BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+      topChromeScrollInset:
+        BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP,
     })
   })
 

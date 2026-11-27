@@ -1,7 +1,12 @@
 import { useAtom } from '@reatom/npm-react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PLAYER_SIZES } from '../../theme/themed'
-import { BAR_OUTER_GAP, BAR_ROW_MIN_HEIGHT, BAR_TOP_ISLAND_MARGIN } from '../bottomBarLayout'
+import {
+  BAR_OUTER_GAP,
+  BAR_ROW_MIN_HEIGHT,
+  BAR_TOP_ISLAND_MARGIN,
+  WIDE_CONTENT_TOP_GAP,
+} from '../bottomBarLayout'
 import { tabBarHeightAtom } from '../model'
 import { useBarBottomPadding } from './useBarBottomPadding'
 import { useIsWideLayout } from './useIsWideLayout'
@@ -43,6 +48,7 @@ export const useScreenChromePadding = (): {
   return {
     bottomChromeHeight: miniPlayerHeight + barBottomPadding + BAR_OUTER_GAP,
     topChromeHeight: insets.top + BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
-    topChromeScrollInset: BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP,
+    topChromeScrollInset:
+      BAR_TOP_ISLAND_MARGIN + BAR_ROW_MIN_HEIGHT + BAR_OUTER_GAP + WIDE_CONTENT_TOP_GAP,
   }
 }

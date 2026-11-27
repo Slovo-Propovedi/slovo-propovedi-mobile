@@ -21,6 +21,10 @@ export const BAR_EXPANDED_ISLAND_TOP_MARGIN = BAR_ROW_MIN_HEIGHT - TAB_BAR_ISLAN
 // floats at the top of the screen: a small gap below the safe-area line that
 // matches the islands' outer gap.
 export const BAR_TOP_ISLAND_MARGIN = 8 as const
+// Extra clearance between the wide island band and the first content row: the
+// island clearance alone leaves only BAR_OUTER_GAP below the pill, which reads as
+// cramped for a section header. Scroll content adds this on top of the band.
+export const WIDE_CONTENT_TOP_GAP = 24 as const
 /**
  * The circle stays circular: width = height = radius * 2 at the uniform
  * one-line height, so its diameter deliberately mirrors the island height.
