@@ -63,7 +63,7 @@ export const TabButton = ({
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: getTabIconOffset(labelProgress.value) }],
   }))
-  const { labelColorStyle, pulseStyle } = useSlotHighlightStyles({
+  const { colorStyle, pulseStyle } = useSlotHighlightStyles({
     collapseProgress: labelProgress,
     isActive,
     isDisabled: isDisabled ?? false,
@@ -74,12 +74,6 @@ export const TabButton = ({
       text: currentTheme.text,
     },
   })
-  // The icon keeps the plain route state; the label alone rides the capsule.
-  const iconColor = isDisabled
-    ? currentTheme.textMuted
-    : isActive
-      ? currentTheme.primary
-      : currentTheme.text
   // Wide splits the affordance: tabs are label-only (Apple Music top bar), the
   // search slot is icon-only. Compact keeps the stacked icon + label.
   const isWideTab = isWideLayout && !isSearchSlot
@@ -91,7 +85,10 @@ export const TabButton = ({
       onPress={onPress}
       accessibilityLabel={accessibilityLabel}
       activeOpacity={isActive ? 1 : undefined}
-      hapticDisabled={isActive && !isBarVisuallyCollapsed}
+      // Switching tabs stays silent here: the capsule's landing cue is the one
+      // haptic for that gesture. Only the collapsed circle's expand tap keeps
+      // its press pulse, since it does not travel anywhere.
+      hapticDisabled={!(isActive && isBarVisuallyCollapsed)}
       style={[styles.tabButton, isDisabled && styles.disabledTabButton]}
     >
       <Animated.View style={[styles.tabItem, itemStyle, pulseStyle]}>
@@ -99,18 +96,14 @@ export const TabButton = ({
           // Wide has no stacked label to make room for, so the icon keeps an
           // explicit zero lift and stays centred in the slim slot.
           <Animated.View style={isWideLayout ? highlightStyles.wideIconCentered : iconStyle}>
-            <TabIcon color={iconColor} isActive={isActive} routeName={routeName} />
+            <TabIcon isActive={isActive} routeName={routeName} colorStyle={colorStyle} />
           </Animated.View>
         )}
         {!isWideSearch && (
           <AnimatedText
             numberOfLines={1}
             maxFontSizeMultiplier={1.2}
-            style={[
-              isWideTab ? highlightStyles.wideLabel : styles.tabText,
-              labelColorStyle,
-              labelStyle,
-            ]}
+            style={[isWideTab ? highlightStyles.wideLabel : styles.tabText, colorStyle, labelStyle]}
           >
             {getTabLabel(routeName)}
           </AnimatedText>

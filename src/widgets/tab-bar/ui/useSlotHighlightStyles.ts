@@ -11,9 +11,10 @@ interface SlotHighlightInput {
   palette: { muted: string; primary: string; text: string }
 }
 
-// Slot reactions to the traveling capsule: the label colour rises as the
-// capsule covers the slot, and the item content pulses with the same overlap.
-// Both fall back to the static active-route rule while the bar is folded.
+// Slot reactions to the traveling capsule: the label and icon colour rise as
+// the capsule covers the slot, and the item content pulses with the same
+// overlap. All fall back to the static active-route rule while the bar is
+// folded.
 export const useSlotHighlightStyles = ({
   collapseProgress,
   isActive,
@@ -21,7 +22,7 @@ export const useSlotHighlightStyles = ({
   motion,
   palette,
 }: SlotHighlightInput) => {
-  const labelColorStyle = useAnimatedStyle(() => {
+  const colorStyle = useAnimatedStyle(() => {
     if (isDisabled) return { color: palette.muted }
 
     if (!motion) return { color: isActive ? palette.primary : palette.text }
@@ -48,5 +49,5 @@ export const useSlotHighlightStyles = ({
     }
   })
 
-  return { labelColorStyle, pulseStyle }
+  return { colorStyle, pulseStyle }
 }

@@ -189,6 +189,23 @@ describe('capsuleTravelDriver', () => {
     expect(capsuleTravelDriver.capsuleCenter.value).toBe(230)
   })
 
+  test('fires the landing haptic on the visual arrival frame, without a route commit', async () => {
+    const { result } = await renderTravel(WIDE_INPUT)
+
+    // A press starts the travel; no navigation re-render happens in this test.
+    result.current.requestTravel('more')
+    // Four 50ms frames finish the 200ms travel into the overshoot; the spring
+    // back is still in flight, so arrival must stay silent.
+    await advance(4)
+    expect(mockedImpactAsync).not.toHaveBeenCalled()
+
+    // The return lands the capsule on the destination: one medium impact,
+    // independent of when the route switch reaches React.
+    await advance(4)
+    expect(mockedImpactAsync).toHaveBeenCalledTimes(1)
+    expect(mockedImpactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Medium)
+  })
+
   test('fires one medium impact on landing, never while passing slots', async () => {
     const { rerender } = await renderTravel(WIDE_INPUT)
 

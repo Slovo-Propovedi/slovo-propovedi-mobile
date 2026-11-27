@@ -1,5 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native'
-import { StyleSheet } from 'react-native'
+import { Platform, StyleSheet } from 'react-native'
 import { type SharedValue } from 'react-native-reanimated'
 import { hapticLight } from 'shared/lib/haptics'
 import { renderWithProviders } from 'shared/mocks/renderWithProviders'
@@ -154,12 +154,18 @@ describe('<TabButton>', () => {
     expect(screen.getByRole('button', { name: /Слушать/ })).toBeTruthy()
   })
 
-  test('inactive tab triggers haptic on press', async () => {
-    await renderTabButton('listen')
+  test('inactive tab does not fire the immediate press haptic on native', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'ios')
+    try {
+      await renderTabButton('listen')
 
-    await fireEvent(screen.getByRole('button', { name: /Слушать/ }), 'press')
+      await fireEvent(screen.getByRole('button', { name: /Слушать/ }), 'press')
 
-    expect(mockedHapticLight).toHaveBeenCalledTimes(1)
+      // Switching tabs is silent: the capsule's landing cue is the one haptic.
+      expect(mockedHapticLight).not.toHaveBeenCalled()
+    } finally {
+      restorePlatform.restore()
+    }
   })
 
   test('active tab does not trigger haptic on press in the expanded bar', async () => {
@@ -192,6 +198,7 @@ describe('<TabButton>', () => {
     })
 
     expect(screen.getByText('Слушать')).toHaveStyle({ color: '#000' })
+    expect(findIconGlyphs('#000')).toHaveLength(1)
   })
 
   test('lights the label as the capsule covers the slot', async () => {
@@ -200,6 +207,7 @@ describe('<TabButton>', () => {
     })
 
     expect(screen.getByText('Слушать')).toHaveStyle({ color: '#f16031' })
+    expect(findIconGlyphs('#f16031')).toHaveLength(1)
   })
 
   test('pulses the slot content while the capsule crosses it', async () => {
