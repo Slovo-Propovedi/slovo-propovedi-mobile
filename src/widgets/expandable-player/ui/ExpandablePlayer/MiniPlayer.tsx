@@ -1,12 +1,13 @@
 import { forwardRef } from 'react'
-import { Platform, type ViewInstance, type ViewStyle } from 'react-native'
+import { Platform, View, type ViewInstance, type ViewStyle } from 'react-native'
 import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
 import { type AnimatedStyle } from 'react-native-reanimated'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { GlassIsland, usePageBlurTarget } from 'shared/ui'
-import { useIsWideLayout } from 'shared/ui/layout'
+import { useIsWideLayout, useLayoutBaseWidth, WIDE_MINI_PLAYER_MAX_WIDTH } from 'shared/ui/layout'
 import { type ThemeColors } from 'shared/ui/theme'
+import { miniPillColumnStyle } from './commonStyles'
 import { MiniDownloadProgress } from './MiniDownloadProgress'
 import { MiniPlayerTrackInfo } from './MiniPlayerTrackInfo'
 import { MiniPlayerTransport } from './MiniPlayerTransport'
@@ -70,49 +71,55 @@ export const MiniPlayer = forwardRef<ViewInstance, MiniPlayerProps>(
     // Wide windows move the transport cluster left of the artwork (Apple Music
     // order); phones keep the compact artwork/title/single-play row.
     const isWideLayout = useIsWideLayout()
+    // The pill is positioned inside this natively centred column. Its cap is the
+    // layout base and the wide pill's own 650 cap (the widest the pill can get),
+    // so a compact→wide flip never leaves the column narrower than the pill.
+    const columnMaxWidth = Math.min(useLayoutBaseWidth(), WIDE_MINI_PLAYER_MAX_WIDTH)
 
     return (
-      <GestureDetector gesture={miniPan}>
-        <GlassIsland
-          ref={ref}
-          onPress={onPress}
-          isLight={isLight}
-          blurTarget={pageBlurTarget}
-          accessibilityRole={ROW_ACCESSIBILITY_ROLE}
-          hostStyle={[
-            miniStyles.miniContainer,
-            // Wide geometry is pinned to the expanded pose, so the scroll-driven
-            // collapse must only fold the compact pill's inset.
-            !isWideLayout && barCollapsed && miniStyles.miniContainerCollapsed,
-            isTucked && miniStyles.miniContainerTucked,
-          ]}
-          animatedStyle={[
-            miniStyle,
-            // Animated geometry wins at the NATIVE level. The React resting style
-            // comes after it so the SHADOW TREE always carries the settled bar
-            // geometry (#63); the transform-only tuckStyle follows last.
-            miniBarStyle,
-            miniBarRestingStyle,
-            tuckStyle,
-          ]}
-        >
-          {isWideLayout ? (
-            <MiniPlayerWideRow audio={audio} playlist={playlist} miniStyles={miniStyles} />
-          ) : (
-            <>
-              <MiniPlayerTrackInfo audio={audio} playlist={playlist} miniStyles={miniStyles} />
-              <MiniPlayerTransport
-                playing={playing}
-                miniStyles={miniStyles}
-                onPlayPause={onPlayPause}
-                showSpinner={showSpinner}
-                currentTheme={currentTheme}
-              />
-            </>
-          )}
-          <MiniDownloadProgress miniStyles={miniStyles} audioUrl={audio.audioUrl} />
-        </GlassIsland>
-      </GestureDetector>
+      <View pointerEvents='box-none' style={[miniPillColumnStyle, { maxWidth: columnMaxWidth }]}>
+        <GestureDetector gesture={miniPan}>
+          <GlassIsland
+            ref={ref}
+            onPress={onPress}
+            isLight={isLight}
+            blurTarget={pageBlurTarget}
+            accessibilityRole={ROW_ACCESSIBILITY_ROLE}
+            hostStyle={[
+              miniStyles.miniContainer,
+              // Wide geometry is pinned to the expanded pose, so the scroll-driven
+              // collapse must only fold the compact pill's inset.
+              !isWideLayout && barCollapsed && miniStyles.miniContainerCollapsed,
+              isTucked && miniStyles.miniContainerTucked,
+            ]}
+            animatedStyle={[
+              miniStyle,
+              // Animated geometry wins at the NATIVE level. The React resting style
+              // comes after it so the SHADOW TREE always carries the settled bar
+              // geometry (#63); the transform-only tuckStyle follows last.
+              miniBarStyle,
+              miniBarRestingStyle,
+              tuckStyle,
+            ]}
+          >
+            {isWideLayout ? (
+              <MiniPlayerWideRow audio={audio} playlist={playlist} miniStyles={miniStyles} />
+            ) : (
+              <>
+                <MiniPlayerTrackInfo audio={audio} playlist={playlist} miniStyles={miniStyles} />
+                <MiniPlayerTransport
+                  playing={playing}
+                  miniStyles={miniStyles}
+                  onPlayPause={onPlayPause}
+                  showSpinner={showSpinner}
+                  currentTheme={currentTheme}
+                />
+              </>
+            )}
+            <MiniDownloadProgress miniStyles={miniStyles} audioUrl={audio.audioUrl} />
+          </GlassIsland>
+        </GestureDetector>
+      </View>
     )
   },
 )

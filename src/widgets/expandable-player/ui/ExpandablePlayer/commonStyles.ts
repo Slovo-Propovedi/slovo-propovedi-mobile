@@ -57,6 +57,7 @@ export const createCommonStyles = (theme: ThemeColors) =>
 // and is no longer needed.
 export const miniLayerStyle = StyleSheet.create({
   layer: {
+    alignItems: 'center',
     bottom: 0,
     left: 0,
     position: 'absolute',
@@ -64,3 +65,15 @@ export const miniLayerStyle = StyleSheet.create({
     top: 0,
   },
 }).layer
+
+// Full-width column of the mini pill's absolute host. The pill itself is
+// positioned INSIDE this column (its style carries column-relative `right`), so
+// native flex re-centres the pill in the same Yoga pass as the island row on a
+// rotation — no JS-computed live-window left can lag behind the relayout.
+export const miniPillColumnStyle = StyleSheet.create({
+  column: {
+    height: '100%',
+    position: 'relative',
+    width: '100%',
+  },
+}).column

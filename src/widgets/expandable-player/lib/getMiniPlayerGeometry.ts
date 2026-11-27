@@ -1,4 +1,9 @@
-import { BAR_OUTER_GAP, CONTENT_COLUMN_WIDTH, getColumnSideInset } from 'shared/ui/layout'
+import {
+  BAR_OUTER_GAP,
+  CONTENT_COLUMN_WIDTH,
+  getColumnSideInset,
+  WIDE_MINI_PLAYER_MAX_WIDTH,
+} from 'shared/ui/layout'
 import { PLAYER_SIZES } from 'shared/ui/theme'
 import { getCompactMiniPlayerGeometry } from './getCompactMiniPlayerGeometry'
 import { type MiniPlayerGeometry } from './getMiniPlayerGeometry.types'
@@ -9,6 +14,32 @@ import { getWideMiniPlayerGeometry } from './getWideMiniPlayerGeometry'
  * own height plus the two outer gaps hides it fully behind the row.
  */
 export const MINI_PILL_TUCK_DISTANCE = PLAYER_SIZES.miniPlayerHeight + BAR_OUTER_GAP * 2
+
+/**
+ * Width of the native centring column the mini pill is placed in.
+ *
+ * The pill host is a full-width Yoga layer whose column is capped by the layout
+ * base and the wide pill's own cap. The column is centred by native flex, so a
+ * rotation re-centres the pill in the same frame as the island row; only the
+ * offset INSIDE the column is animated.
+ * @param screenWidth - Current window width.
+ * @param contentWidth - Chrome content width the column is capped by; defaults to `screenWidth`.
+ */
+export const getMiniPillColumnWidth = (screenWidth: number, contentWidth?: number): number => {
+  'worklet'
+  return Math.min(contentWidth ?? screenWidth, WIDE_MINI_PLAYER_MAX_WIDTH)
+}
+
+/**
+ * Left inset of the native centring column inside the live window.
+ * Worklet-safe, mirrors the maxWidth the UI puts on the column.
+ * @param screenWidth - Current window width.
+ * @param contentWidth - Chrome content width the column is capped by; defaults to `screenWidth`.
+ */
+export const getMiniPillColumnInset = (screenWidth: number, contentWidth?: number): number => {
+  'worklet'
+  return getColumnSideInset(screenWidth, 0, getMiniPillColumnWidth(screenWidth, contentWidth))
+}
 
 interface MiniPlayerGeometryInput {
   /** 0 = detached pill above the tab row, 1 = pill in the collapsed bottom line. */

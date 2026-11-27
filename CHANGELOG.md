@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The search circle in the collapsed bottom bar responds to taps again (Android): its hit-test host had no height and the touch fell through to the page behind it
+- The mini-player pill keeps its position through a rotation: it is centred natively by its host column instead of by a JS-computed screen offset that lagged behind the island
 - Wide layout: the floating top island no longer sits on an opaque full-width band — list content scrolls under the glass instead of being cut at its edge, and the band no longer swallows taps
 - Wide layout: playlist screens and the playlist editor start their content below the floating top island instead of under it
 - Pauses the sermon while you record a voice message in another app; playback resumes when the recording ends (Android)

@@ -204,7 +204,7 @@ describe('useExpandAnimation restingContainerStyle', () => {
         borderRadius: TAB_BAR_ISLAND_HEIGHT / 2,
         bottom: COLLAPSED_BOTTOM,
         height: TAB_BAR_ISLAND_HEIGHT,
-        left: COLLAPSED_LEFT,
+        right: COLLAPSED_LEFT,
         width: 400 - COLLAPSED_LEFT * 2,
       },
       restingContainerStyle: {
@@ -232,12 +232,24 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     mockedWithTiming.mockImplementation(defaultWithTimingImpl)
   })
 
-  const COLLAPSED_RESTING = {
+  // The pill is positioned inside a natively centred column, so its style
+  // carries the column-relative `right`; the container stays screen-relative.
+  const COLLAPSED_PILL = {
+    bottom: COLLAPSED_BOTTOM,
+    right: COLLAPSED_LEFT,
+    width: 400 - COLLAPSED_LEFT * 2,
+  }
+  const EXPANDED_PILL = {
+    bottom: EXPANDED_BOTTOM,
+    right: BAR_SIDE_INSET_EXPANDED,
+    width: 400 - BAR_SIDE_INSET_EXPANDED * 2,
+  }
+  const COLLAPSED_CONTAINER = {
     bottom: COLLAPSED_BOTTOM,
     left: COLLAPSED_LEFT,
     width: 400 - COLLAPSED_LEFT * 2,
   }
-  const EXPANDED_RESTING = {
+  const EXPANDED_CONTAINER = {
     bottom: EXPANDED_BOTTOM,
     left: BAR_SIDE_INSET_EXPANDED,
     width: 400 - BAR_SIDE_INSET_EXPANDED * 2,
@@ -270,16 +282,16 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     // Mid-morph the resting style is only a fallback for the frame before the
     // animated layer asserts: it must carry the START geometry, never the
     // destination (that paints the pill at the target a frame early).
-    expect(flipRender.miniBarRestingStyle).toMatchObject(COLLAPSED_RESTING)
-    expect(flipRender.restingContainerStyle).toMatchObject(COLLAPSED_RESTING)
+    expect(flipRender.miniBarRestingStyle).toMatchObject(COLLAPSED_PILL)
+    expect(flipRender.restingContainerStyle).toMatchObject(COLLAPSED_CONTAINER)
 
     await act(async () => {
       advanceMorphFrames()
     })
 
     const settledRender = renders[renders.length - 1]
-    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
-    expect(settledRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
+    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_PILL)
+    expect(settledRender.restingContainerStyle).toMatchObject(EXPANDED_CONTAINER)
   })
 
   test('commits the destination resting geometry when the bar morph settles', async () => {
@@ -290,8 +302,8 @@ describe('useExpandAnimation bar-morph resting commit', () => {
     })
 
     const settledRender = renders[renders.length - 1]
-    expect(settledRender.miniBarRestingStyle).toMatchObject(COLLAPSED_RESTING)
-    expect(settledRender.restingContainerStyle).toMatchObject(COLLAPSED_RESTING)
+    expect(settledRender.miniBarRestingStyle).toMatchObject(COLLAPSED_PILL)
+    expect(settledRender.restingContainerStyle).toMatchObject(COLLAPSED_CONTAINER)
   })
 })
 
@@ -306,7 +318,12 @@ describe('useExpandAnimation expand-morph resting commit', () => {
     mockedWithTiming.mockImplementation(defaultWithTimingImpl)
   })
 
-  const EXPANDED_RESTING = {
+  const EXPANDED_PILL = {
+    bottom: EXPANDED_BOTTOM,
+    right: BAR_SIDE_INSET_EXPANDED,
+    width: 400 - BAR_SIDE_INSET_EXPANDED * 2,
+  }
+  const EXPANDED_CONTAINER = {
     bottom: EXPANDED_BOTTOM,
     left: BAR_SIDE_INSET_EXPANDED,
     width: 400 - BAR_SIDE_INSET_EXPANDED * 2,
@@ -347,8 +364,8 @@ describe('useExpandAnimation expand-morph resting commit', () => {
     // Committing the fullscreen geometry on the expand flip made the container
     // jump to full size in one frame on native; the resting style must still
     // carry the START geometry the animated layer is morphing away from.
-    expect(flipRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
-    expect(flipRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
+    expect(flipRender.miniBarRestingStyle).toMatchObject(EXPANDED_PILL)
+    expect(flipRender.restingContainerStyle).toMatchObject(EXPANDED_CONTAINER)
     // The geometry guard still needs both settled mini tops during the morph.
     expect(flipRender.barCollapsedTop).toEqual(expect.any(Number))
     expect(flipRender.barExpandedTop).toEqual(expect.any(Number))
@@ -358,7 +375,7 @@ describe('useExpandAnimation expand-morph resting commit', () => {
     })
 
     const settledRender = renders[renders.length - 1]
-    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_PILL)
     expect(settledRender.restingContainerStyle).toMatchObject(FULLSCREEN_RESTING)
   })
 
@@ -367,7 +384,7 @@ describe('useExpandAnimation expand-morph resting commit', () => {
 
     // The start geometry is the fullscreen sheet: itself correct for the frames
     // before the animated layer asserts, so no frame paints the destination.
-    expect(flipRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
+    expect(flipRender.miniBarRestingStyle).toMatchObject(EXPANDED_PILL)
     expect(flipRender.restingContainerStyle).toMatchObject(FULLSCREEN_RESTING)
 
     await act(async () => {
@@ -375,8 +392,8 @@ describe('useExpandAnimation expand-morph resting commit', () => {
     })
 
     const settledRender = renders[renders.length - 1]
-    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_RESTING)
-    expect(settledRender.restingContainerStyle).toMatchObject(EXPANDED_RESTING)
+    expect(settledRender.miniBarRestingStyle).toMatchObject(EXPANDED_PILL)
+    expect(settledRender.restingContainerStyle).toMatchObject(EXPANDED_CONTAINER)
   })
 })
 
@@ -576,8 +593,11 @@ describe('useExpandAnimation window rotation', () => {
 
     expect(restingPillWidth(rotated)).toBe(portraitWidth)
     expect(restingContainerWidth(rotated)).toBe(portraitWidth)
-    // The live column inset centres the pill: (844 - 390) / 2 + 25 = 252.
-    expect(rotated.miniBarRestingStyle.left).toBe(252)
+    // The pill sits in the natively centred column: its style carries only the
+    // 25dp inner inset, never the live 227dp column offset. The column itself
+    // (full-width layer + maxWidth) is what Yoga re-centres on rotation.
+    expect(rotated.miniBarRestingStyle.right).toBe(BAR_SIDE_INSET_EXPANDED)
+    expect(rotated.miniBarRestingStyle).not.toHaveProperty('left')
 
     const rotatedChannels = geometrySpy.mock.results.at(-1)?.value
     const rotatedTick = geometrySpy.mock.calls.at(-1)?.[0].geometryReapplyTick

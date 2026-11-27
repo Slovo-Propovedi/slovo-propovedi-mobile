@@ -30,7 +30,11 @@ const mockIsWideLayout = { value: false }
 jest.mock('shared/ui/layout', () => {
   const actual = jest.requireActual('shared/ui/layout')
 
-  return { ...actual, useIsWideLayout: () => mockIsWideLayout.value }
+  return {
+    ...actual,
+    useIsWideLayout: () => mockIsWideLayout.value,
+    useLayoutBaseWidth: () => 390,
+  }
 })
 
 const WIDE_ROW_TEXT = 'wide controls row'
@@ -217,6 +221,34 @@ describe('<MiniPlayer>', () => {
     const pill = getByRole('button', { name: TITLE_NAME_PATTERN })
 
     expect(StyleSheet.flatten(pill.props.style)?.backgroundColor).toBeUndefined()
+  })
+
+  test('positions the pill in a natively centred column, not from a screen offset', async () => {
+    await renderMiniPlayer({ miniBarRestingStyle: { right: 25, width: 340 } })
+
+    // The host column is full-width (capped by the layout base), so Yoga — not
+    // a JS-computed live-window inset — keeps the pill centred on a rotation.
+    const columns =
+      screen.root?.queryAll(
+        instance => StyleSheet.flatten(instance.props.style)?.maxWidth === 390,
+      ) ?? []
+
+    expect(columns).toHaveLength(1)
+    expect(StyleSheet.flatten(columns[0].props.style)).toMatchObject({
+      height: '100%',
+      width: '100%',
+    })
+
+    // The pill style carries only the insets inside that column: no `left`.
+    const pillStyles =
+      screen.root?.queryAll(instance => {
+        const flat = StyleSheet.flatten(instance.props.style)
+
+        return flat?.right === 25 && flat?.width === 340
+      }) ?? []
+
+    expect(pillStyles.length).toBeGreaterThan(0)
+    expect(StyleSheet.flatten(pillStyles[0].props.style)?.left).toBeUndefined()
   })
 
   test('uses the dark glass recipe in the dark theme', async () => {
