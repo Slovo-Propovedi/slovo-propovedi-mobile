@@ -1,10 +1,14 @@
 import { StyleSheet } from 'react-native'
-import { FONT_SIZES, type ThemeColors } from 'shared/ui/theme'
+import { FONT_SIZES, MIN_TOUCH_TARGET, type ThemeColors } from 'shared/ui/theme'
 import { MINI_ARTWORK_SIZE, MINI_WIDE_CONTROL_GAP } from './miniStyles'
 
 // Shared glyph size of the right cluster (menu, text, burger) and the transport
 // icons: one size keeps the toolbar visually even.
 export const MINI_WIDE_ICON_SIZE = FONT_SIZES.xl
+
+// prev/play/next each keep a 48dp touch box; the fixed three-button slot is what
+// centres the transport between the repeat toggle and the heart.
+const MINI_WIDE_TRANSPORT_WIDTH = MIN_TOUCH_TARGET * 3
 
 // The wide pill's toolbar. Icons keep the compact 36dp visual box like the
 // artwork/play button; hitSlop restores their 48dp touch target.
@@ -44,9 +48,8 @@ export const createWideMiniStyles = (theme: ThemeColors) =>
       flexDirection: 'row',
       gap: MINI_WIDE_CONTROL_GAP,
     },
-    // With the right cluster gone the transport cluster is the pill's last
-    // content: the auto margin pins it to the right edge.
-    transportClusterRight: {
-      marginLeft: 'auto',
+    // Fixed slot for the always-visible prev/play/next buttons.
+    transportControls: {
+      width: MINI_WIDE_TRANSPORT_WIDTH,
     },
   })

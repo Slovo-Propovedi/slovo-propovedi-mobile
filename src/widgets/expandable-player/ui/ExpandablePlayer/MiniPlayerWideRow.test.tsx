@@ -34,13 +34,13 @@ const VERTICAL_MENU_ICON = `Entypo:dots-three-vertical:${FONT_SIZES.xl}`
 const TEXT_ICON = `Ionicons:document-text-outline:${FONT_SIZES.xl}`
 const QUEUE_ICON = `Entypo:list:${FONT_SIZES.xl}`
 const RECT = { height: 36, width: 36, x: 100, y: 200 }
-// Visibility follows the CHROME width (getWideChromeWidth): every window at or
-// above the 600pt content column yields the same 550pt chrome, so the full
-// toolbar must render across the whole wide range.
+// The wide row renders the full fixed toolbar whatever the window width: the
+// layout switch (compact below the wide threshold) happens higher up, so the row
+// itself has no width-dependent hiding.
 const WIDEST = 1024
-const WIDE_WINDOW_WIDTHS = [768, 900, 1024, 1440]
-// The only way this row reaches the hiding cascade is a window narrower than the
-// content column: 557 − 50 = a 507pt chrome, just under the queue threshold.
+const WIDE_WINDOW_WIDTHS = [768, 900, 1124, 1440]
+// Even a window narrower than the 600pt content column gets the full toolbar,
+// because this row is only mounted in the wide layout.
 const NARROW_CHROME_WINDOW = 557
 
 let mockWindowWidth = WIDEST
@@ -454,22 +454,26 @@ describe('<MiniPlayerWideRow>', () => {
     expect(ctx.get(isPlayerExpandedAtom)).toBe(false)
   })
 
-  test('places the transport cluster before the artwork and title on the widest windows', async () => {
-    await renderRow()
+  test.each(WIDE_WINDOW_WIDTHS)(
+    'places the full toolbar in transport, track, menu order at a %ipt window',
+    async windowWidth => {
+      mockWindowWidth = windowWidth
+      await renderRow()
 
-    expectAscending([
-      findIndexByLabel(REPEAT_OFF_LABEL),
-      findIndexByLabel(PREV_LABEL),
-      findIndexByLabel(PLAY_LABEL),
-      findIndexByLabel(NEXT_LABEL),
-      findIndexByLabel(ADD_TO_FAVORITES_LABEL),
-      findIndexByArtwork(ARTWORK_URL),
-      findIndexByText(AUDIO.title),
-      findIndexByLabel(MENU_LABEL),
-      findIndexByLabel(TEXT_SERMON_LABEL),
-      findIndexByLabel(OPEN_PLAYLIST_LABEL),
-    ])
-  })
+      expectAscending([
+        findIndexByLabel(REPEAT_OFF_LABEL),
+        findIndexByLabel(PREV_LABEL),
+        findIndexByLabel(PLAY_LABEL),
+        findIndexByLabel(NEXT_LABEL),
+        findIndexByLabel(ADD_TO_FAVORITES_LABEL),
+        findIndexByArtwork(ARTWORK_URL),
+        findIndexByText(AUDIO.title),
+        findIndexByLabel(MENU_LABEL),
+        findIndexByLabel(TEXT_SERMON_LABEL),
+        findIndexByLabel(OPEN_PLAYLIST_LABEL),
+      ])
+    },
+  )
 
   test('draws the wide right cluster as menu, text icon and burger, in that order', async () => {
     await renderRow()
@@ -493,23 +497,26 @@ describe('<MiniPlayerWideRow>', () => {
     expect(getByText(QUEUE_ICON)).toBeTruthy()
   })
 
-  test('moves the transport after the title only when the chrome cannot fit the right cluster', async () => {
+  test('keeps the full toolbar at a window narrower than the content column', async () => {
     mockWindowWidth = NARROW_CHROME_WINDOW
-    const { getByTestId, queryByLabelText } = await renderRow()
+    const { getByLabelText, getByTestId } = await renderRow()
 
     expectAscending([
-      findIndexByArtwork(ARTWORK_URL),
-      findIndexByText(AUDIO.title),
       findIndexByLabel(REPEAT_OFF_LABEL),
       findIndexByLabel(PREV_LABEL),
       findIndexByLabel(PLAY_LABEL),
       findIndexByLabel(NEXT_LABEL),
       findIndexByLabel(ADD_TO_FAVORITES_LABEL),
+      findIndexByArtwork(ARTWORK_URL),
+      findIndexByText(AUDIO.title),
+      findIndexByLabel(MENU_LABEL),
+      findIndexByLabel(TEXT_SERMON_LABEL),
+      findIndexByLabel(OPEN_PLAYLIST_LABEL),
     ])
-    expect(queryByLabelText(TEXT_SERMON_LABEL)).toBeNull()
-    expect(queryByLabelText(MENU_LABEL)).toBeNull()
-    expect(queryByLabelText(OPEN_PLAYLIST_LABEL)).toBeNull()
-    expect(getByTestId(TRANSPORT_CLUSTER_TEST_ID)).toHaveStyle({ marginLeft: 'auto' })
+    expect(getByLabelText(TEXT_SERMON_LABEL)).toBeTruthy()
+    expect(getByLabelText(MENU_LABEL)).toBeTruthy()
+    expect(getByLabelText(OPEN_PLAYLIST_LABEL)).toBeTruthy()
+    expect(getByTestId(TRANSPORT_CLUSTER_TEST_ID)).not.toHaveStyle({ marginLeft: 'auto' })
   })
 
   describe('full toolbar across the wide range', () => {

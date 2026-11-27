@@ -1,9 +1,7 @@
-import { useWindowDimensions, View } from 'react-native'
+import { View } from 'react-native'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
-import { getWideChromeWidth } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
-import { getMiniControlsVisibility } from '../../lib/getMiniControlsVisibility'
 import { MiniPlayerMenuCluster } from './MiniPlayerMenuCluster'
 import { MiniPlayerTrackInfo } from './MiniPlayerTrackInfo'
 import { MiniPlayerTransportCluster } from './MiniPlayerTransportCluster'
@@ -11,9 +9,9 @@ import { type createMiniStyles } from './miniStyles'
 import { createWideMiniStyles } from './miniWideStyles'
 
 /**
- * Wide-layout content of the mini pill: the Apple Music arrangement where the
- * transport leads on the widest windows — transport, artwork/title, menu — and
- * slides after the title once the menu cluster hides.
+ * Wide-layout content of the mini pill: the fixed Apple Music arrangement —
+ * transport, artwork/title, menu. The row always renders the full toolbar; the
+ * layout switch to the compact row happens above it, on the wide-layout flag.
  * @param root0 - Row props.
  * @param root0.audio - Current sermon (transport and menu source).
  * @param root0.miniStyles - Pill styles built for the active theme.
@@ -28,31 +26,14 @@ export const MiniPlayerWideRow = ({
   miniStyles: ReturnType<typeof createMiniStyles>
   playlist: null | PlaylistData
 }) => {
-  const { width } = useWindowDimensions()
   const { currentTheme } = useTheme()
   const styles = createWideMiniStyles(currentTheme)
-  const visibility = getMiniControlsVisibility(getWideChromeWidth(width))
-  const transport = (
-    <MiniPlayerTransportCluster audio={audio} styles={styles} visibility={visibility} />
-  )
-  const trackInfo = (
-    <MiniPlayerTrackInfo audio={audio} playlist={playlist} miniStyles={miniStyles} />
-  )
 
   return (
     <View style={styles.controlsRow}>
-      {visibility.clusterSide === 'left' ? (
-        <>
-          {transport}
-          {trackInfo}
-          <MiniPlayerMenuCluster audio={audio} styles={styles} visibility={visibility} />
-        </>
-      ) : (
-        <>
-          {trackInfo}
-          {transport}
-        </>
-      )}
+      <MiniPlayerTransportCluster audio={audio} styles={styles} />
+      <MiniPlayerTrackInfo audio={audio} playlist={playlist} miniStyles={miniStyles} />
+      <MiniPlayerMenuCluster audio={audio} styles={styles} />
     </View>
   )
 }
