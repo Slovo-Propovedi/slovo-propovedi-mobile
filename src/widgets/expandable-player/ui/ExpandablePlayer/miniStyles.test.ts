@@ -21,11 +21,20 @@ import {
   MINI_WIDE_ACTION_BOX_SIZE,
   MINI_WIDE_ACTION_HIT_SLOP,
   MINI_WIDE_ACTION_ICON_SIZE,
+  WIDE_SKIP_GLYPH_SIZE,
 } from './miniWideStyles'
 
 const styles = createMiniStyles(LightTheme)
 const wideStyles = createMiniStyles(LightTheme, true)
 const wideToolbarStyles = createWideMiniStyles(LightTheme)
+
+// Reads the wide row's track-info leading inset defensively: the seam test
+// drives that style into existence instead of depending on its shape.
+const getTrackInfoLeadingInset = (toolbarStyles: object) => {
+  const { trackInfo } = toolbarStyles as { trackInfo?: { marginLeft?: number } }
+
+  return trackInfo?.marginLeft ?? 0
+}
 
 describe('mini player horizontal alignment', () => {
   test('expanded bar: the transport glyph shares the search circle axis', () => {
@@ -139,5 +148,22 @@ describe('wide mini player styles', () => {
     // heart) and the track-info block (starting with the artwork).
     expect(wideToolbarStyles.controlsRow.gap).toBe(MINI_WIDE_CONTROL_GAP)
     expect(wideToolbarStyles.rightCluster.gap).toBe(MINI_WIDE_CONTROL_GAP)
+  })
+
+  test('the heart-to-artwork seam keeps the same air as the transport seams', () => {
+    // Transport seams sit between 48dp touch boxes that centre their glyphs, so
+    // both sides contribute glyph air; the artwork is flush with its own box, so
+    // the heart→artwork seam would lose the next-track glyph's inset and read
+    // narrower. The track-info leading inset restores that air.
+    const heartRightInset = (MINI_WIDE_ACTION_BOX_SIZE - MINI_WIDE_ACTION_ICON_SIZE) / 2
+    const nextGlyphInset = (MIN_TOUCH_TARGET - WIDE_SKIP_GLYPH_SIZE) / 2
+    const heartNextGap = heartRightInset + wideToolbarStyles.transportCluster.gap + nextGlyphInset
+    const heartArtworkGap =
+      heartRightInset +
+      wideToolbarStyles.controlsRow.gap +
+      getTrackInfoLeadingInset(wideToolbarStyles)
+
+    expect(getTrackInfoLeadingInset(wideToolbarStyles)).toBe(nextGlyphInset)
+    expect(heartArtworkGap).toBe(heartNextGap)
   })
 })

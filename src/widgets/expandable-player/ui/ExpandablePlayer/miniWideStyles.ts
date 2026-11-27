@@ -62,6 +62,14 @@ export const createWideMiniStyles = (theme: ThemeColors) =>
       opacity: 0.5,
       width: MINI_WIDE_ARTWORK_SIZE,
     },
+    // Transport seams sit between touch boxes that centre their glyphs, so both
+    // sides contribute glyph air; the artwork is flush with its own box. Without
+    // this leading inset the heart→artwork seam loses the next-track glyph's
+    // air and reads narrower than the heart→next seam (both gaps stay
+    // MINI_WIDE_CONTROL_GAP).
+    trackInfo: {
+      marginLeft: (MIN_TOUCH_TARGET - WIDE_SKIP_GLYPH_SIZE) / 2,
+    },
     transportCluster: {
       alignItems: 'center',
       flexDirection: 'row',

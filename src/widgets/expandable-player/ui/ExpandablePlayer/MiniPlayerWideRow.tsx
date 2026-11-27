@@ -32,7 +32,12 @@ export const MiniPlayerWideRow = ({
   return (
     <View style={styles.controlsRow}>
       <MiniPlayerTransportCluster audio={audio} styles={styles} />
-      <MiniPlayerTrackInfo audio={audio} playlist={playlist} miniStyles={miniStyles} />
+      <MiniPlayerTrackInfo
+        audio={audio}
+        playlist={playlist}
+        miniStyles={miniStyles}
+        style={styles.trackInfo}
+      />
       <MiniPlayerMenuCluster audio={audio} styles={styles} />
     </View>
   )

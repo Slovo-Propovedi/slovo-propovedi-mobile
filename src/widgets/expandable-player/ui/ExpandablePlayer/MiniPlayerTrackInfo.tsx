@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { type StyleProp, View, type ViewStyle } from 'react-native'
 import { type PlaylistData } from 'entities/playlist'
 import { type AudioPlayerData } from 'entities/sermon'
 import { CoverImage, MovingText, useMarqueeCycle } from 'shared/ui'
@@ -12,15 +12,18 @@ import { type createMiniStyles } from './miniStyles'
  * @param root0.audio - Current sermon (artwork, title and reference source).
  * @param root0.miniStyles - Pill styles built for the active theme.
  * @param root0.playlist - Playlist context for the subtitle fallback chain.
+ * @param root0.style - Layout overrides of the hosting row (wide-layout seam).
  */
 export const MiniPlayerTrackInfo = ({
   audio,
   miniStyles,
   playlist,
+  style,
 }: {
   audio: AudioPlayerData
   miniStyles: ReturnType<typeof createMiniStyles>
   playlist: null | PlaylistData
+  style?: StyleProp<ViewStyle>
 }) => {
   const subtitle = getPlayerSubtitle(audio, playlist)
   // The title owns the marquee cycle; the subtitle only follows it, so both
@@ -28,7 +31,7 @@ export const MiniPlayerTrackInfo = ({
   const marqueeCycle = useMarqueeCycle()
 
   return (
-    <View style={miniStyles.miniTrackInfo}>
+    <View style={[miniStyles.miniTrackInfo, style]}>
       <CoverImage eager uri={audio.artwork} style={miniStyles.miniCover} />
       <View style={miniStyles.miniTextContainer}>
         <MovingText
