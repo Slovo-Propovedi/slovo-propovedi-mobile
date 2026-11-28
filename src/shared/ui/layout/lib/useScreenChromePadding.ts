@@ -8,8 +8,8 @@ import {
   WIDE_CONTENT_TOP_GAP,
 } from '../bottomBarLayout'
 import { useBarBottomPadding } from './useBarBottomPadding'
+import { useInsetsSpace } from './useInsetsPadding'
 import { useIsWideLayout } from './useIsWideLayout'
-import { useSmoothInsetsSpace } from './useSmoothInsetsPadding'
 
 /**
  * Space the floating chrome occupies around screen content. Compact keeps the
@@ -35,9 +35,9 @@ import { useSmoothInsetsSpace } from './useSmoothInsetsPadding'
  *
  * `bottomChromeSpaceStyle` is the animated `height` of a trailing spacer that
  * replaces the content's bottom padding: an animated `paddingBottom` inside
- * `contentContainerStyle` is not supported by Reanimated, so the reserve glides
- * as a spacer instead (no jump when the insets arrive in two waves around a
- * rotation).
+ * `contentContainerStyle` is not supported by Reanimated, so the reserve lives
+ * in a spacer instead. The spacer snaps on every change — the tween is gone on
+ * purpose, so a rotation's reflow stays sharp and the real shift is visible.
  * Shortcut: only the main and search tab scrollers consume the spacer so far;
  * the remaining `bottomChromeHeight` consumers still pad statically — see
  * docs/debt.md.
@@ -45,7 +45,7 @@ import { useSmoothInsetsSpace } from './useSmoothInsetsPadding'
 export const useScreenChromePadding = (): {
   bottomBarHeight: number
   bottomChromeHeight: number
-  bottomChromeSpaceStyle: ReturnType<typeof useSmoothInsetsSpace>
+  bottomChromeSpaceStyle: ReturnType<typeof useInsetsSpace>
   topChromeHeight: number
   topChromeScrollInset: number
 } => {
@@ -56,7 +56,7 @@ export const useScreenChromePadding = (): {
   const bottomChromeHeight = isWide
     ? PLAYER_SIZES.wideMiniPlayerHeight + barBottomPadding + BAR_OUTER_GAP
     : bottomBarHeight + PLAYER_SIZES.miniPlayerHeight
-  const bottomChromeSpaceStyle = useSmoothInsetsSpace(bottomChromeHeight)
+  const bottomChromeSpaceStyle = useInsetsSpace(bottomChromeHeight)
 
   if (!isWide)
     return {

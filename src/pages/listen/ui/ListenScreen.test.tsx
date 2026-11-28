@@ -11,7 +11,6 @@ import {
   BAR_BOTTOM_INSET_MIN,
   BAR_OUTER_GAP,
   BAR_TOP_ISLAND_MARGIN,
-  INSETS_GLIDE_MS,
   WIDE_BAR_ROW_HEIGHT,
   WIDE_CONTENT_TOP_GAP,
   WIDE_TAB_ISLAND_HEIGHT,
@@ -445,7 +444,7 @@ describe('<ListenScreen>', () => {
     expect(scrollView && topBandHeightAboveScroller(scrollView)).toBe(0)
   })
 
-  test('glides the top safe-area padding when the insets arrive in two waves', async () => {
+  test('snaps the top safe-area padding when the insets arrive in two waves', async () => {
     mockTopInset = 20
     const { rerender } = await renderWithProviders(<ListenScreen />, {})
 
@@ -458,10 +457,16 @@ describe('<ListenScreen>', () => {
       await rerender(<ListenScreen />)
     })
 
-    expect(mockedWithTiming).toHaveBeenCalledWith(0, { duration: INSETS_GLIDE_MS })
+    expect(mockedWithTiming).not.toHaveBeenCalled()
+    // The mock re-evaluates the animated style at render time: the direct
+    // assignment is already in the shared value, the next commit paints it.
+    await act(async () => {
+      await rerender(<ListenScreen />)
+    })
+    expect(topBandHeightAboveScroller(requireContentScrollView())).toBe(0)
   })
 
-  test('glides the lateral insets so content does not jump out from under the cutout', async () => {
+  test('snaps the lateral insets so the cutout reflow stays sharp', async () => {
     const { rerender } = await renderWithProviders(<ListenScreen />, {})
 
     expect(lateralPaddingAboveScroller(requireContentScrollView())).toEqual({ left: 0, right: 0 })
@@ -473,10 +478,14 @@ describe('<ListenScreen>', () => {
       await rerender(<ListenScreen />)
     })
 
-    expect(mockedWithTiming).toHaveBeenCalledWith(44, { duration: INSETS_GLIDE_MS })
+    expect(mockedWithTiming).not.toHaveBeenCalled()
+    await act(async () => {
+      await rerender(<ListenScreen />)
+    })
+    expect(lateralPaddingAboveScroller(requireContentScrollView())).toEqual({ left: 44, right: 0 })
   })
 
-  test('reserves the bottom chrome with a gliding spacer, not static padding', async () => {
+  test('reserves the bottom chrome with a snapping spacer, not static padding', async () => {
     const { getByTestId, rerender } = await renderWithProviders(<ListenScreen />, {})
     const scrollView = findContentScrollView()
 
@@ -494,9 +503,12 @@ describe('<ListenScreen>', () => {
       await rerender(<ListenScreen />)
     })
 
-    expect(mockedWithTiming).toHaveBeenCalledWith(
+    expect(mockedWithTiming).not.toHaveBeenCalled()
+    await act(async () => {
+      await rerender(<ListenScreen />)
+    })
+    expect(StyleSheet.flatten(getByTestId(BOTTOM_CHROME_SPACE_TEST_ID).props.style)?.height).toBe(
       PLAYER_SIZES.wideMiniPlayerHeight + mockBottomInset + BAR_OUTER_GAP,
-      { duration: INSETS_GLIDE_MS },
     )
   })
 })

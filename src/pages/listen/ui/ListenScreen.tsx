@@ -14,9 +14,9 @@ import {
 } from 'shared/ui'
 import {
   useBarCollapseOnScroll,
+  useInsetsPadding,
   useIsWideLayout,
   useScreenChromePadding,
-  useSmoothInsetsPadding,
 } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { usePullToRefresh } from '../lib/usePullToRefresh'
@@ -30,7 +30,7 @@ const BOTTOM_CHROME_SPACE_TEST_ID = 'bottom-chrome-space'
 
 export const ListenScreen = () => {
   const insets = useSafeAreaInsets()
-  const smoothInsetsPadding = useSmoothInsetsPadding(insets)
+  const insetsPadding = useInsetsPadding(insets)
   const { currentTheme } = useTheme()
   const isBarCollapseSuspended = useIsBarCollapseSuspended()
   const isWide = useIsWideLayout()
@@ -55,7 +55,7 @@ export const ListenScreen = () => {
   return (
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.listen}>
       <Animated.View
-        style={[styles.safeArea, { backgroundColor: currentTheme.background }, smoothInsetsPadding]}
+        style={[styles.safeArea, { backgroundColor: currentTheme.background }, insetsPadding]}
       >
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
           <Animated.ScrollView

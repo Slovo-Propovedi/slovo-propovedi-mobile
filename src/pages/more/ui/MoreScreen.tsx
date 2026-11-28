@@ -8,7 +8,7 @@ import { HelpHeaderButton, OnboardingTarget, useTourScrollable } from 'features/
 import { authStatusAtom, authUserAtom, canAccessAdmin, restoreSession } from 'entities/auth'
 import { APP_NAME, APP_VERSION } from 'shared/config'
 import { BLUR_TARGET_ROUTES, BlurBackdrop, ScreenTitleRow, WideTopActions } from 'shared/ui'
-import { useIsWideLayout, useScreenChromePadding, useSmoothInsetsPadding } from 'shared/ui/layout'
+import { useInsetsPadding, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { AdminPanelButton } from './AdminPanelButton'
 import { MoreMenuSettingsItem } from './MoreMenuSettingsItem'
@@ -16,7 +16,7 @@ import { styles } from './styles'
 
 export const MoreScreen = () => {
   const insets = useSafeAreaInsets()
-  const smoothInsetsPadding = useSmoothInsetsPadding(insets)
+  const insetsPadding = useInsetsPadding(insets)
   const isWide = useIsWideLayout()
   const { topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
@@ -37,11 +37,7 @@ export const MoreScreen = () => {
   return (
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.more}>
       <Animated.View
-        style={[
-          styles.container,
-          { backgroundColor: currentTheme.background },
-          smoothInsetsPadding,
-        ]}
+        style={[styles.container, { backgroundColor: currentTheme.background }, insetsPadding]}
       >
         <View style={styles.body}>
           <ScrollView

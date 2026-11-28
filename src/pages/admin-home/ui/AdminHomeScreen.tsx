@@ -12,7 +12,7 @@ import {
   RefreshButton,
   WideTopActions,
 } from 'shared/ui'
-import { useIsWideLayout, useScreenChromePadding, useSmoothInsetsPadding } from 'shared/ui/layout'
+import { useInsetsPadding, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminStats } from '../lib/useAdminStats'
 import { AdminHomeHeader } from './AdminHomeHeader'
@@ -23,7 +23,7 @@ import { styles } from './styles'
 
 export const AdminHomeScreen = () => {
   const insets = useSafeAreaInsets()
-  const smoothInsetsPadding = useSmoothInsetsPadding({ top: insets.top })
+  const insetsPadding = useInsetsPadding({ top: insets.top })
   const isWide = useIsWideLayout()
   const { bottomBarHeight, topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
@@ -34,11 +34,7 @@ export const AdminHomeScreen = () => {
   return (
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.adminHome}>
       <Animated.View
-        style={[
-          styles.container,
-          { backgroundColor: currentTheme.background },
-          smoothInsetsPadding,
-        ]}
+        style={[styles.container, { backgroundColor: currentTheme.background }, insetsPadding]}
       >
         <PullToRefresh onRefresh={stats.reload} refreshing={stats.isRefreshing}>
           <ScrollView

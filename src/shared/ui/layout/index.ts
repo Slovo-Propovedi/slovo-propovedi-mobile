@@ -32,10 +32,10 @@ export {
 export { useBarBottomPadding } from './lib/useBarBottomPadding'
 export { useBarCollapseOnScroll } from './lib/useBarCollapseOnScroll'
 export { useChromeLayoutShift } from './lib/useChromeLayoutShift'
+export { useInsetsPadding } from './lib/useInsetsPadding'
 export { useIsWideLayout } from './lib/useIsWideLayout'
 export { useLayoutBaseWidth } from './lib/useLayoutBaseWidth'
 export { useScreenChromePadding } from './lib/useScreenChromePadding'
-export { INSETS_GLIDE_MS, useSmoothInsetsPadding } from './lib/useSmoothInsetsPadding'
 export {
   isBarCollapsedAtom,
   isTabBarMeasuredAtom,

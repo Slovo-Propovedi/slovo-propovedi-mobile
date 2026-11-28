@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bottom chrome (tab island, search button, mini-player and its highlight) keeps its portrait width through a rotation instead of re-deriving a landscape one a frame behind the native relayout; the chrome is only re-centred
 - Rotation is one reflow: slider cards and the detached search circle keep their size instead of resizing and shifting after the native relayout, and the tab-bar height is derived in the same commit as the bar's bottom padding instead of settling through two Android layout passes
 - The content's top and bottom paddings settle in one commit on rotation: the bottom reserve is derived from the live safe-area insets instead of waiting for the tab-bar height atom, so the content no longer shifts vertically while the chrome settles
-- Safe-area paddings glide instead of jumping when the insets change (rotation, camera cutout landing on a side): the top, left and right edges and the content's bottom reserve animate over 250 ms, so the two-wave status/gesture bar restore on Android reads as one smooth move and content no longer pops out from under the cutout
+- Safe-area paddings apply instantly when the insets change (rotation, camera cutout landing on a side): the top, left and right edges and the content's bottom reserve snap to the new value in the commit that delivers the inset, with no animation in between, so the content's reflow is one deterministic step per delivery instead of a 250 ms travel
 - The playlist header image no longer keeps a stale portrait-era height after rotation; it follows the live window height
 
 ## [0.35.1] - 2026-11-24

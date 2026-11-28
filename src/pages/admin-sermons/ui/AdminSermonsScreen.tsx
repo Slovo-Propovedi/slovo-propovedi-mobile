@@ -11,7 +11,7 @@ import {
   PullToRefresh,
   WideTopActions,
 } from 'shared/ui'
-import { useIsWideLayout, useScreenChromePadding, useSmoothInsetsPadding } from 'shared/ui/layout'
+import { useInsetsPadding, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { useAdminSermons } from '../lib/useAdminSermons'
 import { AdminSermonRow } from './AdminSermonRow'
@@ -28,7 +28,7 @@ const LIST_TEST_ID = 'admin-sermons-list'
 
 export const AdminSermonsScreen = () => {
   const insets = useSafeAreaInsets()
-  const smoothInsetsPadding = useSmoothInsetsPadding({ top: insets.top })
+  const insetsPadding = useInsetsPadding({ top: insets.top })
   const isWide = useIsWideLayout()
   const { bottomBarHeight, topChromeScrollInset: scrollInset } = useScreenChromePadding()
   const router = useRouter()
@@ -66,11 +66,7 @@ export const AdminSermonsScreen = () => {
   return (
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.adminSermons}>
       <Animated.View
-        style={[
-          styles.container,
-          { backgroundColor: currentTheme.background },
-          smoothInsetsPadding,
-        ]}
+        style={[styles.container, { backgroundColor: currentTheme.background }, insetsPadding]}
       >
         <PullToRefresh onRefresh={refresh} refreshing={isRefreshing}>
           <FlatList

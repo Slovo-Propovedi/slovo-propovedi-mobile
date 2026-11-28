@@ -8,7 +8,7 @@ import { useTourActionRegistrar } from 'features/onboarding'
 import { useSearchUrlSync, useSermonPlayback } from 'features/sermon-search'
 import { type SermonData } from 'entities/sermon'
 import { BLUR_TARGET_ROUTES, BlurBackdrop } from 'shared/ui'
-import { useScreenChromePadding, useSmoothInsetsPadding } from 'shared/ui/layout'
+import { useInsetsPadding, useScreenChromePadding } from 'shared/ui/layout'
 import { useTheme } from 'shared/ui/theme'
 import { useClearSearchOnLeave } from '../lib/useClearSearchOnLeave'
 import { useSearchNavigation } from '../lib/useSearchNavigation'
@@ -31,7 +31,7 @@ export const SearchTabScreen = () => {
   const { topChromeHeight } = useScreenChromePadding()
   // The resolved top edge: the field pill needs the higher of the safe area and
   // the wide island band, and the glide must follow the resolved value.
-  const smoothInsetsPadding = useSmoothInsetsPadding({
+  const insetsPadding = useInsetsPadding({
     left: insets.left,
     right: insets.right,
     top: Math.max(insets.top, topChromeHeight),
@@ -61,7 +61,7 @@ export const SearchTabScreen = () => {
   return (
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.search}>
       <Animated.View
-        style={[styles.safeArea, { backgroundColor: currentTheme.background }, smoothInsetsPadding]}
+        style={[styles.safeArea, { backgroundColor: currentTheme.background }, insetsPadding]}
       >
         <SearchScreen
           key={sessionNonce}

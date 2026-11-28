@@ -11,7 +11,7 @@ import {
   PullToRefresh,
   WideTopActions,
 } from 'shared/ui'
-import { useIsWideLayout, useScreenChromePadding, useSmoothInsetsPadding } from 'shared/ui/layout'
+import { useInsetsPadding, useIsWideLayout, useScreenChromePadding } from 'shared/ui/layout'
 import { INDENTS, useTheme } from 'shared/ui/theme'
 import { type AdminSectionListItem } from '../lib/sectionListItem'
 import { useAdminSections } from '../lib/useAdminSections'
@@ -33,7 +33,7 @@ const SectionSkeletonList = () => (
 
 export const AdminSectionsScreen = () => {
   const insets = useSafeAreaInsets()
-  const smoothInsetsPadding = useSmoothInsetsPadding({ top: insets.top })
+  const insetsPadding = useInsetsPadding({ top: insets.top })
   const isWide = useIsWideLayout()
   const { bottomBarHeight, topChromeScrollInset } = useScreenChromePadding()
   const router = useRouter()
@@ -56,11 +56,7 @@ export const AdminSectionsScreen = () => {
   return (
     <BlurBackdrop routeKey={BLUR_TARGET_ROUTES.adminSections}>
       <Animated.View
-        style={[
-          styles.container,
-          { backgroundColor: currentTheme.background },
-          smoothInsetsPadding,
-        ]}
+        style={[styles.container, { backgroundColor: currentTheme.background }, insetsPadding]}
       >
         <PullToRefresh onRefresh={reload} refreshing={isRefreshing}>
           <DraggableFlatList
