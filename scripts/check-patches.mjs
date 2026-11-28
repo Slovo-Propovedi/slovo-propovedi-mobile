@@ -8,6 +8,12 @@ const PATCHES_DIR = 'patches'
 const EXPO_AUDIO = 'expo-audio'
 const EXPO_AUDIO_MODULE_PATH =
   'node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt'
+const EXPO_AUDIO_PLAYLIST_PATH =
+  'node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt'
+const EXPO_AUDIO_CONTROLS_SERVICE_PATH =
+  'node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt'
+const EXPO_AUDIO_METADATA_PLAYER_PATH =
+  'node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt'
 const EXPO_AUDIO_SEEK_INTERVAL_PATH =
   'node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt'
 const EXPO_INTENT_LAUNCHER_MODULE_PATH =
@@ -20,9 +26,21 @@ const SEEK_INTERVAL_HARDENING_SIGNATURE = 'it > 0.0'
 // Per-package probes for the tri-state check. `fixSignature` is the upstream
 // equivalent of the patched code: seeing it without the marker means the
 // package fixed the issue itself and the patch must be deleted.
-const PATCH_PROBES = {
+// `requiredSignatures` proves a marker-carrying file actually received every
+// patched symbol — a marker alone cannot tell a full apply from a partial one.
+export const PATCH_PROBES = {
   'expo-audio': {
-    files: [EXPO_AUDIO_MODULE_PATH],
+    files: [
+      EXPO_AUDIO_MODULE_PATH,
+      EXPO_AUDIO_PLAYLIST_PATH,
+      EXPO_AUDIO_CONTROLS_SERVICE_PATH,
+      EXPO_AUDIO_METADATA_PLAYER_PATH,
+      'node_modules/expo-audio/build/Audio.types.d.ts',
+      'node_modules/expo-audio/build/AudioModule.types.d.ts',
+      'node_modules/expo-audio/ios/AudioPlaylist.swift',
+      'node_modules/expo-audio/src/Audio.types.ts',
+      'node_modules/expo-audio/src/AudioModule.types.ts',
+    ],
   },
   'expo-font': {
     files: ['node_modules/expo-font/build/FontLoader.web.js'],
@@ -30,6 +48,7 @@ const PATCH_PROBES = {
   },
   'expo-intent-launcher': {
     files: [EXPO_INTENT_LAUNCHER_MODULE_PATH],
+    requiredSignatures: ['toJSSafeBundle', 'toJSSafeValue'],
     requiresSourceBuild: true,
   },
   'react-native-draggable-flatlist': {
@@ -126,24 +145,28 @@ const readJsonOrNull = path => {
   }
 }
 
-export const collectFileProblems = ({ filePath, source, fixSignature }) => {
+export const collectFileProblems = ({ filePath, source, fixSignature, requiredSignatures }) => {
   if (!source) {
     return [`${filePath}: target not found — package layout changed, review the patch`]
   }
 
-  if (source.includes(PATCH_MARKER)) {
-    return []
+  if (!source.includes(PATCH_MARKER)) {
+    if (fixSignature && source.includes(fixSignature)) {
+      return [
+        `${filePath}: upstream fix detected without a patch marker — delete the patch if it covers this`,
+      ]
+    }
+
+    return [`${filePath}: patch signature missing — patch did not apply (reinstall or re-create)`]
   }
 
-  if (fixSignature && source.includes(fixSignature)) {
-    return [
-      `${filePath}: upstream fix detected without a patch marker — delete the patch if it covers this`,
-    ]
-  }
-
-  return [
-    `${filePath}: patch signature missing — patch did not apply (reinstall or re-create)`,
-  ]
+  return (requiredSignatures ?? [])
+    .filter(signature => !source.includes(signature))
+    .map(
+      signature =>
+        `${filePath}: required signature "${signature}" missing from the patched file — ` +
+        'patch is partial',
+    )
 }
 
 const collectSeekIntervalProblems = seekIntervalSource => {
@@ -187,7 +210,11 @@ const collectSourceBuildProblems = ({ packageJson, packageName }) => {
   return []
 }
 
-export const collectExpoAudioProblems = ({ audioModuleSource, seekIntervalSource, packageJson }) => {
+export const collectExpoAudioProblems = ({
+  audioModuleSource,
+  seekIntervalSource,
+  packageJson,
+}) => {
   if (!audioModuleSource) {
     return ['expo-audio AudioModule.kt not found — cannot verify the loop-getter patch']
   }
@@ -246,6 +273,7 @@ export const verifyPatch = file => {
           filePath,
           source: readFileOrNull(filePath),
           fixSignature: probe.fixSignature,
+          requiredSignatures: probe.requiredSignatures,
         }),
       )
     : []
@@ -263,11 +291,14 @@ export const verifyPatch = file => {
     return probeProblems
   }
 
-  return collectExpoAudioProblems({
-    audioModuleSource: readFileOrNull(EXPO_AUDIO_MODULE_PATH),
-    seekIntervalSource: readFileOrNull(EXPO_AUDIO_SEEK_INTERVAL_PATH),
-    packageJson: readJsonOrNull(PACKAGE_JSON_PATH),
-  }).map(problem => `${file}: ${problem}`)
+  return [
+    ...probeProblems,
+    ...collectExpoAudioProblems({
+      audioModuleSource: readFileOrNull(EXPO_AUDIO_MODULE_PATH),
+      seekIntervalSource: readFileOrNull(EXPO_AUDIO_SEEK_INTERVAL_PATH),
+      packageJson: readJsonOrNull(PACKAGE_JSON_PATH),
+    }).map(problem => `${file}: ${problem}`),
+  ]
 }
 
 const main = () => {

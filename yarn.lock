@@ -6280,7 +6280,7 @@ expo-asset@~58.0.21:
     "@expo/image-utils" "^0.12.7"
     expo-constants "~58.0.16"
 
-expo-audio@~58.0.12:
+expo-audio@58.0.12:
   version "58.0.12"
   resolved "https://registry.yarnpkg.com/expo-audio/-/expo-audio-58.0.12.tgz#6f0f192eacce31b900d4358b39fac880d8613914"
   integrity sha512-PNVqGyxZET+hSQ/JfX29VPzdj+W5qo7zRSQabN4T/0+EmnnMvyPf5u6FbaGWQuerXKMvKIy7RwSc13ldaye1RA==
@@ -6328,7 +6328,7 @@ expo-file-system@~58.0.15:
   resolved "https://registry.yarnpkg.com/expo-file-system/-/expo-file-system-58.0.15.tgz#a793eb08f6d493b13c08d5dcd16bab15e330a37b"
   integrity sha512-Mu+JF5xV7NovtTHpQSA59felqhODUDI5BvzsS3KK1Kj3W/kZw3LHrXCB9NuhqnzUWyhIFminifrtQlSDQiMyIA==
 
-expo-font@~58.0.12:
+expo-font@58.0.12, expo-font@~58.0.12:
   version "58.0.12"
   resolved "https://registry.yarnpkg.com/expo-font/-/expo-font-58.0.12.tgz#5ff24feba8c7d32626e034bd93b5b58aa3c34433"
   integrity sha512-5m8TJrQ27DT1815P066HBtcHINgD8yuIqH4ca2ZyYwCsPa4QZ8UzOBDtrHnAMWMAlAgol+PGVj9aKeoYov70JA==
@@ -6350,7 +6350,7 @@ expo-image@~58.0.19:
   dependencies:
     sf-symbols-typescript "^2.2.0"
 
-expo-intent-launcher@~58.0.3:
+expo-intent-launcher@58.0.3:
   version "58.0.3"
   resolved "https://registry.yarnpkg.com/expo-intent-launcher/-/expo-intent-launcher-58.0.3.tgz#6d600cd76652855af3a263dc93b0e64dc3951a49"
   integrity sha512-m+InwjvC5z9mAEqNhOmen5TkAFU6vqGdr+CSL9XSQmEpT1YfanJsHg9mc8P5g5mCepKk39If7v9vz8v9iekrsg==
@@ -9855,7 +9855,7 @@ react-is@^19.1.0:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.3.0.tgz#716028d67e9993d23a2d353c6d08a3c1ef2bbeb4"
   integrity sha512-UpMYezM4v5/18F28aC66AEsjXIgE02kyEMH6yLdgLXu/UTfa1Ntwck/nNLrbqJsEXW7gPb0coNO9FQse9WTovA==
 
-react-native-draggable-flatlist@^4.0.3:
+react-native-draggable-flatlist@4.0.3:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/react-native-draggable-flatlist/-/react-native-draggable-flatlist-4.0.3.tgz#eb0bb3149059f48855b53aeb9728ab2eb361e4db"
   integrity sha512-2F4x5BFieWdGq9SetD2nSAR7s7oQCSgNllYgERRXXtNfSOuAGAVbDb/3H3lP0y5f7rEyNwabKorZAD/SyyNbDw==
@@ -9870,7 +9870,7 @@ react-native-drawer-layout@^4.2.12:
     color "^4.2.3"
     use-latest-callback "^0.2.4"
 
-react-native-gesture-handler@~3.3.0:
+react-native-gesture-handler@3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/react-native-gesture-handler/-/react-native-gesture-handler-3.3.0.tgz#58817e551bab57e514fb6784003222d7d7f5738f"
   integrity sha512-ZCTlJ09nE3GPbm7J74lvwpxmx1TQ/7MDlHZNLARVYTN82k21mJUJ7BmI9eWjEi8eevHiAudI5O1Cpnt0rJfoJA==

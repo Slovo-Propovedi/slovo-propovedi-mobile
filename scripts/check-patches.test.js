@@ -5,6 +5,7 @@ import {
   collectExpoAudioProblems,
   collectFileProblems,
   parsePatchFileName,
+  PATCH_PROBES,
   verifyPatch,
 } from './check-patches.mjs'
 
@@ -44,6 +45,22 @@ const PATCHED_SOURCE = `
     }
   }.set { playlist, mode -> playlist.loopMode = mode }
 `
+
+const EXPO_AUDIO_MODULE_PATH =
+  'node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioModule.kt'
+const EXPO_AUDIO_SEEK_INTERVAL_PATH =
+  'node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/SeekInterval.kt'
+// Every expo-audio file the patch touches apart from the two with dedicated checks.
+const EXPO_AUDIO_GENERIC_PROBE_FILES = [
+  'node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlaylist.kt',
+  'node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt',
+  'node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt',
+  'node_modules/expo-audio/build/Audio.types.d.ts',
+  'node_modules/expo-audio/build/AudioModule.types.d.ts',
+  'node_modules/expo-audio/ios/AudioPlaylist.swift',
+  'node_modules/expo-audio/src/Audio.types.ts',
+  'node_modules/expo-audio/src/AudioModule.types.ts',
+]
 
 const PROBE_FILE_PATH = 'node_modules/example/build/Module.js'
 const PROBE_FIX_SIGNATURE = 'loadAsync(name, input).catch'
@@ -111,6 +128,20 @@ describe('verifyPatch', () => {
     expect(verifyPatch(`${packageName}+${version}.patch`)).toEqual([])
   })
 
+  test('accepts the installed expo-audio patch', () => {
+    const packageName = 'expo-audio'
+    const version = readInstalledVersion(packageName)
+
+    expect(verifyPatch(`${packageName}+${version}.patch`)).toEqual([])
+  })
+
+  test('accepts the installed expo-intent-launcher patch', () => {
+    const packageName = 'expo-intent-launcher'
+    const version = readInstalledVersion(packageName)
+
+    expect(verifyPatch(`${packageName}+${version}.patch`)).toEqual([])
+  })
+
   test('reports a version mismatch', () => {
     const errors = verifyPatch(MISMATCHED_PATCH)
 
@@ -124,6 +155,31 @@ describe('verifyPatch', () => {
 
     expect(errors).toHaveLength(1)
     expect(errors[0]).toContain('package missing-package not installed')
+  })
+})
+
+describe('PATCH_PROBES', () => {
+  test('generic expo-audio probes cover every patched file without a dedicated check', () => {
+    const probedFiles = PATCH_PROBES['expo-audio'].files
+
+    expect(probedFiles).toEqual(
+      expect.arrayContaining([EXPO_AUDIO_MODULE_PATH, ...EXPO_AUDIO_GENERIC_PROBE_FILES]),
+    )
+    expect(probedFiles).not.toContain(EXPO_AUDIO_SEEK_INTERVAL_PATH)
+  })
+
+  test('detects a lost patch marker on every generically probed expo-audio file', () => {
+    for (const filePath of EXPO_AUDIO_GENERIC_PROBE_FILES)
+      expect(collectFileProblems({ filePath, source: '// unpatched upstream source' })).toEqual([
+        `${filePath}: patch signature missing — patch did not apply (reinstall or re-create)`,
+      ])
+  })
+
+  test('expo-intent-launcher probes require both sanitizer signatures', () => {
+    expect(PATCH_PROBES['expo-intent-launcher'].requiredSignatures).toEqual([
+      'toJSSafeBundle',
+      'toJSSafeValue',
+    ])
   })
 })
 
@@ -170,6 +226,41 @@ describe('collectFileProblems', () => {
 
     expect(problems).toHaveLength(1)
     expect(problems[0]).toContain('patch signature missing')
+  })
+
+  test('accepts a patched file that carries every required signature', () => {
+    expect(
+      collectFileProblems({
+        filePath: PROBE_FILE_PATH,
+        requiredSignatures: ['toJSSafeBundle', 'toJSSafeValue'],
+        source: `// ${PATCH_MARKER}: sanitize third-party extras\nprivate fun Bundle.toJSSafeBundle() = toJSSafeValue()`,
+      }),
+    ).toEqual([])
+  })
+
+  test('reports a required signature missing from a patched file', () => {
+    expect(
+      collectFileProblems({
+        filePath: PROBE_FILE_PATH,
+        requiredSignatures: ['toJSSafeBundle', 'toJSSafeValue'],
+        source: `// ${PATCH_MARKER}: partial patch\nprivate fun Bundle.toJSSafeBundle() = this`,
+      }),
+    ).toEqual([
+      `${PROBE_FILE_PATH}: required signature "toJSSafeValue" missing from the patched file — ` +
+        'patch is partial',
+    ])
+  })
+
+  test('keeps the did-not-apply error when the marker is absent', () => {
+    expect(
+      collectFileProblems({
+        filePath: PROBE_FILE_PATH,
+        requiredSignatures: ['toJSSafeBundle'],
+        source: 'private fun Bundle.toJSSafeBundle() = this',
+      }),
+    ).toEqual([
+      `${PROBE_FILE_PATH}: patch signature missing — patch did not apply (reinstall or re-create)`,
+    ])
   })
 })
 
