@@ -628,6 +628,8 @@ export { ListenScreen } from './ui'
 
 - Test file naming: `ComponentName.test.tsx`
 - Place test files next to the component
+- **Temporary debug/diagnostic code is untested.** Flag-gated debug modules (e.g. `capsuleTravelDebug.ts`, `insetsDebug.ts`) live WITHOUT co-located tests even though they sit next to their modules: they are debt-tracked for removal, and tests on soon-deleted code are wasted effort. The `docs/debt.md` entry (rule 3 above) is the removal contract instead; keep the module behaviorally inert when the flag is off — a manual smoke with the flag on is enough.
+- **Temporary debug/diagnostic code is NOT committed.** Debug modules and debug logging live as uncommitted working-tree changes while debugging; commits carry only the fixes, cleaned of debug logs and debug modules. Keep the removal note in the module header; if a `docs/debt.md` entry was opened for the diagnostic, it lands and is closed together with the fix commit (never before).
 - Jest preset: `jest-expo`
 - Setup file: `__mocks__/@react-native-async-storage/async-storage.js`
 
